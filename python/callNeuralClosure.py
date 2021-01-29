@@ -83,17 +83,16 @@ def main():
     initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder)
 
     # load model weights
-    neuralClosureModel.loadModel()
+    #neuralClosureModel.loadModel()
 
     # create training Data
     neuralClosureModel.createTrainingData()
-
     ## Test some stufff DELETE
     #(u,h) =  neuralClosureModel.trainingData
     #print(u)
     #print(h)
     # load model
-    # neuralClosureModel.loadModel()
+    #neuralClosureModel.loadModel()
     # train model
     neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, batchSize=options.batch, verbosity = options.verbosity)
 

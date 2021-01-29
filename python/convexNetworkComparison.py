@@ -49,27 +49,27 @@ def main():
     ### Dense Network
     filename = "legacyCode/models/ConvComparison_fcnn"
 
-    model = create_modelMK4()
+    #model = create_modelMK4()
     #model = tf.keras.models.load_model(filename + '/model')
-    model = trainModel(model, filename, batchSize, epochCount)
+    #model = trainModel(model, filename, batchSize, epochCount)
     # model.load_weights(filename + '/best_model.h5')
-    #model = tf.keras.models.load_model(filename + '/model')
+    model = tf.keras.models.load_model(filename + '/model')
 
 
     ### Convex Network (nonnegative weights)
     filename = "legacyCode/models/ConvComparison_nonNeg"
 
-    model_nonneg = create_modelMK4_nonneg()
+    #model_nonneg = create_modelMK4_nonneg()
     #model_nonneg = tf.keras.models.load_model(filename + '/model')
-    model_nonneg = trainModel(model_nonneg, filename, batchSize, epochCount)
+    #model_nonneg = trainModel(model_nonneg, filename, batchSize, epochCount)
     # model_nonneg.load_weights(filename + '/best_model.h5')
-    #model_nonneg = tf.keras.models.load_model(filename + '/model')
+    model_nonneg = tf.keras.models.load_model(filename + '/model')
 
 
     ### Convex Network ICNN architecture
     filename = "legacyCode/models/ConvComparison_ICNN"
 
-    model_ICNN = create_modelMK4_ICNN()
+    #model_ICNN = create_modelMK4_ICNN()
     # model_ICNN = trainModel(model_ICNN, filename, batchSize, epochCount)
     # model_nonneg.load_weights(filename + '/best_model.h5')
     model_ICNN = tf.keras.models.load_model(filename + '/model')

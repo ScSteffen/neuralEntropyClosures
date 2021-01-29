@@ -45,7 +45,7 @@ def main():
 
  # --- Set Parameters ---
     batchSize = 5000
-    epochCount = 10000
+    epochCount = 1000
 
     filenameFCNN = "legacyCode/models/EntropyConvComparison_fcnn"
     filenameNonNeg = "legacyCode/models/EntropyConvComparison_nonNeg"
@@ -85,31 +85,31 @@ def main():
 
     # --- Fully Connected Network ---
     #model = create_modelMK5()
-    model = tf.keras.models.load_model(filenameFCNN + '/model')
+    #model = tf.keras.models.load_model(filenameFCNN + '/model')
     #model = trainModel(model,u,h, filenameFCNN, batchSize, epochCount)
     #model.load_weights(filename + '/best_model.h5')
 
 
     # --- Convex Network (nonnegative weights) ---
     #model_nonneg = create_modelMK5_nonneg()
-    model_nonneg = tf.keras.models.load_model(filenameNonNeg + '/model')
+    #model_nonneg = tf.keras.models.load_model(filenameNonNeg + '/model')
     #model_nonneg = trainModel(model_nonneg,u,h,filenameNonNeg, batchSize, epochCount)
     # model_nonneg.load_weights(filenameNonNeg + '/best_model.h5')
 
 
     # --- Convex Network (ICNN architecture) ---
-    #model_ICNN = create_modelMK5_ICNN()
-    model_ICNN = tf.keras.models.load_model(filenameICNN + '/model')
-    #model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
-    # model_nonneg.load_weights(filename + '/best_model.h5')
+    model_ICNN = create_modelMK5_ICNN()
+    #model_ICNN = tf.keras.models.load_model(filenameICNN + '/model')
+    model_ICNN.load_weights(filenameICNN + '/best_model.h5')
+    model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
 
     # --- Model evaluation ---
 
     #evaluateModel(u,h, model, model_nonneg, model_ICNN)
 
-    printDerivative(model, u,alpha,h)
+    #printDerivative(model, u,alpha,h)
     #printDerivative(model_nonneg, u,alpha,h)
-    #printDerivative(model_ICNN, u,alpha,h)
+    printDerivative(model_ICNN, u,alpha,h)
 
     # printDerivative(model_ICNN)
 
@@ -169,7 +169,7 @@ def printDerivative(model, u, alpha,h):
     #plt.ylim([0, 50])
     plt.show()
 
-    '''
+
     finDiff = finiteDiff(u,h)
     plt.plot(u, finDiff)
     plt.plot(u,gradients)
@@ -181,7 +181,7 @@ def printDerivative(model, u, alpha,h):
     # plt.legend(['Model ','Target Function'])
     #plt.ylim([0, 50])
     plt.show()
-    '''
+
     return gradients
 
 def integrate(x,y):
@@ -213,7 +213,6 @@ def finiteDiff(x,y):
         grad[i+1] =  (y[i] - y[i-1])/(x[i]-x[i-1])
 
     return grad
-
 
 def printWeights(model):
     for layer in model.layers:
@@ -288,7 +287,7 @@ def trainModel(model, u,h, filename, batchSize, epochCount):
     # load history
     history1 = nnUtils.load_trainHistory(filename)
     # print history as a check
-    # nnUtils.print_history(history1)
+    nnUtils.print_history(history1)
 
     print("Training Sequence successfully finished")
     return model
@@ -305,6 +304,7 @@ def create_modelMK5(): # Build the network:
     #### input layer ####
     input_ = keras.Input(shape=(1,))
     # Hidden layers
+    '''
     hidden = layers.Dense(3, activation="softplus",
                           kernel_initializer=initializer,
                           bias_initializer='ones')(input_)
@@ -322,6 +322,12 @@ def create_modelMK5(): # Build the network:
                            kernel_initializer=initializer,
                            bias_initializer='ones'
                            )(hidden)
+    '''
+    hidden = layers.Dense(3, activation="softplus")(input_)
+    hidden = layers.Dense(3, activation="softplus")(hidden)
+    hidden = layers.Dense(3, activation="softplus")(hidden)
+    output_ = layers.Dense(1, activation=None)(hidden)
+
 
     # Create the model
     model = keras.Model(inputs=[input_], outputs=[output_], name = "FCNN")
@@ -381,7 +387,7 @@ def create_modelMK5_ICNN():
 
     # Define LayerDimensions
     # inputDim = 1
-    layerDim = 3
+    layerDim = 10
 
     # Weight initializer
     initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
@@ -428,10 +434,10 @@ def create_modelMK5_ICNN():
         intermediateSum = layers.Add()([weightedSum_x, weightedNonNegSum_z])
 
         # activation
-        out = tf.keras.activations.softplus(intermediateSum)
+        # out = tf.keras.activations.softplus(intermediateSum)
         # batch normalization
         # out = layers.BatchNormalization()(out)
-        return out
+        return intermediateSum
 
     # Number of basis functions used:
     input_ = keras.Input(shape=(1,))
@@ -487,9 +493,24 @@ def loadTrainingData_DataGen(filename):
             alphaList.append(numRowAlpha)
             hList.append(numRowH)
 
+
     print("Data loaded!")
     return (np.asarray(uList),np.asarray(alphaList), np.asarray(hList))
-    
+    '''
+    t = np.asarray(uList)
+    xIn = list(np.arange(-3, 3, 0.001))
+    #tmp = np.reshape(xIn, (xIn.shape[0], 1))
+    y = []
+    dy = []
+    x = []
+    for (xItem) in xIn:
+        x.append([xItem])
+        y.append( [0.5*xItem*xItem - 1])
+        dy.append( [xItem])
+    xArr = np.asarray(x)
+    return (np.asarray(x),np.asarray(dy),np.asarray(y),)
+    '''
+
 def loadTrainingData(filenameU, filenameAlpha, filenameH):
 
     hList = list()
