@@ -43,6 +43,10 @@ class neuralBase:
             print(weights)
             print("---------------------------------------------")
 
+    def showModel(self):
+        self.model.summary()
+        return 0
+
     def trainModel(self, valSplit=0.1, epochCount=2, batchSize=500, verbosity=1):
         '''
         Method to train network
@@ -97,8 +101,11 @@ class neuralBase:
             json.dump(self.model.history.history, file)
         return 0
 
-    def loadModel(self):
-        self.model = tf.keras.models.load_model(self.filename + '/model_saved')
+    def loadModel(self, filename = None):
+        usedFileName = self.filename + '/model_saved'
+        if filename != None:
+            usedFileName = filename
+        self.model = tf.keras.models.load_model(filename)
         print("Model from file loaded")
         return 0
 

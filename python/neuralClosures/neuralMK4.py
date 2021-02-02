@@ -108,7 +108,7 @@ class neuralMK4(neuralBase):
 
         # Create the model
         model = keras.Model(inputs=[input_], outputs=[output_], name="ICNN")
-        model.summary()
+        #model.summary()
 
         # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
         model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
