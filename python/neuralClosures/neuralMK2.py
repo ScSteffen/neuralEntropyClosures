@@ -26,7 +26,7 @@ class neuralMK2(neuralBase):
         self.maxDegree_N = maxDegree_N
         self.model = self.createModel()
         self.filename = "models/"+ tempString
-        self.trainingData = ([0], [0])
+        self.trainingData = ()
 
     def createModel(self):
         # Define the input
@@ -53,11 +53,15 @@ class neuralMK2(neuralBase):
 
         return model
 
-    def createTrainingData(self):
-        uTrain = np.arange(0.001, 800, 0.001)
-        self.trainingData = [uTrain, uTrain]
+    def selectTrainingData(self):
+        if len(self.trainingData) == 0:
+            ValueError("Error: Training Data is an empty tuple.")
+        if len(self.trainingData) < 3:
+            ValueError("Error: Training Data Triple does not have length 3. Must consist of (u, alpha, h).")
 
-        return self.trainingData
+        self.trainingData = (self.trainingData[0], self.trainingData[0]) # (u,u)
+
+        return 0
 
     ### helper functions
 

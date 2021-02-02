@@ -48,7 +48,7 @@ def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
         if maxDegree_N > 0:
             ValueError("Model MK5 is constructed only for maximum degree 0 of the spherical harmonics (at the moment)")
 
-        neuralClosureModel = neuralMK4(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK5(maxDegree_N,folderName)
 
     else:
         ValueError("No network fits your preferences!")

@@ -103,35 +103,16 @@ class neuralMK5(neuralBase):
 
         return model
 
-    def createTrainingData(self):
-        filenameU = self.filename + "/trainingData_M0_u.csv"
-        filenameH = self.filename + "/trainingData_M0_h.csv"
+    def selectTrainingData(self):
+        if len(self.trainingData) == 0:
+            ValueError("Error: Training Data is an empty tuple.")
+        if len(self.trainingData) < 3:
+            ValueError("Error: Training Data Triple does not have length 3. Must consist of (u, alpha, h).")
 
-        # Load Alpha
-        f = open(filenameH, 'r')
-        hList = list()
-        uList = list()
+        self.trainingData = (self.trainingData[0], self.trainingData[2]) # (u,h)
 
-        # --- Load moments u ---
-        with f:
-            reader = csv.reader(f)
+        return 0
 
-            for row in reader:
-                numRow = []
-                for word in row:
-                    numRow.append(float(word))
-
-                hList.append(numRow)
-
-        f = open(filenameU, 'r')
-        # --- Load entropy values ---
-        with f:
-            reader = csv.reader(f)
-
-            for row in reader:
-                numRow = []
-                for word in row:
-                    numRow.append(float(word))
-                uList.append(numRow)
-
-        self.trainingData = (np.asarray(uList), np.asarray(hList))
+    def getIdxSphericalHarmonics(self, k, l):
+        # Returns the global idx from spherical harmonics indices
+        return l * l + k + l

@@ -10,6 +10,7 @@ Date 29.10.2020
 ### imports ###
 from neuralClosures.configModel import initNeuralClosure
 import numpy as np
+import pathlib
 
 from optparse import OptionParser
 
@@ -26,14 +27,21 @@ def initModelCpp(input):
     folderName: Path to the folder containing the neural network model
     '''
 
-    modelNumber = int(input[0])
-    maxDegree_N = int(input[1])
-    folderName = input[2]
+    modelNumber = input[0]
+    maxDegree_N = input[1]
+
+    # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
+    folderName = "neuralClosure_M" +str(maxDegree_N)  + "_MK" + str(modelNumber)
+
     print("inputs:")
     print(modelNumber)
     print(maxDegree_N)
     print(folderName)
     print("endInputs")
+    print("current Path")
+    print(pathlib.Path(__file__).parent.absolute())
+    print("_________________________")
+
     global neuralClosureModel
     neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
     neuralClosureModel.model.summary()
@@ -120,6 +128,7 @@ def main():
     if(options.training == 1):
         # create training Data
         neuralClosureModel.createTrainingData()
+        neuralClosureModel.selectTrainingData()
         # train model
         neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, batchSize=options.batch, verbosity = options.verbosity)
         # save model

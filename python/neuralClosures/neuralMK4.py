@@ -6,13 +6,12 @@ Version: 0.0
 Date 17.12.2020
 '''
 from .neuralBase import neuralBase
-import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras import layers
 from tensorflow import Tensor
 from tensorflow.keras.constraints import NonNeg
 
-import csv
 
 
 class neuralMK4(neuralBase):
@@ -28,124 +27,100 @@ class neuralMK4(neuralBase):
         else:
             tempString=folderName
         self.maxDegree_N = maxDegree_N
+        # --- Determine inputDim by MaxDegree ---
+        if (self.maxDegree_N == 0):
+            self.inputDim = 1
+        elif (self.maxDegree_N == 1):
+            self.inputDim = 4
+        else:
+           raise ValueError("Polynomial degeree higher than 1 not supported atm")
+
         self.model = self.createModel()
         self.filename = "models/"+ tempString
-        self.trainingData = ([0], [0])
 
     def createModel(self):
 
-        # Model variables
-        inputDim = 4 # self.getIdxSphericalHarmonics(self.maxDegree_N, self.maxDegree_N) + 1
-        layerSize = 15
+        layerDim = 10
 
         # Weight initializer
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
         initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
 
-        # Define standard Residual block
-        def ResNetBlock(x: Tensor) -> Tensor:
-            y = keras.layers.Dense(20, activation="relu")(x)
-            y = keras.layers.Dense(20, activation="relu")(y)
-            y = keras.layers.Dense(20, activation="relu")(y)
-
-            out = keras.layers.Add()([x, y])
-            out = keras.layers.ReLU()(out)
-            out = keras.layers.BatchNormalization()(out)
-            return out
-
-        # Convex Layer
-        def ICLayer(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
+        def convexLayer(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
             # Weighted sum of previous layers output plus bias
-            weightedNonNegSum_z = keras.layers.Dense(layerSize, kernel_constraint=NonNeg(), activation=None,
-                                                     kernel_initializer=initializerNonNeg,
-                                                     use_bias=True,
-                                                     bias_initializer='zeros'
-                                                     # name='in_z_NN_Dense'
-                                                     )(layerInput_z)
+            weightedNonNegSum_z = layers.Dense(layerDim, kernel_constraint=NonNeg(), activation=None,
+                                               kernel_initializer=initializerNonNeg,
+                                               use_bias=True,
+                                               bias_initializer='zeros'
+                                               # name='in_z_NN_Dense'
+                                               )(layerInput_z)
             # Weighted sum of network input
-            weightedSum_x = keras.layers.Dense(layerSize, activation=None,
-                                               kernel_initializer=initializer,
-                                               use_bias=False
-                                               # name='in_x_Dense'
-                                               )(netInput_x)
+            weightedSum_x = layers.Dense(layerDim, activation=None,
+                                         kernel_initializer=initializer,
+                                         use_bias=False
+                                         # name='in_x_Dense'
+                                         )(netInput_x)
             # Wz+Wx+b
-            intermediateSum = keras.layers.Add()([weightedSum_x, weightedNonNegSum_z])
+            intermediateSum = layers.Add()([weightedSum_x, weightedNonNegSum_z])
+
             # activation
             out = tf.keras.activations.softplus(intermediateSum)
+            # batch normalization
+            # out = layers.BatchNormalization()(out)
             return out
 
-        # Define input convex ResNet
-        def ICResNetBlock(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
-            # Resnet Block made of IC Layers
-            y = ICLayer(layerInput_z, netInput_x)
-            y = ICLayer(y, netInput_x)
-            y = ICLayer(y, netInput_x)
-            # ResNet Part
-            out = keras.layers.Add()([layerInput_z, y])
-            out = keras.layers.ReLU()(out)
-            out = keras.layers.BatchNormalization()(out)
-            return out
+        def convexLayerOutput(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
+            # Weighted sum of previous layers output plus bias
+            weightedNonNegSum_z = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
+                                               kernel_initializer=initializerNonNeg,
+                                               use_bias=True,
+                                               bias_initializer='zeros'
+                                               # name='in_z_NN_Dense'
+                                               )(layerInput_z)
+            # Weighted sum of network input
+            weightedSum_x = layers.Dense(1, activation=None,
+                                         kernel_initializer=initializer,
+                                         use_bias=False
+                                         # name='in_x_Dense'
+                                         )(netInput_x)
+            # Wz+Wx+b
+            intermediateSum = layers.Add()([weightedSum_x, weightedNonNegSum_z])
 
-        # Define the input
+            # activation
+            # out = tf.keras.activations.softplus(intermediateSum)
+            # batch normalization
+            # out = layers.BatchNormalization()(out)
+            return intermediateSum
+
         # Number of basis functions used:
+        input_ = keras.Input(shape=(self.inputDim,))
 
-        input_ = keras.Input(shape=(inputDim,))
-
-        # Hidden layers
-        hidden = keras.layers.Dense(layerSize, activation="relu")(input_)
-
-        # IC Layers
-        hidden = ICLayer(hidden, input_)
-        hidden = ICLayer(hidden, input_)
-        hidden = ICLayer(hidden, input_)
-        hidden = ICLayer(hidden, input_)
-        hidden = ICLayer(hidden, input_)
-        hidden = ICLayer(hidden, input_)
-
-
-        # Define the ouput
-        output_ = keras.layers.Dense(1, activation=None)(hidden)
+        ### Hidden layers ###
+        # First Layer is a std dense layer
+        hidden = layers.Dense(layerDim, activation="softplus",
+                              kernel_initializer=initializer,
+                              bias_initializer='zeros'
+                              )(input_)
+        # other layers are convexLayers
+        hidden = convexLayer(hidden, input_)
+        hidden = convexLayer(hidden, input_)
+        output_ = convexLayerOutput(hidden, input_)  # outputlayer
 
         # Create the model
-        model = keras.Model(name="MK4closureICResNet", inputs=[input_], outputs=[output_])
+        model = keras.Model(inputs=[input_], outputs=[output_], name="ICNN")
         model.summary()
 
-        # alternative way of training
         # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
-        model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer='adam', metrics=['mean_absolute_error'])
+        model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
 
         return model
 
-    def createTrainingData(self):
-        # Loads the training data generated by "generateTrainingData.py"
-        #filename = self.filename + "/trainMonomial_M1.csv"
+    def selectTrainingData(self):
+        if len(self.trainingData) == 0:
+            ValueError("Error: Training Data is an empty tuple.")
+        if len(self.trainingData) < 3:
+            ValueError("Error: Training Data Triple does not have length 3. Must consist of (u, alpha, h).")
 
-        filename = "data/1_stage/Monomial_M"+str(self.maxDegree_N)+".csv"
-        # Load Alpha
-        f = open(filename, 'r')
-        alphaList = list()
-        uList = list()
-        hList = list()
+        self.trainingData = (self.trainingData[0], self.trainingData[2]) # (u,h)
 
-        with f:
-            reader = csv.reader(f)
-            for row in reader:
-                numRowU = []
-                numRowAlpha = []
-                numRowH = []
-                word_idx = 0
-                for word in row:
-                    # skip first index, which is date and time info
-                    if word_idx > 0 and word_idx <5: #hardcoded... careful
-                        numRowU.append(float(word))
-                    if word_idx >4 and word_idx <9:
-                        numRowAlpha.append(float(word))
-                    if word_idx == 9:
-                        numRowH.append(float(word))
-                    word_idx = word_idx + 1
-                uList.append(numRowU)
-                #alphaList.append(numRowAlpha) Not needed right now
-                hList.append(numRowH)
-
-        print("Data loaded")
-        self.trainingData = (np.asarray(uList), np.asarray(hList))
+        return 0
