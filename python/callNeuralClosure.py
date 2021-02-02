@@ -29,10 +29,15 @@ def initModelCpp(input):
     modelNumber = int(input[0])
     maxDegree_N = int(input[1])
     folderName = input[2]
-
+    print("inputs:")
+    print(modelNumber)
+    print(maxDegree_N)
+    print(folderName)
+    print("endInputs")
     global neuralClosureModel
     neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
-
+    neuralClosureModel.model.summary()
+    print("Network initialized from C++")
     return 0
 
 ### function definitions ###
@@ -47,7 +52,7 @@ def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
 
     return 0
 
-def call_network(input):
+def callNetwork(input):
     '''
     # Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
     '''
@@ -55,7 +60,7 @@ def call_network(input):
 
     return predictions
 
-def call_networkBatchwise(input):
+def callNetworkBatchwise(input):
 
     #print(input)
     inputNP = np.asarray(input)
@@ -89,6 +94,9 @@ def main():
                       help="load model weights from file", metavar="LOADING")
     parser.add_option("-f", "--folder", dest="folder",default="testFolder",
                       help="folder with training data and where the model is stored", metavar="FOLDER")
+    parser.add_option("-t", "--training", dest="training", default=1,
+                      help="training mode (1) execution mode (0)", metavar="TRAINING")
+
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
     options.model = int(options.model)
@@ -96,39 +104,28 @@ def main():
     options.batch = int(options.batch)
     options.verbosity = int(options.verbosity)
     options.loadmodel = int(options.loadmodel)
+    options.training = int(options.training)
 
     # --- End Option Parsing ---
 
 
     # --- initialize model
-    #inArray = [str(options.model), str(options.degree), options.folder]
-    #initModelCpp(inArray)
     initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder)
 
-    # load model weights
-    if(options.loadmodel == 1):
+    if(options.loadmodel == 1 or options.training == 0):
+        # in execution mode the model must be loaded.
+        # load model weights
         neuralClosureModel.loadModel()
 
-    # create training Data
-    neuralClosureModel.createTrainingData()
-    ## Test some stufff DELETE
-    #(u,h) =  neuralClosureModel.trainingData
-    #print(u)
-    #print(h)
-    # load model
-    #neuralClosureModel.loadModel()
-    # train model
-    neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, batchSize=options.batch, verbosity = options.verbosity)
+    if(options.training == 1):
+        # create training Data
+        neuralClosureModel.createTrainingData()
+        # train model
+        neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, batchSize=options.batch, verbosity = options.verbosity)
+        # save model
+        neuralClosureModel.saveModel()
 
-    # save model
-    neuralClosureModel.saveModel()
-
-    # plot training history
-    #neuralClosureModel.plotTrainingHistory()
-
-    # initialize_network()
-    # print(neuralClosureModel.computePrediction([[1]]))
-
+    # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
     return 0
 
 
