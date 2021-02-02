@@ -53,6 +53,6 @@ def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
     else:
         ValueError("No network fits your preferences!")
 
-    print("Neural Closure Model loaded!")
+    print("Neural closure model created")
 
     return neuralClosureModel

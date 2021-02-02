@@ -30,7 +30,7 @@ def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
 
     return 0
 
-def callModel(input):
+def call_network(input):
     '''
     # Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
     '''
@@ -56,7 +56,7 @@ def call_networkBatchwise(input):
     return test
 
 def main():
-    # parse options
+    # --- parse options ---
     parser = OptionParser()
     parser.add_option("-d", "--degree", dest="degree",default=0,
                       help="max degree of moment", metavar="DEGREE")
@@ -68,22 +68,27 @@ def main():
                       help="batch size", metavar="BATCH")
     parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
                       help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
+    parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
+                      help="load model weights from file", metavar="LOADING")
     parser.add_option("-f", "--folder", dest="folder",default="testFolder",
                       help="folder with training data and where the model is stored", metavar="FOLDER")
-
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
     options.model = int(options.model)
     options.epoch = int(options.epoch)
     options.batch = int(options.batch)
     options.verbosity = int(options.verbosity)
+    options.loadmodel = int(options.loadmodel)
+
+    # --- End Option Parsing ---
 
 
-    # initialize model
+    # --- initialize model
     initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder)
 
     # load model weights
-    #neuralClosureModel.loadModel()
+    if(options.loadmodel == 1):
+        neuralClosureModel.loadModel()
 
     # create training Data
     neuralClosureModel.createTrainingData()

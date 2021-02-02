@@ -147,5 +147,5 @@ class neuralMK4(neuralBase):
                 #alphaList.append(numRowAlpha) Not needed right now
                 hList.append(numRowH)
 
-        print("Data loaded!")
+        print("Data loaded")
         self.trainingData = (np.asarray(uList), np.asarray(hList))

@@ -91,17 +91,17 @@ def main():
 
 
     # --- Convex Network (nonnegative weights) ---
-    #model_nonneg = create_modelMK5_nonneg()
+    model_nonneg = create_modelMK5_nonneg()
     #model_nonneg = tf.keras.models.load_model(filenameNonNeg + '/model')
+    model_nonneg.load_weights(filenameNonNeg + '/best_model.h5')
     #model_nonneg = trainModel(model_nonneg,u,h,filenameNonNeg, batchSize, epochCount)
-    # model_nonneg.load_weights(filenameNonNeg + '/best_model.h5')
 
 
     # --- Convex Network (ICNN architecture) ---
     model_ICNN = create_modelMK5_ICNN()
     #model_ICNN = tf.keras.models.load_model(filenameICNN + '/model')
     model_ICNN.load_weights(filenameICNN + '/best_model.h5')
-    model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
+    #model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
 
     # --- Model evaluation ---
 
@@ -109,7 +109,7 @@ def main():
 
     #printDerivative(model, u,alpha,h)
     #printDerivative(model_nonneg, u,alpha,h)
-    printDerivative(model_ICNN, u,alpha,h)
+    printDerivative(model_ICNN, model_nonneg, u,alpha,h)
 
     # printDerivative(model_ICNN)
 
@@ -118,7 +118,7 @@ def main():
     # printWeights(model_nonneg)
     return 0
 
-def printDerivative(model, u, alpha,h):
+def printDerivative(model, model2, u, alpha,h):
     #x = np.arange(-100.0, 100.0, 0.001)
     #tmp = np.reshape(x,(x.shape[0],1))
     x_model = tf.Variable(u)
@@ -130,6 +130,12 @@ def printDerivative(model, u, alpha,h):
 
     gradients = tape.gradient(predictions, x_model)
 
+    with tf.GradientTape() as tape:
+        # training=True is only needed if there are layers with different
+        # behavior during training versus inference (e.g. Dropout).
+        predictions2 = model2(x_model, training=False)  # same as model.predict(x)
+
+    gradients2 = tape.gradient(predictions2, x_model)
 
     #np.gradient(x_model, predictions)
     # m_n phd student: paris (teddy picard?)
@@ -139,22 +145,26 @@ def printDerivative(model, u, alpha,h):
 
     # plot model predictions and derivatives
     plt.plot(u, predictions)
+    plt.plot(u, predictions2, '-.')
     plt.plot(u,h, '--')
-    plt.ylabel('function value')
-    plt.xlabel('input value')
-    plt.legend(['Model', 'Target Fct'])
+    plt.ylabel('entropy')
+    plt.xlabel('moment')
+    plt.legend(['ICNN', 'std Network' , 'Target Fct'])
     #plt.legend(['Model Derivative', 'Target Derivative'])
-    #plt.ylim([0,50])
+    plt.ylim([-15, 20])
+    plt.xlim([0, 50])
     plt.show()
 
     plt.plot(u, gradients)
+    plt.plot(u, gradients2, '-.')
     plt.plot(u, alpha, '--')
-    plt.ylabel('function value')
-    plt.xlabel('input value')
+    plt.ylabel('lagrangian')
+    plt.xlabel('moment')
     #plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
-    plt.legend(['Model Derivative','Target Derivative'])
+    plt.legend(['ICNN Derivative', 'std Network Derivative' , 'Target Derivative'])
     #plt.legend(['Model ','Target Function'])
-    #plt.ylim([0,50])
+    #plt.ylim([0,20])
+    plt.xlim([0,50])
     plt.show()
 
 
@@ -166,7 +176,7 @@ def printDerivative(model, u, alpha,h):
     # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
     plt.legend(['Integrated Gradients', 'Target Funktion'])
     # plt.legend(['Model ','Target Function'])
-    #plt.ylim([0, 50])
+    #plt.ylim([0, 20])
     plt.show()
 
 
@@ -434,7 +444,7 @@ def create_modelMK5_ICNN():
         intermediateSum = layers.Add()([weightedSum_x, weightedNonNegSum_z])
 
         # activation
-        # out = tf.keras.activations.softplus(intermediateSum)
+        #out = tf.keras.activations.softplus(intermediateSum)
         # batch normalization
         # out = layers.BatchNormalization()(out)
         return intermediateSum

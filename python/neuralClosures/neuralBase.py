@@ -10,7 +10,6 @@ Date 29.10.2020
 import json
 import tensorflow as tf
 import numpy as np
-import pandas as pd
 
 
 ### class definitions ###
@@ -98,7 +97,7 @@ class neuralBase:
 
     def loadModel(self):
         self.model = tf.keras.models.load_model(self.filename + '/model_saved')
-
+        print("Model from file loaded")
         return 0
 
     def getIdxSphericalHarmonics(self, k, l):
