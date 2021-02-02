@@ -31,22 +31,16 @@ def initModelCpp(input):
     maxDegree_N = input[1]
 
     # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
-    folderName = "neuralClosure_M" +str(maxDegree_N)  + "_MK" + str(modelNumber)
-
-    print("inputs:")
-    print(modelNumber)
-    print(maxDegree_N)
-    print(folderName)
-    print("endInputs")
-    print("current Path")
-    print(pathlib.Path(__file__).parent.absolute())
-    print("_________________________")
+    folderName = "models/neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber) + "/model_saved"
 
     global neuralClosureModel
     neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
+    neuralClosureModel.loadModel()
     neuralClosureModel.model.summary()
-    print("Network initialized from C++")
+    print("| Tensorflow neural closure initialized.")
+
     return 0
+
 
 ### function definitions ###
 def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
