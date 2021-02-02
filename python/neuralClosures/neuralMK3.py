@@ -27,7 +27,7 @@ class neuralMK3(neuralBase):
     '''
 
     def __init__(self, maxDegree_N=0, folderName= "testFolder"):
-        if(folderName is "testFolder"):
+        if(folderName == "testFolder"):
             tempString = "MK1_N" + str(maxDegree_N)
         else:
             tempString=folderName
