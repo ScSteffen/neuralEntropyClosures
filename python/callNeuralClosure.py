@@ -17,6 +17,23 @@ from optparse import OptionParser
 ### global variable ###
 neuralClosureModel = 0  # bm.initNeuralClosure(0,0)
 
+### function definitions ###
+def initModelCpp(input):
+    '''
+    input: string array consisting of [modelNumber,maxDegree_N, folderName]
+    modelNumber : Defines the used network model, i.e. MK1, MK2...
+    maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
+    folderName: Path to the folder containing the neural network model
+    '''
+
+    modelNumber = int(input[0])
+    maxDegree_N = int(input[1])
+    folderName = input[2]
+
+    global neuralClosureModel
+    neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
+
+    return 0
 
 ### function definitions ###
 def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
@@ -84,6 +101,8 @@ def main():
 
 
     # --- initialize model
+    #inArray = [str(options.model), str(options.degree), options.folder]
+    #initModelCpp(inArray)
     initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder)
 
     # load model weights
