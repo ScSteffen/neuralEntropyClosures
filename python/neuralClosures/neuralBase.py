@@ -52,47 +52,25 @@ class neuralBase:
         Method to train network
         '''
         # Create callbacks
-        mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/model_saved', monitor='loss', mode='min',
-                                                     save_best_only=True, save_weights_only = False, save_freq = 50, verbose=0)
+        mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/best_model.h5', monitor='loss', mode='min',
+                                                     save_best_only=True, verbose = verbosity)#, save_weights_only = True, save_freq = 50, verbose=0)
         #mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
         #                                         save_weights_only=False,
         #                                         verbose=1)
+        callbackList = []
+        if verbosity == 1:
+            callbackList = [mc_best]
+        else:
+            callbackList = [mc_best,LossAndErrorPrintingCallback()]
+
         self.history = self.model.fit(self.trainingData[0], self.trainingData[1],
                                       validation_split=valSplit,
                                       epochs=epochCount,
                                       batch_size=batchSize,
                                       verbose=verbosity,
-                                      callbacks=[mc_best, LossAndErrorPrintingCallback()],
+                                      callbacks=callbackList,
                                       )
         return self.history
-
-    '''
-    def plotTrainingHistory(self):
-        
-        #Method to plot the training data
-        
-        fig, axs = plt.subplots(2)
-
-        axs[0].plot(self.model.history.history['mean_absolute_error'])
-        axs[0].plot(self.model.history.history['val_mean_absolute_error'])
-        axs[0].set_title('absolute error')
-        axs[0].set_ylabel('error')
-        axs[0].set_xlabel('epoch')
-        axs[0].set_yscale("log")
-        axs[0].legend(['train mean abs error', 'val mean abs error'], loc='upper right')
-
-        # summarize history for loss
-        axs[1].plot(self.model.history.history['loss'])
-        axs[1].plot(self.model.history.history['val_loss'])
-        axs[1].set_title('model loss: mse')
-        axs[1].set_ylabel('error')
-        axs[1].set_xlabel('epoch')
-        axs[1].set_yscale("log")
-        axs[1].legend(['train mse', 'val mse'], loc='upper right')
-        # axs[1].show()
-        plt.show()
-        return 0
-    '''
 
     def saveModel(self):
         self.model.save(self.filename + '/model')
@@ -102,10 +80,12 @@ class neuralBase:
         return 0
 
     def loadModel(self, filename = None):
-        usedFileName = self.filename + '/model_saved'
+        usedFileName = self.filename
         if filename != None:
             usedFileName = filename
-        self.model = tf.keras.models.load_model(filename)
+
+        usedFileName = usedFileName + '/best_model.h5'
+        self.model.load_weights(usedFileName )
         print("Model from file loaded")
         return 0
 
@@ -143,6 +123,35 @@ class neuralBase:
 
     def selectTrainingData(self):
         pass
+
+    '''
+       def plotTrainingHistory(self):
+
+           #Method to plot the training data
+
+           fig, axs = plt.subplots(2)
+
+           axs[0].plot(self.model.history.history['mean_absolute_error'])
+           axs[0].plot(self.model.history.history['val_mean_absolute_error'])
+           axs[0].set_title('absolute error')
+           axs[0].set_ylabel('error')
+           axs[0].set_xlabel('epoch')
+           axs[0].set_yscale("log")
+           axs[0].legend(['train mean abs error', 'val mean abs error'], loc='upper right')
+
+           # summarize history for loss
+           axs[1].plot(self.model.history.history['loss'])
+           axs[1].plot(self.model.history.history['val_loss'])
+           axs[1].set_title('model loss: mse')
+           axs[1].set_ylabel('error')
+           axs[1].set_xlabel('epoch')
+           axs[1].set_yscale("log")
+           axs[1].legend(['train mse', 'val mse'], loc='upper right')
+           # axs[1].show()
+           plt.show()
+           return 0
+       '''
+
 
 class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):
     #def on_train_batch_end(self, batch, logs=None):
