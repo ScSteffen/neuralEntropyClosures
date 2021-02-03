@@ -10,7 +10,7 @@ Date 29.10.2020
 ### imports ###
 from neuralClosures.configModel import initNeuralClosure
 import numpy as np
-import pathlib
+import tensorflow as tf
 
 from optparse import OptionParser
 
@@ -56,23 +56,44 @@ def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
 def callNetwork(input):
     '''
     # Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
+    # Output: Gradient of the network wrt input
     '''
-    predictions = neuralClosureModel.model.predict(input)
+    # predictions = neuralClosureModel.model.predict(input)
 
-    return predictions
+    x_model = tf.Variable(input)
+
+    with tf.GradientTape() as tape:
+        # training=True is only needed if there are layers with different
+        # behavior during training versus inference (e.g. Dropout).
+        predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
+
+    gradients = tape.gradient(predictions, x_model)
+
+
+    return gradients
 
 def callNetworkBatchwise(input):
 
+
     #print(input)
     inputNP = np.asarray(input)
+    #predictions = neuralClosureModel.model.predict(inputNP)
+
     #print(inputNP.shape)
     #print(inputNP)
 
-    predictions = neuralClosureModel.model.predict(inputNP)
+    x_model = tf.Variable(input)
 
-    #print(predictions)
+    with tf.GradientTape() as tape:
+        # training=True is only needed if there are layers with different
+        # behavior during training versus inference (e.g. Dropout).
+        predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
 
-    size = predictions.shape[0]*predictions.shape[1]
+    gradients = tape.gradient(predictions, x_model)
+
+    #print(gradients)
+
+    size = gradients.shape[0]*gradients.shape[1]
     test = np.zeros(size)
     for i in  range(0,size):
         test[i] = predictions.flatten(order='C')[i]
