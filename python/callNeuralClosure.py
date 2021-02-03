@@ -31,8 +31,7 @@ def initModelCpp(input):
     maxDegree_N = input[1]
 
     # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
-    folderName = "models/neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber) + "/model_saved"
-
+    folderName = "neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber)
     global neuralClosureModel
     neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
     neuralClosureModel.loadModel()
