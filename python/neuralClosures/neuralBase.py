@@ -11,6 +11,7 @@ import json
 import tensorflow as tf
 import numpy as np
 import csv
+from os import path
 
 
 ### class definitions ###
@@ -85,8 +86,11 @@ class neuralBase:
             usedFileName = filename
 
         usedFileName = usedFileName + '/best_model.h5'
+
+        if path.exists(usedFileName) == False:
+            ValueError("Model does not exists at this path: " + usedFileName)
         self.model.load_weights(usedFileName )
-        print("Model from file loaded")
+        print("Model loaded from file ")
         return 0
 
     def createTrainingData(self):

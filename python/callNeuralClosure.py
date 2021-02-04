@@ -32,6 +32,7 @@ def initModelCpp(input):
 
     # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
     folderName = "neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber)
+
     global neuralClosureModel
     neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
     neuralClosureModel.loadModel()
@@ -74,15 +75,16 @@ def callNetwork(input):
 
 def callNetworkBatchwise(input):
 
-
+    print(type(input))
     #print(input)
-    inputNP = np.asarray(input)
+    inputNetwork = np.reshape(input, (input.shape[0], 1))
+    #inputNP = np.asarray(input)
     #predictions = neuralClosureModel.model.predict(inputNP)
 
     #print(inputNP.shape)
     #print(inputNP)
 
-    x_model = tf.Variable(input)
+    x_model = tf.Variable(inputNetwork)
 
     with tf.GradientTape() as tape:
         # training=True is only needed if there are layers with different
@@ -91,15 +93,32 @@ def callNetworkBatchwise(input):
 
     gradients = tape.gradient(predictions, x_model)
 
-    #print(gradients)
+    # ---- Convert gradients from eagerTensor to numpy array and then to flattened c array ----
 
-    size = gradients.shape[0]*gradients.shape[1]
-    test = np.zeros(size)
-    for i in  range(0,size):
-        test[i] = predictions.flatten(order='C')[i]
-    return test
+    gradNP =  np.reshape(gradients.numpy(), (input.shape[0]))
+    return gradNP
+
+    #print(gradients)
+    #print(gradNP)
+    #print(predictions)
+
+    #size = gradients.shape[0]*gradients.shape[1]
+    #test = np.zeros(size)
+    #for i in  range(0,size):
+    #    test[i] = predictions.flatten(order='C')[i]
+    #return (predictions, gradients)
+    #return test
 
 def main():
+    # Tests
+
+    initModelCpp([4,0])
+    # test
+    nnIN = np.arange(0.5, 5, 0.5)
+    test= callNetworkBatchwise(nnIN)
+    print(test)
+
+    #print("her")
     # --- parse options ---
     parser = OptionParser()
     parser.add_option("-d", "--degree", dest="degree",default=0,
@@ -107,7 +126,7 @@ def main():
     parser.add_option("-m", "--model", dest="model", default=1,
                       help="choice of network model", metavar="MODEL")
     parser.add_option("-e", "--epoch", dest="epoch", default=1000,
-                      help="epoch count for neural network", metavar="EPCOH")
+                      help="epoch count for neural network", metavar="EPOCH")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
     parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
@@ -133,11 +152,15 @@ def main():
 
     # --- initialize model
     initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder)
+    neuralClosureModel.model.summary()
 
     if(options.loadmodel == 1 or options.training == 0):
         # in execution mode the model must be loaded.
         # load model weights
         neuralClosureModel.loadModel()
+    else:
+        print("Start training with new weights")
+
 
     if(options.training == 1):
         # create training Data
