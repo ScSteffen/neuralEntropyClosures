@@ -27,6 +27,9 @@ def initModelCpp(input):
     folderName: Path to the folder containing the neural network model
     '''
 
+    print("|-------------------- Tensorflow initialization Log ------------------")
+    print("|")
+
     modelNumber = input[0]
     maxDegree_N = input[1]
 
@@ -37,8 +40,9 @@ def initModelCpp(input):
     neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
     neuralClosureModel.loadModel()
     neuralClosureModel.model.summary()
+    print("|")
     print("| Tensorflow neural closure initialized.")
-
+    print("|")
     return 0
 
 
