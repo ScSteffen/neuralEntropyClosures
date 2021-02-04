@@ -73,52 +73,32 @@ def callNetwork(input):
 
     return gradients
 
-def callNetworkBatchwise(input):
-
-    print(type(input))
-    #print(input)
-    inputNetwork = np.reshape(input, (input.shape[0], 1))
-    #inputNP = np.asarray(input)
-    #predictions = neuralClosureModel.model.predict(inputNP)
-
-    #print(inputNP.shape)
-    #print(inputNP)
-
+def callNetworkBatchwise(inputNetwork):
+    # Transform npArray to tfEagerTensor
     x_model = tf.Variable(inputNetwork)
 
+    # Compute Autodiff tape
     with tf.GradientTape() as tape:
         # training=True is only needed if there are layers with different
         # behavior during training versus inference (e.g. Dropout).
         predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
 
+    # Compute the gradients
     gradients = tape.gradient(predictions, x_model)
 
     # ---- Convert gradients from eagerTensor to numpy array and then to flattened c array ----
 
-    gradNP =  np.reshape(gradients.numpy(), (input.shape[0]))
-    return gradNP
+    # Note: Use inputNetwork as array, since a newly generated npArray seems to cause a Segfault in cpp
+    (dimCell, dimBase) = inputNetwork.shape
 
-    #print(gradients)
-    #print(gradNP)
-    #print(predictions)
+    for i in range(0, dimCell):
+        for j in range(0, dimBase):
+            inputNetwork[i, j] = gradients[i, j]
 
-    #size = gradients.shape[0]*gradients.shape[1]
-    #test = np.zeros(size)
-    #for i in  range(0,size):
-    #    test[i] = predictions.flatten(order='C')[i]
-    #return (predictions, gradients)
-    #return test
+    return inputNetwork
+
 
 def main():
-    # Tests
-
-    initModelCpp([4,0])
-    # test
-    nnIN = np.arange(0.5, 5, 0.5)
-    test= callNetworkBatchwise(nnIN)
-    print(test)
-
-    #print("her")
     # --- parse options ---
     parser = OptionParser()
     parser.add_option("-d", "--degree", dest="degree",default=0,
