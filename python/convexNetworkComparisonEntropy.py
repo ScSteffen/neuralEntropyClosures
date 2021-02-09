@@ -45,7 +45,7 @@ def main():
 
  # --- Set Parameters ---
     batchSize = 5000
-    epochCount = 1000
+    epochCount = 100000
 
     filenameFCNN = "legacyCode/models/EntropyConvComparison_fcnn"
     filenameNonNeg = "legacyCode/models/EntropyConvComparison_nonNeg"
@@ -86,14 +86,14 @@ def main():
     # --- Fully Connected Network ---
     #model = create_modelMK5()
     #model = tf.keras.models.load_model(filenameFCNN + '/model')
+    #model.load_weights(filenameFCNN + '/best_model.h5')
     #model = trainModel(model,u,h, filenameFCNN, batchSize, epochCount)
-    #model.load_weights(filename + '/best_model.h5')
 
 
     # --- Convex Network (nonnegative weights) ---
-    model_nonneg = create_modelMK5_nonneg()
+    #model_nonneg = create_modelMK5_nonneg()
     #model_nonneg = tf.keras.models.load_model(filenameNonNeg + '/model')
-    model_nonneg.load_weights(filenameNonNeg + '/best_model.h5')
+    #model_nonneg.load_weights(filenameNonNeg + '/best_model.h5')
     #model_nonneg = trainModel(model_nonneg,u,h,filenameNonNeg, batchSize, epochCount)
 
 
@@ -101,7 +101,7 @@ def main():
     model_ICNN = create_modelMK5_ICNN()
     #model_ICNN = tf.keras.models.load_model(filenameICNN + '/model')
     model_ICNN.load_weights(filenameICNN + '/best_model.h5')
-    #model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
+    model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
 
     # --- Model evaluation ---
 
@@ -109,7 +109,7 @@ def main():
 
     #printDerivative(model, u,alpha,h)
     #printDerivative(model_nonneg, u,alpha,h)
-    printDerivative(model_ICNN, model_nonneg, u,alpha,h)
+    #printDerivative(model_ICNN, model, u,alpha,h)
 
     # printDerivative(model_ICNN)
 
@@ -151,8 +151,8 @@ def printDerivative(model, model2, u, alpha,h):
     plt.xlabel('moment')
     plt.legend(['ICNN', 'std Network' , 'Target Fct'])
     #plt.legend(['Model Derivative', 'Target Derivative'])
-    plt.ylim([-15, 20])
-    plt.xlim([0, 50])
+    #plt.ylim([-15, 20])
+    #plt.xlim([0, 50])
     plt.show()
 
     plt.plot(u, gradients)
@@ -164,7 +164,7 @@ def printDerivative(model, model2, u, alpha,h):
     plt.legend(['ICNN Derivative', 'std Network Derivative' , 'Target Derivative'])
     #plt.legend(['Model ','Target Function'])
     #plt.ylim([0,20])
-    plt.xlim([0,50])
+    #plt.xlim([0,50])
     plt.show()
 
 
@@ -283,7 +283,7 @@ def trainModel(model, u,h, filename, batchSize, epochCount):
     # Train the model
     print("Train Model")
     history = model.fit(u,h, validation_split=0.01, epochs=epochCount, batch_size=batchSize, verbose=1,
-                        callbacks=[es, mc_best, mc_500])  # batch size = 900000
+                        callbacks=[ mc_best])  # batch size = 900000
 
     # View History
     # nnUtils.print_history(history.history)
@@ -297,7 +297,7 @@ def trainModel(model, u,h, filename, batchSize, epochCount):
     # load history
     history1 = nnUtils.load_trainHistory(filename)
     # print history as a check
-    nnUtils.print_history(history1)
+    #nnUtils.print_history(history1)
 
     print("Training Sequence successfully finished")
     return model
@@ -333,9 +333,10 @@ def create_modelMK5(): # Build the network:
                            bias_initializer='ones'
                            )(hidden)
     '''
-    hidden = layers.Dense(3, activation="softplus")(input_)
-    hidden = layers.Dense(3, activation="softplus")(hidden)
-    hidden = layers.Dense(3, activation="softplus")(hidden)
+    hidden = layers.Dense(10, activation="softplus")(input_)
+    hidden = layers.Dense(10, activation="softplus")(hidden)
+    hidden = layers.Dense(10, activation="softplus")(hidden)
+    hidden = layers.Dense(10, activation="softplus")(hidden)
     output_ = layers.Dense(1, activation=None)(hidden)
 
 
@@ -504,9 +505,9 @@ def loadTrainingData_DataGen(filename):
             hList.append(numRowH)
 
 
-    print("Data loaded!")
-    return (np.asarray(uList),np.asarray(alphaList), np.asarray(hList))
-    '''
+    #print("Data loaded!")
+    #return (np.asarray(uList),np.asarray(alphaList), np.asarray(hList))
+
     t = np.asarray(uList)
     xIn = list(np.arange(-3, 3, 0.001))
     #tmp = np.reshape(xIn, (xIn.shape[0], 1))

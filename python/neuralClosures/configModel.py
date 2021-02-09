@@ -44,9 +44,9 @@ def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
 
         neuralClosureModel = neuralMK4(maxDegree_N,folderName)
 
-    elif modelNumber == 5:  # MK4 model ICNN with entropy target
-        if maxDegree_N > 0:
-            ValueError("Model MK5 is constructed only for maximum degree 0 of the spherical harmonics (at the moment)")
+    elif modelNumber == 5:  # MK5 model Dense with entropy target (direct comparison with model MK4)
+        if maxDegree_N > 1:
+            ValueError("Model MK5 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
 
         neuralClosureModel = neuralMK5(maxDegree_N,folderName)
 

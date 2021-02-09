@@ -23,7 +23,7 @@ class neuralMK4(neuralBase):
 
     def __init__(self, maxDegree_N=0, folderName= "testFolder"):
         if(folderName == "testFolder"):
-            tempString = "MK1_N" + str(maxDegree_N)
+            tempString = "MK4_N" + str(maxDegree_N)
         else:
             tempString=folderName
         self.maxDegree_N = maxDegree_N
