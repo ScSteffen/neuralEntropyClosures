@@ -520,7 +520,6 @@ def loadTrainingData_DataGen(filename):
         dy.append( [xItem])
     xArr = np.asarray(x)
     return (np.asarray(x),np.asarray(dy),np.asarray(y),)
-    '''
 
 def loadTrainingData(filenameU, filenameAlpha, filenameH):
 
