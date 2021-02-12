@@ -28,7 +28,7 @@ class neuralBase:
     def __init__(self, maxDegree_N=0):
         # self.model = self.createModel(self)
         # self.filename = "models/MK1_N" + maxDegree_N
-        self.trainingData = ()
+        self.trainingData = []
         self.maxDegree_N = maxDegree_N
         self.inputDim = 1 # Must be overwritten by child classes!
 
@@ -123,7 +123,7 @@ class neuralBase:
                 hList.append(numRowH)
 
         print("Data loaded")
-        self.trainingData = (np.asarray(uList), np.asarray(alphaList), np.asarray(hList))
+        self.trainingData = [np.asarray(uList), np.asarray(alphaList), np.asarray(hList)]
 
     def selectTrainingData(self):
         pass

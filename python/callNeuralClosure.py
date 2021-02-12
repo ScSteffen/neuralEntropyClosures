@@ -103,6 +103,8 @@ def callNetworkBatchwise(inputNetwork):
 
 
 def main():
+    print("---------- Start Network Training Suite ------------")
+    print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
     parser.add_option("-d", "--degree", dest="degree",default=0,
@@ -118,7 +120,7 @@ def main():
     parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
                       help="load model weights from file", metavar="LOADING")
     parser.add_option("-f", "--folder", dest="folder",default="testFolder",
-                      help="folder with training data and where the model is stored", metavar="FOLDER")
+                      help="folder where the model is stored", metavar="FOLDER")
     parser.add_option("-t", "--training", dest="training", default=1,
                       help="training mode (1) execution mode (0)", metavar="TRAINING")
 
@@ -135,6 +137,7 @@ def main():
 
 
     # --- initialize model
+    print("Initialize model")
     initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder)
     neuralClosureModel.model.summary()
 
