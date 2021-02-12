@@ -12,6 +12,7 @@ from .neuralMK3 import neuralMK3
 from .neuralMK4 import neuralMK4
 from .neuralMK5 import neuralMK5
 from .neuralMK6 import neuralMK6
+from .neuralMK7 import neuralMK7
 
 ### global functions ###
 def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
@@ -52,11 +53,17 @@ def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
 
         neuralClosureModel = neuralMK5(maxDegree_N,folderName)
 
-    elif modelNumber == 6:  # MK5 model Dense with entropy target (direct comparison with model MK4)
+    elif modelNumber == 6:  # MK4 model ICNN with input normalization
         if maxDegree_N > 1:
             ValueError("Model MK6 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
 
         neuralClosureModel = neuralMK6(maxDegree_N,folderName)
+
+    elif modelNumber == 7:  # MK4 model ICNN with input normalization and deeper layout
+        if maxDegree_N > 1:
+            ValueError("Model MK7 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
+
+        neuralClosureModel = neuralMK7(maxDegree_N,folderName)
 
     else:
         ValueError("No network fits your preferences!")
