@@ -58,11 +58,13 @@ class neuralBase:
         #mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
         #                                         save_weights_only=False,
         #                                         verbose=1)
+        csv_logger = tf.keras.callbacks.CSVLogger(self.filename + '/history.csv')
+
         callbackList = []
         if verbosity == 1:
-            callbackList = [mc_best]
+            callbackList = [mc_best,csv_logger]
         else:
-            callbackList = [mc_best,LossAndErrorPrintingCallback()]
+            callbackList = [mc_best,LossAndErrorPrintingCallback(),csv_logger]
 
         self.history = self.model.fit(self.trainingData[0], self.trainingData[1],
                                       validation_split=valSplit,

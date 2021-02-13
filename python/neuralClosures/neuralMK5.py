@@ -83,6 +83,6 @@ class neuralMK5(neuralBase):
         if len(self.trainingData) < 3:
             ValueError("Error: Training Data Triple does not have length 3. Must consist of (u, alpha, h).")
 
-        self.trainingData = [self.trainingData[0], self.trainingData[2]] # (u,h)
+        del self.trainingData[1]
 
         return 0
