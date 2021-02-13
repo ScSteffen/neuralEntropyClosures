@@ -13,6 +13,8 @@ from .neuralMK4 import neuralMK4
 from .neuralMK5 import neuralMK5
 from .neuralMK6 import neuralMK6
 from .neuralMK7 import neuralMK7
+from .neuralMK8 import neuralMK8
+
 
 ### global functions ###
 def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
@@ -65,6 +67,11 @@ def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
 
         neuralClosureModel = neuralMK7(maxDegree_N,folderName)
 
+    elif modelNumber == 8:  # MK4 model ICNN with input normalization and deeper layout and relu activation
+        if maxDegree_N > 1:
+            ValueError("Model MK8 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
+
+        neuralClosureModel = neuralMK7(maxDegree_N,folderName)
     else:
         ValueError("No network fits your preferences!")
 
