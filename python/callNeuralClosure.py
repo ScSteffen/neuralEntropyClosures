@@ -47,14 +47,14 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
+def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder", optimizer = 'adam'):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
     '''
 
     global neuralClosureModel
-    neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
+    neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName, optimizer)
 
     return 0
 
@@ -115,6 +115,8 @@ def main():
                       help="epoch count for neural network", metavar="EPOCH")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
+    parser.add_option("-o", "--optimizer", dest="optimizer", default="Adam",
+                      help="optimizer choice", metavar="OPTIMIZER")
     parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
                       help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
     parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
@@ -138,7 +140,7 @@ def main():
 
     # --- initialize model
     print("Initialize model")
-    initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder)
+    initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder,  optimizer=options.optimizer)
     neuralClosureModel.model.summary()
 
     if(options.loadmodel == 1 or options.training == 0):
@@ -151,8 +153,7 @@ def main():
 
     if(options.training == 1):
         # create training Data
-        neuralClosureModel.createTrainingData()
-        neuralClosureModel.selectTrainingData()
+        neuralClosureModel.loadTrainingData()
         # train model
         neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, batchSize=options.batch, verbosity = options.verbosity)
         # save model

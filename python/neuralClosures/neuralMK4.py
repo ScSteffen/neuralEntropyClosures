@@ -21,7 +21,7 @@ class neuralMK4(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, maxDegree_N=0, folderName= "testFolder"):
+    def __init__(self, maxDegree_N=0, folderName= "testFolder",optimizer = 'adam'):
         if(folderName == "testFolder"):
             tempString = "MK4_N" + str(maxDegree_N)
         else:
@@ -34,7 +34,7 @@ class neuralMK4(neuralBase):
             self.inputDim = 4
         else:
            raise ValueError("Polynomial degeree higher than 1 not supported atm")
-
+        self.opt = optimizer
         self.model = self.createModel()
         self.filename = "models/"+ tempString
 
@@ -111,16 +111,9 @@ class neuralMK4(neuralBase):
         #model.summary()
 
         # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
-        model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
+        model.compile(loss="mean_squared_error", optimizer=self.opt, metrics=['mean_absolute_error'])
 
         return model
 
     def selectTrainingData(self):
-        if len(self.trainingData) == 0:
-            ValueError("Error: Training Data is an empty tuple.")
-        if len(self.trainingData) < 3:
-            ValueError("Error: Training Data Triple does not have length 3. Must consist of (u, alpha, h).")
-
-        del self.trainingData[1]
-
-        return 0
+        return [True, False, True]

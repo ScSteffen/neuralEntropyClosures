@@ -18,11 +18,13 @@ class neuralMK2(neuralBase):
     Loss function: Entropy functional derivative is loss
     '''
 
-    def __init__(self, maxDegree_N=0, folderName= "testFolder"):
+    def __init__(self, maxDegree_N=0, folderName= "testFolder",optimizer = 'adam'):
         if(folderName == "testFolder"):
             tempString = "MK1_N" + str(maxDegree_N)
         else:
             tempString=folderName
+
+        self.opt = optimizer
         self.maxDegree_N = maxDegree_N
         self.model = self.createModel()
         self.filename = "models/"+ tempString
@@ -49,18 +51,20 @@ class neuralMK2(neuralBase):
         # tf.keras.losses.MeanSquaredError()
         # custom_loss1d
         model.compile(loss=self.custom_loss1dMBPrime(), optimizer='adam')
-        model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer='adam', metrics=['mean_absolute_error'])
+        model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=self.opt, metrics=['mean_absolute_error'])
 
         return model
 
     def selectTrainingData(self):
-        if len(self.trainingData) == 0:
-            ValueError("Error: Training Data is an empty tuple.")
-        if len(self.trainingData) < 3:
-            ValueError("Error: Training Data Triple does not have length 3. Must consist of (u, alpha, h).")
+        return [True, False, False]
 
-        self.trainingData = [self.trainingData[0], self.trainingData[0]] # (u,u)
+    def selectTrainingData(self):
+        return [True, False, True]
 
+    def trainingDataPostprocessing(self):
+        #dublicate u
+        self.trainingData.append(self.trainingData[0])
+        print("Moments U dublicated")
         return 0
 
     ### helper functions

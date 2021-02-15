@@ -17,7 +17,7 @@ from .neuralMK8 import neuralMK8
 
 
 ### global functions ###
-def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
+def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder", optimizer = 'adam'):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -30,48 +30,48 @@ def initNeuralClosure(modelNumber=1, maxDegree_N=0, folderName = "testFolder"):
         ValueError("Negative number of basis functions not possible")
 
     elif modelNumber == 1:  # MK1 model
-        neuralClosureModel = neuralMK1(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK1(maxDegree_N,folderName,optimizer)
 
     elif modelNumber == 2:  # Mk2 model
         if maxDegree_N > 0:
             ValueError("Model MK1 is constructed only for maximum degree 0 of the spherical harmonics")
-        neuralClosureModel = neuralMK2(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK2(maxDegree_N,folderName,optimizer)
 
     elif modelNumber == 3:  # MK3 model
         if maxDegree_N > 1:
             ValueError("Model MK3 is constructed only for maximum degree 1 of the spherical harmonics (at the moment)")
 
-        neuralClosureModel = neuralMK3(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK3(maxDegree_N,folderName,optimizer)
 
     elif modelNumber == 4:  # MK4 model ICNN
         if maxDegree_N > 1:
             ValueError("Model MK4 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
 
-        neuralClosureModel = neuralMK4(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK4(maxDegree_N,folderName,optimizer)
 
     elif modelNumber == 5:  # MK5 model Dense with entropy target (direct comparison with model MK4)
         if maxDegree_N > 1:
             ValueError("Model MK5 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
 
-        neuralClosureModel = neuralMK5(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK5(maxDegree_N,folderName,optimizer)
 
     elif modelNumber == 6:  # MK4 model ICNN with input normalization
         if maxDegree_N > 1:
             ValueError("Model MK6 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
 
-        neuralClosureModel = neuralMK6(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK6(maxDegree_N,folderName,optimizer)
 
     elif modelNumber == 7:  # MK4 model ICNN with input normalization and deeper layout
         if maxDegree_N > 1:
             ValueError("Model MK7 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
 
-        neuralClosureModel = neuralMK7(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK7(maxDegree_N,folderName,optimizer)
 
     elif modelNumber == 8:  # MK4 model ICNN with input normalization and deeper layout and relu activation
         if maxDegree_N > 1:
             ValueError("Model MK8 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
 
-        neuralClosureModel = neuralMK7(maxDegree_N,folderName)
+        neuralClosureModel = neuralMK7(maxDegree_N,folderName,optimizer)
     else:
         ValueError("No network fits your preferences!")
 

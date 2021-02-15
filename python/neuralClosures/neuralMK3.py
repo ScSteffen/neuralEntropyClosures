@@ -26,15 +26,15 @@ class neuralMK3(neuralBase):
     Loss function:  MSE between alpha and real_alpha
     '''
 
-    def __init__(self, maxDegree_N=0, folderName= "testFolder"):
+    def __init__(self, maxDegree_N=0, folderName= "testFolder",optimizer = 'adam'):
         if(folderName == "testFolder"):
             tempString = "MK1_N" + str(maxDegree_N)
         else:
             tempString=folderName
         self.maxDegree_N = maxDegree_N
+        self.opt = optimizer
         self.model = self.createModel()
         self.filename = "models/"+ tempString
-        self.trainingData = ([0], [0])
 
     def createModel(self):
         inputDim = self.getIdxSphericalHarmonics(self.maxDegree_N, self.maxDegree_N) + 1
@@ -75,19 +75,12 @@ class neuralMK3(neuralBase):
 
         # alternative way of training
         # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
-        model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer='adam', metrics=['mean_absolute_error'])
+        model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=self.opt, metrics=['mean_absolute_error'])
 
         return model
 
     def selectTrainingData(self):
-        if len(self.trainingData) == 0:
-            ValueError("Error: Training Data is an empty tuple.")
-        if len(self.trainingData) < 3:
-            ValueError("Error: Training Data Triple does not have length 3. Must consist of (u, alpha, h).")
-
-        del self.trainingData[2]
-
-        return 0
+        return [True, True, False]
 
     def getIdxSphericalHarmonics(self, k, l):
         # Returns the global idx from spherical harmonics indices
