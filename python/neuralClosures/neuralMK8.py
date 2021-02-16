@@ -108,7 +108,6 @@ class neuralMK8(neuralBase):
         hidden = convexLayer(hidden, input_)
         hidden = convexLayer(hidden, input_)
         hidden = convexLayer(hidden, input_)
-        hidden = convexLayer(hidden, input_)
         output_ = convexLayerOutput(hidden, input_)  # outputlayer
 
         # Create the model

@@ -108,7 +108,6 @@ class neuralMK7(neuralBase):
         hidden = convexLayer(hidden, input_)
         hidden = convexLayer(hidden, input_)
         hidden = convexLayer(hidden, input_)
-        hidden = convexLayer(hidden, input_)
         output_ = convexLayerOutput(hidden, input_)  # outputlayer
 
         # Create the model
@@ -125,7 +124,7 @@ class neuralMK7(neuralBase):
 
     def trainingDataPostprocessing(self):
         # find the maximum of u_0
-        u0Max = max(self.trainingData[0][:, 0])
-        self.trainingData[0] / u0Max
-        print("Training Data Scaled")
+        #u0Max = max(self.trainingData[0][:, 0])
+        #self.trainingData[0] / u0Max
+        #print("Training Data Scaled")
         return 0
