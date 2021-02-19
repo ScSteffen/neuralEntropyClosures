@@ -104,6 +104,11 @@ def callNetworkBatchwise(inputNetwork):
 
 def main():
     print("---------- Start Network Training Suite ------------")
+    print("CPU parallelsim status")
+    tf.config.threading.set_inter_op_parallelism_threads(1)
+    print(tf.config.threading.get_inter_op_parallelism_threads())
+    print(tf.config.threading.get_intra_op_parallelism_threads())
+
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
@@ -113,10 +118,10 @@ def main():
                       help="choice of network model", metavar="MODEL")
     parser.add_option("-e", "--epoch", dest="epoch", default=1000,
                       help="epoch count for neural network", metavar="EPOCH")
+    parser.add_option("-c", "--epochChunk", dest="epochchunk", default=1,
+                      help="number of epoch chunks", metavar="EPOCHCHUNK")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
-    parser.add_option("-o", "--optimizer", dest="optimizer", default="Adam",
-                      help="optimizer choice", metavar="OPTIMIZER")
     parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
                       help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
     parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
@@ -125,11 +130,14 @@ def main():
                       help="folder where the model is stored", metavar="FOLDER")
     parser.add_option("-t", "--training", dest="training", default=1,
                       help="training mode (1) execution mode (0)", metavar="TRAINING")
+    parser.add_option("-o", "--optimizer", dest="optimizer", default="Adam",
+                      help="optimizer choice", metavar="OPTIMIZER")
 
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
     options.model = int(options.model)
     options.epoch = int(options.epoch)
+    options.epochchunk = int(options.epochchunk)
     options.batch = int(options.batch)
     options.verbosity = int(options.verbosity)
     options.loadmodel = int(options.loadmodel)
@@ -155,7 +163,7 @@ def main():
         # create training Data
         neuralClosureModel.loadTrainingData()
         # train model
-        neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, batchSize=options.batch, verbosity = options.verbosity)
+        neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks = options.epochchunk, batchSize=options.batch, verbosity = options.verbosity)
         # save model
         neuralClosureModel.saveModel()
 

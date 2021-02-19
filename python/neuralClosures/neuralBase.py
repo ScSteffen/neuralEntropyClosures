@@ -12,7 +12,7 @@ import tensorflow as tf
 import numpy as np
 import csv
 import pandas as pd
-from os import path
+from os import path, makedirs, walk
 import time
 
 ### class definitions ###
@@ -49,7 +49,7 @@ class neuralBase:
         self.model.summary()
         return 0
 
-    def trainModel(self, valSplit=0.1, epochCount=2, batchSize=500, verbosity=1):
+    def trainModel(self, valSplit=0.1, epochCount=2, epochChunks = 1, batchSize=500, verbosity=1):
         '''
         Method to train network
         '''
@@ -59,22 +59,89 @@ class neuralBase:
         #mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
         #                                         save_weights_only=False,
         #                                         verbose=1)
-        csv_logger = tf.keras.callbacks.CSVLogger(self.filename + '/history.csv')
 
-        callbackList = []
-        if verbosity == 1:
-            callbackList = [mc_best,csv_logger]
-        else:
-            callbackList = [mc_best,LossAndErrorPrintingCallback(),csv_logger]
+        # Split Training epochs
+        miniEpoch = int(epochCount/epochChunks)
 
-        self.history = self.model.fit(self.trainingData[0], self.trainingData[1],
-                                      validation_split=valSplit,
-                                      epochs=epochCount,
-                                      batch_size=batchSize,
-                                      verbose=verbosity,
-                                      callbacks=callbackList,
-                                      )
+        for i in range(0,epochChunks):
+            #  perform a batch doublication every 1/10th of the epoch count
+            print("Current Batch Size: " +str(batchSize))
+
+            # assemble callbacks
+            callbackList = []
+            csv_logger = self.createCSVLoggerCallback()
+            if verbosity == 1:
+                callbackList = [mc_best,csv_logger]
+            else:
+                callbackList = [mc_best,LossAndErrorPrintingCallback(),csv_logger]
+
+            #start Training
+            self.history = self.model.fit(self.trainingData[0], self.trainingData[1],
+                                          validation_split=valSplit,
+                                          epochs=miniEpoch,
+                                          batch_size=batchSize,
+                                          verbose=verbosity,
+                                          callbacks=callbackList,
+                                          )
+            batchSize = 2*batchSize
+
+        self.concatHistoryFiles()
+
         return self.history
+
+    def concatHistoryFiles(self):
+        '''
+        concatenates the historylogs (works only for up to 10 logs right now)
+        assumes that all files in the folder correspond to current training
+        '''
+
+        if not path.exists(self.filename + '/historyLogs/'):
+            ValueError("Folder <historyLogs> does not exist.")
+
+        historyLogs = []
+
+        for (dirpath, dirnames, filenames) in walk( self.filename + '/historyLogs/' ):
+            historyLogs.extend(filenames)
+            break
+        print("Found logs:")
+        historyLogs.sort()
+        print(historyLogs)
+
+        historyLogsDF = []
+        count = 0
+        for log in historyLogs:
+            historyLogsDF.append(pd.read_csv(self.filename + '/historyLogs/'+ log))
+
+        totalDF = pd.concat(historyLogsDF, ignore_index=True)
+
+        # postprocess:
+        numEpochs = len(totalDF.index)
+        totalDF['epoch'] = np.arange(numEpochs)
+        #write
+        totalDF.to_csv(self.filename + '/historyLogs/CompleteHistory.csv',index =False)
+        return 0
+
+    def createCSVLoggerCallback(self):
+        '''
+        dynamically creates a csvlogger
+        '''
+        #check if dir exists
+        if not path.exists(self.filename + '/historyLogs/'):
+            makedirs(self.filename + '/historyLogs/')
+
+        # checkfirst, if history file exists.
+        logFile = self.filename + '/historyLogs/history1'
+        count = 1
+        while path.isfile(logFile + '.csv'):
+            count += 1
+            logFile = self.filename + '/historyLogs/history_' + str(count).zfill(3) +'_'
+
+
+        logFile = logFile + '.csv'
+        # create logger callback
+        csv_logger = tf.keras.callbacks.CSVLogger(logFile)
+
+        return csv_logger
 
     def saveModel(self):
         self.model.save(self.filename + '/model')
