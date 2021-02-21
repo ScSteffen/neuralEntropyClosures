@@ -104,7 +104,7 @@ def callNetworkBatchwise(inputNetwork):
 
 def main():
     print("---------- Start Network Training Suite ------------")
-       print("Parsing options")
+    print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
     parser.add_option("-d", "--degree", dest="degree",default=0,
