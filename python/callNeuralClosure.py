@@ -149,6 +149,7 @@ def main():
         # Set CPU as available physical device
         my_devices = tf.config.experimental.list_physical_devices(device_type='CPU')
         tf.config.experimental.set_visible_devices(devices=my_devices, device_type='CPU')
+        print("CPU set as device")
 
     # --- initialize model
     print("Initialize model")
