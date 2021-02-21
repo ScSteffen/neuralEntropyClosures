@@ -132,7 +132,7 @@ class neuralBase:
             makedirs(self.filename + '/historyLogs/')
 
         # checkfirst, if history file exists.
-        logFile = self.filename + '/historyLogs/history1'
+        logFile = self.filename + '/historyLogs/history_001_:'
         count = 1
         while path.isfile(logFile + '.csv'):
             count += 1
