@@ -56,6 +56,8 @@ class neuralBase:
         # Create callbacks
         mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/best_model.h5', monitor='loss', mode='min',
                                                      save_best_only=True, verbose = verbosity)#, save_weights_only = True, save_freq = 50, verbose=0)
+        es = EarlyStopping(monitor='loss', mode='min', min_delta=0.001, patience=10,
+                           verbose=1)
         #mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
         #                                         save_weights_only=False,
         #                                         verbose=1)
@@ -71,9 +73,9 @@ class neuralBase:
             callbackList = []
             csv_logger = self.createCSVLoggerCallback()
             if verbosity == 1:
-                callbackList = [mc_best,csv_logger]
+                callbackList = [mc_best,es,csv_logger]
             else:
-                callbackList = [mc_best,LossAndErrorPrintingCallback(),csv_logger]
+                callbackList = [mc_best,es,LossAndErrorPrintingCallback(),csv_logger]
 
             #start Training
             self.history = self.model.fit(self.trainingData[0], self.trainingData[1],
