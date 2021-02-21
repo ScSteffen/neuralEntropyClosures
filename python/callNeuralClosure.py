@@ -104,12 +104,7 @@ def callNetworkBatchwise(inputNetwork):
 
 def main():
     print("---------- Start Network Training Suite ------------")
-    print("CPU parallelsim status")
-    tf.config.threading.set_inter_op_parallelism_threads(1)
-    print(tf.config.threading.get_inter_op_parallelism_threads())
-    print(tf.config.threading.get_intra_op_parallelism_threads())
-
-    print("Parsing options")
+       print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
     parser.add_option("-d", "--degree", dest="degree",default=0,
@@ -132,6 +127,9 @@ def main():
                       help="training mode (1) execution mode (0)", metavar="TRAINING")
     parser.add_option("-o", "--optimizer", dest="optimizer", default="Adam",
                       help="optimizer choice", metavar="OPTIMIZER")
+    parser.add_option("-p", "--processingmode", dest="processingmode", default=1,
+                      help="gpu mode (1). cpu mode (0) ", metavar="PROCESSINGMODE")
+
 
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
@@ -142,9 +140,15 @@ def main():
     options.verbosity = int(options.verbosity)
     options.loadmodel = int(options.loadmodel)
     options.training = int(options.training)
+    options.processingmode = int(options.processingmode)
 
     # --- End Option Parsing ---
 
+    # witch to CPU mode, if wished
+    if options.processingmode == 0:
+        # Set CPU as available physical device
+        my_devices = tf.config.experimental.list_physical_devices(device_type='CPU')
+        tf.config.experimental.set_visible_devices(devices=my_devices, device_type='CPU')
 
     # --- initialize model
     print("Initialize model")
