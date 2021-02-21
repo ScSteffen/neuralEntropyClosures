@@ -11,6 +11,7 @@ Date 29.10.2020
 from neuralClosures.configModel import initNeuralClosure
 import numpy as np
 import tensorflow as tf
+import os
 
 from optparse import OptionParser
 
@@ -147,9 +148,12 @@ def main():
     # witch to CPU mode, if wished
     if options.processingmode == 0:
         # Set CPU as available physical device
-        my_devices = tf.config.experimental.list_physical_devices(device_type='CPU')
-        tf.config.experimental.set_visible_devices(devices=my_devices, device_type='CPU')
-        print("CPU set as device")
+        # Set CPU as available physical device
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+        if tf.test.gpu_device_name():
+            print('GPU found. Using GPU')
+        else:
+            print("Disabled GPU. Using CPU")
 
     # --- initialize model
     print("Initialize model")
