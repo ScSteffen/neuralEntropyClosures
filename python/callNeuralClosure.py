@@ -15,9 +15,9 @@ import os
 
 from optparse import OptionParser
 
-
 ### global variable ###
 neuralClosureModel = 0  # bm.initNeuralClosure(0,0)
+
 
 ### function definitions ###
 def initModelCpp(input):
@@ -48,7 +48,7 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder", optimizer = 'adam'):
+def initModel(modelNumber=1, maxDegree_N=0, folderName="testFolder", optimizer='adam'):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -58,6 +58,7 @@ def initModel(modelNumber=1, maxDegree_N=0, folderName = "testFolder", optimizer
     neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName, optimizer)
 
     return 0
+
 
 def callNetwork(input):
     '''
@@ -75,8 +76,8 @@ def callNetwork(input):
 
     gradients = tape.gradient(predictions, x_model)
 
-
     return gradients
+
 
 def callNetworkBatchwise(inputNetwork):
     # Transform npArray to tfEagerTensor
@@ -108,7 +109,7 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
-    parser.add_option("-d", "--degree", dest="degree",default=0,
+    parser.add_option("-d", "--degree", dest="degree", default=0,
                       help="max degree of moment", metavar="DEGREE")
     parser.add_option("-m", "--model", dest="model", default=1,
                       help="choice of network model", metavar="MODEL")
@@ -122,7 +123,7 @@ def main():
                       help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
     parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
                       help="load model weights from file", metavar="LOADING")
-    parser.add_option("-f", "--folder", dest="folder",default="testFolder",
+    parser.add_option("-f", "--folder", dest="folder", default="testFolder",
                       help="folder where the model is stored", metavar="FOLDER")
     parser.add_option("-t", "--training", dest="training", default=1,
                       help="training mode (1) execution mode (0)", metavar="TRAINING")
@@ -130,7 +131,6 @@ def main():
                       help="optimizer choice", metavar="OPTIMIZER")
     parser.add_option("-p", "--processingmode", dest="processingmode", default=1,
                       help="gpu mode (1). cpu mode (0) ", metavar="PROCESSINGMODE")
-
 
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
@@ -157,22 +157,23 @@ def main():
 
     # --- initialize model
     print("Initialize model")
-    initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName = options.folder,  optimizer=options.optimizer)
+    initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName=options.folder,
+              optimizer=options.optimizer)
     neuralClosureModel.model.summary()
 
-    if(options.loadmodel == 1 or options.training == 0):
+    if (options.loadmodel == 1 or options.training == 0):
         # in execution mode the model must be loaded.
         # load model weights
         neuralClosureModel.loadModel()
     else:
         print("Start training with new weights")
 
-
-    if(options.training == 1):
+    if (options.training == 1):
         # create training Data
         neuralClosureModel.loadTrainingData()
         # train model
-        neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks = options.epochchunk, batchSize=options.batch, verbosity = options.verbosity)
+        neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks=options.epochchunk,
+                                      batchSize=options.batch, verbosity=options.verbosity)
         # save model
         neuralClosureModel.saveModel()
 

@@ -15,6 +15,7 @@ import pandas as pd
 from os import path, makedirs, walk
 import time
 
+
 ### class definitions ###
 class neuralBase:
 
@@ -31,7 +32,7 @@ class neuralBase:
         # self.filename = "models/MK1_N" + maxDegree_N
         self.trainingData = []
         self.maxDegree_N = maxDegree_N
-        self.inputDim = 1 # Must be overwritten by child classes!
+        self.inputDim = 1  # Must be overwritten by child classes!
 
     def createModel(self):
         pass
@@ -49,35 +50,36 @@ class neuralBase:
         self.model.summary()
         return 0
 
-    def trainModel(self, valSplit=0.1, epochCount=2, epochChunks = 1, batchSize=500, verbosity=1):
+    def trainModel(self, valSplit=0.1, epochCount=2, epochChunks=1, batchSize=500, verbosity=1):
         '''
         Method to train network
         '''
         # Create callbacks
         mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/best_model.h5', monitor='loss', mode='min',
-                                                     save_best_only=True, verbose = verbosity)#, save_weights_only = True, save_freq = 50, verbose=0)
+                                                     save_best_only=True,
+                                                     verbose=verbosity)  # , save_weights_only = True, save_freq = 50, verbose=0)
         es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
-                           verbose=1)
-        #mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
+                                              verbose=1)
+        # mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
         #                                         save_weights_only=False,
         #                                         verbose=1)
 
         # Split Training epochs
-        miniEpoch = int(epochCount/epochChunks)
+        miniEpoch = int(epochCount / epochChunks)
 
-        for i in range(0,epochChunks):
+        for i in range(0, epochChunks):
             #  perform a batch doublication every 1/10th of the epoch count
-            print("Current Batch Size: " +str(batchSize))
+            print("Current Batch Size: " + str(batchSize))
 
             # assemble callbacks
             callbackList = []
             csv_logger = self.createCSVLoggerCallback()
             if verbosity == 1:
-                callbackList = [mc_best,es,csv_logger]
+                callbackList = [mc_best, es, csv_logger]
             else:
-                callbackList = [mc_best,es,LossAndErrorPrintingCallback(),csv_logger]
+                callbackList = [mc_best, es, LossAndErrorPrintingCallback(), csv_logger]
 
-            #start Training
+            # start Training
             self.history = self.model.fit(self.trainingData[0], self.trainingData[1],
                                           validation_split=valSplit,
                                           epochs=miniEpoch,
@@ -85,7 +87,7 @@ class neuralBase:
                                           verbose=verbosity,
                                           callbacks=callbackList,
                                           )
-            batchSize = 2*batchSize
+            batchSize = 2 * batchSize
 
         self.concatHistoryFiles()
 
@@ -102,7 +104,7 @@ class neuralBase:
 
         historyLogs = []
 
-        for (dirpath, dirnames, filenames) in walk( self.filename + '/historyLogs/' ):
+        for (dirpath, dirnames, filenames) in walk(self.filename + '/historyLogs/'):
             historyLogs.extend(filenames)
             break
         print("Found logs:")
@@ -112,22 +114,22 @@ class neuralBase:
         historyLogsDF = []
         count = 0
         for log in historyLogs:
-            historyLogsDF.append(pd.read_csv(self.filename + '/historyLogs/'+ log))
+            historyLogsDF.append(pd.read_csv(self.filename + '/historyLogs/' + log))
 
         totalDF = pd.concat(historyLogsDF, ignore_index=True)
 
         # postprocess:
         numEpochs = len(totalDF.index)
         totalDF['epoch'] = np.arange(numEpochs)
-        #write
-        totalDF.to_csv(self.filename + '/historyLogs/CompleteHistory.csv',index =False)
+        # write
+        totalDF.to_csv(self.filename + '/historyLogs/CompleteHistory.csv', index=False)
         return 0
 
     def createCSVLoggerCallback(self):
         '''
         dynamically creates a csvlogger
         '''
-        #check if dir exists
+        # check if dir exists
         if not path.exists(self.filename + '/historyLogs/'):
             makedirs(self.filename + '/historyLogs/')
 
@@ -136,8 +138,7 @@ class neuralBase:
         count = 1
         while path.isfile(logFile + '.csv'):
             count += 1
-            logFile = self.filename + '/historyLogs/history_' + str(count).zfill(3) +'_'
-
+            logFile = self.filename + '/historyLogs/history_' + str(count).zfill(3) + '_'
 
         logFile = logFile + '.csv'
         # create logger callback
@@ -152,7 +153,7 @@ class neuralBase:
             json.dump(self.model.history.history, file)
         return 0
 
-    def loadModel(self, filename = None):
+    def loadModel(self, filename=None):
         usedFileName = self.filename
         if filename != None:
             usedFileName = filename
@@ -161,7 +162,7 @@ class neuralBase:
 
         if path.exists(usedFileName) == False:
             ValueError("Model does not exists at this path: " + usedFileName)
-        self.model.load_weights(usedFileName )
+        self.model.load_weights(usedFileName)
         print("Model loaded from file ")
         return 0
 
@@ -170,19 +171,18 @@ class neuralBase:
         self.trainingData = []
         filename = "data/1_stage/Monomial_M" + str(self.maxDegree_N) + ".csv"
 
-
         # determine which cols correspond to u, alpha and h
-        uCols = list(range(1,self.inputDim+1))
-        alphaCols = list(range(self.inputDim+1, 2*self.inputDim+1))
-        hCol = [2*self.inputDim +1]
+        uCols = list(range(1, self.inputDim + 1))
+        alphaCols = list(range(self.inputDim + 1, 2 * self.inputDim + 1))
+        hCol = [2 * self.inputDim + 1]
 
-        #selectedCols = self.selectTrainingData() #outputs a boolean triple.
+        # selectedCols = self.selectTrainingData() #outputs a boolean triple.
 
         selectedCols = [True, False, True]
 
         start = time.time()
         if selectedCols[0] == True:
-            df = pd.read_csv(filename, usecols=[i for i in uCols ])
+            df = pd.read_csv(filename, usecols=[i for i in uCols])
             uNParray = df.to_numpy()
             self.trainingData.append(uNParray)
         if selectedCols[1] == True:
@@ -233,10 +233,10 @@ class neuralBase:
 
 
 class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):
-    #def on_train_batch_end(self, batch, logs=None):
+    # def on_train_batch_end(self, batch, logs=None):
     #    print("For batch {}, loss is {:7.2f}.".format(batch, logs["loss"]))
 
-    #def on_test_batch_end(self, batch, logs=None):
+    # def on_test_batch_end(self, batch, logs=None):
     #    print("For batch {}, loss is {:7.2f}.".format(batch, logs["loss"]))
 
     def on_epoch_end(self, epoch, logs=None):
@@ -246,4 +246,3 @@ class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):
                 epoch, logs["loss"], logs["mean_absolute_error"]
             )
         )
-
