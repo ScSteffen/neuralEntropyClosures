@@ -56,7 +56,7 @@ class neuralBase:
         # Create callbacks
         mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/best_model.h5', monitor='loss', mode='min',
                                                      save_best_only=True, verbose = verbosity)#, save_weights_only = True, save_freq = 50, verbose=0)
-        es = EarlyStopping(monitor='loss', mode='min', min_delta=0.001, patience=10,
+        es = EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
                            verbose=1)
         #mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
         #                                         save_weights_only=False,
