@@ -48,14 +48,14 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(modelNumber=1, maxDegree_N=0, folderName="testFolder", optimizer='adam'):
+def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", optimizer='adam'):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
     '''
 
     global neuralClosureModel
-    neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName, optimizer)
+    neuralClosureModel = initNeuralClosure(modelNumber, polyDegree, spatialDim, folderName, optimizer)
 
     return 0
 
@@ -72,7 +72,7 @@ def callNetwork(input):
     with tf.GradientTape() as tape:
         # training=True is only needed if there are layers with different
         # behavior during training versus inference (e.g. Dropout).
-        predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
+        predictions = neuralClosureModel.model(x_model, training=False)  # same as neuralClosureModel.model.predict(x)
 
     gradients = tape.gradient(predictions, x_model)
 
@@ -111,6 +111,8 @@ def main():
     parser = OptionParser()
     parser.add_option("-d", "--degree", dest="degree", default=0,
                       help="max degree of moment", metavar="DEGREE")
+    parser.add_option("-s", "--spatialDimension", dest="spatialDimension", default=3,
+                      help="spatial dimension of closure", metavar="SPATIALDIM")
     parser.add_option("-m", "--model", dest="model", default=1,
                       help="choice of network model", metavar="MODEL")
     parser.add_option("-e", "--epoch", dest="epoch", default=1000,
@@ -134,6 +136,7 @@ def main():
 
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
+    options.spatialDimension = int(options.spatialDimension)
     options.model = int(options.model)
     options.epoch = int(options.epoch)
     options.epochchunk = int(options.epochchunk)
@@ -157,7 +160,8 @@ def main():
 
     # --- initialize model
     print("Initialize model")
-    initModel(modelNumber=options.model, maxDegree_N=options.degree, folderName=options.folder,
+    initModel(modelNumber=options.model, polyDegree=options.degree, spatialDim=options.spatialDimension,
+              folderName=options.folder,
               optimizer=options.optimizer)
     neuralClosureModel.model.summary()
 

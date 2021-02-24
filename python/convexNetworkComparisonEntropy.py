@@ -42,8 +42,7 @@ plt.style.use("kitish")
 # ------  Code starts here --------
 
 def main():
-
- # --- Set Parameters ---
+    # --- Set Parameters ---
     batchSize = 5000
     epochCount = 100000
 
@@ -55,9 +54,9 @@ def main():
     filenameH = "trainingData_M0_h.csv"
     filenameAlpha = "trainingData_M0_alpha.csv"
 
-    #filenameUClean = "trainingData_M0_u_clean.csv"
-    #filenameAlphaClean = "trainingData_M0_alpha_clean.csv"
-    #filenameHClean = "trainingData_M0_h_clean.csv"
+    # filenameUClean = "trainingData_M0_u_clean.csv"
+    # filenameAlphaClean = "trainingData_M0_alpha_clean.csv"
+    # filenameHClean = "trainingData_M0_h_clean.csv"
 
     filenameUCleanTrain = "data/0_stage/trainingData_M0_u_cleanTrain.csv"
     filenameAlphaCleanTrain = "data/0_stage/trainingData_M0_alpha_cleanTrain.csv"
@@ -72,44 +71,40 @@ def main():
     # --- Load and Preprocess Data ---
 
     print("Load Training Data")
-    #(u,h) = loadTrainingData(filenameUCleanTrain,filenameHCleanTrain)
-    #(uTest, alphaTest, hTest) = loadTrainingData(filenameUCleanTest, filenameHCleanTest)
-    (u,alpha,h) = loadTrainingData_DataGen(filename)
-    #(u,alpha,h) = loadTrainingData(filenameUCleanTrain,filenameAlphaCleanTrain,filenameHCleanTrain)
-    #print("Clean Training Data")
-    #(u,alpha,h) = cleanTrainingData(u,alpha,h)
-    #print("Store Cleaned Training Data")
-    #storeTrainingData(u,alpha,h,filenameUCleanTrain,filenameAlphaCleanTrain,filenameHCleanTrain)
-
-
+    # (u,h) = loadTrainingData(filenameUCleanTrain,filenameHCleanTrain)
+    # (uTest, alphaTest, hTest) = loadTrainingData(filenameUCleanTest, filenameHCleanTest)
+    (u, alpha, h) = loadTrainingData_DataGen(filename)
+    # (u,alpha,h) = loadTrainingData(filenameUCleanTrain,filenameAlphaCleanTrain,filenameHCleanTrain)
+    # print("Clean Training Data")
+    # (u,alpha,h) = cleanTrainingData(u,alpha,h)
+    # print("Store Cleaned Training Data")
+    # storeTrainingData(u,alpha,h,filenameUCleanTrain,filenameAlphaCleanTrain,filenameHCleanTrain)
 
     # --- Fully Connected Network ---
-    #model = create_modelMK5()
-    #model = tf.keras.models.load_model(filenameFCNN + '/model')
-    #model.load_weights(filenameFCNN + '/best_model.h5')
-    #model = trainModel(model,u,h, filenameFCNN, batchSize, epochCount)
-
+    model = create_modelMK5()
+    # model = tf.keras.models.load_model(filenameFCNN + '/model')
+    model.load_weights(filenameFCNN + '/best_model.h5')
+    # model = trainModel(model,u,h, filenameFCNN, batchSize, epochCount)
 
     # --- Convex Network (nonnegative weights) ---
-    #model_nonneg = create_modelMK5_nonneg()
-    #model_nonneg = tf.keras.models.load_model(filenameNonNeg + '/model')
-    #model_nonneg.load_weights(filenameNonNeg + '/best_model.h5')
-    #model_nonneg = trainModel(model_nonneg,u,h,filenameNonNeg, batchSize, epochCount)
-
+    # model_nonneg = create_modelMK5_nonneg()
+    # model_nonneg = tf.keras.models.load_model(filenameNonNeg + '/model')
+    # model_nonneg.load_weights(filenameNonNeg + '/best_model.h5')
+    # model_nonneg = trainModel(model_nonneg,u,h,filenameNonNeg, batchSize, epochCount)
 
     # --- Convex Network (ICNN architecture) ---
     model_ICNN = create_modelMK5_ICNN()
-    #model_ICNN = tf.keras.models.load_model(filenameICNN + '/model')
+    # model_ICNN = tf.keras.models.load_model(filenameICNN + '/model')
     model_ICNN.load_weights(filenameICNN + '/best_model.h5')
-    model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
+    # model_ICNN = trainModel(model_ICNN,u,h, filenameICNN, batchSize, epochCount)
 
     # --- Model evaluation ---
 
-    #evaluateModel(u,h, model, model_nonneg, model_ICNN)
+    # evaluateModel(u,h, model, model_nonneg, model_ICNN)
 
-    #printDerivative(model, u,alpha,h)
-    #printDerivative(model_nonneg, u,alpha,h)
-    #printDerivative(model_ICNN, model, u,alpha,h)
+    # printDerivative(model, u,alpha,h)
+    # printDerivative(model_nonneg, u,alpha,h)
+    printDerivative(model_ICNN, model, u, alpha, h)
 
     # printDerivative(model_ICNN)
 
@@ -118,9 +113,10 @@ def main():
     # printWeights(model_nonneg)
     return 0
 
-def printDerivative(model, model2, u, alpha,h):
-    #x = np.arange(-100.0, 100.0, 0.001)
-    #tmp = np.reshape(x,(x.shape[0],1))
+
+def printDerivative(model, model2, u, alpha, h):
+    # x = np.arange(-100.0, 100.0, 0.001)
+    # tmp = np.reshape(x,(x.shape[0],1))
     x_model = tf.Variable(u)
 
     with tf.GradientTape() as tape:
@@ -137,7 +133,7 @@ def printDerivative(model, model2, u, alpha,h):
 
     gradients2 = tape.gradient(predictions2, x_model)
 
-    #np.gradient(x_model, predictions)
+    # np.gradient(x_model, predictions)
     # m_n phd student: paris (teddy picard?)
 
     # Gradient
@@ -146,13 +142,13 @@ def printDerivative(model, model2, u, alpha,h):
     # plot model predictions and derivatives
     plt.plot(u, predictions)
     plt.plot(u, predictions2, '-.')
-    plt.plot(u,h, '--')
+    plt.plot(u, h, '--')
     plt.ylabel('entropy')
     plt.xlabel('moment')
-    plt.legend(['ICNN', 'std Network' , 'Target Fct'])
-    #plt.legend(['Model Derivative', 'Target Derivative'])
-    #plt.ylim([-15, 20])
-    #plt.xlim([0, 50])
+    plt.legend(['ICNN', 'std Network', 'Target Fct'])
+    # plt.legend(['Model Derivative', 'Target Derivative'])
+    # plt.ylim([-15, 20])
+    # plt.xlim([0, 50])
     plt.show()
 
     plt.plot(u, gradients)
@@ -160,15 +156,14 @@ def printDerivative(model, model2, u, alpha,h):
     plt.plot(u, alpha, '--')
     plt.ylabel('lagrangian')
     plt.xlabel('moment')
-    #plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
-    plt.legend(['ICNN Derivative', 'std Network Derivative' , 'Target Derivative'])
-    #plt.legend(['Model ','Target Function'])
-    #plt.ylim([0,20])
-    #plt.xlim([0,50])
+    # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
+    plt.legend(['ICNN Derivative', 'std Network Derivative', 'Target Derivative'])
+    # plt.legend(['Model ','Target Function'])
+    # plt.ylim([0,20])
+    # plt.xlim([0,50])
     plt.show()
 
-
-    integratedGradients = integrate(u,gradients)
+    integratedGradients = integrate(u, gradients)
     plt.plot(u, integratedGradients)
     plt.plot(u, h, '--')
     plt.ylabel('function value')
@@ -176,25 +171,25 @@ def printDerivative(model, model2, u, alpha,h):
     # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
     plt.legend(['Integrated Gradients', 'Target Funktion'])
     # plt.legend(['Model ','Target Function'])
-    #plt.ylim([0, 20])
+    # plt.ylim([0, 20])
     plt.show()
 
-
-    finDiff = finiteDiff(u,h)
+    finDiff = finiteDiff(u, h)
     plt.plot(u, finDiff)
-    plt.plot(u,gradients)
+    plt.plot(u, gradients)
     plt.plot(u, alpha, '--')
     plt.ylabel('function value')
     plt.xlabel('input value')
     # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
     plt.legend(['Finite Difference', 'Model Derivative', 'alpha'])
     # plt.legend(['Model ','Target Function'])
-    #plt.ylim([0, 50])
+    # plt.ylim([0, 50])
     plt.show()
 
     return gradients
 
-def integrate(x,y):
+
+def integrate(x, y):
     '''
     :param x: function argument
     :param y: = f(x)
@@ -203,12 +198,13 @@ def integrate(x,y):
 
     integral = np.zeros(x.shape)
 
-    for i in range(0, x.shape[0]-1):
-        integral[i+1] = integral[i] + (x[i+1]-x[i])*y[i+1]
+    for i in range(0, x.shape[0] - 1):
+        integral[i + 1] = integral[i] + (x[i + 1] - x[i]) * y[i + 1]
 
     return integral
 
-def finiteDiff(x,y):
+
+def finiteDiff(x, y):
     '''
     :param x: Function Argument
     :param y: Function value = f(x)
@@ -217,12 +213,13 @@ def finiteDiff(x,y):
 
     grad = np.zeros(x.shape)
 
-    grad[0] = (y[1] - y[0])/(x[1]-x[0])
+    grad[0] = (y[1] - y[0]) / (x[1] - x[0])
 
     for i in range(0, x.shape[0] - 1):
-        grad[i+1] =  (y[i] - y[i-1])/(x[i]-x[i-1])
+        grad[i + 1] = (y[i] - y[i - 1]) / (x[i] - x[i - 1])
 
     return grad
+
 
 def printWeights(model):
     for layer in model.layers:
@@ -237,8 +234,8 @@ def printWeights(model):
 
     return 0
 
-def evaluateModel(x,y,model, model2, model3):
 
+def evaluateModel(x, y, model, model2, model3):
     # --- Get Data ----
     u = x[0::3]
     h = y[0::3]
@@ -260,7 +257,8 @@ def evaluateModel(x,y,model, model2, model3):
 
     return 0
 
-def trainModel(model, u,h, filename, batchSize, epochCount):
+
+def trainModel(model, u, h, filename, batchSize, epochCount):
     ### 0) Set variables #######################################################
 
     ### 1)  Generate Training Data #############################################
@@ -282,8 +280,8 @@ def trainModel(model, u,h, filename, batchSize, epochCount):
 
     # Train the model
     print("Train Model")
-    history = model.fit(u,h, validation_split=0.01, epochs=epochCount, batch_size=batchSize, verbose=1,
-                        callbacks=[ mc_best])  # batch size = 900000
+    history = model.fit(u, h, validation_split=0.01, epochs=epochCount, batch_size=batchSize, verbose=1,
+                        callbacks=[mc_best])  # batch size = 900000
 
     # View History
     # nnUtils.print_history(history.history)
@@ -297,12 +295,13 @@ def trainModel(model, u,h, filename, batchSize, epochCount):
     # load history
     history1 = nnUtils.load_trainHistory(filename)
     # print history as a check
-    #nnUtils.print_history(history1)
+    # nnUtils.print_history(history1)
 
     print("Training Sequence successfully finished")
     return model
 
-def create_modelMK5(): # Build the network:
+
+def create_modelMK5():  # Build the network:
 
     # Define the input
     weightIniMean = 0.0
@@ -339,14 +338,14 @@ def create_modelMK5(): # Build the network:
     hidden = layers.Dense(10, activation="softplus")(hidden)
     output_ = layers.Dense(1, activation=None)(hidden)
 
-
     # Create the model
-    model = keras.Model(inputs=[input_], outputs=[output_], name = "FCNN")
+    model = keras.Model(inputs=[input_], outputs=[output_], name="FCNN")
     model.summary()
 
     # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
     model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
     return model
+
 
 def create_modelMK5_nonneg():
     # Define the input
@@ -384,12 +383,13 @@ def create_modelMK5_nonneg():
                            )(hidden)
 
     # Create the model
-    model = keras.Model(inputs=[input_], outputs=[output_],name = "NNNN")
+    model = keras.Model(inputs=[input_], outputs=[output_], name="NNNN")
     model.summary()
 
     # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
     model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
     return model
+
 
 def create_modelMK5_ICNN():
     # Define the input
@@ -445,7 +445,7 @@ def create_modelMK5_ICNN():
         intermediateSum = layers.Add()([weightedSum_x, weightedNonNegSum_z])
 
         # activation
-        #out = tf.keras.activations.softplus(intermediateSum)
+        # out = tf.keras.activations.softplus(intermediateSum)
         # batch normalization
         # out = layers.BatchNormalization()(out)
         return intermediateSum
@@ -465,12 +465,13 @@ def create_modelMK5_ICNN():
     output_ = convexLayerOutput(hidden, input_)  # outputlayer
 
     # Create the model
-    model = keras.Model(inputs=[input_], outputs=[output_],name = "ICNN")
+    model = keras.Model(inputs=[input_], outputs=[output_], name="ICNN")
     model.summary()
 
     # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
     model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
     return model
+
 
 def loadTrainingData_DataGen(filename):
     '''
@@ -504,25 +505,24 @@ def loadTrainingData_DataGen(filename):
             alphaList.append(numRowAlpha)
             hList.append(numRowH)
 
-
-    #print("Data loaded!")
-    #return (np.asarray(uList),np.asarray(alphaList), np.asarray(hList))
+    # print("Data loaded!")
+    # return (np.asarray(uList),np.asarray(alphaList), np.asarray(hList))
 
     t = np.asarray(uList)
     xIn = list(np.arange(-3, 3, 0.001))
-    #tmp = np.reshape(xIn, (xIn.shape[0], 1))
+    # tmp = np.reshape(xIn, (xIn.shape[0], 1))
     y = []
     dy = []
     x = []
     for (xItem) in xIn:
         x.append([xItem])
-        y.append( [0.5*xItem*xItem - 1])
-        dy.append( [xItem])
+        y.append([0.5 * xItem * xItem - 1])
+        dy.append([xItem])
     xArr = np.asarray(x)
-    return (np.asarray(x),np.asarray(dy),np.asarray(y),)
+    return (np.asarray(x), np.asarray(dy), np.asarray(y),)
+
 
 def loadTrainingData(filenameU, filenameAlpha, filenameH):
-
     hList = list()
     uList = list()
     alphaList = list()
@@ -565,7 +565,8 @@ def loadTrainingData(filenameU, filenameAlpha, filenameH):
 
     return (np.asarray(uList), np.asarray(alphaList), np.asarray(hList))
 
-def cleanTrainingData(u,alpha,h):
+
+def cleanTrainingData(u, alpha, h):
     # brief: removes unrealistic values of the training set. sorts training set
     # input: uTrain.shape     = (setSize, basisSize) Moment vector
     #        alphaTrain.shape = (setSize, basisSize) lagrange multilpier vector
@@ -575,6 +576,7 @@ def cleanTrainingData(u,alpha,h):
     #         hTrain.shape     = (setSize, 1) entropy
 
     setSize = u.shape[0]
+
     def entryMarker(idx):
         # --- mark entries, that should be deleted ---
         keepEntry = True
@@ -591,12 +593,11 @@ def cleanTrainingData(u,alpha,h):
 
         return keepEntry
 
-
     # --- parallelize data generation ---
     num_cores = multiprocessing.cpu_count()
     print("Starting data cleanup using " + str(num_cores) + " cores")
     deletionList = Parallel(n_jobs=num_cores)(
-        delayed(entryMarker)(i) for i in range(0,setSize ))  # (u,  h)
+        delayed(entryMarker)(i) for i in range(0, setSize))  # (u,  h)
 
     # --- delete entries ---
     u = u[deletionList]
@@ -604,15 +605,15 @@ def cleanTrainingData(u,alpha,h):
     alpha = alpha[deletionList]
 
     # --- sort remaining entries
-    zipped_lists = zip(u,alpha, h)
+    zipped_lists = zip(u, alpha, h)
     sorted_pairs = sorted(zipped_lists)
     tuples = zip(*sorted_pairs)
     listU, listAlpha, listH = [list(tuple) for tuple in tuples]
 
-    return (np.asarray(listU),np.asarray(listAlpha),np.asarray(listH))
+    return (np.asarray(listU), np.asarray(listAlpha), np.asarray(listH))
 
-def storeTrainingData(u,alpha, h, filenameU,filenameAlpha,filenameH):
 
+def storeTrainingData(u, alpha, h, filenameU, filenameAlpha, filenameH):
     # store u
     f = open(filenameU, 'w')
     with f:
@@ -635,6 +636,7 @@ def storeTrainingData(u,alpha, h, filenameU,filenameAlpha,filenameH):
             writer.writerow(row)
     f.close()
     return 0
+
 
 if __name__ == '__main__':
     main()

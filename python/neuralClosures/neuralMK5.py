@@ -13,7 +13,6 @@ from tensorflow import Tensor
 from tensorflow.keras.constraints import NonNeg
 
 
-
 class neuralMK5(neuralBase):
     '''
     MK4 Model: Train u to alpha
@@ -21,23 +20,23 @@ class neuralMK5(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, maxDegree_N=0, folderName= "testFolder",optimizer = 'adam'):
-        if(folderName == "testFolder"):
-            tempString = "MK5_N" + str(maxDegree_N)
+    def __init__(self, polyDegree=0, folderName="testFolder", optimizer='adam'):
+        if (folderName == "testFolder"):
+            tempString = "MK5_N" + str(polyDegree)
         else:
-            tempString=folderName
-        self.maxDegree_N = maxDegree_N
+            tempString = folderName
+        self.polyDegree = polyDegree
         # --- Determine inputDim by MaxDegree ---
-        if (self.maxDegree_N == 0):
+        if (self.polyDegree == 0):
             self.inputDim = 1
-        elif (self.maxDegree_N == 1):
+        elif (self.polyDegree == 1):
             self.inputDim = 4
         else:
-           raise ValueError("Polynomial degeree higher than 1 not supported atm")
+            raise ValueError("Polynomial degeree higher than 1 not supported atm")
 
         self.opt = optimizer
         self.model = self.createModel()
-        self.filename = "models/"+ tempString
+        self.filename = "models/" + tempString
 
     def createModel(self):
 
@@ -47,31 +46,29 @@ class neuralMK5(neuralBase):
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
         initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
 
-
-
         # Number of basis functions used:
         input_ = keras.Input(shape=(self.inputDim,))
 
         ### Hidden layers ###
         # First Layer is a std dense layer
         hidden = layers.Dense(layerDim, activation="relu",
-                             )(input_)
+                              )(input_)
         # other layers are convexLayers
-        hidden = layers.Dense(layerDim, activation="relu",
-                             )(hidden)
-        hidden = layers.Dense(layerDim, activation="relu",
-                             )(hidden)
         hidden = layers.Dense(layerDim, activation="relu",
                               )(hidden)
         hidden = layers.Dense(layerDim, activation="relu",
-                             )(hidden)
+                              )(hidden)
+        hidden = layers.Dense(layerDim, activation="relu",
+                              )(hidden)
+        hidden = layers.Dense(layerDim, activation="relu",
+                              )(hidden)
 
         output_ = layers.Dense(layerDim, activation="relu",
-                             )(hidden)  # outputlayer
+                               )(hidden)  # outputlayer
 
         # Create the model
         model = keras.Model(inputs=[input_], outputs=[output_], name="ICNN")
-        #model.summary()
+        # model.summary()
 
         # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
         model.compile(loss="mean_squared_error", optimizer=self.opt, metrics=['mean_absolute_error'])

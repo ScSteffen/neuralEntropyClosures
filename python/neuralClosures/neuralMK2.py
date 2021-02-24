@@ -18,16 +18,16 @@ class neuralMK2(neuralBase):
     Loss function: Entropy functional derivative is loss
     '''
 
-    def __init__(self, maxDegree_N=0, folderName= "testFolder",optimizer = 'adam'):
-        if(folderName == "testFolder"):
-            tempString = "MK1_N" + str(maxDegree_N)
+    def __init__(self, polyDegree=0, folderName="testFolder", optimizer='adam'):
+        if (folderName == "testFolder"):
+            tempString = "MK1_N" + str(polyDegree)
         else:
-            tempString=folderName
+            tempString = folderName
 
         self.opt = optimizer
-        self.maxDegree_N = maxDegree_N
+        self.polyDegree = polyDegree
         self.model = self.createModel()
-        self.filename = "models/"+ tempString
+        self.filename = "models/" + tempString
         self.trainingData = ()
 
     def createModel(self):
@@ -62,7 +62,7 @@ class neuralMK2(neuralBase):
         return [True, False, True]
 
     def trainingDataPostprocessing(self):
-        #dublicate u
+        # dublicate u
         self.trainingData.append(self.trainingData[0])
         print("Moments U dublicated")
         return 0

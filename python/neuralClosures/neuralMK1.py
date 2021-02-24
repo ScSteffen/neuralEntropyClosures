@@ -16,20 +16,20 @@ class neuralMK1(neuralBase):
     Loss function:  MSE between alpha and real_alpha
     '''
 
-    def __init__(self, maxDegree_N=0, folderName= "testFolder",optimizer = 'adam'):
-        if(folderName == "testFolder"):
-            tempString = "MK1_N" + str(maxDegree_N)
+    def __init__(self, polyDegree=0, folderName="testFolder", optimizer='adam'):
+        if (folderName == "testFolder"):
+            tempString = "MK1_N" + str(polyDegree)
         else:
-            tempString=folderName
+            tempString = folderName
 
         self.opt = optimizer
-        self.maxDegree_N = maxDegree_N
+        self.polyDegree = polyDegree
         self.model = self.createModel()
-        self.filename = "models/"+  tempString
+        self.filename = "models/" + tempString
         self.trainingData = ()
 
     def createModel(self):
-        inputDim = self.getIdxSphericalHarmonics(self.maxDegree_N, self.maxDegree_N) + 1
+        inputDim = self.getIdxSphericalHarmonics(self.polyDegree, self.polyDegree) + 1
         model = keras.models.Sequential([
             keras.layers.Dense(256, activation='sigmoid', input_shape=(inputDim,)),
             keras.layers.Dense(512, activation='sigmoid'),
@@ -46,7 +46,7 @@ class neuralMK1(neuralBase):
         return model
 
     def selectTrainingData(self):
-        return [True,True,False]
+        return [True, True, False]
 
     def getIdxSphericalHarmonics(self, k, l):
         # Returns the global idx from spherical harmonics indices
