@@ -16,14 +16,18 @@ plt.style.use("kitish")
 
 def main():
     # Normalized Plots
-    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
-    # plotHoverNormalized_N1_N2(u, h)
+    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
+    plotHoverNormalized_N1_N2(u, h)
+
+    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
+    plotHoverNormalized_N2_N3(u, h)
 
     # Plots of 1D M0 Data
     # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M0_D1.csv", 1)
     # plot1DM0Data(u, alpha, h)
 
     # Plots of 1D M1 Data
+
     [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M1_D1.csv", 2)
     plot1DM1Data(u, alpha, h)
 
@@ -61,6 +65,42 @@ def loadTrainingData(filename, lenU):
     print("Data loaded. Elapsed time: " + str(end - start))
 
     return trainingData
+
+
+def plotHoverNormalized_N2_N3(u, h):
+    '''
+    Plot h over relative moments corresponding to Monreals diss
+    '''
+
+    # Fixing random state for reproducibility
+    np.random.seed(19680801)
+
+    def randrange(n, vmin, vmax):
+        '''
+        Helper function to make an array of random numbers having shape (n, )
+        with each number distributed Uniform(vmin, vmax).
+        '''
+        return (vmax - vmin) * np.random.rand(n) + vmin
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)  # , projection='3d')
+    ax.grid(True, linestyle='-', color='0.75')
+    x = u[:, 2]
+    y = u[:, 3]
+    z = h
+    out = ax.scatter(x, y, s=20, c=z, cmap=cm.jet);
+
+    ax.set_title("h over N2 and N3", fontsize=14)
+    ax.set_xlabel("N2", fontsize=12)
+    ax.set_ylabel("N3", fontsize=12)
+    # ax.set_xlabel('N1')
+    # ax.set_ylabel('N2')
+    # ax.set_zlabel('h')
+    # pos_neg_clipped = ax.imshow(z)
+    cbar = fig.colorbar(out, ax=ax, extend='both')
+    plt.show()
+
+    return 0
 
 
 def plotHoverNormalized_N1_N2(u, h):
