@@ -38,6 +38,9 @@ Notation:
  * MK4 : ICNN training $u\rightarrow h$
  * MK5 : Dense net training $u\rightarrow h$
  * MK6 : ICNN training $u\rightarrow h$ with scaled down imput (relative moments)
+ * MK7 : Deeper version of MK4
+ * MK8 : MK7 with relu
+ * MK9 : MK7 with additional loss || u - uTrue ||
 
 ### Employing a network with KiT-RT C++ framework ###
 

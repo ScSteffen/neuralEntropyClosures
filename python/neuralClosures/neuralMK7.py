@@ -25,9 +25,10 @@ class neuralMK7(neuralBase):
             tempString = "MK7_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
             tempString = folderName
+            
         self.polyDegree = polyDegree
         self.spatialDim = spatialDim
-        
+
         # --- Determine inputDim by MaxDegree ---
         if (spatialDim == 1):
             self.inputDim = polyDegree + 1

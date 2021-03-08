@@ -12,6 +12,7 @@ from neuralClosures.configModel import initNeuralClosure
 import numpy as np
 import tensorflow as tf
 import os
+import pandas as pd
 
 from optparse import OptionParser
 
@@ -164,6 +165,32 @@ def main():
               folderName=options.folder,
               optimizer=options.optimizer)
     neuralClosureModel.model.summary()
+
+    # Print chosen options to file
+    d = {'degree': [options.degree],
+         'spatial Dimension': [options.spatialDimension],
+         'model': [options.model],
+         'epoch': [options.epoch],
+         'epochChunk': [options.epochchunk],
+         'batchsize': [options.batch],
+         'verbosity': [options.verbosity],
+         'loadmodel': [options.loadmodel],
+         'training': [options.training],
+         'folder': [options.folder],
+         'optimizer': [options.optimizer],
+         'processingmode': [options.processingmode]}
+    df = pd.DataFrame(data=d)
+    count = 0
+    cfgFile = neuralClosureModel.filename + '/config_001_'
+    while os.path.isfile(cfgFile + '.csv'):
+        count += 1
+        cfgFile = neuralClosureModel.filename + '/config_' + str(count).zfill(3) + '_'
+
+    cfgFile = cfgFile + '.csv'
+
+    print("Writing config to " + cfgFile)
+
+    df.to_csv(cfgFile, index=False)
 
     if (options.loadmodel == 1 or options.training == 0):
         # in execution mode the model must be loaded.
