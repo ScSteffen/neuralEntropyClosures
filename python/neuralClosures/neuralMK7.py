@@ -25,7 +25,7 @@ class neuralMK7(neuralBase):
             tempString = "MK7_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
             tempString = folderName
-            
+
         self.polyDegree = polyDegree
         self.spatialDim = spatialDim
 
@@ -39,8 +39,15 @@ class neuralMK7(neuralBase):
                 self.inputDim = 4
             else:
                 raise ValueError("Polynomial degeree higher than 1 not supported atm")
+        elif (spatialDim == 2):
+            if (self.polyDegree == 0):
+                self.inputDim = 1
+            elif (self.polyDegree == 1):
+                self.inputDim = 3
+            else:
+                raise ValueError("Polynomial degeree higher than 1 not supported atm")
         else:
-            raise ValueError("Saptial dimension other than 1 or 3 not supported atm")
+            raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
 
         self.opt = optimizer
         self.model = self.createModel()

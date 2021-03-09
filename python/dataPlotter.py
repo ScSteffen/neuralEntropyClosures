@@ -16,15 +16,15 @@ plt.style.use("kitish")
 
 def main():
     # Normalized Plots
-    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
-    # plotHoverNormalized_N1_N2(u, h)
+    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
+    plotHoverNormalized_N1_N2(u, h)
 
-    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
-    # plotHoverNormalized_N2_N3(u, h)
+    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
+    plotHoverNormalized_N2_N3(u, h)
 
     # Plots of 1D M0 Data
-    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M0_D1.csv", 1)
-    plot1DM0Data(u, alpha, h)
+    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M0_D1.csv", 1)
+    # plot1DM0Data(u, alpha, h)
 
     # Plots of 1D M1 Data
 
