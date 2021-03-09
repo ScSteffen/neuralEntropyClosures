@@ -23,7 +23,7 @@ def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="tes
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
     '''
 
-    msg = "Chosen Model: MK" + str(modelNumber) + ", Degree " + str(modelNumber)
+    msg = "Chosen Model: MK" + str(modelNumber) + ", Degree " + str(polyDegree)
     print(msg)
     # Create the correct network
 
