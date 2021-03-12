@@ -16,20 +16,20 @@ plt.style.use("kitish")
 
 def main():
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
-    plotHoverNormalized_N1_N2(u, h)
+    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
+    # plotHoverNormalized_N1_N2(u, h)
 
-    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
-    plotHoverNormalized_N2_N3(u, h)
+    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
+    # plotHoverNormalized_N2_N3(u, h)
 
     # Plots of 1D M0 Data
-    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M0_D1.csv", 1)
-    # plot1DM0Data(u, alpha, h)
+    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M0_1D.csv", 1)
+    plot1DM0Data(u, alpha, h)
 
     # Plots of 1D M1 Data
 
-    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M1_D1.csv", 2)
-    # plot1DM1Data(u, alpha, h)
+    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M1_1D.csv", 2)
+    plot1DM1Data(u, alpha, h)
 
     return 0
 
@@ -154,21 +154,21 @@ def exampleplot(u, h):
 
 def plot1DM0Data(u, alpha, h):
     integratedGradients = integrate(u, alpha)
-    plt.plot(u, integratedGradients)
+    # plt.plot(u, integratedGradients)
     plt.plot(u, h, '--')
-    plt.ylabel('function value')
-    plt.xlabel('input value')
+    plt.ylabel('h')
+    plt.xlabel('u')
     # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
-    plt.legend(['integrated alpha', 'h'])
+    plt.legend(['h'])
     # plt.legend(['Model ','Target Function'])
     # plt.ylim([0, 20])
     plt.show()
 
     finDiff = finiteDiff(u, h)
-    plt.plot(u, finDiff)
+    # plt.plot(u, finDiff)
     plt.plot(u, alpha, '--')
-    plt.ylabel('function value')
-    plt.xlabel('input value')
+    plt.ylabel('alpha')
+    plt.xlabel('u')
     # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
     plt.legend(['fd h', 'alpha'])
     # plt.legend(['Model ','Target Function'])
@@ -187,6 +187,16 @@ def plot1DM0Data(u, alpha, h):
     plt.plot(alpha, u, '--')
     plt.ylabel('u')
     plt.xlabel('alpha')
+    # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
+    # plt.legend(['fd h', 'alpha'])
+    # plt.legend(['Model ','Target Function'])
+    # plt.ylim([0, 50])
+    plt.show()
+
+    plt.plot(h, alpha,
+             '--')
+    plt.ylabel('alpha')
+    plt.xlabel('h')
     # plt.legend(['Model', 'Model Derivative', 'Target Fct', 'Target Derivative'])
     # plt.legend(['fd h', 'alpha'])
     # plt.legend(['Model ','Target Function'])

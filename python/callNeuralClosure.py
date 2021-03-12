@@ -110,30 +110,32 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
-    parser.add_option("-d", "--degree", dest="degree", default=0,
-                      help="max degree of moment", metavar="DEGREE")
-    parser.add_option("-s", "--spatialDimension", dest="spatialDimension", default=3,
-                      help="spatial dimension of closure", metavar="SPATIALDIM")
-    parser.add_option("-m", "--model", dest="model", default=1,
-                      help="choice of network model", metavar="MODEL")
-    parser.add_option("-e", "--epoch", dest="epoch", default=1000,
-                      help="epoch count for neural network", metavar="EPOCH")
-    parser.add_option("-c", "--epochChunk", dest="epochchunk", default=1,
-                      help="number of epoch chunks", metavar="EPOCHCHUNK")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
-    parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
-                      help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
-    parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
-                      help="load model weights from file", metavar="LOADING")
+    parser.add_option("-c", "--epochChunk", dest="epochchunk", default=1,
+                      help="number of epoch chunks", metavar="EPOCHCHUNK")
+    parser.add_option("-d", "--degree", dest="degree", default=0,
+                      help="max degree of moment", metavar="DEGREE")
+    parser.add_option("-e", "--epoch", dest="epoch", default=1000,
+                      help="epoch count for neural network", metavar="EPOCH")
     parser.add_option("-f", "--folder", dest="folder", default="testFolder",
                       help="folder where the model is stored", metavar="FOLDER")
-    parser.add_option("-t", "--training", dest="training", default=1,
-                      help="training mode (1) execution mode (0)", metavar="TRAINING")
+    parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
+                      help="load model weights from file", metavar="LOADING")
+    parser.add_option("-m", "--model", dest="model", default=1,
+                      help="choice of network model", metavar="MODEL")
+    parser.add_option("-n", "--normalized", dest="normalized", default=0,
+                      help="train on normalized moments", metavar="NORMALIZED")
     parser.add_option("-o", "--optimizer", dest="optimizer", default="Adam",
                       help="optimizer choice", metavar="OPTIMIZER")
     parser.add_option("-p", "--processingmode", dest="processingmode", default=1,
                       help="gpu mode (1). cpu mode (0) ", metavar="PROCESSINGMODE")
+    parser.add_option("-s", "--spatialDimension", dest="spatialDimension", default=3,
+                      help="spatial dimension of closure", metavar="SPATIALDIM")
+    parser.add_option("-t", "--training", dest="training", default=1,
+                      help="training mode (1) execution mode (0)", metavar="TRAINING")
+    parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
+                      help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
 
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
@@ -146,6 +148,7 @@ def main():
     options.loadmodel = int(options.loadmodel)
     options.training = int(options.training)
     options.processingmode = int(options.processingmode)
+    options.normalized = int(options.normalized)
 
     # --- End Option Parsing ---
 
@@ -178,7 +181,9 @@ def main():
          'training': [options.training],
          'folder': [options.folder],
          'optimizer': [options.optimizer],
-         'processingmode': [options.processingmode]}
+         'processingmode': [options.processingmode],
+         'normalized moments': [options.normalized]}
+
     df = pd.DataFrame(data=d)
     count = 0
     cfgFile = neuralClosureModel.filename + '/config_001_'
@@ -195,7 +200,7 @@ def main():
     if (options.loadmodel == 1 or options.training == 0):
         # in execution mode the model must be loaded.
         # load model weights
-        neuralClosureModel.loadModel()
+        neuralClosureModel.loadModel(normalizedMoments=options.normalized)
     else:
         print("Start training with new weights")
 
