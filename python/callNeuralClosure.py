@@ -200,13 +200,13 @@ def main():
     if (options.loadmodel == 1 or options.training == 0):
         # in execution mode the model must be loaded.
         # load model weights
-        neuralClosureModel.loadModel(normalizedMoments=options.normalized)
+        neuralClosureModel.loadModel()
     else:
         print("Start training with new weights")
 
     if (options.training == 1):
         # create training Data
-        neuralClosureModel.loadTrainingData()
+        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized)
         # train model
         neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks=options.epochchunk,
                                       batchSize=options.batch, verbosity=options.verbosity)
