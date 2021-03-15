@@ -7,6 +7,7 @@ Author: Steffen Schotthöfer
 import numpy as np
 import time
 import pandas as pd
+import tensorflow as tf
 
 
 def finiteDiff(x, y):
@@ -41,7 +42,7 @@ def integrate(x, y):
     return integral
 
 
-def loadTrainingData(filename, inputDim):
+def loadData(filename, inputDim):
     '''
     Load training Data from csv file <filename>
     u, alpha have length <inputDim>
@@ -78,3 +79,28 @@ def loadTrainingData(filename, inputDim):
     print("Data loaded. Elapsed time: " + str(end - start))
 
     return trainingData
+
+
+def evaluateModel(model, input):
+    '''Evaluates the model at input'''
+    return model.predict(input)
+
+
+def evaluateModelDerivative(model, input):
+    '''Evaluates model derivatives at input'''
+
+    x_model = tf.Variable(input)
+
+    with tf.GradientTape() as tape:
+        # training=True is only needed if there are layers with different
+        # behavior during training versus inference (e.g. Dropout).
+        predictions = model(x_model, training=False)  # same as model.predict(x)
+
+    gradients = tape.gradient(predictions, x_model)
+    return gradients
+
+
+def loadTFModel(filename):
+    '''Loads a .h5 file to memory'''
+    nn = tf.keras.models.load_model(filename)
+    return nn

@@ -76,9 +76,9 @@ class neuralBase:
             callbackList = []
             csv_logger = self.createCSVLoggerCallback()
             if verbosity == 1:
-                callbackList = [mc_best, es, csv_logger]
+                callbackList = [mc_best, csv_logger]
             else:
-                callbackList = [mc_best, es, LossAndErrorPrintingCallback(), csv_logger]
+                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
 
             # start Training
             self.history = self.model.fit(self.trainingData[0], self.trainingData[1],

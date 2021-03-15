@@ -36,7 +36,7 @@ from tensorflow.keras import initializers
 # import tensorflow.keras.backend as K
 import matplotlib.pyplot as plt
 
-from src.utils import finiteDiff, integrate
+from src.utils import finiteDiff, integrate, loadData
 
 plt.style.use("kitish")
 
@@ -75,7 +75,7 @@ def main():
     print("Load Training Data")
     # (u,h) = loadTrainingData(filenameUCleanTrain,filenameHCleanTrain)
     # (uTest, alphaTest, hTest) = loadTrainingData(filenameUCleanTest, filenameHCleanTest)
-    (u, alpha, h) = loadTrainingData_DataGen(filename)
+    (u, alpha, h) = loadData(filename)
     # (u,alpha,h) = loadTrainingData(filenameUCleanTrain,filenameAlphaCleanTrain,filenameHCleanTrain)
     # print("Clean Training Data")
     # (u,alpha,h) = cleanTrainingData(u,alpha,h)
