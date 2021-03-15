@@ -86,8 +86,14 @@ def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="tes
                     "Model MK7 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
             neuralClosureModel = neuralMK7(polyDegree, spatialDim, folderName, optimizer)
 
+    elif spatialDim == 2:
+        if modelNumber == 7:  # MK4 model ICNN with input normalization and deeper layout
+            if polyDegree > 1:
+                ValueError(
+                    "Model MK7 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
+            neuralClosureModel = neuralMK7(polyDegree, spatialDim, folderName, optimizer)
     else:
-        ValueError("No network fits your preferences!")
+        print("No network fits your preferences!")
 
     print("Neural closure model created")
 

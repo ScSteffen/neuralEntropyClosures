@@ -42,7 +42,7 @@ def integrate(x, y):
     return integral
 
 
-def loadData(filename, inputDim):
+def loadData(filename, inputDim, selectedCols=[True, True, True]):
     '''
     Load training Data from csv file <filename>
     u, alpha have length <inputDim>
@@ -58,9 +58,6 @@ def loadData(filename, inputDim):
     hCol = [2 * inputDim + 1]
 
     # selectedCols = self.selectTrainingData() #outputs a boolean triple.
-
-    selectedCols = [True, False, True]
-
     start = time.time()
     if selectedCols[0] == True:
         df = pd.read_csv(filename, usecols=[i for i in uCols])
@@ -83,6 +80,9 @@ def loadData(filename, inputDim):
 
 def evaluateModel(model, input):
     '''Evaluates the model at input'''
+    x = input
+    print(x.shape)
+    print(x)
     return model.predict(input)
 
 
