@@ -175,7 +175,7 @@ class neuralBase:
         if normalizedMoments == 1:
             filename = "data/1_stage/" + str(self.spatialDim) + "D/Monomial_M" + str(self.polyDegree) + "_" + str(
                 self.spatialDim) + "D_normal.csv"
-        
+
         print("Loading Data from location: " + filename)
         # determine which cols correspond to u, alpha and h
         uCols = list(range(1, self.inputDim + 1))
@@ -202,6 +202,8 @@ class neuralBase:
 
         end = time.time()
         print("Data loaded. Elapsed time: " + str(end - start))
+
+        return True
 
     def selectTrainingData(self):
         pass

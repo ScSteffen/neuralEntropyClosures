@@ -36,6 +36,8 @@ from tensorflow.keras import initializers
 # import tensorflow.keras.backend as K
 import matplotlib.pyplot as plt
 
+from src.utils import finiteDiff, integrate
+
 plt.style.use("kitish")
 
 
@@ -187,38 +189,6 @@ def printDerivative(model, model2, u, alpha, h):
     plt.show()
 
     return gradients
-
-
-def integrate(x, y):
-    '''
-    :param x: function argument
-    :param y: = f(x)
-    :return: integrate y over span of x
-    '''
-
-    integral = np.zeros(x.shape)
-
-    for i in range(0, x.shape[0] - 1):
-        integral[i + 1] = integral[i] + (x[i + 1] - x[i]) * y[i + 1]
-
-    return integral
-
-
-def finiteDiff(x, y):
-    '''
-    :param x: Function Argument
-    :param y: Function value = f(x)
-    :return: df/dx at all points x
-    '''
-
-    grad = np.zeros(x.shape)
-
-    grad[0] = (y[1] - y[0]) / (x[1] - x[0])
-
-    for i in range(0, x.shape[0] - 1):
-        grad[i + 1] = (y[i] - y[i - 1]) / (x[i] - x[i - 1])
-
-    return grad
 
 
 def printWeights(model):

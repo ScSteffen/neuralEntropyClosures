@@ -8,7 +8,7 @@ Date 29.10.2020
 '''
 
 ### imports ###
-from neuralClosures.configModel import initNeuralClosure
+from src.neuralClosures.configModel import initNeuralClosure
 import numpy as np
 import tensorflow as tf
 import os
