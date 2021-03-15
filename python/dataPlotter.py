@@ -15,6 +15,10 @@ plt.style.use("kitish")
 
 
 def main():
+    # Plots of 1D M0 Data
+    [u, alpha, h] = loadTrainingData("disc_Moments.csv", 3)
+    plot2DMoments(u, h)
+
     # Normalized Plots
     # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
     # plotHoverNormalized_N1_N2(u, h)
@@ -136,6 +140,37 @@ def plotHoverNormalized_N1_N2(u, h):
     cbar = fig.colorbar(out, ax=ax, extend='both')
     plt.show()
 
+    return 0
+
+
+def plot2DMoments(u, h):
+    '''
+        Plot h over two dimensions of u1
+    '''
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)  # , projection='3d')
+    ax.grid(True, linestyle='-', color='0.75')
+    x = u[:, 1]
+    y = u[:, 2]
+    z = h
+    out = ax.scatter(x, y, s=20, c=z, cmap=cm.jet);
+
+    ax.set_title("h over u1 (2D)", fontsize=14)
+    ax.set_xlabel("u1 1", fontsize=12)
+    ax.set_ylabel("u1 2", fontsize=12)
+    ax.set_ylim(-1, 1)
+    ax.set_xlim(-1, 1)
+    # ax.set_xlabel('N1')
+    # ax.set_ylabel('N2')
+    # ax.set_zlabel('h')
+    # pos_neg_clipped = ax.imshow(z)
+    cbar = fig.colorbar(out, ax=ax, extend='both')
+
+    circle1 = plt.Circle((0, 0), 1, color='k', fill=False)
+    ax.add_patch(circle1)
+    ax.plot()
+    plt.show()
     return 0
 
 
