@@ -80,9 +80,9 @@ def loadData(filename, inputDim, selectedCols=[True, True, True]):
 
 def evaluateModel(model, input):
     '''Evaluates the model at input'''
-    x = input
-    print(x.shape)
-    print(x)
+    # x = input
+    # print(x.shape)
+    # print(x)
     return model.predict(input)
 
 
