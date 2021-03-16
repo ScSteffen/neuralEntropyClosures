@@ -6,7 +6,8 @@ Date: 15.03.2021
 
 from src.neuralClosures.configModel import initNeuralClosure
 import src.utils as utils
-
+import src.math as math
+import numpy as np
 import matplotlib.pyplot as plt
 
 plt.style.use("kitish")
@@ -25,39 +26,69 @@ def main():
 
     # Model Predictions
     h_pred = utils.evaluateModel(model, u)
-    alpha_pred = utils.evaluateModel(model, u)
+    alpha_pred = utils.evaluateModelDerivative(model, u)
 
     # plot errors
     # h - h_pred over u
+    # plot1D(u[:, 1], abs/(h - h_pred)/h))
+    # alpha - alpha_pred
+    # alphaErr = np.linalg.norm(alpha - alpha_pred, 1)
+    # print(alpha[:, 1] - alpha_pred[:, 1])
+    x = u[:, 1]
+    ys = [alpha[:, 1], alpha_pred[:, 1]]
+    labels = ["alpha 1", "alpha 1 pred"]
+    # plot1D(x, ys, labels,'alpha_0')
+    ys = [alpha[:, 0], alpha_pred[:, 0]]
+    labels = ["alpha 0", "alpha 0 pred"]
+    # plot1D(x, ys, labels, 'alpha_0')
+    ys = [relDifferenceScalar(alpha[:, 0], alpha_pred[:, 0]), relDifferenceScalar(alpha[:, 1], alpha_pred[:, 1]),
+          relDifferenceScalar(h, h_pred)]
+    labels = ["diff alpha0", "diff alpha1", "diff h"]
+    # plot1D(x, ys, labels, 'differences')
+
+    # Compare u and reconstructed u
+    [mu, w] = math.qGaussLegendre1D(100)  # Create quadrature
+    mBasis = math.computeMonomialBasis1D(mu, 1)  # Create basis
+
+    # Sanity check: reconstruct u with original alpha
+    erg = math.reconstructU(alpha, mBasis, w)
+    err = relDifference(u, erg)
+    erg_neural = math.reconstructU(alpha_pred, mBasis, w)
+    err_neural = relDifference(u, erg_neural)
+    # plot1D(x, [err, err_neural], ['err', 'err neural'], 'Error in U')
+
+    # plot error in u and error in alpha
+    err_alpha = relDifference(alpha_pred, alpha)
+    plot1D(x, [err_alpha, err_neural], ['errAlpha', 'errU'], 'Error in network prediction')
 
     return 0
 
 
-def initModelCpp(input):
-    '''
-    input: string array consisting of [modelNumber,maxDegree_N, folderName]
-    modelNumber : Defines the used network model, i.e. MK1, MK2...
-    maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
-    folderName: Path to the folder containing the neural network model
-    '''
-
-    print("|-------------------- Tensorflow initialization Log ------------------")
-    print("|")
-
-    modelNumber = input[0]
-    maxDegree_N = input[1]
-
-    # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
-    folderName = "neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber)
-
-    neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
-    neuralClosureModel = tf.keras.models.load_model(file)
-
-    neuralClosureModel.model.summary()
-    print("|")
-    print("| Tensorflow neural closure initialized.")
-    print("|")
+def plot1D(x, ys, labels=[], name='defaultName'):
+    for y in ys:
+        plt.plot(x, y)
+    plt.legend(labels)
+    plt.yscale('log')
+    plt.savefig("figures/" + name + ".png")
     return 0
+
+
+def relDifferenceScalar(x1, x2):
+    '''
+    input: x1,x2: dim ns
+    returns: rel difference vector (dim ns)
+    '''
+    return abs((x1 - x2) / np.maximum(abs(x1), abs(x2)))
+
+
+def relDifference(x1, x2):
+    '''
+    input: x1,x2: dim nsxN
+    returns: rel difference vector (dim ns)
+    '''
+    absDiff = np.linalg.norm((x1 - x2), axis=1, ord=1)
+    normalization = np.maximum(np.linalg.norm(x1, axis=1, ord=1), np.linalg.norm(x2, axis=1, ord=1))
+    return absDiff / normalization
 
 
 if __name__ == '__main__':
