@@ -61,10 +61,31 @@ def main():
     err_alpha = relDifference(alpha_pred, alpha)
     plot1D(x, [err_alpha, err_neural], ['errAlpha', 'errU'], 'Error in network prediction')
 
+    # do error analysis at one point
+    u_spec = u[25000]
+    alpha_spec = alpha[25000]
+    # disturb alpha in direction e = [0,1] with different stepsize
+
+    us = np.repeat(u_spec[np.newaxis, :], 20, axis=0)
+    alphas = np.repeat(alpha_spec[np.newaxis, :], 20, axis=0)
+    alphas_dist = np.copy(alphas)
+    delta = 1
+
+    for i in range(0, 20):
+        alphas_dist[i, 1] = alphas_dist[i, 1] * (1 + delta)
+        delta = delta / 2
+
+    u_rec_spec = math.reconstructU(alphas_dist, mBasis, w)
+
+    err_alpha = relDifference(alphas_dist, alphas)
+    err_u = relDifference(u_rec_spec, us)
+    plot1D(range(0, 20), [err_alpha, err_u], ['errAlpha', 'errU'], 'Disturbed_alpha')
+
     return 0
 
 
 def plot1D(x, ys, labels=[], name='defaultName'):
+    plt.clf()
     for y in ys:
         plt.plot(x, y)
     plt.legend(labels)
