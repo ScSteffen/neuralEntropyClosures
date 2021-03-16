@@ -50,10 +50,7 @@ def reconstructU(alpha, m, w):
            w    , dims = nq
     returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
     """
-    res = np.zeros(alpha.shape)
-    for i in range(alpha.shape[0]):
-        res[i, :] = reconstructUSingleCell(alpha[i, :], m, w)
-
+   
     # tensor version
     temp = entropyDualPrime(np.matmul(alpha, m))  # ns x nq
     ## extend to 3D tensor
