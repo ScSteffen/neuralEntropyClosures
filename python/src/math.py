@@ -50,7 +50,7 @@ def reconstructU(alpha, m, w):
            w    , dims = nq
     returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
     """
-   
+
     # tensor version
     temp = entropyDualPrime(np.matmul(alpha, m))  # ns x nq
     ## extend to 3D tensor
@@ -58,6 +58,16 @@ def reconstructU(alpha, m, w):
     tempTensor = temp.reshape(temp.shape[0], 1, temp.shape[1])  # ns x N x nq
 
     return integrate(mTensor * tempTensor, w)
+
+
+def reconstructL1F(alpha, m, w):
+    """
+    imput: alpha, dims = (nS x N)
+           m    , dims = (N x nq)
+           w    , dims = nq
+    returns:  the L1 norm of f, the kinetic density, <|f|>
+    """
+    return integrate(np.abs(entropyDualPrime(np.matmul(alpha, m))), w)
 
 
 def reconstructUSingleCell(alpha, m, w):
