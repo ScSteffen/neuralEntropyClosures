@@ -17,7 +17,7 @@ plt.style.use("kitish")
 def main():
     # Plots of 1D M0 Data
     [u, alpha, h] = loadTrainingData("disc_Moments.csv", 3)
-    plot2DMoments(u, h)
+    # plot2DMoments(u, h)
 
     # Normalized Plots
     # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
@@ -28,12 +28,12 @@ def main():
 
     # Plots of 1D M0 Data
     [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M0_1D.csv", 1)
-    plot1DM0Data(u, alpha, h)
+    # plot1DM0Data(u, alpha, h)
 
     # Plots of 1D M1 Data
 
-    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M1_1D.csv", 2)
-    plot1DM1Data(u, alpha, h)
+    [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M1_1D_small.csv", 2)
+    plot1DM1Data(alpha, alpha, h)
 
     return 0
 

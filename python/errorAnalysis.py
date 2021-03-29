@@ -9,12 +9,13 @@ import src.utils as utils
 import src.math as math
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 plt.style.use("kitish")
 
 
 def main():
-    filenameModel = "models/01_errorAnalysis_M1_1D/best_model.h5"
+    filenameModel = "models/02_errorAnalysis_M1_1D_normal/best_model.h5"
     filenameData = "data/1_stage/1D/Monomial_M1_1D_normal.csv"
     inputDim = 2
 
@@ -28,23 +29,23 @@ def main():
     h_pred = utils.evaluateModel(model, u)
     alpha_pred = utils.evaluateModelDerivative(model, u)
 
+    # plot results
+    plot1D(u[:, 1], [h_pred[:, 0], h[:, 0]], ['h pred', 'h'], 'h_over_u', log=False)
+
     # plot errors
-    # h - h_pred over u
-    # plot1D(u[:, 1], abs/(h - h_pred)/h))
-    # alpha - alpha_pred
-    # alphaErr = np.linalg.norm(alpha - alpha_pred, 1)
-    # print(alpha[:, 1] - alpha_pred[:, 1])
+
     x = u[:, 1]
     ys = [alpha[:, 1], alpha_pred[:, 1]]
     labels = ["alpha 1", "alpha 1 pred"]
-    # plot1D(x, ys, labels,'alpha_0')
+    plot1D(x, ys, labels, 'alpha_0', log=False)
     ys = [alpha[:, 0], alpha_pred[:, 0]]
     labels = ["alpha 0", "alpha 0 pred"]
-    # plot1D(x, ys, labels, 'alpha_0')
-    ys = [relDifferenceScalar(alpha[:, 0], alpha_pred[:, 0]), relDifferenceScalar(alpha[:, 1], alpha_pred[:, 1]),
-          relDifferenceScalar(h, h_pred)]
+    plot1D(x, ys, labels, 'alpha_0', log=False)
+    ys = [relDifferenceScalar(alpha[:, 0], alpha_pred[:, 0], maxMode=False),
+          relDifferenceScalar(alpha[:, 1], alpha_pred[:, 1], maxMode=True),
+          relDifferenceScalar(h, h_pred, maxMode=False)]
     labels = ["diff alpha0", "diff alpha1", "diff h"]
-    # plot1D(x, ys, labels, 'differences')
+    plot1D(x, ys, labels, 'differences', log=True)
 
     ### Compare u and reconstructed u
     [mu, w] = math.qGaussLegendre1D(100)  # Create quadrature
@@ -65,8 +66,11 @@ def main():
     # errorAnalysisU(u, alpha, mBasis, w)
     # errorAnalysisf(alpha, mBasis, w)
     # errorAnalysisUM0()
-    errorAnalysisUM1_normal()
 
+    c = 0
+    # for alpha_orig in alpha:
+    # errorAnalysisUM1_normal(alpha, c)
+    #    c += 1
     return 0
 
 
@@ -128,24 +132,86 @@ def errorAnalysisUM0():
     return 0
 
 
-def errorAnalysisUM1_normal():
+def errorAnalysisUM1_normal(alphas_orig, count):
     """
     Creates random deviations of a given starting alpha, and plots error of u over the deviation
     """
     # Basis creation
     [mu, w] = math.qGaussLegendre1D(1000)  # Create quadrature
     mBasis = math.computeMonomialBasis1D(mu, 1)  # Create basis
-    
-    alphas = np.arange(0, 1, 0.001).reshape((1000, 1))
-    alphas1 = np.ones((1000, 1))
-    alphas = np.concatenate((alphas1, alphas), axis=1)
+
+    '''
+    # sample the alphas
+    alpha_orig = np.asarray([-100, -100])
+
+    devitatio_dir = np.random.rand(1, 2)
+    devitatio_norm = np.linalg.norm(devitatio_dir)
+    devitatio_dir = devitatio_dir / devitatio_norm
+    deltas = np.arange(0, 1, 0.001) * np.linalg.norm(alpha_orig)
+    deltas = deltas.reshape(deltas.shape[0], 1)
+    alphas = np.repeat(alpha_orig[np.newaxis, :], deltas.shape[0], axis=0)
+
+    alphas = alphas + deltas * devitatio_dir
 
     # us = 2 * np.exp(alphas)
     us_rec = math.reconstructU(alphas, mBasis, w)
     us_orig = np.repeat(us_rec[0][np.newaxis, :], us_rec.shape[0], axis=0)
     relDiff = relDifference(us_orig, us_rec, maxMode=False)
-    plot1D(alphas[:, 1], [relDiff], ['relErr'], 'relErrU M1 normal', log=False)
+    plot1D(deltas, [relDiff], ['relErr'], 'relErrU_dir_' + str(devitatio_dir), log=False)
+    '''
 
+    ### Same plot as heatmap point cloud for multiple directions
+    maxDir = 100
+    nDelta = 20
+    dTheta = 2 * np.pi / maxDir
+    # alpha_orig = np.asarray([-5.210706, 0.280600])
+    maxRange = 0.1
+    deltas = np.arange(0, maxRange, maxRange / nDelta)
+    deltas = deltas.reshape(deltas.shape[0], 1)
+
+    completeAlphas = np.empty((1, 2))
+    completeRelDiff = np.empty((1,))
+
+    for j in range(0, alphas_orig.shape[0]):
+        alpha_orig = alphas_orig[j, :]
+        for i in range(0, maxDir):
+            theta = i * dTheta
+            devitatio_dir = [np.cos(theta), np.sin(theta)]
+            alphas = np.repeat(alpha_orig[np.newaxis, :], deltas.shape[0], axis=0)
+            alphas = alphas + deltas * devitatio_dir
+
+            us_rec = math.reconstructL1F(alphas, mBasis, w).reshape(alphas.shape[0], 1)
+            us_orig = np.repeat(us_rec[0][np.newaxis, :], us_rec.shape[0], axis=0)
+            relDiff = relDifference(us_orig, us_rec, maxMode=False)
+
+            completeAlphas = np.concatenate((completeAlphas, alphas), axis=0)
+            completeRelDiff = np.concatenate((completeRelDiff, relDiff), axis=0)
+
+    completeAlphas = completeAlphas[1:]
+    completeRelDiff = completeRelDiff[1:]
+
+    # plot everything
+    fig = plt.figure()
+    ax = fig.add_subplot(111)  # , projection='3d')
+    ax.grid(True, linestyle='-', color='0.75')
+    x = completeAlphas[:, 0]
+    y = completeAlphas[:, 1]
+    z = completeRelDiff
+    out = ax.scatter(x, y, s=20, c=z, cmap=cm.jet, norm=cm.colors.LogNorm());
+
+    ax.set_title("err f over alpha1 and alpha2", fontsize=14)
+    ax.set_xlabel("alpha0", fontsize=12)
+    ax.set_ylabel("alpha1", fontsize=12)
+    ax.set_ylim([-2, 2])
+    ax.set_xlim([-1.5, -0.5])
+    # ax.set_xlabel('N1')
+    # ax.set_ylabel('N2')
+    # ax.set_zlabel('h')
+    # pos_neg_clipped = ax.imshow(z)
+    cbar = fig.colorbar(out, ax=ax, extend='both')
+    # plt.show()
+    plt.savefig("figures/ScatterPlots/ScatterM1Error_" + str(count) + ".png")
+    plt.close(fig)
     return 0
 
 
@@ -166,12 +232,18 @@ def plot1D(x, ys, labels=[], name='defaultName', log=True):
     return 0
 
 
-def relDifferenceScalar(x1, x2):
+def relDifferenceScalar(x1, x2, maxMode=True):
     '''
     input: x1,x2: dim ns
     returns: rel difference vector (dim ns)
     '''
-    return abs((x1 - x2) / np.maximum(abs(x1), abs(x2)))
+    result = 0
+    if maxMode:
+        result = abs((x1 - x2) / np.maximum(abs(x1), abs(x2)))
+    else:
+        result = abs((x1 - x2) / abs(x1))
+
+    return result
 
 
 def relDifference(x1, x2, maxMode=True):

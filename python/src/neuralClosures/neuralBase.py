@@ -51,10 +51,15 @@ class neuralBase:
         self.model.summary()
         return 0
 
-    def trainModel(self, valSplit=0.1, epochCount=2, epochChunks=1, batchSize=500, verbosity=1):
+    def trainModel(self, valSplit=0.1, epochCount=2, epochChunks=1, batchSize=500, verbosity=1, processingMode=0):
         '''
         Method to train network
         '''
+
+        # Set full precision training for CPU training
+        if processingMode == 0:
+            tf.keras.backend.set_floatx('float32')
+
         # Create callbacks
         mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/best_model.h5', monitor='loss', mode='min',
                                                      save_best_only=True,
