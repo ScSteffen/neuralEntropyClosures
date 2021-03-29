@@ -49,14 +49,14 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", optimizer='adam'):
+def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", optimizer='adam', width=10, height=5):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
     '''
 
     global neuralClosureModel
-    neuralClosureModel = initNeuralClosure(modelNumber, polyDegree, spatialDim, folderName, optimizer)
+    neuralClosureModel = initNeuralClosure(modelNumber, polyDegree, spatialDim, folderName, optimizer, width, height)
 
     return 0
 
@@ -136,6 +136,10 @@ def main():
                       help="training mode (1) execution mode (0)", metavar="TRAINING")
     parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
                       help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
+    parser.add_option("-w", "--networkwidth", dest="networkwidth", default=10,
+                      help="width of each network layer", metavar="WIDTH")
+    parser.add_option("-x", "--networkheight", dest="networkheight", default=5,
+                      help="height of the network", metavar="HEIGHT")
 
     (options, args) = parser.parse_args()
     options.degree = int(options.degree)
@@ -149,6 +153,8 @@ def main():
     options.training = int(options.training)
     options.processingmode = int(options.processingmode)
     options.normalized = int(options.normalized)
+    options.networkwidth = int(options.networkwidth)
+    options.networkheight = int(options.networkheight)
 
     # --- End Option Parsing ---
 
@@ -166,7 +172,7 @@ def main():
     print("Initialize model")
     initModel(modelNumber=options.model, polyDegree=options.degree, spatialDim=options.spatialDimension,
               folderName=options.folder,
-              optimizer=options.optimizer)
+              optimizer=options.optimizer, width=options.networkheight, height=options.networkheight)
     neuralClosureModel.model.summary()
 
     # Print chosen options to file
@@ -209,7 +215,8 @@ def main():
         neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized)
         # train model
         neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks=options.epochchunk,
-                                      batchSize=options.batch, verbosity=options.verbosity)
+                                      batchSize=options.batch, verbosity=options.verbosity,
+                                      processingMode=options.processingmode)
         # save model
         neuralClosureModel.saveModel()
 
