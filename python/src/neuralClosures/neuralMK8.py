@@ -1,5 +1,5 @@
 '''
-Derived network class "MK4" for the neural entropy closure.
+Same as MK7, but with relu activation
 It features the ICNN approach by Amos et al.
 Author: Steffen Schotthöfer
 Version: 0.0

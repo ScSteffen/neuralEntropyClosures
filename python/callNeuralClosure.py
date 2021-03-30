@@ -172,7 +172,7 @@ def main():
     print("Initialize model")
     initModel(modelNumber=options.model, polyDegree=options.degree, spatialDim=options.spatialDimension,
               folderName=options.folder,
-              optimizer=options.optimizer, width=options.networkheight, height=options.networkheight)
+              optimizer=options.optimizer, width=options.networkwidth, height=options.networkheight)
     neuralClosureModel.model.summary()
 
     # Print chosen options to file
