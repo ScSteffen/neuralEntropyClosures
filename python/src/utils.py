@@ -8,6 +8,8 @@ import numpy as np
 import time
 import pandas as pd
 import tensorflow as tf
+import matplotlib.pyplot as plt
+import random
 
 
 def finiteDiff(x, y):
@@ -104,3 +106,33 @@ def loadTFModel(filename):
     '''Loads a .h5 file to memory'''
     nn = tf.keras.models.load_model(filename)
     return nn
+
+
+def plot1D(x, ys, labels=[], name='defaultName', log=True, linetypes=[], ):
+    plt.clf()
+    if not linetypes:
+        linetypes = ['-', '--', '-.', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*', 'h',
+                     'H',
+                     '+', 'x', 'D', 'd', '|', '_']
+        linetypes = linetypes[0:len(labels)]
+
+    for y, lineType in zip(ys, linetypes):
+        plt.plot(x, y, lineType)
+    plt.legend(labels)
+
+    if (log):
+        plt.yscale('log')
+
+    # plt.show()
+    plt.savefig("figures/" + name + ".png")
+    return 0
+
+
+def shuffleTrainData(x, y, mode="random"):
+    c = list(zip(x, y))
+
+    random.shuffle(c)
+
+    x, y = zip(*c)
+
+    return [np.asarray(x), np.asarray(y)]

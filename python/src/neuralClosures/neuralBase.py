@@ -187,9 +187,9 @@ class neuralBase:
         alphaCols = list(range(self.inputDim + 1, 2 * self.inputDim + 1))
         hCol = [2 * self.inputDim + 1]
 
-        # selectedCols = self.selectTrainingData() #outputs a boolean triple.
+        selectedCols = self.selectTrainingData()  # outputs a boolean triple.
 
-        selectedCols = [True, False, True]
+        # selectedCols = [True, False, True]
 
         start = time.time()
         if selectedCols[0] == True:
