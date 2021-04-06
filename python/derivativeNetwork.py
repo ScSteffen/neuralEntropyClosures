@@ -2,37 +2,19 @@
 '''
 Exploration of convex Networks on a simple example
 It includes the ICNN techniques (Amos et al)
+Loss is |h-h_pred| + | alpha - alpha_pred |
 '''
-
-### This is a script for the training of the
-### Third NN approach
-
-'''
-Improvements:
-1)  accepts u as a N-vector
-2)  Generalized Loss function
-3)  Adapted network layout
-4)  RESNet Used as Netowork ( TODO )
-'''
-
-import csv
-import multiprocessing
-import pandas as pd
-from joblib import Parallel, delayed
-
-### imports
+import src.math as math
 import numpy as np
-# in-project imports
-import legacyCode.nnUtils as nnUtils
-import csv
-# Tensorflow
 import tensorflow as tf
 from tensorflow import Tensor
-from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.constraints import NonNeg
+
 from tensorflow.keras import initializers
+from tensorflow.keras.layers import Lambda
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 import matplotlib.pyplot as plt
 
@@ -343,6 +325,177 @@ def create_modelMK4_ICNN():
 
 def createTrainingData(x):
     return x  # 0.5 * x * x
+
+
+class DerivativeNet(tf.keras.Model):
+
+    def __init__(self, inputDim, modelWidth, modelDepth, **opts):
+        super(DerivativeNet, self).__init__()
+
+        # Specify integration weights and basis
+        ### Compare u and reconstructed u
+        [mu, quadWeights] = math.qGaussLegendre1D(100)  # Create quadrature
+        mBasis = math.computeMonomialBasis1D(mu, 1)  # Create basis
+
+        # Specify architecture and input shape
+        self.mBasis = tf.constant(mBasis, dtype=float)
+        self.quadWeights = tf.constant(quadWeights, dtype=float)
+
+        self.inputDim = inputDim
+        self.modelWidth = modelWidth
+        self.modelDepth = modelDepth
+
+        # Weight initializer for sofplus  after K Kumar
+        input_stddev = np.sqrt((1 / inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        hidden_stddev = np.sqrt((1 / self.modelWidth) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+
+        self.hiddenInitializer = initializers.RandomNormal(mean=0., stddev=hidden_stddev)
+        self.inputLayerInitializer = initializers.RandomNormal(mean=0., stddev=input_stddev)
+
+        # build the network
+        self.input_layer = layers.Dense(self.inputDim, activation="softplus",
+                                        kernel_initializer=self.inputLayerInitializer,
+                                        use_bias=True,
+                                        bias_initializer='zeros')
+        self.ic_layers = list()
+
+        for i in range(modelDepth):
+            self.ic_layers.append(ICNNBlock(self.modelWidth, False))
+
+        self.output_layer = ICNNBlock(self.modelWidth, True)
+
+    def identity_func(self, tensor):
+        return tensor
+
+    def reconstructU(self, alpha, tol=1e-8):
+        """
+            imput: alpha, dims = (nS x N)
+                   m    , dims = (N x nq)
+                   w    , dims = nq
+            returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+        """
+
+        # Check the predicted alphas for +/- infinity or nan - raise error if found
+        checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
+
+        # Clip the predicted alphas below the tf.exp overflow threshold
+        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+
+        # Calculate the closed density function at each point along velocity domain
+        G_alpha = tf.math.exp(tf.tensordot(clipped_alpha[:, :], self.mBasis[:, :], axes=1))
+
+        # Pointwise-multiply moment vector by closed density along velocity axis
+        m0G_alpha = tf.multiply(G_alpha, self.m0)
+        m1G_alpha = tf.multiply(G_alpha, self.m1)
+        m2G_alpha = tf.multiply(G_alpha, self.m2)
+
+        # Compute integral by quadrature (dot-product with weights along velocity axis)
+        u0 = tf.tensordot(m0G_alpha, self.w, axes=1)
+        u1 = tf.tensordot(m1G_alpha, self.w, axes=1)
+        u2 = tf.tensordot(m2G_alpha, self.w, axes=1)
+
+        # Stack-moments together
+        moment_pred = tf.stack([u0, u1, u2], axis=1)
+
+        return moment_pred
+
+    def reconstructFlux(self, alpha, tol=1e-8):
+        return 0
+
+    def call(self, x, training=False):
+        """
+        Defines network function. Can be adapted to have different paths
+        for training and non-training modes (not currently used).
+
+        At each layer, applies, in order: (1) weights & biases, (2) batch normalization
+        (current: commented out), then (3) activation.
+
+        Inputs:
+            (x,training = False,mask = False)
+        Returns:
+            returns [h(x),alpha(x),u(x)]
+        """
+
+        x = Lambda(self.identity_func, name="input")(x)
+
+        with tf.GradientTape() as grad_tape:
+            grad_tape.watch(x)
+            y = self.input_layer(x)
+            for ic_layer in self.ic_layers:
+                y = ic_layer(y, x)
+            h = self.output_layer(y, x)
+
+        d_net = grad_tape.gradient(h, x)
+
+        d_net = Lambda(self.identity_func, name="d_net")(d_net)
+
+        alpha = d_net
+
+        u = self.reconstructU(alpha)
+        flux = self.reconstructFlux(alpha)
+
+        return [h, alpha, u, flux]
+
+
+class ICNNBlock(tf.keras.Model):
+    def __init__(self, modelWidth, outputLayer=False):
+        super(ICNNBlock, self).__init__(name='')
+
+        self.outputLayer = outputLayer
+        self.modelWidth = modelWidth
+        # Weight initializer for sofplus  after K Kumar
+        hidden_stddev = np.sqrt((1 / self.modelWidth) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        self.hiddenInitializer = initializers.RandomNormal(mean=0., stddev=hidden_stddev)
+
+        # Create Layers
+        self.Nonneg_layer = layers.Dense(self.modelWidth, kernel_constraint=NonNeg(), activation=None,
+                                         kernel_initializer=self.hiddenInitializer,
+                                         use_bias=True, bias_initializer='zeros')
+
+        self.dense_layer = layers.Dense(self.modelWidth, activation=None,
+                                        kernel_initializer=self.hiddenInitializer,
+                                        use_bias=False)
+
+        self.add_layer = layers.Add()
+        self.bn_layer = layers.BatchNormalization()
+
+    def call(self, layer_input, model_input, training=False):
+        z_nonneg = self.Nonneg_layer(layer_input)
+        x = self.dense_layer(model_input)
+        intermediateSum = self.add_layer([x, z_nonneg])
+
+        intermediateSum2 = self.bn_layer(intermediateSum, training=training)
+
+        if self.outputLayer:
+            out = intermediateSum2
+        else:
+            out = tf.keras.activations.softplus(intermediateSum2)
+
+        return out
+
+
+class HaltWhen(tf.keras.callbacks.Callback):
+    def __init__(self, quantity, tol):
+        """
+        Should be used in conjunction with
+        the saving criterion for the model; otherwise
+        training will stop without saving the model with quantity <= tol
+        """
+        super(HaltWhen, self).__init__()
+        if type(quantity) == str:
+            self.quantity = quantity
+        else:
+            raise TypeError('HaltWhen(quantity,tol); quantity must be a string for a monitored quantity')
+        self.tol = tol
+
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch > 1:
+            if logs.get(self.quantity) < self.tol:
+                print('\n\n', self.quantity, ' has reached', logs.get(self.quantity), ' < = ', self.tol,
+                      '. End Training.')
+                self.model.stop_training = True
+        else:
+            pass
 
 
 if __name__ == '__main__':
