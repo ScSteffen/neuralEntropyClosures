@@ -30,22 +30,22 @@ def main():
     alpha_pred = utils.evaluateModelDerivative(model, u)
 
     # plot results
-    plot1D(u[:, 1], [h_pred[:, 0], h[:, 0]], ['h pred', 'h'], 'h_over_u', log=False)
+    utils.plot1D(u[:, 1], [h_pred[:, 0], h[:, 0]], ['h pred', 'h'], 'h_over_u', log=False)
 
     # plot errors
 
     x = u[:, 1]
     ys = [alpha[:, 1], alpha_pred[:, 1]]
     labels = ["alpha 1", "alpha 1 pred"]
-    plot1D(x, ys, labels, 'alpha_0', log=False)
+    utils.plot1D(x, ys, labels, 'alpha_0', log=False)
     ys = [alpha[:, 0], alpha_pred[:, 0]]
     labels = ["alpha 0", "alpha 0 pred"]
-    plot1D(x, ys, labels, 'alpha_0', log=False)
+    utils.plot1D(x, ys, labels, 'alpha_0', log=False)
     ys = [relDifferenceScalar(alpha[:, 0], alpha_pred[:, 0], maxMode=False),
           relDifferenceScalar(alpha[:, 1], alpha_pred[:, 1], maxMode=True),
           relDifferenceScalar(h, h_pred, maxMode=False)]
     labels = ["diff alpha0", "diff alpha1", "diff h"]
-    plot1D(x, ys, labels, 'differences', log=True)
+    utils.plot1D(x, ys, labels, 'differences', log=True)
 
     ### Compare u and reconstructed u
     [mu, w] = math.qGaussLegendre1D(100)  # Create quadrature
@@ -212,23 +212,6 @@ def errorAnalysisUM1_normal(alphas_orig, count):
     # plt.show()
     plt.savefig("figures/ScatterPlots/ScatterM1Error_" + str(count) + ".png")
     plt.close(fig)
-    return 0
-
-
-def plot1D(x, ys, labels=[], name='defaultName', log=True):
-    plt.clf()
-    lineTypes = ['-', '--', '-.', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*', 'h', 'H',
-                 '+', 'x', 'D', 'd', '|', '_']
-    lineTypes = lineTypes[0:len(labels)]
-    for y, lineType in zip(ys, lineTypes):
-        plt.plot(x, y, lineType)
-    plt.legend(labels)
-
-    if (log):
-        plt.yscale('log')
-
-    # plt.show()
-    plt.savefig("figures/" + name + ".png")
     return 0
 
 
