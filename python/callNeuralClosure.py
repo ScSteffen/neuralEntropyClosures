@@ -49,14 +49,17 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", optimizer='adam', width=10, height=5):
+def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", optimizer='adam', width=10, depth=5,
+              normalized=False):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
     '''
 
     global neuralClosureModel
-    neuralClosureModel = initNeuralClosure(modelNumber, polyDegree, spatialDim, folderName, optimizer, width, height)
+    neuralClosureModel = initNeuralClosure(modelNumber=modelNumber, polyDegree=polyDegree, spatialDim=spatialDim,
+                                           folderName=folderName, optimizer=optimizer, depth=depth,
+                                           width=width, normalized=normalized)
 
     return 0
 
@@ -138,7 +141,7 @@ def main():
                       help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
     parser.add_option("-w", "--networkwidth", dest="networkwidth", default=10,
                       help="width of each network layer", metavar="WIDTH")
-    parser.add_option("-x", "--networkheight", dest="networkheight", default=5,
+    parser.add_option("-x", "--networkdepth", dest="networkdepth", default=5,
                       help="height of the network", metavar="HEIGHT")
 
     (options, args) = parser.parse_args()
@@ -152,9 +155,9 @@ def main():
     options.loadmodel = int(options.loadmodel)
     options.training = int(options.training)
     options.processingmode = int(options.processingmode)
-    options.normalized = int(options.normalized)
+    options.normalized = bool(options.normalized)
     options.networkwidth = int(options.networkwidth)
-    options.networkheight = int(options.networkheight)
+    options.networkdepth = int(options.networkdepth)
 
     # --- End Option Parsing ---
 
@@ -171,8 +174,8 @@ def main():
     # --- initialize model
     print("Initialize model")
     initModel(modelNumber=options.model, polyDegree=options.degree, spatialDim=options.spatialDimension,
-              folderName=options.folder,
-              optimizer=options.optimizer, width=options.networkwidth, height=options.networkheight)
+              folderName=options.folder, normalized=options.normalized,
+              optimizer=options.optimizer, width=options.networkwidth, depth=options.networkdepth)
     neuralClosureModel.model.summary()
 
     # Print chosen options to file
@@ -188,7 +191,9 @@ def main():
          'folder': [options.folder],
          'optimizer': [options.optimizer],
          'processingmode': [options.processingmode],
-         'normalized moments': [options.normalized]}
+         'normalized moments': [options.normalized],
+         'network width': [options.networkwidth],
+         'network depth': [options.networkdepth]}
 
     df = pd.DataFrame(data=d)
     count = 0
