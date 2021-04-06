@@ -15,6 +15,7 @@ from .neuralMK6 import neuralMK6
 from .neuralMK7 import neuralMK7
 from .neuralMK8 import neuralMK8
 from .neuralMK9 import neuralMK9
+from .neuralMK10 import neuralMK10
 
 
 ### global functions ###
@@ -91,8 +92,14 @@ def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="tes
         if modelNumber == 9:  # MK4 model ICNN with input normalization and deeper layout
             if polyDegree > 3:
                 ValueError(
-                    "Model MK7 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
+                    "Model MK9 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
             neuralClosureModel = neuralMK9(polyDegree, spatialDim, folderName, optimizer)
+
+        if modelNumber == 10:
+            if polyDegree > 3:
+                ValueError(
+                    "Model MK10 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
+            neuralClosureModel = neuralMK10(polyDegree, spatialDim, folderName, optimizer)
 
     elif spatialDim == 2:
         if modelNumber == 7:  # MK4 model ICNN with input normalization and deeper layout
