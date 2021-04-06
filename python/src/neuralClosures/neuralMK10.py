@@ -25,7 +25,8 @@ class neuralMK10(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, polyDegree=0, spatialDim=0, folderName="testFolder", optimizer='adam', width=10, height=5):
+    def __init__(self, polyDegree=0, spatialDim=0, folderName="testFolder", optimizer='adam', width=10, depth=5,
+                 normalized=False):
         if (folderName == "testFolder"):
             tempString = "MK10_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
@@ -34,7 +35,7 @@ class neuralMK10(neuralBase):
         self.polyDegree = polyDegree
         self.spatialDim = spatialDim
         self.modelWidth = width
-        self.modelHeight = height
+        self.modelDepth = depth
 
         # --- Determine inputDim by MaxDegree ---
         if (spatialDim == 1):
@@ -56,6 +57,9 @@ class neuralMK10(neuralBase):
         else:
             raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
 
+        if normalized:
+            self.inputDim = self.inputDim - 1
+
         self.opt = optimizer
         self.filename = "models/" + tempString
 
@@ -65,11 +69,12 @@ class neuralMK10(neuralBase):
 
         # build model
 
-        model = DerivativeNet(self.inputDim, self.modelWidth, self.modelHeight, name="ICNN_Derivative_Net")
+        model = DerivativeNet(self.inputDim, self.modelWidth, self.modelDepth, name="ICNN_Derivative_Net")
 
         # implicitly build the model
-        test_point = np.array([[0.5, 0.7], [-0.5, -0.7], [0.01, -0.01], [0.9, -0.9]], dtype=float)
-        test_point = tf.constant(test_point, dtype=tf.float32)
+        batchSize = 3
+        x_build = np.zeros((batchSize, self.inputDim), dtype=float)
+        test_point = tf.constant(x_build, dtype=tf.float32)
         test_output = model.predict(test_point)
 
         model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
