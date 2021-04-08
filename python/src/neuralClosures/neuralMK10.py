@@ -77,7 +77,36 @@ class neuralMK10(neuralBase):
         test_point = tf.constant(x_build, dtype=tf.float32)
         test_output = model.predict(test_point)
 
-        model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
+        # What should the loss components be? This will set initial loss weights to float(0) or float(1) acccordingly.
+        mse_h, mse_alpha, mse_u, mse_flux = [True, True, False, False]
+        # Choose weights for moment training routine
+        mt_weights = [float(mse_h), float(mse_alpha)]  # , float(mse_u), float(mse_flux)]
+
+        # create the loss functions
+        def h_mse_loss(h_true, h_pred):
+            loss_val = tf.keras.losses.MSE(h_true, h_pred)
+            return loss_val
+
+        def alpha_mse_loss(alpha_true, alpha_pred):
+            loss_val = float(10) * tf.keras.losses.MeanSquaredError()(alpha_true, alpha_pred)
+            return loss_val
+
+        x_build = [[1], [2], [3]] * np.ones((batchSize, 1), dtype=float)
+        test_point2 = tf.constant(x_build, dtype=tf.float32)
+
+        x_build = np.zeros((batchSize, 1), dtype=float)
+        test_point1 = tf.constant(x_build, dtype=tf.float32)
+
+        print(alpha_mse_loss(test_point, test_point2))
+        print(alpha_mse_loss(test_point2, test_point2))
+
+        print(h_mse_loss(test_point, test_point2))
+        print(h_mse_loss(test_point2, test_point2))
+
+        model.compile(
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': alpha_mse_loss},
+            optimizer='adam',
+            metrics=['mean_absolute_error'])
 
         # model.summary()
 
@@ -120,6 +149,11 @@ class neuralMK10(neuralBase):
                 callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
 
             # start Training
+            # h = self.trainingData[2]
+            # alpha = self.trainingData[1]
+            # u = self.trainingData[0]
+            # trainDataY =          net_out = tf.stack([h, alpha], axis=1)[:, :, 0]
+
             self.history = self.model.fit(x=self.trainingData[0], y=[self.trainingData[2], self.trainingData[1]],
                                           validation_split=valSplit,
                                           epochs=miniEpoch,
@@ -143,6 +177,7 @@ class neuralMK10(neuralBase):
 class DerivativeNet(tf.keras.Model):
 
     def __init__(self, inputDim, modelWidth, modelDepth, **opts):
+        # tf.keras.backend.set_floatx('float64')  # Full precision trianing
         super(DerivativeNet, self).__init__()
 
         # Specify integration weights and basis
@@ -175,7 +210,7 @@ class DerivativeNet(tf.keras.Model):
         for i in range(modelDepth):
             self.ic_layers.append(ICNNBlock(self.modelWidth, False))
 
-        self.output_layer = ICNNBlock(self.modelWidth, True)
+        self.output_layer = ICNNBlock(1, True)  # outputsize 1, since h is scalar
 
     def identity_func(self, tensor):
         return tensor
@@ -246,6 +281,7 @@ class DerivativeNet(tf.keras.Model):
 
         # u = self.reconstructU(alpha)
         # flux = self.reconstructFlux(alpha)
+        # net_out = tf.stack([h, alpha], axis=1)[:, :, 0]
 
         return [h, alpha]
 

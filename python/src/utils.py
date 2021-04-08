@@ -125,6 +125,7 @@ def plot1D(x, ys, labels=[], name='defaultName', log=True, linetypes=[], ):
 
     # plt.show()
     plt.savefig("figures/" + name + ".png")
+    print("Figure successfully saved to file: " + str("figures/" + name + ".png"))
     return 0
 
 
