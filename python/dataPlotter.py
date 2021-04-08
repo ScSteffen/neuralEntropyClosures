@@ -200,7 +200,7 @@ def plot1DM0Data(u, alpha, h):
     plt.show()
 
     finDiff = finiteDiff(u, h)
-    # plt.plot(u, finDiff)
+    plt.plot(u, finDiff)
     plt.plot(u, alpha, '--')
     plt.ylabel('alpha')
     plt.xlabel('u')

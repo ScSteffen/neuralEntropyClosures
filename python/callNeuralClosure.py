@@ -9,6 +9,8 @@ Date 29.10.2020
 
 ### imports ###
 from src.neuralClosures.configModel import initNeuralClosure
+from src import utils
+
 import numpy as np
 import tensorflow as tf
 import os
@@ -198,6 +200,7 @@ def main():
     df = pd.DataFrame(data=d)
     count = 0
     cfgFile = neuralClosureModel.filename + '/config_001_'
+
     while os.path.isfile(cfgFile + '.csv'):
         count += 1
         cfgFile = neuralClosureModel.filename + '/config_' + str(count).zfill(3) + '_'
@@ -208,7 +211,7 @@ def main():
 
     df.to_csv(cfgFile, index=False)
 
-    if (options.loadmodel == 1 or options.training == 0):
+    if (options.loadmodel == 1 or options.training == 0 or options.training == 2):
         # in execution mode the model must be loaded.
         # load model weights
         neuralClosureModel.loadModel()
@@ -223,9 +226,39 @@ def main():
                                       batchSize=options.batch, verbosity=options.verbosity,
                                       processingMode=options.processingmode)
         # save model
-        neuralClosureModel.saveModel()
+        # neuralClosureModel.saveModel()
+    elif (options.training == 2):
+        print("Analysis mode entered.")
+        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized)
+        [u, alpha, h] = neuralClosureModel.getTrainingData()
+        [h_pred, alpha_pred] = neuralClosureModel.computePrediction(u)
 
-    # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
+        # create the loss functions
+        def h_mse_loss(h_true, h_pred):
+            loss_val = tf.keras.losses.MSE(h_true, h_pred)
+            return loss_val
+
+        def alpha_mse_loss(alpha_true, alpha_pred):
+            loss_val = tf.keras.losses.MeanSquaredError()(alpha_true, alpha_pred)
+            return loss_val
+
+        diff_h = h_mse_loss(h, h_pred)
+        diff_alpha = h_mse_loss(alpha, alpha_pred)
+
+        diff2 = alpha_mse_loss(h, h_pred)
+        diff3 = alpha_mse_loss(alpha, alpha_pred)
+        print(diff2)
+        print(diff3)
+
+        utils.plot1D(u, [h_pred, h], ['h pred', 'h'], 'h_over_u', log=False)
+        utils.plot1D(u, [alpha_pred, alpha], ['alpha pred', 'alpha'], 'alpha_over_u', log=False)
+        utils.plot1D(u, [diff_alpha, diff_h], ['difference alpha', 'difference h'], 'errors', log=False)
+
+
+    else:
+        # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
+        print("pure execution mode")
+    print("Neural Entropy Closure Suite finished successfully.")
     return 0
 
 
