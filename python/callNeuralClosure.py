@@ -235,7 +235,7 @@ def main():
 
         # create the loss functions
         def h_mse_loss(h_true, h_pred):
-            loss_val = tf.keras.losses.MSE(h_true, h_pred)
+            loss_val = tf.keras.losses.mean_squared_error(h_true, h_pred)
             return loss_val
 
         def alpha_mse_loss(alpha_true, alpha_pred):
@@ -244,6 +244,8 @@ def main():
 
         diff_h = h_mse_loss(h, h_pred)
         diff_alpha = h_mse_loss(alpha, alpha_pred)
+        print(diff_h)
+        print(diff_alpha)
 
         diff2 = alpha_mse_loss(h, h_pred)
         diff3 = alpha_mse_loss(alpha, alpha_pred)
@@ -252,7 +254,7 @@ def main():
 
         utils.plot1D(u, [h_pred, h], ['h pred', 'h'], 'h_over_u', log=False)
         utils.plot1D(u, [alpha_pred, alpha], ['alpha pred', 'alpha'], 'alpha_over_u', log=False)
-        utils.plot1D(u, [diff_alpha, diff_h], ['difference alpha', 'difference h'], 'errors', log=False)
+        utils.plot1D(u, [diff_alpha, diff_h], ['difference alpha', 'difference h'], 'errors', log=True)
 
 
     else:

@@ -69,7 +69,7 @@ class neuralMK10(neuralBase):
 
         # build model
 
-        model = DerivativeNet(self.inputDim, self.modelWidth, self.modelDepth, name="ICNN_Derivative_Net")
+        model = customNet(self.inputDim, self.modelWidth, self.modelDepth, name="ICNN_Derivative_Net")
 
         # implicitly build the model
         batchSize = 3
@@ -77,18 +77,14 @@ class neuralMK10(neuralBase):
         test_point = tf.constant(x_build, dtype=tf.float32)
         test_output = model.predict(test_point)
 
-        # What should the loss components be? This will set initial loss weights to float(0) or float(1) acccordingly.
-        mse_h, mse_alpha, mse_u, mse_flux = [True, True, False, False]
-        # Choose weights for moment training routine
-        mt_weights = [float(mse_h), float(mse_alpha)]  # , float(mse_u), float(mse_flux)]
-
         # create the loss functions
-        def h_mse_loss(h_true, h_pred):
-            loss_val = tf.keras.losses.MSE(h_true, h_pred)
+        def mse_loss(h_true, h_pred):
+            loss_val = tf.keras.losses.mean_squared_error(h_true, h_pred)
             return loss_val
 
-        def alpha_mse_loss(alpha_true, alpha_pred):
+        def alter_mse_loss(alpha_true, alpha_pred):
             loss_val = float(10) * tf.keras.losses.MeanSquaredError()(alpha_true, alpha_pred)
+            # loss_val = 0
             return loss_val
 
         x_build = [[1], [2], [3]] * np.ones((batchSize, 1), dtype=float)
@@ -97,21 +93,22 @@ class neuralMK10(neuralBase):
         x_build = np.zeros((batchSize, 1), dtype=float)
         test_point1 = tf.constant(x_build, dtype=tf.float32)
 
-        print(alpha_mse_loss(test_point, test_point2))
-        print(alpha_mse_loss(test_point2, test_point2))
+        print(alter_mse_loss(test_point, test_point2))
+        print(alter_mse_loss(test_point2, test_point2))
 
-        print(h_mse_loss(test_point, test_point2))
-        print(h_mse_loss(test_point2, test_point2))
+        print(mse_loss(test_point, test_point2))
+        print(mse_loss(test_point2, test_point2))
 
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': alpha_mse_loss},
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
+            loss_weights={'output_1': 1, 'output_2': 1},
             optimizer='adam',
             metrics=['mean_absolute_error'])
 
-        # model.summary()
+        model.summary()
 
-        tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True)
-
+        tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
+                                  show_layer_names=True, rankdir='TB', expand_nested=True)
         return model
 
     def trainModel(self, valSplit=0.1, epochCount=2, epochChunks=1, batchSize=500, verbosity=1, processingMode=0):
@@ -119,14 +116,11 @@ class neuralMK10(neuralBase):
         Method to train network
         '''
 
-        # Set full precision training for CPU training
-        if processingMode == 0:
-            tf.keras.backend.set_floatx('float32')
-
         # Create callbacks
         mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/best_model.h5', monitor='loss', mode='min',
                                                      save_best_only=True,
                                                      verbose=verbosity)  # , save_weights_only = True, save_freq = 50, verbose=0)
+
         es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
                                               verbose=1)
         # mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
@@ -149,8 +143,8 @@ class neuralMK10(neuralBase):
                 callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
 
             # start Training
-            # h = self.trainingData[2]
-            # alpha = self.trainingData[1]
+            h = self.trainingData[2]
+            alpha = self.trainingData[1]
             # u = self.trainingData[0]
             # trainDataY =          net_out = tf.stack([h, alpha], axis=1)[:, :, 0]
 
@@ -174,11 +168,11 @@ class neuralMK10(neuralBase):
         return 0
 
 
-class DerivativeNet(tf.keras.Model):
+class customNet(tf.keras.Model):
 
     def __init__(self, inputDim, modelWidth, modelDepth, **opts):
-        # tf.keras.backend.set_floatx('float64')  # Full precision trianing
-        super(DerivativeNet, self).__init__()
+        # tf.keras.backend.set_floatx('float64')  # Full precision training
+        super(customNet, self).__init__()
 
         # Specify integration weights and basis
         ### Compare u and reconstructed u
@@ -204,13 +198,15 @@ class DerivativeNet(tf.keras.Model):
         self.input_layer = layers.Dense(self.inputDim, activation="softplus",
                                         kernel_initializer=self.inputLayerInitializer,
                                         use_bias=True,
-                                        bias_initializer='zeros')
+                                        bias_initializer='zeros',
+                                        name='input_layer')
         self.ic_layers = list()
 
         for i in range(modelDepth):
-            self.ic_layers.append(ICNNBlock(self.modelWidth, False))
+            self.ic_layers.append(ICNNBlock(self.modelWidth, False, blocknumber=i))
 
-        self.output_layer = ICNNBlock(1, True)  # outputsize 1, since h is scalar
+        self.output_layer = ICNNBlock(1, True, blockName="icnn_output",
+                                      blocknumber=0)  # outputsize 1, since h is scalar
 
     def identity_func(self, tensor):
         return tensor
@@ -264,31 +260,29 @@ class DerivativeNet(tf.keras.Model):
             returns [h(x),alpha(x),u(x)]
         """
 
-        x = layers.Lambda(self.identity_func, name="input")(x)
+        # x = layers.Lambda(self.identity_func, name="input")(x)
 
         with tf.GradientTape() as grad_tape:
             grad_tape.watch(x)
             y = self.input_layer(x)
             for ic_layer in self.ic_layers:
                 y = ic_layer(y, x)
-            h = self.output_layer(y, x)
 
+            h = self.output_layer(y, x)
+            
         d_net = grad_tape.gradient(h, x)
 
-        d_net = layers.Lambda(self.identity_func, name="d_net")(d_net)
-
-        alpha = d_net
+        alpha = layers.Lambda(self.identity_func, name="d_net")(d_net)
 
         # u = self.reconstructU(alpha)
         # flux = self.reconstructFlux(alpha)
         # net_out = tf.stack([h, alpha], axis=1)[:, :, 0]
-
         return [h, alpha]
 
 
 class ICNNBlock(tf.keras.Model):
-    def __init__(self, modelWidth, outputLayer=False):
-        super(ICNNBlock, self).__init__(name='')
+    def __init__(self, modelWidth, outputLayer=False, blockName="icnnBlock", blocknumber=0):
+        super(ICNNBlock, self).__init__(name=blockName + str(blocknumber))
 
         self.outputLayer = outputLayer
         self.modelWidth = modelWidth
@@ -299,14 +293,16 @@ class ICNNBlock(tf.keras.Model):
         # Create Layers
         self.Nonneg_layer = layers.Dense(self.modelWidth, kernel_constraint=NonNeg(), activation=None,
                                          kernel_initializer=self.hiddenInitializer,
-                                         use_bias=True, bias_initializer='zeros')
+                                         use_bias=True, bias_initializer='zeros',
+                                         name="non_negative_layer_" + str(blocknumber))
 
         self.dense_layer = layers.Dense(self.modelWidth, activation=None,
                                         kernel_initializer=self.hiddenInitializer,
-                                        use_bias=False)
+                                        use_bias=False,
+                                        name="arb_negative_layer_" + str(blocknumber))
 
-        self.add_layer = layers.Add()
-        self.bn_layer = layers.BatchNormalization()
+        self.add_layer = layers.Add(name="add_connection_" + str(blocknumber))
+        self.bn_layer = layers.BatchNormalization(name="bn_" + str(blocknumber))
 
     def call(self, layer_input, model_input, training=False):
         z_nonneg = self.Nonneg_layer(layer_input)

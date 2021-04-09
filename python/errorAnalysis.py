@@ -15,8 +15,8 @@ plt.style.use("kitish")
 
 
 def main():
-    filenameModel = "models/02_errorAnalysis_M1_1D_normal/best_model.h5"
-    filenameData = "data/1_stage/1D/Monomial_M1_1D_normal.csv"
+    filenameModel = "models/01_errorAnalysis_M1_1D/best_model.h5"
+    filenameData = "data/1D/Monomial_M1_1D_normal.csv"
     inputDim = 2
 
     # Load Model
