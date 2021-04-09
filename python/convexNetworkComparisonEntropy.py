@@ -18,7 +18,6 @@ Improvements:
 import csv
 import multiprocessing
 import pandas as pd
-from joblib import Parallel, delayed
 
 ### imports
 import numpy as np
@@ -64,7 +63,7 @@ def main():
     filenameAlphaCleanTrain = "data/0_stage/trainingData_M0_alpha_cleanTrain.csv"
     filenameHCleanTrain = "data/0_stage/trainingData_M0_h_cleanTrain.csv"
 
-    filename = "data/0_stage/DataGen_M0_0_100.csv"
+    filename = "data/1D/Monomial_M1_1D_normal.csv"
 
     filenameUCleanTest = "trainingData_M0_u_cleanTest.csv"
     filenameAlphaCleanTest = "trainingData_M0_alpha_cleanTest.csv"
@@ -75,7 +74,7 @@ def main():
     print("Load Training Data")
     # (u,h) = loadTrainingData(filenameUCleanTrain,filenameHCleanTrain)
     # (uTest, alphaTest, hTest) = loadTrainingData(filenameUCleanTest, filenameHCleanTest)
-    (u, alpha, h) = loadData(filename)
+    (u, alpha, h) = loadData(filename, 1)
     # (u,alpha,h) = loadTrainingData(filenameUCleanTrain,filenameAlphaCleanTrain,filenameHCleanTrain)
     # print("Clean Training Data")
     # (u,alpha,h) = cleanTrainingData(u,alpha,h)
@@ -83,10 +82,11 @@ def main():
     # storeTrainingData(u,alpha,h,filenameUCleanTrain,filenameAlphaCleanTrain,filenameHCleanTrain)
 
     # --- Fully Connected Network ---
+    print(tf.keras.losses.mean_squared_error(u, u))
     model = create_modelMK5()
     # model = tf.keras.models.load_model(filenameFCNN + '/model')
     model.load_weights(filenameFCNN + '/best_model.h5')
-    # model = trainModel(model,u,h, filenameFCNN, batchSize, epochCount)
+    model = trainModel(model, u, h, filenameFCNN, batchSize, epochCount)
 
     # --- Convex Network (nonnegative weights) ---
     # model_nonneg = create_modelMK5_nonneg()
@@ -313,7 +313,7 @@ def create_modelMK5():  # Build the network:
     model.summary()
 
     # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
-    model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
+    model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer='adam', metrics=['mean_absolute_error'])
     return model
 
 

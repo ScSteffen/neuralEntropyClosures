@@ -52,8 +52,8 @@ class neuralMK7(neuralBase):
             raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
 
         self.opt = optimizer
-        self.model = self.createModel()
         self.filename = "models/" + tempString
+        self.model = self.createModel()
 
     def createModel(self):
 
@@ -121,7 +121,7 @@ class neuralMK7(neuralBase):
         # other layers are convexLayers
         for idx in range(0, self.modelHeight):
             hidden = convexLayer(hidden, input_)
-        
+
         output_ = convexLayerOutput(hidden, input_)  # outputlayer
 
         # Create the model
@@ -131,6 +131,8 @@ class neuralMK7(neuralBase):
         # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
         model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
 
+        tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
+                                  show_layer_names=True, rankdir='TB', expand_nested=True)
         return model
 
     def selectTrainingData(self):
