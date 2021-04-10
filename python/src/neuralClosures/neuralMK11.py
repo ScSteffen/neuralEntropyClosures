@@ -8,6 +8,7 @@ Date 09.04.2020
 from .neuralBase import neuralBase
 from .neuralBase import LossAndErrorPrintingCallback
 
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras as keras
 from tensorflow.keras import layers
@@ -131,14 +132,20 @@ class neuralMK11(neuralBase):
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build model
-
         model = sobolevModel(coreModel, name="sobolev_icnn_wrapper")
-        model.build(input_shape=(self.inputDim,))
+
+        batchSize = 2  # dummy entry
+        model.build(input_shape=(batchSize, self.inputDim))
+
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
-            loss_weights={'output_1': 1, 'output_2': 1},
+            loss='mean_absolute_error',
             optimizer='adam',
-            metrics=['mean_absolute_error'])
+            metrics=['mean_absolute_error', 'mean_squared_error'])
+        # model.compile(
+        #    loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
+        #    loss_weights={'output_1': 1, 'output_2': 1},
+        #    optimizer='adam',
+        #    metrics=['mean_absolute_error'])
 
         # model.summary()
 
