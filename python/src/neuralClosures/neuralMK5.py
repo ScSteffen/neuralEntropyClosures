@@ -20,23 +20,17 @@ class neuralMK5(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, polyDegree=0, folderName="testFolder", optimizer='adam'):
+    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
+                 normalized=False):
         if (folderName == "testFolder"):
-            tempString = "MK5_N" + str(polyDegree)
+            customFolderName = "MK1_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
-            tempString = folderName
-        self.polyDegree = polyDegree
-        # --- Determine inputDim by MaxDegree ---
-        if (self.polyDegree == 0):
-            self.inputDim = 1
-        elif (self.polyDegree == 1):
-            self.inputDim = 4
-        else:
-            raise ValueError("Polynomial degeree higher than 1 not supported atm")
+            customFolderName = folderName
 
-        self.opt = optimizer
+        super(neuralMK5, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+                                        customFolderName)
+
         self.model = self.createModel()
-        self.filename = "models/" + tempString
 
     def createModel(self):
 

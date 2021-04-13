@@ -27,96 +27,55 @@ def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="tes
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
     '''
 
+    # Catch obvious errors
+    if (polyDegree < 0):
+        ValueError("Negative number of basis functions not possible")
+    if (spatialDim < 0 or spatialDim > 3):
+        ValueError("Spatial dimension must be between 1 and 3.")
+    if (width < 1):
+        ValueError("Model width must be bigger than 0.")
+    if (depth < 1):
+        ValueError("Model depth must be bigger than 0.")
+
     msg = "Chosen Model: MK" + str(modelNumber) + ", Degree " + str(polyDegree)
     print(msg)
+
     # Create the correct network
-
-    if (spatialDim == 3):
-        if (polyDegree < 0):
-            ValueError("Negative number of basis functions not possible")
-        elif modelNumber == 1:  # MK1 model
-            neuralClosureModel = neuralMK1(polyDegree, folderName, optimizer)
-
-        elif modelNumber == 2:  # Mk2 model
-            if polyDegree > 0:
-                ValueError("Model MK1 is constructed only for maximum degree 0 of the spherical harmonics")
-            neuralClosureModel = neuralMK2(polyDegree, folderName, optimizer)
-
-        elif modelNumber == 3:  # MK3 model
-            if polyDegree > 1:
-                ValueError(
-                    "Model MK3 is constructed only for maximum degree 1 of the spherical harmonics (at the moment)")
-
-            neuralClosureModel = neuralMK3(polyDegree, folderName, optimizer)
-
-        elif modelNumber == 4:  # MK4 model ICNN
-            if polyDegree > 1:
-                ValueError(
-                    "Model MK4 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
-
-            neuralClosureModel = neuralMK4(polyDegree, folderName, optimizer)
-
-        elif modelNumber == 5:  # MK5 model Dense with entropy target (direct comparison with model MK4)
-            if polyDegree > 1:
-                ValueError(
-                    "Model MK5 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
-
-            neuralClosureModel = neuralMK5(polyDegree, folderName, optimizer)
-
-        elif modelNumber == 6:  # MK4 model ICNN with input normalization
-            if polyDegree > 1:
-                ValueError(
-                    "Model MK6 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
-
-            neuralClosureModel = neuralMK6(polyDegree, folderName, optimizer)
-
-        elif modelNumber == 7:  # MK4 model ICNN with input normalization and deeper layout
-            if polyDegree > 1:
-                ValueError(
-                    "Model MK7 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
-
-            neuralClosureModel = neuralMK7(polyDegree, spatialDim, folderName, optimizer, width, depth)
-
-        elif modelNumber == 8:  # MK4 model ICNN with input normalization and deeper layout and relu activation
-            if polyDegree > 1:
-                ValueError(
-                    "Model MK8 is constructed only for maximum degree 1 of the spherical monomials (at the moment)")
-
-            neuralClosureModel = neuralMK8(polyDegree, folderName, optimizer)
-    elif spatialDim == 1:
-        if modelNumber == 7:  # MK4 model ICNN with input normalization and deeper layout
-            if polyDegree > 3:
-                ValueError(
-                    "Model MK7 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
-            neuralClosureModel = neuralMK7(polyDegree, spatialDim, folderName, optimizer, width, depth)
-
-        if modelNumber == 9:  # MK4 model ICNN with input normalization and deeper layout
-            if polyDegree > 3:
-                ValueError(
-                    "Model MK9 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
-            neuralClosureModel = neuralMK9(polyDegree, spatialDim, folderName, optimizer)
-
-        if modelNumber == 10:
-            if polyDegree > 3:
-                ValueError(
-                    "Model MK10 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
-            neuralClosureModel = neuralMK10(polyDegree, spatialDim, folderName, optimizer, width, depth,
-                                            normalized)
-        if modelNumber == 11:
-            if polyDegree > 3:
-                ValueError(
-                    "Model MK11 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
-            neuralClosureModel = neuralMK11(polyDegree, spatialDim, folderName, optimizer, width, depth,
-                                            normalized)
-
-    elif spatialDim == 2:
-        if modelNumber == 7:  # MK4 model ICNN with input normalization and deeper layout
-            if polyDegree > 1:
-                ValueError(
-                    "Model MK7 is constructed only for maximum degree 3 of the spherical monomials (at the moment)")
-            neuralClosureModel = neuralMK7(polyDegree, spatialDim, folderName, optimizer, width, depth)
+    if (modelNumber == 1):
+        neuralClosureModel = neuralMK1(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 2):
+        neuralClosureModel = neuralMK2(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 3):
+        neuralClosureModel = neuralMK3(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 4):
+        neuralClosureModel = neuralMK4(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 5):
+        neuralClosureModel = neuralMK5(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 6):
+        neuralClosureModel = neuralMK6(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 7):
+        neuralClosureModel = neuralMK7(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 8):
+        neuralClosureModel = neuralMK8(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 9):
+        neuralClosureModel = neuralMK9(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 10):
+        neuralClosureModel = neuralMK10(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                        optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 11):
+        neuralClosureModel = neuralMK11(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                        optimizer=optimizer, width=width, depth=depth, normalized=normalized)
     else:
-        print("No network fits your preferences!")
+        ValueError("No network fits your preferences!")
 
     print("Neural closure model created")
 

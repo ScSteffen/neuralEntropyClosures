@@ -20,39 +20,16 @@ class neuralMK7(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, polyDegree=0, spatialDim=0, folderName="testFolder", optimizer='adam', width=10, height=5):
+    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
+                 normalized=False):
         if (folderName == "testFolder"):
-            tempString = "MK7_N" + str(polyDegree) + "_D" + str(spatialDim)
+            customFolderName = "MK1_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
-            tempString = folderName
+            customFolderName = folderName
 
-        self.polyDegree = polyDegree
-        self.spatialDim = spatialDim
-        self.modelWidth = width
-        self.modelHeight = height
+        super(neuralMK7, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+                                        customFolderName)
 
-        # --- Determine inputDim by MaxDegree ---
-        if (spatialDim == 1):
-            self.inputDim = polyDegree + 1
-        elif (spatialDim == 3):
-            if (self.polyDegree == 0):
-                self.inputDim = 1
-            elif (self.polyDegree == 1):
-                self.inputDim = 4
-            else:
-                raise ValueError("Polynomial degeree higher than 1 not supported atm")
-        elif (spatialDim == 2):
-            if (self.polyDegree == 0):
-                self.inputDim = 1
-            elif (self.polyDegree == 1):
-                self.inputDim = 3
-            else:
-                raise ValueError("Polynomial degeree higher than 1 not supported atm")
-        else:
-            raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
-
-        self.opt = optimizer
-        self.filename = "models/" + tempString
         self.model = self.createModel()
 
     def createModel(self):
