@@ -19,8 +19,39 @@ import time
 ### class definitions ###
 class neuralBase:
 
-    def __init__(self):
-        pass
+    def __init__(self, normalized, polyDegree, spatialDim, width, depth, optimizer, customFolderName):
+        self.normalized = normalized
+        self.polyDegree = polyDegree
+        self.spatialDim = spatialDim
+        self.modelWidth = width
+        self.modelDepth = depth
+        self.optimizer = optimizer
+        self.filename = "models/" + customFolderName
+
+        # --- Determine inputDim by MaxDegree ---
+        if (spatialDim == 1):
+            self.inputDim = polyDegree + 1
+        elif (spatialDim == 3):
+            if (self.polyDegree == 0):
+                self.inputDim = 1
+            elif (self.polyDegree == 1):
+                self.inputDim = 4
+            else:
+                raise ValueError("Polynomial degeree higher than 1 not supported atm")
+        elif (spatialDim == 2):
+            if (self.polyDegree == 0):
+                self.inputDim = 1
+            elif (self.polyDegree == 1):
+                self.inputDim = 3
+            else:
+                raise ValueError("Polynomial degeree higher than 1 not supported atm")
+        else:
+            raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
+
+        self.csvInputDim = self.inputDim  # only for reading csv data
+
+        if normalized:
+            self.inputDim = self.inputDim - 1
 
     def createModel(self):
         pass
@@ -182,10 +213,17 @@ class neuralBase:
         if selectedCols[0] == True:
             df = pd.read_csv(filename, usecols=[i for i in uCols])
             uNParray = df.to_numpy()
+            if self.normalized:
+                # ignore first col of u
+                uNParray = uNParray[1:]
+
             self.trainingData.append(uNParray)
         if selectedCols[1] == True:
             df = pd.read_csv(filename, usecols=[i for i in alphaCols])
             alphaNParray = df.to_numpy()
+            if self.normalized:
+                # ignore first col of alpha
+                alphaNParray = alphaNParray[1:]
             self.trainingData.append(alphaNParray)
         if selectedCols[2] == True:
             df = pd.read_csv(filename, usecols=[i for i in hCol])

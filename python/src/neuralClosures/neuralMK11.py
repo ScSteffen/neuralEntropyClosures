@@ -23,43 +23,15 @@ class neuralMK11(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, polyDegree=0, spatialDim=0, folderName="testFolder", optimizer='adam', width=10, depth=5,
+    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
                  normalized=False):
         if (folderName == "testFolder"):
-            tempString = "MK11_N" + str(polyDegree) + "_D" + str(spatialDim)
+            customFolderName = "MK11_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
-            tempString = folderName
+            customFolderName = folderName
 
-        self.polyDegree = polyDegree
-        self.spatialDim = spatialDim
-        self.modelWidth = width
-        self.modelDepth = depth
-
-        # --- Determine inputDim by MaxDegree ---
-        if (spatialDim == 1):
-            self.inputDim = polyDegree + 1
-        elif (spatialDim == 3):
-            if (self.polyDegree == 0):
-                self.inputDim = 1
-            elif (self.polyDegree == 1):
-                self.inputDim = 4
-            else:
-                raise ValueError("Polynomial degeree higher than 1 not supported atm")
-        elif (spatialDim == 2):
-            if (self.polyDegree == 0):
-                self.inputDim = 1
-            elif (self.polyDegree == 1):
-                self.inputDim = 3
-            else:
-                raise ValueError("Polynomial degeree higher than 1 not supported atm")
-        else:
-            raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
-
-        if normalized:
-            self.inputDim = self.inputDim - 1
-
-        self.opt = optimizer
-        self.filename = "models/" + tempString
+        super(neuralMK11, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+                                         customFolderName)
 
         self.model = self.createModel()
 
@@ -137,10 +109,9 @@ class neuralMK11(neuralBase):
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
 
-        model.compile(
-            loss='mean_absolute_error',
-            optimizer='adam',
-            metrics=['mean_absolute_error', 'mean_squared_error'])
+        model.compile(loss='mean_absolute_error',
+                      optimizer='adam',
+                      metrics=['mean_absolute_error', 'mean_squared_error'])
         # model.compile(
         #    loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
         #    loss_weights={'output_1': 1, 'output_2': 1},

@@ -26,15 +26,17 @@ class neuralMK3(neuralBase):
     Loss function:  MSE between alpha and real_alpha
     '''
 
-    def __init__(self, polyDegree=0, folderName="testFolder", optimizer='adam'):
+    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
+                 normalized=False):
         if (folderName == "testFolder"):
-            tempString = "MK1_N" + str(polyDegree)
+            customFolderName = "MK1_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
-            tempString = folderName
-        self.polyDegree = polyDegree
-        self.opt = optimizer
+            customFolderName = folderName
+
+        super(neuralMK3, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+                                        customFolderName)
+
         self.model = self.createModel()
-        self.filename = "models/" + tempString
 
     def createModel(self):
         inputDim = self.getIdxSphericalHarmonics(self.polyDegree, self.polyDegree) + 1
