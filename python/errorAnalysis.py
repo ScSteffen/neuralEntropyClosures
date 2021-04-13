@@ -15,7 +15,7 @@ plt.style.use("kitish")
 
 
 def main():
-    filenameModel = "models/01_errorAnalysis_M1_1D/best_model.h5"
+    filenameModel = "models/test2/best_model.h5"  # "models/01_errorAnalysis_M1_1D/best_model.h5"
     filenameData = "data/1D/Monomial_M1_1D_normal.csv"
     inputDim = 2
 
@@ -26,9 +26,9 @@ def main():
     [u, alpha, h] = utils.loadData(filenameData, inputDim)
 
     # Model Predictions
-    [h_pred, alpha_pred] = model.predict(input)
-    # h_pred = utils.evaluateModel(model, u)
-    # alpha_pred = utils.evaluateModelDerivative(model, u)
+    # [h_pred, alpha_pred] = model.predict(input)
+    h_pred = utils.evaluateModel(model, u)
+    alpha_pred = utils.evaluateModelDerivative(model, u)
 
     # plot results
     utils.plot1D(u[:, 1], [h_pred[:, 0], h[:, 0]], ['h pred', 'h'], 'h_over_u', log=False)

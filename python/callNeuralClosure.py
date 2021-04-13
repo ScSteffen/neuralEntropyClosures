@@ -220,7 +220,8 @@ def main():
 
     if (options.training == 1):
         # create training Data
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized)
+        trainingMode = True
+        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, trainingMode=trainingMode)
         # train model
         neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks=options.epochchunk,
                                       batchSize=options.batch, verbosity=options.verbosity,
@@ -229,9 +230,23 @@ def main():
         # neuralClosureModel.saveModel()
     elif (options.training == 2):
         print("Analysis mode entered.")
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized)
+        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, trainingMode=False)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
-        [h_pred, alpha_pred] = neuralClosureModel.computePrediction(u)
+
+        x_model = tf.Variable(u)
+
+        with tf.GradientTape() as tape:
+            # training=True is only needed if there are layers with different
+            # behavior during training versus inference (e.g. Dropout).
+            tape.watch(x_model)
+            predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
+
+            # Compute the gradients
+        alpha_pred = np.asarray(tape.gradient(predictions, x_model))
+
+        h_pred = neuralClosureModel.computePrediction(u)
+
+        # [h_pred, alpha_pred] = neuralClosureModel.computePrediction(u)
 
         # create the loss functions
         def h_mse_loss(h_true, h_pred):
