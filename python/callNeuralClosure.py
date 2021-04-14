@@ -221,7 +221,7 @@ def main():
     if (options.training == 1):
         # create training Data
         trainingMode = True
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, trainingMode=trainingMode)
+        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=trainingMode)
         # train model
         neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks=options.epochchunk,
                                       batchSize=options.batch, verbosity=options.verbosity,
@@ -230,7 +230,7 @@ def main():
         # neuralClosureModel.saveModel()
     elif (options.training == 2):
         print("Analysis mode entered.")
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, trainingMode=False)
+        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=False)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
 
         x_model = tf.Variable(u)
