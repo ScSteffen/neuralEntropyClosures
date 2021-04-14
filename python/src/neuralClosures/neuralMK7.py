@@ -96,7 +96,7 @@ class neuralMK7(neuralBase):
                               bias_initializer='zeros'
                               )(input_)
         # other layers are convexLayers
-        for idx in range(0, self.modelHeight):
+        for idx in range(0, self.modelDepth):
             hidden = convexLayer(hidden, input_)
 
         output_ = convexLayerOutput(hidden, input_)  # outputlayer
@@ -108,8 +108,8 @@ class neuralMK7(neuralBase):
         # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
         model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
 
-        tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
-                                  show_layer_names=True, rankdir='TB', expand_nested=True)
+        # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
+        #                          show_layer_names=True, rankdir='TB', expand_nested=True)
         return model
 
     def selectTrainingData(self):

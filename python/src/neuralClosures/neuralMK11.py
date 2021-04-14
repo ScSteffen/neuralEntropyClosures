@@ -111,21 +111,21 @@ class neuralMK11(neuralBase):
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build model
-        model = coreModel  # sobolevModel(coreModel, name="sobolev_icnn_wrapper")
+        model = sobolevModel(coreModel, name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
 
-        model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                      # loss={'output_1': tf.keras.losses.MeanSquaredError()},
-                      # loss_weights={'output_1': 1, 'output_2': 0},
-                      optimizer='adam',
-                      metrics=['mean_absolute_error', 'mean_squared_error'])
-        # model.compile(
-        #    loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
-        #    loss_weights={'output_1': 1, 'output_2': 1},
-        #    optimizer='adam',
-        #    metrics=['mean_absolute_error'])
+        # model.compile(loss=tf.keras.losses.MeanSquaredError(),
+        #              # loss={'output_1': tf.keras.losses.MeanSquaredError()},
+        #              # loss_weights={'output_1': 1, 'output_2': 0},
+        #              optimizer='adam',
+        #              metrics=['mean_absolute_error', 'mean_squared_error'])
+        model.compile(
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
+            loss_weights={'output_1': 1, 'output_2': 1},
+            optimizer='adam',
+            metrics=['mean_absolute_error'])
 
         # model.summary()
 
@@ -144,7 +144,7 @@ class neuralMK11(neuralBase):
                                                      save_best_only=True,
                                                      verbose=verbosity)  # , save_weights_only = True, save_freq = 50, verbose=0)
 
-        es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=100,
+        es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.000001, patience=100,
                                               verbose=1)
         # mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
         #                                         save_weights_only=False,
@@ -179,6 +179,7 @@ class neuralMK11(neuralBase):
                                           batch_size=batchSize,
                                           verbose=verbosity,
                                           callbacks=callbackList,
+                                          shuffle=True
                                           )
             batchSize = 2 * batchSize
 
