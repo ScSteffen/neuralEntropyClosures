@@ -115,6 +115,8 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
+    parser.add_option("-a", "--alphasampling", dest="alphasampling", default=False,
+                      help="uses data sampled in alpha", metavar="ALPHA")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
     parser.add_option("-c", "--epochChunk", dest="epochchunk", default=1,
@@ -147,6 +149,7 @@ def main():
                       help="height of the network", metavar="HEIGHT")
 
     (options, args) = parser.parse_args()
+    options.alphasampling = bool(options.alphasampling)
     options.degree = int(options.degree)
     options.spatialDimension = int(options.spatialDimension)
     options.model = int(options.model)
@@ -181,7 +184,8 @@ def main():
     neuralClosureModel.model.summary()
 
     # Print chosen options to file
-    d = {'degree': [options.degree],
+    d = {'alphasampling': [options.alphasampling],
+         'degree': [options.degree],
          'spatial Dimension': [options.spatialDimension],
          'model': [options.model],
          'epoch': [options.epoch],
@@ -221,9 +225,10 @@ def main():
     if (options.training == 1):
         # create training Data
         trainingMode = True
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=trainingMode)
+        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=trainingMode,
+                                            alphasampling=options.alphasampling)
         # train model
-        neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks=options.epochchunk,
+        neuralClosureModel.trainModel(valSplit=0.1, epochCount=options.epoch, epochChunks=options.epochchunk,
                                       batchSize=options.batch, verbosity=options.verbosity,
                                       processingMode=options.processingmode)
         # save model
