@@ -29,15 +29,16 @@ class neuralMK1(neuralBase):
         self.model = self.createModel()
 
     def createModel(self):
-        inputDim = self.getIdxSphericalHarmonics(self.polyDegree, self.polyDegree) + 1
+        # inputDim = self.getIdxSphericalHarmonics(self.polyDegree, self.polyDegree) + 1
+
         model = keras.models.Sequential([
-            keras.layers.Dense(256, activation='sigmoid', input_shape=(inputDim,)),
+            keras.layers.Dense(256, activation='sigmoid', input_shape=(self.inputDim,)),
             keras.layers.Dense(512, activation='sigmoid'),
             keras.layers.Dropout(0.2),
             keras.layers.Dense(256, activation='sigmoid'),
             keras.layers.Dropout(0.2),
             keras.layers.Dense(128, activation='sigmoid'),
-            keras.layers.Dense(inputDim, )
+            keras.layers.Dense(self.inputDim, )
         ], name="MK1closure")
 
         model.summary()

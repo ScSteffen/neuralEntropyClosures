@@ -14,6 +14,7 @@ from tensorflow import keras as keras
 from tensorflow.keras import layers
 from tensorflow.keras.constraints import NonNeg
 from tensorflow import Tensor
+from src import math
 
 
 class neuralMK11(neuralBase):
@@ -111,7 +112,7 @@ class neuralMK11(neuralBase):
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build model
-        model = sobolevModel(coreModel, name="sobolev_icnn_wrapper")
+        model = sobolevModel(coreModel, polyDegree=self.polyDegree, name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
@@ -196,12 +197,19 @@ class neuralMK11(neuralBase):
 
 class sobolevModel(tf.keras.Model):
     # Sobolev implies, that the model outputs also its derivative
-    def __init__(self, coreModel, **opts):
-        # tf.keras.backend.set_floatx('float64')  # Full precision training
+    def __init__(self, coreModel, polyDegree=1, **opts):
         super(sobolevModel, self).__init__()
-
         # Member is only the model we want to wrap with sobolev execution
         self.coreModel = coreModel  # must be a compiled tensorflow model
+
+        # Create quadrature and momentBasis. Currently only for 1D problems
+        self.polyDegree = polyDegree
+        self.nq = 100
+        [self.quadPts, self.quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
+
+        mBasis = math.computeMonomialBasis1D(self.quadPts, self.polyDegree)  # dims = (N x nq)
+        self.inputDim = mBasis.shape[0]
+        self.momentBasis = tf.constant(mBasis, shape=(1, self.inputDim, self.nq))  # dims = (batchSIze x N x nq)
 
     def call(self, x, training=False):
         """
@@ -210,10 +218,10 @@ class sobolevModel(tf.keras.Model):
 
         with tf.GradientTape() as grad_tape:
             grad_tape.watch(x)
-            y = self.coreModel(x)
-        derivativeNet = grad_tape.gradient(y, x)
+            h = self.coreModel(x)
+        alpha = grad_tape.gradient(h, x)
 
-        return [y, derivativeNet]
+        return [h, alpha]
 
     def callDerivative(self, x, training=False):
         with tf.GradientTape() as grad_tape:
@@ -222,3 +230,48 @@ class sobolevModel(tf.keras.Model):
         derivativeNet = grad_tape.gradient(y, x)
 
         return derivativeNet
+
+    def reconstrucU(self, alpha):
+        """
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        imput: alpha, dims = (nS x N)
+               m    , dims = (N x nq)
+               w    , dims = nq
+        returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+        """
+        # Currently only for maxwell Boltzmann entropy
+
+        f_quad = tf.math.exp(tf.tensordot(alpha[:, :], self.momentBasis[:, :], axes=1))
+        u = 0
+        return u
+
+
+"""
+def reconstructU(alpha, m, w):
+    """
+# imput: alpha, dims = (nS x N)
+#       m    , dims = (N x nq)
+#       w    , dims = nq
+# returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+"""
+
+# tensor version
+temp = entropyDualPrime(np.matmul(alpha, m))  # ns x nq
+## extend to 3D tensor
+mTensor = m.reshape(1, m.shape[0], m.shape[1])  # ns x N  x nq
+tempTensor = temp.reshape(temp.shape[0], 1, temp.shape[1])  # ns x N x nq
+
+return integrate(mTensor * tempTensor, w)
+
+
+def integrate(integrand, weights):
+"""
+# params: weights = quadweights vector (at quadpoints) (dim = nq)
+#        integrand = integrand vector, evaluated at quadpts (dim = vectorlen x nq)
+# returns: integral <integrand>
+"""
+return np.dot(integrand, weights)
+"""
