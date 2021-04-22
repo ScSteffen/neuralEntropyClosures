@@ -172,10 +172,16 @@ class neuralBase:
         return csv_logger
 
     def saveModel(self):
-        self.model.save(self.filename + '/model')
-
-        with open(self.filename + '/trainingHistory.json', 'w') as file:
-            json.dump(self.model.history.history, file)
+        """
+        Saves best model to .pb file
+        """
+        # load best h5 file
+        usedFileName = self.filename
+        self.model.load_weights(self.filename + '/best_model.h5')
+        self.model.save(self.filename + '/best_model')
+        print("Model successfully saved to file and .h5")
+        # with open(self.filename + '/trainingHistory.json', 'w') as file:
+        #    json.dump(self.model.history.history, file)
         return 0
 
     def loadModel(self, filename=None):
