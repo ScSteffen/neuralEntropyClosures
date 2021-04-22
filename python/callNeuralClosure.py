@@ -183,37 +183,8 @@ def main():
               optimizer=options.optimizer, width=options.networkwidth, depth=options.networkdepth)
     neuralClosureModel.model.summary()
 
-    # Print chosen options to file
-    d = {'alphasampling': [options.alphasampling],
-         'degree': [options.degree],
-         'spatial Dimension': [options.spatialDimension],
-         'model': [options.model],
-         'epoch': [options.epoch],
-         'epochChunk': [options.epochchunk],
-         'batchsize': [options.batch],
-         'verbosity': [options.verbosity],
-         'loadmodel': [options.loadmodel],
-         'training': [options.training],
-         'folder': [options.folder],
-         'optimizer': [options.optimizer],
-         'processingmode': [options.processingmode],
-         'normalized moments': [options.normalized],
-         'network width': [options.networkwidth],
-         'network depth': [options.networkdepth]}
-
-    df = pd.DataFrame(data=d)
-    count = 0
-    cfgFile = neuralClosureModel.filename + '/config_001_'
-
-    while os.path.isfile(cfgFile + '.csv'):
-        count += 1
-        cfgFile = neuralClosureModel.filename + '/config_' + str(count).zfill(3) + '_'
-
-    cfgFile = cfgFile + '.csv'
-
-    print("Writing config to " + cfgFile)
-
-    df.to_csv(cfgFile, index=False)
+    # Save options and runscript to file
+    utils.writeConfigFile(options, neuralClosureModel)
 
     if (options.loadmodel == 1 or options.training == 0 or options.training == 2):
         # in execution mode the model must be loaded.
@@ -232,7 +203,7 @@ def main():
                                       batchSize=options.batch, verbosity=options.verbosity,
                                       processingMode=options.processingmode)
         # save model
-        # neuralClosureModel.saveModel()
+        neuralClosureModel.saveModel()
     elif (options.training == 2):
         print("Analysis mode entered.")
         neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=False)

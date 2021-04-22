@@ -10,6 +10,7 @@ import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import random
+import os
 
 
 def finiteDiff(x, y):
@@ -137,3 +138,70 @@ def shuffleTrainData(x, y, mode="random"):
     x, y = zip(*c)
 
     return [np.asarray(x), np.asarray(y)]
+
+
+def writeConfigFile(options, neuralClosureModel):
+    # create String to create a python runscript
+    runScript = "python callNEuralClosure.py \\  \n"
+    runScript = runScript + "--alphasampling " + str(int(options.alphasampling)) + " \\  \n"
+    runScript = runScript + "--batch " + str(options.batch) + " \\ \n"
+    runScript = runScript + "--epochChunk " + str(options.epochchunk) + "\\  \n"
+    runScript = runScript + "--degree " + str(options.degree) + " \\  \n"
+    runScript = runScript + "--epoch " + str(options.epoch) + " \\  \n"
+    runScript = runScript + "--folder " + str(options.folder) + "\\  \n"
+    runScript = runScript + "--loadModel " + str(1) + " \\  \n"  # force to load
+    runScript = runScript + "--model " + str(options.model) + " \\  \n"
+    runScript = runScript + "--normalized " + str(int(options.normalized)) + " \\  \n"
+    runScript = runScript + "--optimizer " + str(options.optimizer) + " \\  \n"
+    runScript = runScript + "--processingmode " + str(options.processingmode) + "\\  \n"
+    runScript = runScript + "--spatialDimension " + str(options.spatialDimension) + "\\  \n"
+    runScript = runScript + "--training " + str(options.training) + " \\  \n"
+    runScript = runScript + "--verbosity " + str(options.verbosity) + " \\  \n"
+    runScript = runScript + "--networkwidth " + str(options.networkwidth) + " \\  \n"
+    runScript = runScript + "--networkdepth " + str(options.networkdepth)
+
+    # Getting filename
+    rsFile = neuralClosureModel.filename + '/runScript_001_'
+    count = 0
+
+    while os.path.isfile(rsFile + '.sh'):
+        count += 1
+        rsFile = neuralClosureModel.filename + '/runScript_' + str(count).zfill(3) + '_'
+
+    rsFile = rsFile + '.sh'
+
+    print("Writing config to " + rsFile)
+    f = open(rsFile, "w")
+    f.write(runScript)
+    f.close()
+
+    # Print chosen options to csv
+    d = {'alphasampling': [options.alphasampling],
+         'batch': [options.batch],
+         'epochChunk': [options.epochchunk],
+         'degree': [options.degree],
+         'epoch': [options.epoch],
+         'folder': [options.folder],
+         'loadmodel': [options.loadmodel],
+         'model': [options.model],
+         'normalized moments': [options.normalized],
+         'optimizer': [options.optimizer],
+         'processingmode': [options.processingmode],
+         'spatial Dimension': [options.spatialDimension],
+         'verbosity': [options.verbosity],
+         'training': [options.training],
+         'network width': [options.networkwidth],
+         'network depth': [options.networkdepth]}
+
+    df = pd.DataFrame(data=d)
+    count = 0
+    cfgFile = neuralClosureModel.filename + '/config_001_'
+
+    while os.path.isfile(cfgFile + '.csv'):
+        count += 1
+        cfgFile = neuralClosureModel.filename + '/config_' + str(count).zfill(3) + '_'
+
+    cfgFile = cfgFile + '.csv'
+    df.to_csv(cfgFile, index=False)
+
+    return True
