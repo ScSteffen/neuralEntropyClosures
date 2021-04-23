@@ -194,6 +194,25 @@ class neuralMK11(neuralBase):
     def trainingDataPostprocessing(self):
         return 0
 
+    def callNetwork(self, u_complete):
+        """
+        brief: Only works for maxwell Boltzmann entropy so far.
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: u_complete, dims = (nS x N)
+        returns: alpha_complete_predicted, dim = (nS x N)
+                 u_complete_reconstructed, dim = (nS x N)
+                 h_predicted, dim = (nS x 1)
+        """
+        u_reduced = u_complete[:, 1:]  # chop of u_0
+        [h_predicted, alpha_predicted] = self.model(u_reduced)
+        alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
+        u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
+
+        return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
+
 
 class sobolevModel(tf.keras.Model):
     # Sobolev implies, that the model outputs also its derivative
@@ -205,11 +224,14 @@ class sobolevModel(tf.keras.Model):
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.polyDegree = polyDegree
         self.nq = 100
-        [self.quadPts, self.quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
-
-        mBasis = math.computeMonomialBasis1D(self.quadPts, self.polyDegree)  # dims = (N x nq)
+        [quadPts, quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
+        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)  # dims = (batchSIze x N x nq)
+        self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
+                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
+        mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
         self.inputDim = mBasis.shape[0]
-        self.momentBasis = tf.constant(mBasis, shape=(1, self.inputDim, self.nq))  # dims = (batchSIze x N x nq)
+        self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
+                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
 
     def call(self, x, training=False):
         """
@@ -231,47 +253,34 @@ class sobolevModel(tf.keras.Model):
 
         return derivativeNet
 
-    def reconstrucU(self, alpha):
+    def reconstruct_alpha(self, alpha):
+        """
+        brief: Only works for maxwell Boltzmann entropy so far.
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N-1)
+               m    , dims = (N x nq)
+               w    , dims = nq
+        returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
+        """
+        tmp = tf.math.exp(tf.tensordot(alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        alpha_0 = -tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))  # ln(<tmp>)
+        return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
+
+    def reconstruct_u(self, alpha):
         """
         nS = batchSize
         N = basisSize
         nq = number of quadPts
 
-        imput: alpha, dims = (nS x N)
+        input: alpha, dims = (nS x N)
                m    , dims = (N x nq)
                w    , dims = nq
         returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
         """
         # Currently only for maxwell Boltzmann entropy
-
-        f_quad = tf.math.exp(tf.tensordot(alpha[:, :], self.momentBasis[:, :], axes=1))
-        u = 0
-        return u
-
-
-"""
-def reconstructU(alpha, m, w):
-    """
-# imput: alpha, dims = (nS x N)
-#       m    , dims = (N x nq)
-#       w    , dims = nq
-# returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
-"""
-
-# tensor version
-temp = entropyDualPrime(np.matmul(alpha, m))  # ns x nq
-## extend to 3D tensor
-mTensor = m.reshape(1, m.shape[0], m.shape[1])  # ns x N  x nq
-tempTensor = temp.reshape(temp.shape[0], 1, temp.shape[1])  # ns x N x nq
-
-return integrate(mTensor * tempTensor, w)
-
-
-def integrate(integrand, weights):
-"""
-# params: weights = quadweights vector (at quadpoints) (dim = nq)
-#        integrand = integrand vector, evaluated at quadpts (dim = vectorlen x nq)
-# returns: integral <integrand>
-"""
-return np.dot(integrand, weights)
-"""
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
+        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis

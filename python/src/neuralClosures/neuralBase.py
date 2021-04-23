@@ -6,14 +6,15 @@ Date 29.10.2020
 '''
 
 ### imports ###
-# import matplotlib.pyplot as plt
-import json
+# python modules
 import tensorflow as tf
 import numpy as np
-import csv
 import pandas as pd
 from os import path, makedirs, walk
 import time
+
+# intern modules
+from src import utils
 
 
 ### class definitions ###
@@ -56,18 +57,29 @@ class neuralBase:
     def createModel(self):
         pass
 
-    def computePrediction(self, input):
+    def callNetwork(self, u):
+        """
+        Brief: This does not reconstruct u, but returns original u. Careful here!
+
+        # Input: input.shape = (nCells, nMaxMoment), nMaxMoment = 9 in case of MK3
+        # Output: Gradient of the network wrt input
+        """
+        x_model = tf.Variable(u)
+
+        with tf.GradientTape() as tape:
+            # training=True is only needed if there are layers with different
+            # behavior during training versus inference (e.g. Dropout).
+            predictions = self.model(x_model, training=False)  # same as neuralClosureModel.model.predict(x)
+
+        gradients = tape.gradient(predictions, x_model)
+
+        return [x_model, gradients, predictions]
+
+    def simple_callNetwork(self, input):
+        """
+        Simple prediction, that just calls the model
+        """
         return self.model.predict(input)
-
-    def printWeights(self):
-        for layer in self.model.layers:
-            weights = layer.get_weights()  # list of numpy arrays
-            print(weights)
-            print("---------------------------------------------")
-
-    def showModel(self):
-        self.model.summary()
-        return 0
 
     def trainModel(self, valSplit=0.1, epochCount=2, epochChunks=1, batchSize=500, verbosity=1, processingMode=0):
         '''
@@ -197,7 +209,17 @@ class neuralBase:
         print("Model loaded from file ")
         return 0
 
-    def loadTrainingData(self, normalizedMoments=False, shuffleMode=False, alphasampling=False):
+    def printWeights(self):
+        for layer in self.model.layers:
+            weights = layer.get_weights()  # list of numpy arrays
+            print(weights)
+            print("---------------------------------------------")
+
+    def showModel(self):
+        self.model.summary()
+        return 0
+
+    def loadTrainingData(self, shuffleMode=False, alphasampling=False, loadAll=False):
         """
         Loads the trianing data
         params: normalizedMoments = load normalized data  (u_0=1)
@@ -210,7 +232,7 @@ class neuralBase:
         ### Create trainingdata filename"
         filename = "data/" + str(self.spatialDim) + "D/Monomial_M" + str(self.polyDegree) + "_" + str(
             self.spatialDim) + "D"
-        if normalizedMoments:
+        if self.normalized:
             filename = "data/" + str(self.spatialDim) + "D/Monomial_M" + str(self.polyDegree) + "_" + str(
                 self.spatialDim) + "D_normal"
         if alphasampling:
@@ -231,7 +253,7 @@ class neuralBase:
         if selectedCols[0] == True:
             df = pd.read_csv(filename, usecols=[i for i in uCols])
             uNParray = df.to_numpy()
-            if self.normalized:
+            if self.normalized and not loadAll:
                 # ignore first col of u
                 uNParray = uNParray[:, 1:]
 
@@ -239,7 +261,7 @@ class neuralBase:
         if selectedCols[1] == True:
             df = pd.read_csv(filename, usecols=[i for i in alphaCols])
             alphaNParray = df.to_numpy()
-            if self.normalized:
+            if self.normalized and not loadAll:
                 # ignore first col of alpha
                 alphaNParray = alphaNParray[:, 1:]
             self.trainingData.append(alphaNParray)
@@ -269,33 +291,81 @@ class neuralBase:
     def trainingDataPostprocessing(self):
         return 0
 
-    '''
-       def plotTrainingHistory(self):
+    def evaluateModel(self, u_test, alpha_test, h_test):
+        """
+        brief: runs a number of tests and evalutations to determine test errors of the model.
+        input: u_test, dim (nS, N)
+               alpha_test, dim (nS, N)
+               h_test, dim(nS,1)
+        return: True, if run successfully. Prints several plots and pictures to file.
+        """
 
-           #Method to plot the training data
+        [u_pred, alpha_pred, h_pred] = self.callNetwork(u_test)
 
-           fig, axs = plt.subplots(2)
+        # create the loss functions
+        def pointwiseDiff(trueSamples, predSamples):
+            """
+            brief: computes the squared 2-norm for each sample point
+            input: trueSamples, dim = (ns,N)
+                   predSamples, dim = (ns,N)
+            returns: mse(trueSamples-predSamples) dim = (ns,)
+            """
+            loss_val = tf.keras.losses.mean_squared_error(trueSamples, predSamples)
+            return loss_val
 
-           axs[0].plot(self.model.history.history['mean_absolute_error'])
-           axs[0].plot(self.model.history.history['val_mean_absolute_error'])
-           axs[0].set_title('absolute error')
-           axs[0].set_ylabel('error')
-           axs[0].set_xlabel('epoch')
-           axs[0].set_yscale("log")
-           axs[0].legend(['train mean abs error', 'val mean abs error'], loc='upper right')
+        def meanDiff(trueSamples, predSamples):
+            """
+            brief: computes the average of pointwiseDiff over all samples
+            input: trueSamples, dim = (ns,N)
+                   predSamples, dim = (ns,N)
+            returns: avg(mse(trueSamples-predSamples)) dim = (1,)
+            """
+            loss_val = tf.keras.losses.MeanSquaredError()(trueSamples, predSamples)
+            return loss_val
 
-           # summarize history for loss
-           axs[1].plot(self.model.history.history['loss'])
-           axs[1].plot(self.model.history.history['val_loss'])
-           axs[1].set_title('model loss: mse')
-           axs[1].set_ylabel('error')
-           axs[1].set_xlabel('epoch')
-           axs[1].set_yscale("log")
-           axs[1].legend(['train mse', 'val mse'], loc='upper right')
-           # axs[1].show()
-           plt.show()
-           return 0
-       '''
+        diff_h = pointwiseDiff(h_test, h_pred)
+        diff_alpha = pointwiseDiff(alpha_test, alpha_pred)
+        diff_u = pointwiseDiff(u_test, u_pred)
+
+        utils.plot1D(u_test[:, 1], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
+        utils.plot1D(u_test[:, 1], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
+                     'alpha1_over_u1',
+                     log=False)
+        utils.plot1D(u_test[:, 1], [alpha_pred[:, 0], alpha_test[:, 0]], ['alpha0 pred', 'alpha0 true'],
+                     'alpha0_over_u1',
+                     log=False)
+        utils.plot1D(u_test[:, 1], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1', log=False)
+        utils.plot1D(u_test[:, 1], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1', log=False)
+        utils.plot1D(u_test[:, 1], [diff_alpha, diff_h, diff_u], ['difference alpha', 'difference h', 'difference u'],
+                     'errors', log=True)
+
+        '''
+           def plotTrainingHistory(self):
+
+               #Method to plot the training data
+
+               fig, axs = plt.subplots(2)
+
+               axs[0].plot(self.model.history.history['mean_absolute_error'])
+               axs[0].plot(self.model.history.history['val_mean_absolute_error'])
+               axs[0].set_title('absolute error')
+               axs[0].set_ylabel('error')
+               axs[0].set_xlabel('epoch')
+               axs[0].set_yscale("log")
+               axs[0].legend(['train mean abs error', 'val mean abs error'], loc='upper right')
+
+               # summarize history for loss
+               axs[1].plot(self.model.history.history['loss'])
+               axs[1].plot(self.model.history.history['val_loss'])
+               axs[1].set_title('model loss: mse')
+               axs[1].set_ylabel('error')
+               axs[1].set_xlabel('epoch')
+               axs[1].set_yscale("log")
+               axs[1].legend(['train mse', 'val mse'], loc='upper right')
+               # axs[1].show()
+               plt.show()
+               return 0
+           '''
 
 
 class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):

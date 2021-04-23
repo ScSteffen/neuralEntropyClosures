@@ -125,7 +125,7 @@ def plot1D(x, ys, labels=[], name='defaultName', log=True, linetypes=[], ):
         plt.yscale('log')
 
     # plt.show()
-    plt.savefig("figures/" + name + ".png")
+    plt.savefig("figures/" + name + ".png", dpi=150)
     print("Figure successfully saved to file: " + str("figures/" + name + ".png"))
     return 0
 
