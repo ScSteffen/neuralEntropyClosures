@@ -142,23 +142,23 @@ def shuffleTrainData(x, y, mode="random"):
 
 def writeConfigFile(options, neuralClosureModel):
     # create String to create a python runscript
-    runScript = "python callNeuralClosure.py \\  \n"
-    runScript = runScript + "--alphasampling " + str(int(options.alphasampling)) + " \\  \n"
-    runScript = runScript + "--batch " + str(options.batch) + " \\ \n"
-    runScript = runScript + "--epochChunk " + str(options.epochchunk) + "\\  \n"
-    runScript = runScript + "--degree " + str(options.degree) + " \\  \n"
-    runScript = runScript + "--epoch " + str(options.epoch) + " \\  \n"
-    runScript = runScript + "--folder " + str(options.folder) + "\\  \n"
-    runScript = runScript + "--loadModel " + str(1) + " \\  \n"  # force to load
-    runScript = runScript + "--model " + str(options.model) + " \\  \n"
-    runScript = runScript + "--normalized " + str(int(options.normalized)) + " \\  \n"
-    runScript = runScript + "--optimizer " + str(options.optimizer) + " \\  \n"
-    runScript = runScript + "--processingmode " + str(options.processingmode) + "\\  \n"
-    runScript = runScript + "--spatialDimension " + str(options.spatialDimension) + "\\  \n"
-    runScript = runScript + "--training " + str(options.training) + " \\  \n"
-    runScript = runScript + "--verbosity " + str(options.verbosity) + " \\  \n"
-    runScript = runScript + "--networkwidth " + str(options.networkwidth) + " \\  \n"
-    runScript = runScript + "--networkdepth " + str(options.networkdepth)
+    runScript = "python callNeuralClosure.py \\\n"
+    runScript = runScript + "--alphasampling=" + str(int(options.alphasampling)) + "\\\n"
+    runScript = runScript + "--batch=" + str(options.batch) + "\\\n"
+    runScript = runScript + "--epochChunk=" + str(options.epochchunk) + "\\\n"
+    runScript = runScript + "--degree=" + str(options.degree) + "\\\n"
+    runScript = runScript + "--epoch=" + str(options.epoch) + " \\\n"
+    runScript = runScript + "--folder=" + str(options.folder) + "\\\n"
+    runScript = runScript + "--loadModel=" + str(1) + "\\\n"  # force to load
+    runScript = runScript + "--model=" + str(options.model) + " \\\n"
+    runScript = runScript + "--normalized=" + str(int(options.normalized)) + "\\\n"
+    runScript = runScript + "--optimizer=" + str(options.optimizer) + "\\\n"
+    runScript = runScript + "--processingmode=" + str(options.processingmode) + "\\\n"
+    runScript = runScript + "--spatialDimension=" + str(options.spatialDimension) + "\\\n"
+    runScript = runScript + "--training=" + str(options.training) + "\\\n"
+    runScript = runScript + "--verbosity=" + str(options.verbosity) + "\\\n"
+    runScript = runScript + "--networkwidth=" + str(options.networkwidth) + "\\\n"
+    runScript = runScript + "--networkdepth=" + str(options.networkdepth)
 
     # Getting filename
     rsFile = neuralClosureModel.filename + '/runScript_001_'
