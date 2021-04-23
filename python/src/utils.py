@@ -142,7 +142,7 @@ def shuffleTrainData(x, y, mode="random"):
 
 def writeConfigFile(options, neuralClosureModel):
     # create String to create a python runscript
-    runScript = "python callNEuralClosure.py \\  \n"
+    runScript = "python callNeuralClosure.py \\  \n"
     runScript = runScript + "--alphasampling " + str(int(options.alphasampling)) + " \\  \n"
     runScript = runScript + "--batch " + str(options.batch) + " \\ \n"
     runScript = runScript + "--epochChunk " + str(options.epochchunk) + "\\  \n"
