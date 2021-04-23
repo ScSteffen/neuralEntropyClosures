@@ -8,14 +8,13 @@ Date 29.10.2020
 '''
 
 ### imports ###
+# internal modules
 from src.neuralClosures.configModel import initNeuralClosure
 from src import utils
 
-import numpy as np
+# python modules
 import tensorflow as tf
 import os
-import pandas as pd
-
 from optparse import OptionParser
 
 ### global variable ###
@@ -196,7 +195,7 @@ def main():
     if (options.training == 1):
         # create training Data
         trainingMode = True
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=trainingMode,
+        neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
                                             alphasampling=options.alphasampling)
         # train model
         neuralClosureModel.trainModel(valSplit=0.1, epochCount=options.epoch, epochChunks=options.epochchunk,
@@ -206,46 +205,14 @@ def main():
         neuralClosureModel.saveModel()
     elif (options.training == 2):
         print("Analysis mode entered.")
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=False)
+        neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
 
-        x_model = tf.Variable(u)
+        # test stuff:
+        # tmp = neuralClosureModel.callNetwork(u, alpha, h)
+        # print(tmp)
 
-        with tf.GradientTape() as tape:
-            # training=True is only needed if there are layers with different
-            # behavior during training versus inference (e.g. Dropout).
-            tape.watch(x_model)
-            predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
-
-            # Compute the gradients
-        alpha_pred = np.asarray(tape.gradient(predictions, x_model))
-
-        h_pred = neuralClosureModel.computePrediction(u)
-
-        # [h_pred, alpha_pred] = neuralClosureModel.computePrediction(u)
-
-        # create the loss functions
-        def h_mse_loss(h_true, h_pred):
-            loss_val = tf.keras.losses.mean_squared_error(h_true, h_pred)
-            return loss_val
-
-        def alpha_mse_loss(alpha_true, alpha_pred):
-            loss_val = tf.keras.losses.MeanSquaredError()(alpha_true, alpha_pred)
-            return loss_val
-
-        diff_h = h_mse_loss(h, h_pred)
-        diff_alpha = h_mse_loss(alpha, alpha_pred)
-        print(diff_h)
-        print(diff_alpha)
-
-        diff2 = alpha_mse_loss(h, h_pred)
-        diff3 = alpha_mse_loss(alpha, alpha_pred)
-        print(diff2)
-        print(diff3)
-
-        utils.plot1D(u, [h_pred, h], ['h pred', 'h'], 'h_over_u', log=False)
-        utils.plot1D(u, [alpha_pred, alpha], ['alpha pred', 'alpha'], 'alpha_over_u', log=False)
-        utils.plot1D(u, [diff_alpha, diff_h], ['difference alpha', 'difference h'], 'errors', log=True)
+        neuralClosureModel.evaluateModel(u, alpha, h)
 
 
     else:
