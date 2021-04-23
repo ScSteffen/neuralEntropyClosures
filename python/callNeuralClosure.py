@@ -8,14 +8,13 @@ Date 29.10.2020
 '''
 
 ### imports ###
+# internal modules
 from src.neuralClosures.configModel import initNeuralClosure
 from src import utils
 
-import numpy as np
+# python modules
 import tensorflow as tf
 import os
-import pandas as pd
-
 from optparse import OptionParser
 
 ### global variable ###
@@ -115,6 +114,8 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
+    parser.add_option("-a", "--alphasampling", dest="alphasampling", default=False,
+                      help="uses data sampled in alpha", metavar="ALPHA")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
     parser.add_option("-c", "--epochChunk", dest="epochchunk", default=1,
@@ -147,6 +148,7 @@ def main():
                       help="height of the network", metavar="HEIGHT")
 
     (options, args) = parser.parse_args()
+    options.alphasampling = bool(options.alphasampling)
     options.degree = int(options.degree)
     options.spatialDimension = int(options.spatialDimension)
     options.model = int(options.model)
@@ -180,36 +182,8 @@ def main():
               optimizer=options.optimizer, width=options.networkwidth, depth=options.networkdepth)
     neuralClosureModel.model.summary()
 
-    # Print chosen options to file
-    d = {'degree': [options.degree],
-         'spatial Dimension': [options.spatialDimension],
-         'model': [options.model],
-         'epoch': [options.epoch],
-         'epochChunk': [options.epochchunk],
-         'batchsize': [options.batch],
-         'verbosity': [options.verbosity],
-         'loadmodel': [options.loadmodel],
-         'training': [options.training],
-         'folder': [options.folder],
-         'optimizer': [options.optimizer],
-         'processingmode': [options.processingmode],
-         'normalized moments': [options.normalized],
-         'network width': [options.networkwidth],
-         'network depth': [options.networkdepth]}
-
-    df = pd.DataFrame(data=d)
-    count = 0
-    cfgFile = neuralClosureModel.filename + '/config_001_'
-
-    while os.path.isfile(cfgFile + '.csv'):
-        count += 1
-        cfgFile = neuralClosureModel.filename + '/config_' + str(count).zfill(3) + '_'
-
-    cfgFile = cfgFile + '.csv'
-
-    print("Writing config to " + cfgFile)
-
-    df.to_csv(cfgFile, index=False)
+    # Save options and runscript to file
+    utils.writeConfigFile(options, neuralClosureModel)
 
     if (options.loadmodel == 1 or options.training == 0 or options.training == 2):
         # in execution mode the model must be loaded.
@@ -221,55 +195,24 @@ def main():
     if (options.training == 1):
         # create training Data
         trainingMode = True
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=trainingMode)
+        neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
+                                            alphasampling=options.alphasampling)
         # train model
-        neuralClosureModel.trainModel(valSplit=0.01, epochCount=options.epoch, epochChunks=options.epochchunk,
+        neuralClosureModel.trainModel(valSplit=0.1, epochCount=options.epoch, epochChunks=options.epochchunk,
                                       batchSize=options.batch, verbosity=options.verbosity,
                                       processingMode=options.processingmode)
         # save model
-        # neuralClosureModel.saveModel()
+        neuralClosureModel.saveModel()
     elif (options.training == 2):
         print("Analysis mode entered.")
-        neuralClosureModel.loadTrainingData(normalizedMoments=options.normalized, shuffleMode=False)
+        neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
 
-        x_model = tf.Variable(u)
+        # test stuff:
+        # tmp = neuralClosureModel.callNetwork(u, alpha, h)
+        # print(tmp)
 
-        with tf.GradientTape() as tape:
-            # training=True is only needed if there are layers with different
-            # behavior during training versus inference (e.g. Dropout).
-            tape.watch(x_model)
-            predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
-
-            # Compute the gradients
-        alpha_pred = np.asarray(tape.gradient(predictions, x_model))
-
-        h_pred = neuralClosureModel.computePrediction(u)
-
-        # [h_pred, alpha_pred] = neuralClosureModel.computePrediction(u)
-
-        # create the loss functions
-        def h_mse_loss(h_true, h_pred):
-            loss_val = tf.keras.losses.mean_squared_error(h_true, h_pred)
-            return loss_val
-
-        def alpha_mse_loss(alpha_true, alpha_pred):
-            loss_val = tf.keras.losses.MeanSquaredError()(alpha_true, alpha_pred)
-            return loss_val
-
-        diff_h = h_mse_loss(h, h_pred)
-        diff_alpha = h_mse_loss(alpha, alpha_pred)
-        print(diff_h)
-        print(diff_alpha)
-
-        diff2 = alpha_mse_loss(h, h_pred)
-        diff3 = alpha_mse_loss(alpha, alpha_pred)
-        print(diff2)
-        print(diff3)
-
-        utils.plot1D(u, [h_pred, h], ['h pred', 'h'], 'h_over_u', log=False)
-        utils.plot1D(u, [alpha_pred, alpha], ['alpha pred', 'alpha'], 'alpha_over_u', log=False)
-        utils.plot1D(u, [diff_alpha, diff_h], ['difference alpha', 'difference h'], 'errors', log=True)
+        neuralClosureModel.evaluateModel(u, alpha, h)
 
 
     else:
