@@ -1,1 +1,18 @@
-python callNeuralClosure.py -d 1 -s 1 -m 7 -e 500 -b 128 -v 1 -t 1 -l 0 -c 5 -p 0 -f neuralClosure_M1_D1_MK7
+python callNeuralClosure.py \  
+--alphasampling 1 \  
+--batch 128 \ 
+--epochChunk 3\  
+--degree 3 \  
+--epoch 3000 \  
+--folder 09_sim_M3_1D_MK11\  
+--loadModel 1 \  
+--model 11 \  
+--normalized 1 \  
+--optimizer Adam \  
+--processingmode 1\  
+--spatialDimension 1\  
+--training 2 \  
+--verbosity 1 \  
+--networkwidth 12 \  
+--networkdepth 18
+
