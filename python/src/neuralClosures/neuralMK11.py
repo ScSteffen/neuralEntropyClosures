@@ -255,7 +255,8 @@ class sobolevModel(tf.keras.Model):
 
     def reconstruct_alpha(self, alpha):
         """
-        brief: Only works for maxwell Boltzmann entropy so far.
+        brief:  Reconstructs alpha_0 and then concats alpha_0 to alpha_1,... , from alpha1,...
+                Only works for maxwell Boltzmann entropy so far.
         nS = batchSize
         N = basisSize
         nq = number of quadPts
@@ -271,6 +272,7 @@ class sobolevModel(tf.keras.Model):
 
     def reconstruct_u(self, alpha):
         """
+        brief: reconstructs u from alpha
         nS = batchSize
         N = basisSize
         nq = number of quadPts
