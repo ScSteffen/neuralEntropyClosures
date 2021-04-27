@@ -114,7 +114,7 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
-    parser.add_option("-a", "--alphasampling", dest="alphasampling", default=False,
+    parser.add_option("-a", "--alphasampling", dest="alphasampling", default=0,
                       help="uses data sampled in alpha", metavar="ALPHA")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
@@ -150,7 +150,7 @@ def main():
 
     (options, args) = parser.parse_args()
     options.objective = int(options.objective)
-    options.alphasampling = bool(options.alphasampling)
+    options.alphasampling = int(options.alphasampling)
     options.degree = int(options.degree)
     options.spatialDimension = int(options.spatialDimension)
     options.model = int(options.model)

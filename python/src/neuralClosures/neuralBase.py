@@ -231,7 +231,7 @@ class neuralBase:
         self.model.summary()
         return 0
 
-    def loadTrainingData(self, shuffleMode=False, alphasampling=False, loadAll=False):
+    def loadTrainingData(self, shuffleMode=False, alphasampling=0, loadAll=False):
         """
         Loads the trianing data
         params: normalizedMoments = load normalized data  (u_0=1)
@@ -247,7 +247,7 @@ class neuralBase:
         if self.normalized:
             filename = "data/" + str(self.spatialDim) + "D/Monomial_M" + str(self.polyDegree) + "_" + str(
                 self.spatialDim) + "D_normal"
-        if alphasampling:
+        if alphasampling == 1:
             filename = filename + "_alpha"
         filename = filename + ".csv"
 
