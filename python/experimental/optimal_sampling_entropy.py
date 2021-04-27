@@ -177,8 +177,8 @@ def main():
     u_list = [u_ini[0, :], u_ini[1, :]]
     h_list = [h_ini[0, :], h_ini[1, :]]
     [u_train, alpha_train, h_train] = sample_data_entropy_M1(u_list, alpha_list, h_list, tolerance)
-    t = u_train[:][1]
-    utils.plot1D(x=u[:, 1], ys=[alpha[:, 1], h], labels=['alpha', 'h'], linetypes=['+', '*'],
+  
+    utils.plot1D(x=u_train[:, 1], ys=[alpha_train[:, 1], h_train], labels=['alpha', 'h'], linetypes=['+', '*'],
                  name='smart_sampled_entropy', log=False, folder_name="figures")
     return 0
 
