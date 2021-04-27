@@ -41,22 +41,30 @@ class neuralMK11(neuralBase):
         layerDim = self.modelWidth
 
         # Weight initializer
-        initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
-        initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
+        # 1. This is a modified Kaiming inititalization with a first-order taylor expansion of the
+        # softplus activation function (see S. Kumar "On Weight Initialization in
+        # Deep Neural Networks").
+
+        # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
+        input_stddev = np.sqrt((1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        hidden_stddev = np.sqrt((1 / 1.1) * (1 / self.modelWidth) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+
         # Weight regularizer
-        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.0, l2=0.0)  # L1 + L2 penalties
+        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.00001, l2=0.00001)  # L1 + L2 penalties
 
         def convexLayer(layerInput_z: Tensor, netInput_x: Tensor, layerIdx=0) -> Tensor:
             # Weighted sum of previous layers output plus bias
             weightedNonNegSum_z = layers.Dense(layerDim, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=initializerNonNeg,
+                                               kernel_initializer=keras.initializers.RandomNormal(mean=0.,
+                                                                                                  stddev=hidden_stddev),
                                                kernel_regularizer=l1l2Regularizer,
                                                use_bias=True, bias_initializer='zeros',
                                                name='non_neg_component_' + str(layerIdx)
                                                )(layerInput_z)
             # Weighted sum of network input
             weightedSum_x = layers.Dense(layerDim, activation=None,
-                                         kernel_initializer=initializer,
+                                         kernel_initializer=keras.initializers.RandomNormal(mean=0.,
+                                                                                            stddev=hidden_stddev),
                                          kernel_regularizer=l1l2Regularizer,
                                          use_bias=False, name='dense_component_' + str(layerIdx)
                                          )(netInput_x)
@@ -72,7 +80,8 @@ class neuralMK11(neuralBase):
         def convexLayerOutput(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
             # Weighted sum of previous layers output plus bias
             weightedNonNegSum_z = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=initializerNonNeg,
+                                               kernel_initializer=keras.initializers.RandomNormal(mean=0.,
+                                                                                                  stddev=hidden_stddev),
                                                kernel_regularizer=l1l2Regularizer,
                                                use_bias=True,
                                                bias_initializer='zeros'
@@ -80,7 +89,8 @@ class neuralMK11(neuralBase):
                                                )(layerInput_z)
             # Weighted sum of network input
             weightedSum_x = layers.Dense(1, activation=None,
-                                         kernel_initializer=initializer,
+                                         kernel_initializer=keras.initializers.RandomNormal(mean=0.,
+                                                                                            stddev=hidden_stddev),
                                          kernel_regularizer=l1l2Regularizer,
                                          use_bias=False
                                          # name='in_x_Dense'
@@ -98,7 +108,7 @@ class neuralMK11(neuralBase):
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(layerDim, activation="softplus",
-                              kernel_initializer=initializer,
+                              kernel_initializer=keras.initializers.RandomNormal(mean=0., stddev=input_stddev),
                               kernel_regularizer=l1l2Regularizer,
                               bias_initializer='zeros',
                               name="first_dense"
@@ -117,11 +127,6 @@ class neuralMK11(neuralBase):
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
 
-        # model.compile(loss=tf.keras.losses.MeanSquaredError(),
-        #              # loss={'output_1': tf.keras.losses.MeanSquaredError()},
-        #              # loss_weights={'output_1': 1, 'output_2': 0},
-        #              optimizer='adam',
-        #              metrics=['mean_absolute_error', 'mean_squared_error'])
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
             loss_weights={'output_1': 1, 'output_2': 1},
