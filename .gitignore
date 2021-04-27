@@ -13,6 +13,9 @@ python/legacyCode/models/*
 
 # Data
 *.csv
+*.h5
+*.png
+*.pb
 
 # images
 *.png
