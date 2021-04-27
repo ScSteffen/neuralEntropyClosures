@@ -24,14 +24,14 @@ class neuralMK11(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
+    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", lossCombi=0, width=10, depth=5,
                  normalized=False):
         if (folderName == "testFolder"):
             customFolderName = "MK11_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
             customFolderName = folderName
 
-        super(neuralMK11, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+        super(neuralMK11, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
                                          customFolderName)
 
         self.model = self.createModel()
@@ -129,8 +129,8 @@ class neuralMK11(neuralBase):
 
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
-            loss_weights={'output_1': 1, 'output_2': 1},
-            optimizer='adam',
+            loss_weights={'output_1': self.lossWeights[0], 'output_2': self.lossWeights[1]},
+            optimizer=self.optimizer,
             metrics=['mean_absolute_error'])
 
         # model.summary()

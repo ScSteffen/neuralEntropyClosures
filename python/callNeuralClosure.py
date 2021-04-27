@@ -50,7 +50,7 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", optimizer='adam', width=10, depth=5,
+def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", lossCombi=0, width=10, depth=5,
               normalized=False):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
@@ -59,7 +59,7 @@ def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder"
 
     global neuralClosureModel
     neuralClosureModel = initNeuralClosure(modelNumber=modelNumber, polyDegree=polyDegree, spatialDim=spatialDim,
-                                           folderName=folderName, optimizer=optimizer, depth=depth,
+                                           folderName=folderName, lossCombi=lossCombi, depth=depth,
                                            width=width, normalized=normalized)
 
     return 0
@@ -132,8 +132,9 @@ def main():
                       help="choice of network model", metavar="MODEL")
     parser.add_option("-n", "--normalized", dest="normalized", default=0,
                       help="train on normalized moments", metavar="NORMALIZED")
-    parser.add_option("-o", "--optimizer", dest="optimizer", default="Adam",
-                      help="optimizer choice", metavar="OPTIMIZER")
+    parser.add_option("-o", "--objective", dest="objective", default=0,
+                      help="choice of loss functions:\n 0=[h]\n 1 =[h,alpha]\n 2=[h,alpha,u]\n3=[h,alpha,u,flux]",
+                      metavar="OBJECTIVE")
     parser.add_option("-p", "--processingmode", dest="processingmode", default=1,
                       help="gpu mode (1). cpu mode (0) ", metavar="PROCESSINGMODE")
     parser.add_option("-s", "--spatialDimension", dest="spatialDimension", default=3,
@@ -148,6 +149,7 @@ def main():
                       help="height of the network", metavar="HEIGHT")
 
     (options, args) = parser.parse_args()
+    options.objective = int(options.objective)
     options.alphasampling = bool(options.alphasampling)
     options.degree = int(options.degree)
     options.spatialDimension = int(options.spatialDimension)
@@ -179,7 +181,7 @@ def main():
     print("Initialize model")
     initModel(modelNumber=options.model, polyDegree=options.degree, spatialDim=options.spatialDimension,
               folderName=options.folder, normalized=options.normalized,
-              optimizer=options.optimizer, width=options.networkwidth, depth=options.networkdepth)
+              lossCombi=options.objective, width=options.networkwidth, depth=options.networkdepth)
     neuralClosureModel.model.summary()
 
     # Save options and runscript to file

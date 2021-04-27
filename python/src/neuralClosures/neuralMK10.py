@@ -25,14 +25,14 @@ class neuralMK10(neuralBase):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
+    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", lossCombi=0, width=10, depth=5,
                  normalized=False):
         if (folderName == "testFolder"):
             customFolderName = "MK1_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
             customFolderName = folderName
 
-        super(neuralMK10, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+        super(neuralMK10, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
                                          customFolderName)
 
         self.model = self.createModel()
