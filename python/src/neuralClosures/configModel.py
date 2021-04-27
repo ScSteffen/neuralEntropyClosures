@@ -21,7 +21,7 @@ from .neuralMK12 import neuralMK12
 
 
 ### global functions ###
-def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", optimizer='adam', width=10,
+def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", lossCombi=0, width=10,
                       depth=5, normalized=False):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
@@ -44,40 +44,40 @@ def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="tes
     # Create the correct network
     if (modelNumber == 1):
         neuralClosureModel = neuralMK1(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 2):
         neuralClosureModel = neuralMK2(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 3):
         neuralClosureModel = neuralMK3(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 4):
         neuralClosureModel = neuralMK4(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 5):
         neuralClosureModel = neuralMK5(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 6):
         neuralClosureModel = neuralMK6(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 7):
         neuralClosureModel = neuralMK7(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 8):
         neuralClosureModel = neuralMK8(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 9):
         neuralClosureModel = neuralMK9(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 10):
         neuralClosureModel = neuralMK10(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                        optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 11):
         neuralClosureModel = neuralMK11(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                        optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 12):
         neuralClosureModel = neuralMK12(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                        optimizer=optimizer, width=width, depth=depth, normalized=normalized)
+                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     else:
         ValueError("No network fits your preferences!")
 
