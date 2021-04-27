@@ -18,14 +18,14 @@ class neuralMK2(neuralBase):
     Loss function: Entropy functional derivative is loss
     '''
 
-    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
+    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", lossCombi=0, width=10, depth=5,
                  normalized=False):
         if (folderName == "testFolder"):
             customFolderName = "MK1_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
             customFolderName = folderName
 
-        super(neuralMK2, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+        super(neuralMK2, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
                                         customFolderName)
 
         self.model = self.createModel()

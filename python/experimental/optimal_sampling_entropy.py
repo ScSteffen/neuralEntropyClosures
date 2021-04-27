@@ -67,7 +67,7 @@ def sample_data_entropy_M1(u_min, u_max, tol):
     performs the smart sampling algorithm on the entropy closure problem
     """
 
-    s_x = [min_x, max_x]
+    s_x = [u_min, u_max]
     e_max = tol
     j = 0
     while e_max >= tol:

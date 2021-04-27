@@ -20,14 +20,26 @@ from src import utils
 ### class definitions ###
 class neuralBase:
 
-    def __init__(self, normalized, polyDegree, spatialDim, width, depth, optimizer, customFolderName):
+    def __init__(self, normalized, polyDegree, spatialDim, width, depth, lossCombi, customFolderName):
         self.normalized = normalized
         self.polyDegree = polyDegree
         self.spatialDim = spatialDim
         self.modelWidth = width
         self.modelDepth = depth
-        self.optimizer = optimizer
+        self.optimizer = 'adam'
         self.filename = "models/" + customFolderName
+
+        # --- Determine loss combination ---
+        if lossCombi == 0:
+            self.lossWeights = [1, 0, 0, 0]
+        if lossCombi == 1:
+            self.lossWeights = [1, 1, 0, 0]
+        if lossCombi == 2:
+            self.lossWeights = [1, 1, 1, 0]
+        if lossCombi == 3:
+            self.lossWeights = [1, 1, 1, 1]
+        else:
+            self.lossWeights = [1, 0, 0, 0]
 
         # --- Determine inputDim by MaxDegree ---
         if (spatialDim == 1):
