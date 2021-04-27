@@ -7,6 +7,8 @@ Date: 16.03.21
 from numpy.polynomial.legendre import leggauss
 import numpy as np
 import tensorflow as tf
+import tensorflow_probability as tfp
+import scipy
 
 
 class EntropyTools:
@@ -32,6 +34,9 @@ class EntropyTools:
         self.inputDim = mBasis.shape[0]
         self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
                                        dtype=tf.float32)  # dims = (batchSIze x N x nq)
+        self.opti_u = 0
+        self.opti_m = 0
+        self.opti_w = 0
 
     def reconstruct_alpha(self, alpha):
         """
@@ -96,10 +101,76 @@ class EntropyTools:
         """
         return tf.constant(vector, shape=vector.shape, dtype=tf.float32)
 
+    def minimize_entropy(self, u, start):
+        """
+        brief: computes the minimal entropy at u
+        input: u = dims (1,N)
+           start =  start_valu of alpha
+        """
+        dim = u.numpy().shape[1]
+        self.opti_u = np.reshape(u.numpy(), (dim,))
+        self.opti_m = self.momentBasis.numpy()
+        self.opti_w = self.quadWeights.numpy()
 
-### Standalone features
+        opti_start = np.reshape(start.numpy(), (dim,))
 
-### Integration
+        opt_result = scipy.optimize.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
+                                             tol=1e-7)
+
+        if not opt_result.success:
+            exit("Optimization unsuccessfull!")
+        return tf.constant(opt_result.x, dtype=tf.float32, shape=(1, dim))
+
+    def opti_entropy(self, alpha):
+        """
+        brief: returns the negative entropy functional with fixed u
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (1 x N)
+               u, dims = (1 x N)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = - alpha*u + <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        # compute negative entropy functional
+        f_quad = np.exp(np.tensordot(alpha, self.opti_m, axes=([0], [0])))  # alpha*m
+        t1 = np.tensordot(f_quad, self.opti_w, axes=([0], [1]))  # f*w
+        t2 = np.inner(alpha, self.opti_u)
+
+        return t1 - t2
+
+    def opti_entropy_prime(self, alpha):
+        """
+         brief: returns the derivative negative entropy functional with fixed u
+         nS = batchSize
+         N = basisSize
+         nq = number of quadPts
+
+         input: alpha, dims = (1 x N)
+                u, dims = (1 x N)
+         used members: m    , dims = (N x nq)
+                     w    , dims = nq
+
+         returns h = - alpha*u + <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+
+        f_quad = np.exp(np.tensordot(alpha, self.opti_m, axes=([0], [0])))  # alpha*m
+        tmp = np.multiply(f_quad, self.opti_w)  # f*w
+        t2 = np.tensordot(tmp, self.opti_m[:, :], axes=([1], [1]))  # f * w * momentBasis
+        dim = t2.shape[1]
+        return np.reshape(t2 - self.opti_u, (dim,))
+
+        ### Standalone features
+
+        ### Integration
+
+
 def qGaussLegendre1D(order):
     """
     order: order of quadrature
@@ -119,7 +190,7 @@ def integrate(integrand, weights):
 
 ### Entropy functions
 
-def entropyFunctional(u, alpha, m, quadPts):
+def negEntropyFunctional(u, alpha, m, w):
     """
     compute entropy functional at one point using
     inputs: u = moment vector, dim = N+1
@@ -128,6 +199,7 @@ def entropyFunctional(u, alpha, m, quadPts):
             quadPts = number of quadpts
     returns: h = alpha*u - <entropyDual(alpha*m)>
     """
+    # tmp = integrate(entropyDualPrime(np.matmul(alpha, m)), w)
     return 0  # Todo
 
 
