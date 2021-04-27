@@ -152,7 +152,7 @@ def writeConfigFile(options, neuralClosureModel):
     runScript = runScript + "--loadModel=" + str(1) + " \\\n"  # force to load
     runScript = runScript + "--model=" + str(options.model) + " \\\n"
     runScript = runScript + "--normalized=" + str(int(options.normalized)) + " \\\n"
-    runScript = runScript + "--optimizer=" + str(options.optimizer) + " \\\n"
+    runScript = runScript + "--objective=" + str(options.objective) + " \\\n"
     runScript = runScript + "--processingmode=" + str(options.processingmode) + " \\\n"
     runScript = runScript + "--spatialDimension=" + str(options.spatialDimension) + " \\\n"
     runScript = runScript + "--training=" + str(options.training) + " \\\n"
@@ -185,7 +185,7 @@ def writeConfigFile(options, neuralClosureModel):
          'loadmodel': [options.loadmodel],
          'model': [options.model],
          'normalized moments': [options.normalized],
-         'optimizer': [options.optimizer],
+         'objective': [options.objective],
          'processingmode': [options.processingmode],
          'spatial Dimension': [options.spatialDimension],
          'verbosity': [options.verbosity],
