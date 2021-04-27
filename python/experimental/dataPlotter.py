@@ -10,14 +10,18 @@ from matplotlib import cm
 import numpy as np
 import pandas as pd
 import time
+from src import utils
 
-plt.style.use("kitish")
+
+# plt.style.use("kitish")
 
 
 def main():
     # Plot normalized Data
-    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M1_1D_normal.csv", 1)
-    plot1DM0Data(u, alpha, h)
+    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M1_1D_normal.csv", 2)
+    utils.plot1D(u[:, 1], [h], ['h'], 'validation_check', log=False, folder_name="figures")
+
+    # plot1DM0Data(u, alpha, h)
 
     # Plots of 1D M0 Data
     # [u, alpha, h] = loadTrainingData("disc_Moments.csv", 3)

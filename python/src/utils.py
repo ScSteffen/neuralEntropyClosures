@@ -109,7 +109,7 @@ def loadTFModel(filename):
     return nn
 
 
-def plot1D(x, ys, labels=[], name='defaultName', log=True, linetypes=[], ):
+def plot1D(x, ys, labels=[], name='defaultName', log=True, folder_name="figures", linetypes=[]):
     plt.clf()
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*', 'h',
@@ -125,8 +125,8 @@ def plot1D(x, ys, labels=[], name='defaultName', log=True, linetypes=[], ):
         plt.yscale('log')
 
     # plt.show()
-    plt.savefig("figures/" + name + ".png", dpi=150)
-    print("Figure successfully saved to file: " + str("figures/" + name + ".png"))
+    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     return 0
 
 

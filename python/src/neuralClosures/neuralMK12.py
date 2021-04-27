@@ -1,6 +1,6 @@
 '''
-Network class "MK11" for the neural entropy closure.
-MK7 ICNN with sobolev wrapper.
+Network class "MK12" for the neural entropy closure.
+As MK11, but dense network instead of ICNN
 Author: Steffen Schotthöfer
 Version: 0.0
 Date 09.04.2020
@@ -17,12 +17,7 @@ from tensorflow import Tensor
 from src import math
 
 
-class neuralMK11(neuralBase):
-    '''
-    MK4 Model: Train u to h and alpha
-    Training data generation: b) read solver data from file: Uses C++ Data generator
-    Loss function:  MSE between h_pred and real_h
-    '''
+class neuralMK12(neuralBase):
 
     def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", optimizer='adam', width=10, depth=5,
                  normalized=False):
@@ -31,7 +26,7 @@ class neuralMK11(neuralBase):
         else:
             customFolderName = folderName
 
-        super(neuralMK11, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
+        super(neuralMK12, self).__init__(normalized, polyDegree, spatialDim, width, depth, optimizer,
                                          customFolderName)
 
         self.model = self.createModel()
@@ -46,54 +41,6 @@ class neuralMK11(neuralBase):
         # Weight regularizer
         l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.0, l2=0.0)  # L1 + L2 penalties
 
-        def convexLayer(layerInput_z: Tensor, netInput_x: Tensor, layerIdx=0) -> Tensor:
-            # Weighted sum of previous layers output plus bias
-            weightedNonNegSum_z = layers.Dense(layerDim, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=initializerNonNeg,
-                                               kernel_regularizer=l1l2Regularizer,
-                                               use_bias=True, bias_initializer='zeros',
-                                               name='non_neg_component_' + str(layerIdx)
-                                               )(layerInput_z)
-            # Weighted sum of network input
-            weightedSum_x = layers.Dense(layerDim, activation=None,
-                                         kernel_initializer=initializer,
-                                         kernel_regularizer=l1l2Regularizer,
-                                         use_bias=False, name='dense_component_' + str(layerIdx)
-                                         )(netInput_x)
-            # Wz+Wx+b
-            intermediateSum = layers.Add(name='add_component_' + str(layerIdx))([weightedSum_x, weightedNonNegSum_z])
-
-            # activation
-            out = tf.keras.activations.softplus(intermediateSum)
-            # batch normalization
-            # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
-            return out
-
-        def convexLayerOutput(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
-            # Weighted sum of previous layers output plus bias
-            weightedNonNegSum_z = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=initializerNonNeg,
-                                               kernel_regularizer=l1l2Regularizer,
-                                               use_bias=True,
-                                               bias_initializer='zeros'
-                                               # name='in_z_NN_Dense'
-                                               )(layerInput_z)
-            # Weighted sum of network input
-            weightedSum_x = layers.Dense(1, activation=None,
-                                         kernel_initializer=initializer,
-                                         kernel_regularizer=l1l2Regularizer,
-                                         use_bias=False
-                                         # name='in_x_Dense'
-                                         )(netInput_x)
-            # Wz+Wx+b
-            intermediateSum = layers.Add()([weightedSum_x, weightedNonNegSum_z])
-
-            # activation
-            # out = tf.keras.activations.softplus(intermediateSum)
-            # batch normalization
-            # out = layers.BatchNormalization()(out)
-            return intermediateSum
-
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
@@ -105,8 +52,18 @@ class neuralMK11(neuralBase):
                               )(input_)
         # other layers are convexLayers
         for idx in range(0, self.modelDepth):
-            hidden = convexLayer(hidden, input_, layerIdx=idx)
-        output_ = convexLayerOutput(hidden, input_)  # outputlayer
+            hidden = layers.Dense(self.modelWidth, activation="softplus",
+                                  kernel_initializer=initializer,
+                                  kernel_regularizer=l1l2Regularizer,
+                                  bias_initializer='zeros',
+                                  name="dense_" + str(idx)
+                                  )(hidden)
+        output_ = layers.Dense(1, activation="linear",
+                               kernel_initializer=initializer,
+                               kernel_regularizer=l1l2Regularizer,
+                               bias_initializer='zeros',
+                               name="dense_output"
+                               )(hidden)  # outputlayer
 
         # Create the core model
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
@@ -255,8 +212,7 @@ class sobolevModel(tf.keras.Model):
 
     def reconstruct_alpha(self, alpha):
         """
-        brief:  Reconstructs alpha_0 and then concats alpha_0 to alpha_1,... , from alpha1,...
-                Only works for maxwell Boltzmann entropy so far.
+        brief: Only works for maxwell Boltzmann entropy so far.
         nS = batchSize
         N = basisSize
         nq = number of quadPts
@@ -272,7 +228,6 @@ class sobolevModel(tf.keras.Model):
 
     def reconstruct_u(self, alpha):
         """
-        brief: reconstructs u from alpha
         nS = batchSize
         N = basisSize
         nq = number of quadPts
