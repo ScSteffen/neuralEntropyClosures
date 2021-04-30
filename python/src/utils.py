@@ -109,7 +109,7 @@ def loadTFModel(filename):
     return nn
 
 
-def plot1D(x, ys, labels=[], name='defaultName', log=True, folder_name="figures", linetypes=[]):
+def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures", linetypes=[], show_fig=False):
     plt.clf()
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*', 'h',
@@ -117,14 +117,23 @@ def plot1D(x, ys, labels=[], name='defaultName', log=True, folder_name="figures"
                      '+', 'x', 'D', 'd', '|', '_']
         linetypes = linetypes[0:len(labels)]
 
-    for y, lineType in zip(ys, linetypes):
-        plt.plot(x, y, lineType)
-    plt.legend(labels)
+    if len(xs) == 1:
+        x = xs[0]
+        for y, lineType in zip(ys, linetypes):
+            plt.plot(x, y, lineType)
+        plt.legend(labels)
+    elif len(xs) is not len(ys):
+        ValueError("list of x entries must be of same length as y entries")
+    else:
+        for x, y, lineType in zip(xs, ys, linetypes):
+            plt.plot(x, y, lineType)
+        plt.legend(labels)
 
     if (log):
         plt.yscale('log')
 
-    # plt.show()
+    if show_fig:
+        plt.show()
     plt.savefig(folder_name + "/" + name + ".png", dpi=150)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     return 0
@@ -145,7 +154,7 @@ def writeConfigFile(options, neuralClosureModel):
     runScript = "python callNeuralClosure.py \\\n"
     runScript = runScript + "--alphasampling=" + str(int(options.alphasampling)) + " \\\n"
     runScript = runScript + "--batch=" + str(options.batch) + " \\\n"
-    runScript = runScript + "--epochChunk=" + str(options.epochchunk) + " \\\n"
+    runScript = runScript + "--curriculum=" + str(options.curriculum) + " \\\n"
     runScript = runScript + "--degree=" + str(options.degree) + " \\\n"
     runScript = runScript + "--epoch=" + str(options.epoch) + " \\\n"
     runScript = runScript + "--folder=" + str(options.folder) + " \\\n"
@@ -178,7 +187,7 @@ def writeConfigFile(options, neuralClosureModel):
     # Print chosen options to csv
     d = {'alphasampling': [options.alphasampling],
          'batch': [options.batch],
-         'epochChunk': [options.epochchunk],
+         'curriculum': [options.curriculum],
          'degree': [options.degree],
          'epoch': [options.epoch],
          'folder': [options.folder],

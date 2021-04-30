@@ -118,8 +118,8 @@ def main():
                       help="uses data sampled in alpha", metavar="ALPHA")
     parser.add_option("-b", "--batch", dest="batch", default=1000,
                       help="batch size", metavar="BATCH")
-    parser.add_option("-c", "--epochChunk", dest="epochchunk", default=1,
-                      help="number of epoch chunks", metavar="EPOCHCHUNK")
+    parser.add_option("-c", "--curriculum", dest="curriculum", default=1,
+                      help="training curriculum", metavar="EPOCHCHUNK")
     parser.add_option("-d", "--degree", dest="degree", default=0,
                       help="max degree of moment", metavar="DEGREE")
     parser.add_option("-e", "--epoch", dest="epoch", default=1000,
@@ -155,7 +155,7 @@ def main():
     options.spatialDimension = int(options.spatialDimension)
     options.model = int(options.model)
     options.epoch = int(options.epoch)
-    options.epochchunk = int(options.epochchunk)
+    options.curriculum = int(options.curriculum)
     options.batch = int(options.batch)
     options.verbosity = int(options.verbosity)
     options.loadmodel = int(options.loadmodel)
@@ -200,9 +200,9 @@ def main():
         neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
                                             alphasampling=options.alphasampling)
         # train model
-        neuralClosureModel.trainModel(valSplit=0.1, epochCount=options.epoch, epochChunks=options.epochchunk,
-                                      batchSize=options.batch, verbosity=options.verbosity,
-                                      processingMode=options.processingmode)
+        neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
+                                                 batchSize=options.batch, verbosity=options.verbosity,
+                                                 processingMode=options.processingmode)
         # save model
         neuralClosureModel.saveModel()
     elif (options.training == 2):

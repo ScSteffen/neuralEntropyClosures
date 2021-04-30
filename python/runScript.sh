@@ -1,18 +1,18 @@
-python callNeuralClosure.py \  
---alphasampling 1 \  
---batch 128 \ 
---epochChunk 3\  
---degree 3 \  
---epoch 3000 \  
---folder 09_sim_M3_1D_MK11\  
---loadModel 1 \  
---model 11 \  
---normalized 1 \  
---optimizer Adam \  
---processingmode 1\  
---spatialDimension 1\  
---training 2 \  
---verbosity 1 \  
---networkwidth 12 \  
---networkdepth 18
+python callNeuralClosure.py \
+--alphasampling=0 \
+--batch=128 \
+--curriculum=1 \
+--degree=1 \
+--epoch=2 \
+--folder=00_comp_study/02_M1_1D_MK11_W20 \
+--loadModel=0 \
+--model=11 \
+--normalized=1 \
+--objective=2 \
+--processingmode=1 \
+--spatialDimension=1 \
+--training=1 \
+--verbosity=1 \
+--networkwidth=40 \
+--networkdepth=10
 
