@@ -93,7 +93,8 @@ class neuralBase:
         """
         return self.model.predict(input)
 
-    def trainModel(self, valSplit=0.1, epochCount=2, epochChunks=1, batchSize=500, verbosity=1, processingMode=0):
+    def config_start_training(self, valSplit=0.1, epochCount=2, curriculum=1, batchSize=500, verbosity=1,
+                              processingMode=0):
         '''
         Method to train network
         '''
@@ -108,38 +109,74 @@ class neuralBase:
                                                      verbose=verbosity)  # , save_weights_only = True, save_freq = 50, verbose=0)
         es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
                                               verbose=1)
-        # mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
-        #                                         save_weights_only=False,
-        #                                         verbose=1)
 
-        # Split Training epochs
-        miniEpoch = int(epochCount / epochChunks)
+        if curriculum == 0:  # Epoch chunk training
+            # mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
+            #                                         save_weights_only=False,
+            #                                         verbose=1)
+            epochChunks = 4
+            # Split Training epochs
+            mini_epoch = int(epochCount / epochChunks)
 
-        for i in range(0, epochChunks):
-            #  perform a batch doublication every 1/10th of the epoch count
-            print("Current Batch Size: " + str(batchSize))
+            for i in range(0, curriculum):
+                #  perform a batch doublication every 1/10th of the epoch count
+                print("Current Batch Size: " + str(batchSize))
 
-            # assemble callbacks
-            callbackList = []
+                # assemble callbacks
+                callbackList = []
+                csv_logger = self.createCSVLoggerCallback()
+                if verbosity == 1:
+                    callbackList = [mc_best, csv_logger]
+                else:
+                    callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
+
+                # start Training
+                self.history = self.call_training(val_split=valSplit, epoch_size=epochCount, batch_size=batchSize,
+                                                  verbosity_mode=verbosity, callback_list=callbackList)
+                batchSize = 2 * batchSize
+
+            self.concatHistoryFiles()
+
+        elif curriculum == 1:  # learning rate scheduler
+            # We only use this at the moment
+            initial_lr = float(1e-3)
+            drop_rate = (epochCount / 3)
+            stop_tol = 1e-7
+            mt_patience = int(epochCount / 10)
+            min_delta = stop_tol / 10
+
+            # specific callbacks
+            def step_decay(epoch):
+                step_size = initial_lr * np.power(10, (-epoch / drop_rate))
+                return step_size
+
+            LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
+            HW = tf.keras.callbacks.HaltWhen('val_output_' + str(self.lossChoices) + '_loss', stop_tol)
+            ES = tf.keras.callbacks.EarlyStopping(monitor='val_output_' + str(self.lossChoices) + '_loss', mode='min',
+                                                  verbose=1, patience=mt_patience, min_delta=min_delta)
             csv_logger = self.createCSVLoggerCallback()
+
             if verbosity == 1:
-                callbackList = [mc_best, csv_logger]
+                callbackList = [mc_best, csv_logger, LR, HW, ES]
             else:
-                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
+                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, LR, HW, ES]
 
             # start Training
-            self.history = self.model.fit(self.trainingData[0], self.trainingData[1],
-                                          validation_split=valSplit,
-                                          epochs=miniEpoch,
-                                          batch_size=batchSize,
-                                          verbose=verbosity,
-                                          callbacks=callbackList,
-                                          shuffle=True
-                                          )
-            batchSize = 2 * batchSize
+            self.history = self.call_training(val_split=valSplit, epoch_size=epochCount, batch_size=batchSize,
+                                              verbosity_mode=verbosity, callback_list=callbackList)
 
-        self.concatHistoryFiles()
+        return self.history
 
+    def call_training(self, val_split=0.1, epoch_size=2, batch_size=128, verbosity_mode=1, callback_list=[]):
+        '''
+        Calls training depending on the MK model
+        '''
+        xData = self.trainingData[0]
+        yData = self.trainingData[1]
+        self.model.fit(x=xData, y=yData,
+                       validation_split=val_split, epochs=epoch_size,
+                       batch_size=batch_size, verbose=verbosity_mode,
+                       callbacks=callback_list, shuffle=True)
         return self.history
 
     def concatHistoryFiles(self):
