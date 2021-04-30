@@ -200,9 +200,9 @@ def main():
         neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
                                             alphasampling=options.alphasampling)
         # train model
-        neuralClosureModel.trainModel(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
-                                      batchSize=options.batch, verbosity=options.verbosity,
-                                      processingMode=options.processingmode)
+        neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
+                                                 batchSize=options.batch, verbosity=options.verbosity,
+                                                 processingMode=options.processingmode)
         # save model
         neuralClosureModel.saveModel()
     elif (options.training == 2):

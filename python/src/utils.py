@@ -154,7 +154,7 @@ def writeConfigFile(options, neuralClosureModel):
     runScript = "python callNeuralClosure.py \\\n"
     runScript = runScript + "--alphasampling=" + str(int(options.alphasampling)) + " \\\n"
     runScript = runScript + "--batch=" + str(options.batch) + " \\\n"
-    runScript = runScript + "--epochChunk=" + str(options.epochchunk) + " \\\n"
+    runScript = runScript + "--curriculum=" + str(options.curriculum) + " \\\n"
     runScript = runScript + "--degree=" + str(options.degree) + " \\\n"
     runScript = runScript + "--epoch=" + str(options.epoch) + " \\\n"
     runScript = runScript + "--folder=" + str(options.folder) + " \\\n"
@@ -187,7 +187,7 @@ def writeConfigFile(options, neuralClosureModel):
     # Print chosen options to csv
     d = {'alphasampling': [options.alphasampling],
          'batch': [options.batch],
-         'epochChunk': [options.epochchunk],
+         'curriculum': [options.curriculum],
          'degree': [options.degree],
          'epoch': [options.epoch],
          'folder': [options.folder],
