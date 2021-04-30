@@ -119,6 +119,7 @@ class neuralBase:
             mini_epoch = int(epochCount / epochChunks)
 
             for i in range(0, curriculum):
+                print("Training with increasing batch size")
                 #  perform a batch doublication every 1/10th of the epoch count
                 print("Current Batch Size: " + str(batchSize))
 
@@ -138,6 +139,7 @@ class neuralBase:
             self.concatHistoryFiles()
 
         elif curriculum == 1:  # learning rate scheduler
+            print("Training with learning rate scheduler")
             # We only use this at the moment
             initial_lr = float(1e-3)
             drop_rate = (epochCount / 3)
@@ -151,8 +153,8 @@ class neuralBase:
                 return step_size
 
             LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
-            HW = tf.keras.callbacks.HaltWhen('val_output_' + str(self.lossChoices) + '_loss', stop_tol)
-            ES = tf.keras.callbacks.EarlyStopping(monitor='val_output_' + str(self.lossChoices) + '_loss', mode='min',
+            HW = HaltWhenCallback('val_output_loss', stop_tol)
+            ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
             csv_logger = self.createCSVLoggerCallback()
 
@@ -431,3 +433,27 @@ class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):
                 epoch, logs["loss"], logs["mean_absolute_error"]
             )
         )
+
+
+class HaltWhenCallback(tf.keras.callbacks.Callback):
+    def __init__(self, quantity, tol):
+        """
+        Should be used in conjunction with
+        the saving criterion for the model; otherwise
+        training will stop without saving the model with quantity <= tol
+        """
+        super(HaltWhenCallback, self).__init__()
+        if type(quantity) == str:
+            self.quantity = quantity
+        else:
+            raise TypeError('HaltWhen(quantity,tol); quantity must be a string for a monitored quantity')
+        self.tol = tol
+
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch > 1:
+            if logs.get(self.quantity) < self.tol:
+                print('\n\n', self.quantity, ' has reached', logs.get(self.quantity), ' < = ', self.tol,
+                      '. End Training.')
+                self.model.stop_training = True
+        else:
+            pass
