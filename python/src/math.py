@@ -7,7 +7,6 @@ Date: 16.03.21
 from numpy.polynomial.legendre import leggauss
 import numpy as np
 import tensorflow as tf
-import tensorflow_probability as tfp
 import scipy
 
 
