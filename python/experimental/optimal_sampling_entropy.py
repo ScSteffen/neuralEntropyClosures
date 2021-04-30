@@ -122,13 +122,13 @@ def sample_data_entropy_M1(u, alpha, h, tol):
                 alpha_new = tf.reshape(alpha_u, shape=(2,))
                 h_new = tf.reshape(h_u, shape=(1,))
                 e = e_u
-                print("undershoot worse")
+                # print("undershoot worse")
             else:
                 u_new = tf.reshape(u_o, shape=(2,))
                 alpha_new = tf.reshape(alpha_o, shape=(2,))
                 h_new = tf.reshape(h_o, shape=(1,))
                 e = e_o
-                print("overshoot worse")
+                # print("overshoot worse")
 
             if e > e_max:
                 e_max = e
@@ -150,8 +150,8 @@ def sample_data_entropy_M1(u, alpha, h, tol):
 def main():
     # x = sample_data(-10, 10, 0.0001, quad_func, quad_func_grad)
 
-    # test the entropyTools
-    batchSize = 200
+    ### Create alpha sampled values
+    batchSize = 13
     N = 1
     entropy_tools = math.EntropyTools(N)
 
@@ -162,11 +162,32 @@ def main():
     u = entropy_tools.reconstruct_u(alpha)
     h = entropy_tools.compute_h(u, alpha)
 
-    utils.plot1D(u[:, 1], [alpha[:, 1], h], ['alpha', 'h'], 'sanity_check', log=False, folder_name="figures")
+    # utils.plot1D([u[:, 1]], [alpha[:, 1], h], ['alpha', 'h'], 'sanity_check', log=False, folder_name="figures")
 
-    # Looking good
-    u_lower = -0.999
-    u_upper = 0.999
+    ### Create u sampled values
+    u_0 = np.ones((13, 1))
+    u_1 = np.reshape(np.linspace(-0.98, 0.98, 13), (13, 1))
+    u_ = np.concatenate((u_0, u_1), axis=1)
+    u_in = tf.constant(u_, shape=(13, 2))
+    alpha_ = []
+    h_ = []
+    u_ = []
+    for i in range(13):
+        alpha_curr = entropy_tools.minimize_entropy(tf.reshape(u_in[i], shape=(1, 2)),
+                                                    tf.reshape(u_in[i], shape=(1, 2)))
+        u_curr = entropy_tools.reconstruct_u(alpha_curr)
+        h_curr = entropy_tools.compute_h(u_curr, alpha_curr)
+        u_.append(u_curr[0])
+        h_.append(h_curr[0])
+        alpha_.append(alpha_curr[0])
+
+    u_ = tf.stack(u_)
+    h_ = tf.stack(h_)
+    alpha_ = tf.stack(alpha_)
+    # utils.plot1D([u_[:, 1]], [alpha_[:, 1], h_], ['alpha', 'h'], 'sanity_check2', log=False, folder_name="figures")
+
+    ### Create smart sampled values
+
     tolerance = 0.1
 
     alpha_1 = entropy_tools.convert_to_tensorf(np.asarray([-50, 50]).reshape((2, N)))
@@ -177,9 +198,58 @@ def main():
     u_list = [u_ini[0, :], u_ini[1, :]]
     h_list = [h_ini[0, :], h_ini[1, :]]
     [u_train, alpha_train, h_train] = sample_data_entropy_M1(u_list, alpha_list, h_list, tolerance)
-  
-    utils.plot1D(x=u_train[:, 1], ys=[alpha_train[:, 1], h_train], labels=['alpha', 'h'], linetypes=['+', '*'],
+
+    utils.plot1D(xs=[u_train[:, 1]], ys=[alpha_train[:, 1], h_train], labels=['alpha', 'h'], linetypes=['+', '*'],
                  name='smart_sampled_entropy', log=False, folder_name="figures")
+
+    utils.plot1D(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[alpha_train[:, 1], alpha[:, 1], alpha_[:, 1]],
+                 labels=['alpha_smart', 'alpha_alpha_sampled', 'alpha_u_sampled'],
+                 linetypes=['*', '2', '3'],
+                 name='alha_sampling_strategies', log=False, folder_name="figures")
+    utils.plot1D(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[h_train, h, h_],
+                 labels=['h_smart', 'h_alpha_sampled', 'h_u_sampled'],
+                 linetypes=['*', '2', '3'], name='h_sampling_strategies', log=False, folder_name="figures",
+                 show_fig=False)
+
+    ### Compare networks with different samplings
+
+    model_smart = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
+                                    width=15, depth=5, normalized=True, lossCombi=1)
+    model_u = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
+                                width=15, depth=5, normalized=True, lossCombi=1)
+    model_alpha = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
+                                    width=15, depth=5, normalized=True, lossCombi=1)
+
+    mc_best_smart = tf.keras.callbacks.ModelCheckpoint('model_smart/best_model.h5', monitor='loss', mode='min',
+                                                       save_best_only=True, verbose=0)
+    csv_logger_smart = tf.keras.callbacks.CSVLogger('model_smart/history.csv')
+    mc_best_uniform = tf.keras.callbacks.ModelCheckpoint('model_u/best_model.h5', monitor='loss', mode='min',
+                                                         save_best_only=True, verbose=0)
+    csv_logger_uniform = tf.keras.callbacks.CSVLogger('model_u/history.csv')
+    mc_best_alpha = tf.keras.callbacks.ModelCheckpoint('model_alpha/best_model.h5', monitor='loss', mode='min',
+                                                       save_best_only=True, verbose=0)
+    csv_logger_alpha = tf.keras.callbacks.CSVLogger('model_alpha/history.csv')
+
+    # initialize both models with the same weight
+    model_smart.model.load_weights('best_model.h5')
+    model_u.model.load_weights('best_model.h5')
+    model_alpha.model.load_weights('best_model.h5')
+
+    # some params
+    epochs = 200000
+    batch = 16
+    print("training starts")
+    # model_smart.model.fit(x=u_train[:, 1], y=[h_train, alpha_train[:, 1]], validation_split=0.0, epochs=epochs,
+    #                      batch_size=batch, verbose=0, callbacks=[mc_best_smart, csv_logger_smart])
+    print("trained smart model")
+    # model_u.model.fit(x=u[:, 1], y=[h, alpha[:, 1]], validation_split=0.0, epochs=epochs, batch_size=batch,
+    #                  verbose=0, callbacks=[mc_best_uniform, csv_logger_uniform])
+    print("trained u model")
+
+    model_alpha.model.fit(x=u_[:, 1], y=[h_, alpha_[:, 1]], validation_split=0.0, epochs=epochs, batch_size=batch,
+                          verbose=0, callbacks=[mc_best_alpha, csv_logger_alpha])
+    print("trained alpha model")
+
     return 0
 
 

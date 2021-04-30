@@ -92,57 +92,16 @@ class neuralMK12(neuralBase):
 
         return model
 
-    def trainModel(self, valSplit=0.1, epochCount=2, epochChunks=1, batchSize=500, verbosity=1, processingMode=0):
+    def call_training(self, val_split=0.1, epoch_size=2, batch_size=128, verbosity_mode=1, callback_list=[]):
         '''
-        Method to train network
+        Calls training depending on the MK model
         '''
-
-        # Create callbacks
-        mc_best = tf.keras.callbacks.ModelCheckpoint(self.filename + '/best_model.h5', monitor='loss', mode='min',
-                                                     save_best_only=True,
-                                                     verbose=verbosity)  # , save_weights_only = True, save_freq = 50, verbose=0)
-
-        es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.000001, patience=100,
-                                              verbose=1)
-        # mc_checkpoint =  tf.keras.callbacks.ModelCheckpoint(filepath=self.filename + '/model_saved',
-        #                                         save_weights_only=False,
-        #                                         verbose=1)
-
-        # Split Training epochs
-        miniEpoch = int(epochCount / epochChunks)
-
-        for i in range(0, epochChunks):
-            #  perform a batch doublication every 1/10th of the epoch count
-            print("Current Batch Size: " + str(batchSize))
-
-            # assemble callbacks
-            callbackList = []
-            csv_logger = self.createCSVLoggerCallback()
-
-            if verbosity == 1:
-                callbackList = [mc_best, es, csv_logger]
-            else:
-                callbackList = [mc_best, es, LossAndErrorPrintingCallback(), csv_logger]
-
-            # start Training
-            h = self.trainingData[2]
-            alpha = self.trainingData[1]
-            # u = self.trainingData[0]
-            # trainDataY =          net_out = tf.stack([h, alpha], axis=1)[:, :, 0]
-
-            # self.history = self.model.fit(x=self.trainingData[0], y=self.trainingData[2],
-            self.history = self.model.fit(x=self.trainingData[0], y=[self.trainingData[2], self.trainingData[1]],
-                                          validation_split=valSplit,
-                                          epochs=miniEpoch,
-                                          batch_size=batchSize,
-                                          verbose=verbosity,
-                                          callbacks=callbackList,
-                                          shuffle=True
-                                          )
-            batchSize = 2 * batchSize
-
-            self.concatHistoryFiles()
-
+        xData = self.trainingData[0]
+        yData = [self.trainingData[2], self.trainingData[1]]
+        self.model.fit(x=xData, y=yData,
+                       validation_split=val_split, epochs=epoch_size,
+                       batch_size=batch_size, verbose=verbosity_mode,
+                       callbacks=callback_list, shuffle=True)
         return self.history
 
     def selectTrainingData(self):

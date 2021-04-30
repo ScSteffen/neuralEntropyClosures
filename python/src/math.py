@@ -115,7 +115,7 @@ class EntropyTools:
         opti_start = np.reshape(start.numpy(), (dim,))
 
         opt_result = scipy.optimize.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
-                                             tol=1e-7)
+                                             tol=1e-4)
 
         if not opt_result.success:
             exit("Optimization unsuccessfull!")
