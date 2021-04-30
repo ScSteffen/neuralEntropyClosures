@@ -47,24 +47,30 @@ class neuralMK11(neuralBase):
 
         # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
         input_stddev = np.sqrt((1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        hidden_stddev = np.sqrt((1 / 1.1) * (1 / self.modelWidth) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
+        # Weight initializer (uniform bounded)
+        # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
+        # initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
 
         # Weight regularizer
-        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.00001, l2=0.00001)  # L1 + L2 penalties
+        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
-        def convexLayer(layerInput_z: Tensor, netInput_x: Tensor, layerIdx=0) -> Tensor:
+        def convexLayer(layerInput_z: Tensor, netInput_x: Tensor, layerIdx=0, layer_dim=layerDim) -> Tensor:
+            stddev = np.sqrt(
+                (1 / 1.1) * (1 / layerDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+
             # Weighted sum of previous layers output plus bias
-            weightedNonNegSum_z = layers.Dense(layerDim, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=keras.initializers.RandomNormal(mean=0.,
-                                                                                                  stddev=hidden_stddev),
+            weightedNonNegSum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,
+                                               kernel_initializer=initializer,
                                                kernel_regularizer=l1l2Regularizer,
                                                use_bias=True, bias_initializer='zeros',
-                                               name='non_neg_component_' + str(layerIdx)
+                                               name='non_neg_component_' + str(
+                                                   layerIdx)
                                                )(layerInput_z)
             # Weighted sum of network input
-            weightedSum_x = layers.Dense(layerDim, activation=None,
-                                         kernel_initializer=keras.initializers.RandomNormal(mean=0.,
-                                                                                            stddev=hidden_stddev),
+            weightedSum_x = layers.Dense(layer_dim, activation=None,
+                                         kernel_initializer=initializer,
                                          kernel_regularizer=l1l2Regularizer,
                                          use_bias=False, name='dense_component_' + str(layerIdx)
                                          )(netInput_x)
@@ -78,10 +84,13 @@ class neuralMK11(neuralBase):
             return out
 
         def convexLayerOutput(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
+            stddev = np.sqrt(
+                (1 / 1.1) * (1 / 1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+
             # Weighted sum of previous layers output plus bias
             weightedNonNegSum_z = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=keras.initializers.RandomNormal(mean=0.,
-                                                                                                  stddev=hidden_stddev),
+                                               kernel_initializer=initializer,
                                                kernel_regularizer=l1l2Regularizer,
                                                use_bias=True,
                                                bias_initializer='zeros'
@@ -89,8 +98,7 @@ class neuralMK11(neuralBase):
                                                )(layerInput_z)
             # Weighted sum of network input
             weightedSum_x = layers.Dense(1, activation=None,
-                                         kernel_initializer=keras.initializers.RandomNormal(mean=0.,
-                                                                                            stddev=hidden_stddev),
+                                         kernel_initializer=initializer,
                                          kernel_regularizer=l1l2Regularizer,
                                          use_bias=False
                                          # name='in_x_Dense'
@@ -108,7 +116,7 @@ class neuralMK11(neuralBase):
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(layerDim, activation="softplus",
-                              kernel_initializer=keras.initializers.RandomNormal(mean=0., stddev=input_stddev),
+                              kernel_initializer=input_initializer,
                               kernel_regularizer=l1l2Regularizer,
                               bias_initializer='zeros',
                               name="first_dense"
@@ -116,6 +124,7 @@ class neuralMK11(neuralBase):
         # other layers are convexLayers
         for idx in range(0, self.modelDepth):
             hidden = convexLayer(hidden, input_, layerIdx=idx)
+        hidden = convexLayer(hidden, input_, layerIdx=self.modelDepth + 1, layer_dim=int(layerDim / 2))
         output_ = convexLayerOutput(hidden, input_)  # outputlayer
 
         # Create the core model
@@ -128,10 +137,11 @@ class neuralMK11(neuralBase):
         model.build(input_shape=(batchSize, self.inputDim))
 
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
-            loss_weights={'output_1': self.lossWeights[0], 'output_2': self.lossWeights[1]},
-            optimizer=self.optimizer,
-            metrics=['mean_absolute_error'])
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
+                  'output_3': tf.keras.losses.MeanSquaredError()},
+            loss_weights={'output_1': self.lossWeights[0], 'output_2': self.lossWeights[1],
+                          'output_3': self.lossWeights[2]},
+            optimizer=self.optimizer, metrics=['mean_absolute_error'])
 
         # model.summary()
 
@@ -145,11 +155,11 @@ class neuralMK11(neuralBase):
         Calls training depending on the MK model
         '''
         xData = self.trainingData[0]
-        yData = [self.trainingData[2], self.trainingData[1]]
-        self.model.fit(x=xData, y=yData,
-                       validation_split=val_split, epochs=epoch_size,
-                       batch_size=batch_size, verbose=verbosity_mode,
-                       callbacks=callback_list, shuffle=True)
+        yData = [self.trainingData[2], self.trainingData[1], self.trainingData[0]]
+        self.history = self.model.fit(x=xData, y=yData,
+                                      validation_split=val_split, epochs=epoch_size,
+                                      batch_size=batch_size, verbose=verbosity_mode,
+                                      callbacks=callback_list, shuffle=True)
         return self.history
 
     def selectTrainingData(self):
@@ -207,7 +217,9 @@ class sobolevModel(tf.keras.Model):
             h = self.coreModel(x)
         alpha = grad_tape.gradient(h, x)
 
-        return [h, alpha]
+        alpha_complete = self.reconstruct_alpha(alpha)
+        u_complete = self.reconstruct_u(alpha_complete)
+        return [h, alpha, u_complete[:, 1:]]  # cutoff the 0th order moment, since it is 1 by construction
 
     def callDerivative(self, x, training=False):
         with tf.GradientTape() as grad_tape:
@@ -230,7 +242,12 @@ class sobolevModel(tf.keras.Model):
                w    , dims = nq
         returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
         """
-        tmp = tf.math.exp(tf.tensordot(alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        # Check the predicted alphas for +/- infinity or nan - raise error if found
+        checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
+        # Clip the predicted alphas below the tf.exp overflow threshold
+        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+
+        tmp = tf.math.exp(tf.tensordot(clipped_alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
         alpha_0 = -tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))  # ln(<tmp>)
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
@@ -246,7 +263,12 @@ class sobolevModel(tf.keras.Model):
                w    , dims = nq
         returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
         """
+        # Check the predicted alphas for +/- infinity or nan - raise error if found
+        checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
+        # Clip the predicted alphas below the tf.exp overflow threshold
+        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(clipped_alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis

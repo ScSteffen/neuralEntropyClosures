@@ -28,7 +28,8 @@ class neuralBase:
         self.modelDepth = depth
         self.optimizer = 'adam'
         self.filename = "models/" + customFolderName
-
+        self.history = []
+        
         # --- Determine loss combination ---
         if lossCombi == 0:
             self.lossWeights = [1, 0, 0, 0]
@@ -153,7 +154,7 @@ class neuralBase:
                 return step_size
 
             LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
-            HW = HaltWhenCallback('val_output_loss', stop_tol)
+            HW = HaltWhenCallback('val_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
             csv_logger = self.createCSVLoggerCallback()
