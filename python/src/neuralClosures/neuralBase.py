@@ -88,6 +88,13 @@ class neuralBase:
 
         return [x_model, gradients, predictions]
 
+    def call_scaled(self, u_non_normal):
+        """
+        Brief: By default the same behaviour as callNetwork.
+              This method is subclassed by all networks, that only take normalized moments (MK11 and newer)
+        """
+        return self.callNetwork(u_non_normal)
+
     def simple_callNetwork(self, input):
         """
         Simple prediction, that just calls the model
@@ -394,14 +401,8 @@ class neuralBase:
         """
 
         # normalize data
-        u_0 = np.reshape(u_test[:, 0], (u_test.shape[0], 1))
-        u_normalized = u_test / u_0
-        # u_normalized = np.reshape(u_normalized, u_test.shape)
-        [u_pred, alpha_pred, h_pred] = self.callNetwork(u_normalized)
-        u_pred_scaled = u_pred * u_0
+        [u_pred_scaled, alpha_pred_scaled, h_pred_scaled] = self.call_scaled(u_test)
 
-        # 
-        #
         # create the loss functions
         def pointwiseDiff(trueSamples, predSamples):
             """

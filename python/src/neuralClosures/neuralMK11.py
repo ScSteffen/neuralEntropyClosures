@@ -187,6 +187,31 @@ class neuralMK11(neuralBase):
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
 
+    def call_scaled(self, u_non_normal):
+
+        """
+        brief: Only works for maxwell Boltzmann entropy so far.
+        Calls the network with non normalized moments. (first the moments get normalized, then the network gets called,
+        then the upscaling mechanisms get called, then the original entropy gets computed.)
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: u_complete, dims = (nS x N)
+        returns: [u,alpha,h], where
+                 alpha_complete_predicted_scaled, dim = (nS x N)
+                 u_complete_reconstructed_scaled, dim = (nS x N)
+                 h_predicted_scaled, dim = (nS x 1)
+        """
+        u_non_normal = tf.constant(u_non_normal, dtype=tf.float32)
+        u_downscaled = self.model.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
+        [u_complete_reconstructed, alpha_complete_predicted, h_predicted] = self.callNetwork(u_downscaled)
+        u_rescaled = self.model.scale_u(u_complete_reconstructed, u_non_normal[:, 0])  # upscaling
+        alpha_rescaled = self.model.scale_alpha(alpha_complete_predicted, u_non_normal[:, 0])  # upscaling
+        h_rescaled = self.model.compute_h(u_rescaled, alpha_rescaled)
+
+        return [u_rescaled, alpha_rescaled, h_rescaled]
+
 
 class sobolevModel(tf.keras.Model):
     # Sobolev implies, that the model outputs also its derivative
@@ -276,3 +301,43 @@ class sobolevModel(tf.keras.Model):
         f_quad = tf.math.exp(tf.tensordot(clipped_alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
+
+    def scale_alpha(self, alpha, u_0):
+        """
+        Performs the up-scaling computation, s.t. alpha corresponds to a moment with u0 = u_0, instead of u0=1
+        input: alpha = [alpha_0,...,alpha_N],  batch of lagrange multipliers of the zeroth moment, dim = (nsx(N+1)))
+               u_0 = batch of zeroth moments, dim = (nsx1)
+        output: alpha_scaled = alpha + [ln(u_0),0,0,...]
+        """
+        return tf.concat(
+            [tf.reshape(tf.math.add(alpha[:, 0], tf.math.log(u_0)), shape=(alpha.shape[0], 1)), alpha[:, 1:]], axis=-1)
+
+    def scale_u(self, u_orig, scale_values):
+        """
+        Up-scales a batch of normalized moments by its original zero order moment u_0
+        input: u_orig = [u0_orig,...,uN_orig], original moments, dim=(nsx(N+1))
+               scale_values = zero order moment, scaling factor, dim= (nsx1)
+        output: u_scaled = u_orig*scale_values, dim(ns x(N+1)
+        """
+        return tf.math.multiply(u_orig, tf.reshape(scale_values, shape=(scale_values.shape[0], 1)))
+
+    def compute_h(self, u, alpha):
+        """
+        brief: computes the entropy functional h on u and alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+               u, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = alpha*u - <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
+        return tmp2 - tmp
