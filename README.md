@@ -2,6 +2,9 @@
 
 A Project to construct some neural networks to solve the minimal entropy problem. 
 
+## Packages needed
+
+Tensorflow v2.2.0
 
 ## How to use ## 
 
