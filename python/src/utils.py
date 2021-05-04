@@ -124,7 +124,8 @@ def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures
             plt.plot(x, y, lineType)
         plt.legend(labels)
     elif len(xs) is not len(ys):
-        ValueError("list of x entries must be of same length as y entries")
+        print("Error: List of x entries must be of same length as y entries")
+        exit(1)
     else:
         for x, y, lineType in zip(xs, ys, linetypes):
             plt.plot(x, y, lineType)
