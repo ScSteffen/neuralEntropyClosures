@@ -9,7 +9,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=0 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -27,7 +27,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=0 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -45,7 +45,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=0 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -63,7 +63,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=0 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -81,7 +81,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=1 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -99,7 +99,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=1 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -117,7 +117,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=1 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -135,7 +135,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=1 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -153,7 +153,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=2 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -171,7 +171,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=2 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -189,7 +189,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=2 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
@@ -207,7 +207,7 @@ python callNeuralClosure.py \
 --model=11 \
 --normalized=1 \
 --objective=2 \
---processingmode=0 \
+--processingmode=1 \
 --spatialDimension=1 \
 --training=1 \
 --verbosity=1 \
