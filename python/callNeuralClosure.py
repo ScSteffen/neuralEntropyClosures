@@ -18,6 +18,7 @@ import os
 from optparse import OptionParser
 
 ### global variable ###
+
 neuralClosureModel = 0  # bm.initNeuralClosure(0,0)
 
 
@@ -187,36 +188,36 @@ def main():
     # Save options and runscript to file
     utils.writeConfigFile(options, neuralClosureModel)
 
-    if (options.loadmodel == 1 or options.training == 0 or options.training == 2):
+    if options.loadmodel == 1 or options.training == 0 or options.training == 2:
         # in execution mode the model must be loaded.
         # load model weights
         neuralClosureModel.loadModel()
     else:
         print("Start training with new weights")
 
-    if (options.training == 1):
+    if options.training == 1:
         # create training Data
         trainingMode = True
         neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
-                                            alphasampling=options.alphasampling)
+                                            alphasampling=options.alphasampling,
+                                            normalizedData=neuralClosureModel.normalized)
         # train model
         neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
                                                  batchSize=options.batch, verbosity=options.verbosity,
                                                  processingMode=options.processingmode)
         # save model
         neuralClosureModel.saveModel()
-    elif (options.training == 2):
+
+    elif options.training == 2:
         print("Analysis mode entered.")
-        neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True)
+        print("Evaluate Model on normalized data...")
+        neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True, normalizedData=True)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
-
-        # test stuff:
-        # tmp = neuralClosureModel.callNetwork(u, alpha, h)
-        # print(tmp)
-
+        neuralClosureModel.evaluateModelNormalized(u, alpha, h)
+        print("Evaluate Model on non-normalized data...")
+        neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True, normalizedData=False)
+        [u, alpha, h] = neuralClosureModel.getTrainingData()
         neuralClosureModel.evaluateModel(u, alpha, h)
-
-
     else:
         # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
         print("pure execution mode")

@@ -181,7 +181,7 @@ class neuralMK11(neuralBase):
                  h_predicted, dim = (nS x 1)
         """
         u_reduced = u_complete[:, 1:]  # chop of u_0
-        [h_predicted, alpha_predicted] = self.model(u_reduced)
+        [h_predicted, alpha_predicted, u_0_predicted] = self.model(u_reduced)
         alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
         u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
 
@@ -209,7 +209,11 @@ class sobolevModel(tf.keras.Model):
 
     def call(self, x, training=False):
         """
-        Defines the sobolev execution
+        Defines the sobolev executio (does not return 0th order moment)
+        input: x = [u_1,u_2,...,u_N]
+        output: h = entropy of u,alpha
+                alpha = [alpha_1,...,alpha_N]
+                u = [u_1,u_2,...,u_N]
         """
 
         with tf.GradientTape() as grad_tape:

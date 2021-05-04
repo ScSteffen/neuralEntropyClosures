@@ -29,7 +29,7 @@ class neuralBase:
         self.optimizer = 'adam'
         self.filename = "models/" + customFolderName
         self.history = []
-        
+
         # --- Determine loss combination ---
         if lossCombi == 0:
             self.lossWeights = [1, 0, 0, 0]
@@ -176,10 +176,8 @@ class neuralBase:
         '''
         xData = self.trainingData[0]
         yData = self.trainingData[1]
-        self.model.fit(x=xData, y=yData,
-                       validation_split=val_split, epochs=epoch_size,
-                       batch_size=batch_size, verbose=verbosity_mode,
-                       callbacks=callback_list, shuffle=True)
+        self.model.fit(x=xData, y=yData, validation_split=val_split, epochs=epoch_size, batch_size=batch_size,
+                       verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
         return self.history
 
     def concatHistoryFiles(self):
@@ -271,7 +269,7 @@ class neuralBase:
         self.model.summary()
         return 0
 
-    def loadTrainingData(self, shuffleMode=False, alphasampling=0, loadAll=False):
+    def loadTrainingData(self, shuffleMode=False, alphasampling=0, loadAll=False, normalizedData=False):
         """
         Loads the trianing data
         params: normalizedMoments = load normalized data  (u_0=1)
@@ -284,7 +282,7 @@ class neuralBase:
         ### Create trainingdata filename"
         filename = "data/" + str(self.spatialDim) + "D/Monomial_M" + str(self.polyDegree) + "_" + str(
             self.spatialDim) + "D"
-        if self.normalized:
+        if normalizedData:
             filename = "data/" + str(self.spatialDim) + "D/Monomial_M" + str(self.polyDegree) + "_" + str(
                 self.spatialDim) + "D_normal"
         if alphasampling == 1:
@@ -305,7 +303,7 @@ class neuralBase:
         if selectedCols[0] == True:
             df = pd.read_csv(filename, usecols=[i for i in uCols])
             uNParray = df.to_numpy()
-            if self.normalized and not loadAll:
+            if normalizedData and not loadAll:
                 # ignore first col of u
                 uNParray = uNParray[:, 1:]
 
@@ -313,7 +311,7 @@ class neuralBase:
         if selectedCols[1] == True:
             df = pd.read_csv(filename, usecols=[i for i in alphaCols])
             alphaNParray = df.to_numpy()
-            if self.normalized and not loadAll:
+            if normalizedData and not loadAll:
                 # ignore first col of alpha
                 alphaNParray = alphaNParray[:, 1:]
             self.trainingData.append(alphaNParray)
@@ -343,7 +341,7 @@ class neuralBase:
     def trainingDataPostprocessing(self):
         return 0
 
-    def evaluateModel(self, u_test, alpha_test, h_test):
+    def evaluateModelNormalized(self, u_test, alpha_test, h_test):
         """
         brief: runs a number of tests and evalutations to determine test errors of the model.
         input: u_test, dim (nS, N)
@@ -365,16 +363,6 @@ class neuralBase:
             loss_val = tf.keras.losses.mean_squared_error(trueSamples, predSamples)
             return loss_val
 
-        def meanDiff(trueSamples, predSamples):
-            """
-            brief: computes the average of pointwiseDiff over all samples
-            input: trueSamples, dim = (ns,N)
-                   predSamples, dim = (ns,N)
-            returns: avg(mse(trueSamples-predSamples)) dim = (1,)
-            """
-            loss_val = tf.keras.losses.MeanSquaredError()(trueSamples, predSamples)
-            return loss_val
-
         diff_h = pointwiseDiff(h_test, h_pred)
         diff_alpha = pointwiseDiff(alpha_test, alpha_pred)
         diff_u = pointwiseDiff(u_test, u_pred)
@@ -391,33 +379,48 @@ class neuralBase:
         utils.plot1D(u_test[:, 1], [diff_alpha, diff_h, diff_u], ['difference alpha', 'difference h', 'difference u'],
                      'errors', log=True)
 
-        '''
-           def plotTrainingHistory(self):
+        return 0
 
-               #Method to plot the training data
+    def evaluateModel(self, u_test, alpha_test, h_test):
+        """
+        brief: runs a number of tests and evalutations to determine test errors of the model.
+        input: u_test, dim (nS, N)
+               alpha_test, dim (nS, N)
+               h_test, dim(nS,1)
+        return: True, if run successfully. Prints several plots and pictures to file.
+        """
 
-               fig, axs = plt.subplots(2)
+        # normalize data
+        u_0 = np.reshape(u_test[:, 0], (u_test.shape[0], 1))
+        u_normalized = u_test / u_0
+        # u_normalized = np.reshape(u_normalized, u_test.shape)
+        [u_pred, alpha_pred, h_pred] = self.callNetwork(u_normalized)
+        u_pred_scaled = u_pred * u_0
 
-               axs[0].plot(self.model.history.history['mean_absolute_error'])
-               axs[0].plot(self.model.history.history['val_mean_absolute_error'])
-               axs[0].set_title('absolute error')
-               axs[0].set_ylabel('error')
-               axs[0].set_xlabel('epoch')
-               axs[0].set_yscale("log")
-               axs[0].legend(['train mean abs error', 'val mean abs error'], loc='upper right')
+        # 
+        #
+        # create the loss functions
+        def pointwiseDiff(trueSamples, predSamples):
+            """
+            brief: computes the squared 2-norm for each sample point
+            input: trueSamples, dim = (ns,N)
+                   predSamples, dim = (ns,N)
+            returns: mse(trueSamples-predSamples) dim = (ns,)
+            """
+            loss_val = tf.keras.losses.mean_squared_error(trueSamples, predSamples)
+            return loss_val
 
-               # summarize history for loss
-               axs[1].plot(self.model.history.history['loss'])
-               axs[1].plot(self.model.history.history['val_loss'])
-               axs[1].set_title('model loss: mse')
-               axs[1].set_ylabel('error')
-               axs[1].set_xlabel('epoch')
-               axs[1].set_yscale("log")
-               axs[1].legend(['train mse', 'val mse'], loc='upper right')
-               # axs[1].show()
-               plt.show()
-               return 0
-           '''
+        # compute errors
+        # diff_h = pointwiseDiff(h_test, h_pred)
+        # diff_alpha = pointwiseDiff(alpha_test, alpha_pred)
+        diff_u = pointwiseDiff(u_test, u_pred_scaled)
+
+        # print losses
+        utils.scatterPlot2D(u_test, diff_u, name="err in u over u", log=False, show_fig=False)
+        # utils.plot1D(u_test[:, 1], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1', log=False)
+        # utils.plot1D(u_test[:, 1], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1', log=False)
+
+        return 0
 
 
 class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):

@@ -9,6 +9,7 @@ import time
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import random
 import os
 
@@ -129,13 +130,47 @@ def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures
             plt.plot(x, y, lineType)
         plt.legend(labels)
 
-    if (log):
+    if log:
         plt.yscale('log')
 
     if show_fig:
         plt.show()
     plt.savefig(folder_name + "/" + name + ".png", dpi=150)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    return 0
+
+
+def scatterPlot2D(x_in, y_in, name='defaultName', log=True, folder_name="figures", show_fig=False):
+    '''
+    brief: Compute a scatter plot
+    input: x_in = [x1,x2] function arguments
+           y_in = function values
+    '''
+    plt.clf()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)  # , projection='3d')
+    ax.grid(True, linestyle='-', color='0.75')
+    x = x_in[:, 0]
+    y = x_in[:, 1]
+    z = y_in
+    out = ax.scatter(x, y, s=20, c=z, cmap=cm.jet);
+
+    ax.set_title(name, fontsize=14)
+    ax.set_xlabel("u1", fontsize=12)
+    ax.set_ylabel("u2", fontsize=12)
+    # ax.set_xlabel('N1')
+    # ax.set_ylabel('N2')
+    # ax.set_zlabel('h')
+    # pos_neg_clipped = ax.imshow(z)
+    cbar = fig.colorbar(out, ax=ax, extend='both')
+
+    if log:
+        ax.set_yscale('log')
+
+    if show_fig:
+        plt.show()
+    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+
     return 0
 
 
