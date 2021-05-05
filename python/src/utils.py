@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import random
 import os
+from pathlib import Path
 
 
 def finiteDiff(x, y):
@@ -209,6 +210,9 @@ def writeConfigFile(options, neuralClosureModel):
     rsFile = neuralClosureModel.filename + '/runScript_001_'
     count = 0
 
+    # create directory if it does not exist
+    make_directory(neuralClosureModel.filename)
+
     while os.path.isfile(rsFile + '.sh'):
         count += 1
         rsFile = neuralClosureModel.filename + '/runScript_' + str(count).zfill(3) + '_'
@@ -250,3 +254,10 @@ def writeConfigFile(options, neuralClosureModel):
     df.to_csv(cfgFile, index=False)
 
     return True
+
+
+def make_directory(path_to_directory):
+    if not os.path.exists(path_to_directory):
+        p = Path(path_to_directory)
+        p.mkdir(parents=True)
+    return 0
