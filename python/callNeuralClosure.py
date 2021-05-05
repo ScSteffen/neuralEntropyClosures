@@ -17,9 +17,10 @@ import tensorflow as tf
 import os
 from optparse import OptionParser
 
+
 ### global variable ###
 
-neuralClosureModel = 0  # bm.initNeuralClosure(0,0)
+# neuralClosureModel = 0  # bm.initNeuralClosure(0,0)
 
 
 ### function definitions ###

@@ -33,11 +33,11 @@ class neuralBase:
         # --- Determine loss combination ---
         if lossCombi == 0:
             self.lossWeights = [1, 0, 0, 0]
-        if lossCombi == 1:
+        elif lossCombi == 1:
             self.lossWeights = [1, 1, 0, 0]
-        if lossCombi == 2:
+        elif lossCombi == 2:
             self.lossWeights = [1, 1, 1, 0]
-        if lossCombi == 3:
+        elif lossCombi == 3:
             self.lossWeights = [1, 1, 1, 1]
         else:
             self.lossWeights = [1, 0, 0, 0]
@@ -261,7 +261,8 @@ class neuralBase:
         usedFileName = usedFileName + '/best_model.h5'
 
         if path.exists(usedFileName) == False:
-            ValueError("Model does not exists at this path: " + usedFileName)
+            print("Model does not exists at this path: " + usedFileName)
+            exit(1)
         self.model.load_weights(usedFileName)
         print("Model loaded from file ")
         return 0
