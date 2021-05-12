@@ -37,8 +37,8 @@ class neuralBase:
             self.lossWeights = [1, 1, 0, 0]
         elif lossCombi == 2:
             self.lossWeights = [1, 1, 1, 0]
-        elif lossCombi == 3:
-            self.lossWeights = [1, 1, 1, 1]
+        elif lossCombi == 4:
+            self.lossWeights = [0, 0, 0, 1]
         else:
             self.lossWeights = [1, 0, 0, 0]
 

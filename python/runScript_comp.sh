@@ -8,7 +8,7 @@ python callNeuralClosure.py \
   --loadModel=0 \
   --model=11 \
   --normalized=1 \
-  --objective=0 \
+  --objective=2 \
   --processingmode=1 \
   --spatialDimension=1 \
   --training=1 \

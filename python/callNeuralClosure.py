@@ -135,7 +135,7 @@ def main():
     parser.add_option("-n", "--normalized", dest="normalized", default=0,
                       help="train on normalized moments", metavar="NORMALIZED")
     parser.add_option("-o", "--objective", dest="objective", default=0,
-                      help="choice of loss functions:\n 0=[h]\n 1 =[h,alpha]\n 2=[h,alpha,u]\n3=[h,alpha,u,flux]",
+                      help="choice of loss functions:\n 0=[h]\n 1 =[h,alpha]\n 2=[h,alpha,u]\n3=[rel_entropy_h]",
                       metavar="OBJECTIVE")
     parser.add_option("-p", "--processingmode", dest="processingmode", default=1,
                       help="gpu mode (1). cpu mode (0) ", metavar="PROCESSINGMODE")
