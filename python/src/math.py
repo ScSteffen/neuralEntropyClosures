@@ -165,9 +165,28 @@ class EntropyTools:
         dim = t2.shape[1]
         return np.reshape(t2 - self.opti_u, (dim,))
 
-        ### Standalone features
+    def KL_divergence(self, alpha_true, alpha):
+        """
+        brief: computes the Kullback-Leibler Divergence of the kinetic density w.r.t alpha given the kinetic density w.r.t
+                alpha_true
+        input: alpha_true , dim= (1,N+1)
+               alpha , dim = (ns, N+1)
+        output: pointwise KL Divergence, dim  = ns x 1
+        """
 
-        ### Integration
+        diff = alpha_true - alpha
+
+        t1 = tf.math.exp(tf.tensordot(alpha_true, self.momentBasis, axes=([1], [0])))
+        t2 = tf.tensordot(diff, self.momentBasis, axes=([1], [0]))
+        integrand = tf.math.multiply(t1, t2)
+
+        res = tf.tensordot(integrand, self.quadWeights, axes=([1], [1]))
+        return res
+
+    ### Standalone features
+
+
+### Integration
 
 
 def qGaussLegendre1D(order):
