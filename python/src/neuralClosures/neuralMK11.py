@@ -138,14 +138,14 @@ class neuralMK11(neuralBase):
         model.build(input_shape=(batchSize, self.inputDim))
 
         # test
-        a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
-        a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
-        a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
-        a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
+        # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
+        # a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
+        # a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
+        # a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
 
-        print(tf.keras.losses.MeanSquaredError()(a3, a2))
-        print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
-        print(self.custom_mse(a2, a3))
+        # print(tf.keras.losses.MeanSquaredError()(a3, a2))
+        # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
+        # print(self.custom_mse(a2, a3))
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
                   'output_3': tf.keras.losses.MeanSquaredError(),
@@ -217,33 +217,14 @@ class neuralMK11(neuralBase):
             """
 
             # extend alpha_true to full dimension
-            print("alpha_true")
-            print(y_true)
-            print("alpha")
-            print(y_pred)
             alpha_true_recon = reconstruct_alpha(y_true)
             alpha_pred_recon = reconstruct_alpha(y_pred)
+            # compute KL_divergence
             diff = alpha_true_recon - alpha_pred_recon
-            print("diff")
-
-            # print(diff)
-            # print("___")
             t1 = tf.math.exp(tf.tensordot(alpha_true_recon, mB, axes=([1], [0])))
             t2 = tf.tensordot(diff, mB, axes=([1], [0]))
             integrand = tf.math.multiply(t1, t2)
-            # print(integrand.shape)
-            # print("____")
-            res = tf.tensordot(integrand, qW, axes=([1], [1]))
-            # print(res.shape)
-            # print("____")
-            # res = tf.math.reduce_mean(res, axis=0, keepdims=False, name=None)
-            # print(res.shape)
-            # print("____")
-            # res = tf.reshape(res, shape=())
-            # print(res.shape)
-            # print("____")
-            # print("end:::::::::::::::end")
-            return res
+            return tf.tensordot(integrand, qW, axes=([1], [1]))
 
         return KL_divergence
 
