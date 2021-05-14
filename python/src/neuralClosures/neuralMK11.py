@@ -148,10 +148,10 @@ class neuralMK11(neuralBase):
         # print(self.custom_mse(a2, a3))
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
-                  'output_3': tf.keras.losses.MeanSquaredError(),
-                  'output_4': self.KL_divergence_loss(model.momentBasis, model.quadWeights)},  # self.custom_mse},
+                  'output_3': tf.keras.losses.MeanSquaredError()},
+            # 'output_4': self.KL_divergence_loss(model.momentBasis, model.quadWeights)},  # self.custom_mse},
             loss_weights={'output_1': self.lossWeights[0], 'output_2': self.lossWeights[1],
-                          'output_3': self.lossWeights[2], 'output_4': self.lossWeights[3]},
+                          'output_3': self.lossWeights[2]},  # , 'output_4': self.lossWeights[3]},
             optimizer=self.optimizer, metrics=['mean_absolute_error'])
 
         # model.summary()
@@ -234,7 +234,7 @@ class neuralMK11(neuralBase):
         '''
         xData = self.trainingData[0]
         # yData = [h,alpha,u, alpha (for KLDivergence)]
-        yData = [self.trainingData[2], self.trainingData[1], self.trainingData[0], self.trainingData[1]]
+        yData = [self.trainingData[2], self.trainingData[1], self.trainingData[0]]  # , self.trainingData[1]]
         self.history = self.model.fit(x=xData, y=yData,
                                       validation_split=val_split, epochs=epoch_size,
                                       batch_size=batch_size, verbose=verbosity_mode,
@@ -327,7 +327,7 @@ class sobolevModel(tf.keras.Model):
 
         alpha_complete = self.reconstruct_alpha(alpha)
         u_complete = self.reconstruct_u(alpha_complete)
-        return [h, alpha, u_complete[:, 1:], alpha]  # cutoff the 0th order moment, since it is 1 by construction
+        return [h, alpha, u_complete[:, 1:]]  # cutoff the 0th order moment, since it is 1 by construction
 
     def callDerivative(self, x, training=False):
         with tf.GradientTape() as grad_tape:
