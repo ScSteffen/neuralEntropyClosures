@@ -18,6 +18,7 @@ from .neuralMK9 import neuralMK9
 from .neuralMK10 import neuralMK10
 from .neuralMK11 import neuralMK11
 from .neuralMK12 import neuralMK12
+from .neuralMK13 import neuralMK13
 
 
 ### global functions ###
@@ -77,6 +78,9 @@ def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="tes
                                         lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     elif (modelNumber == 12):
         neuralClosureModel = neuralMK12(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
+                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
+    elif (modelNumber == 13):
+        neuralClosureModel = neuralMK13(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
                                         lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
     else:
         ValueError("No network fits your preferences!")

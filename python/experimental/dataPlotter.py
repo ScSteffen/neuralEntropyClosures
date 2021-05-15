@@ -18,8 +18,8 @@ from src import utils
 
 def main():
     # Plot normalized Data
-    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M1_1D_normal.csv", 2)
-    utils.plot1D(u[:, 1], [h], ['h'], 'validation_check', log=False, folder_name="figures")
+    # [u, alpha, h] = loadTrainingData("data/1D/Monomial_M1_1D_normal.csv", 2)
+    # utils.plot1D(u[:, 1], [h], ['h'], 'validation_check', log=False, folder_name="figures")
 
     # plot1DM0Data(u, alpha, h)
 
@@ -28,8 +28,8 @@ def main():
     # plot2DMoments(u, h)
 
     # Normalized Plots
-    # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M2_D1_normalized.csv", 3)
-    # plotHoverNormalized_N1_N2(u, h)
+    [u, alpha, h] = loadTrainingData("data/2D/Monomial_M1_2D_normal_alpha.csv", 3)
+    plotHoverNormalized_N1_N2(u, h)
 
     # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
     # plotHoverNormalized_N2_N3(u, h)
