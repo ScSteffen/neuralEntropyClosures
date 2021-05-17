@@ -118,7 +118,7 @@ def main():
     parser = OptionParser()
     parser.add_option("-a", "--alphasampling", dest="alphasampling", default=0,
                       help="uses data sampled in alpha", metavar="ALPHA")
-    parser.add_option("-b", "--batch", dest="batch", default=1000,
+    parser.add_option("-b", "--batch", dest="batch", default=128,
                       help="batch size", metavar="BATCH")
     parser.add_option("-c", "--curriculum", dest="curriculum", default=1,
                       help="training curriculum", metavar="EPOCHCHUNK")
