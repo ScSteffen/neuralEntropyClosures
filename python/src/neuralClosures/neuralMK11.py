@@ -132,7 +132,8 @@ class neuralMK11(neuralBase):
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build model
-        model = sobolevModel(coreModel, polyDegree=self.polyDegree, name="sobolev_icnn_wrapper")
+        model = sobolevModel(coreModel, polyDegree=self.polyDegree, spatialDim=self.spatialDim,
+                             name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
@@ -294,7 +295,7 @@ class neuralMK11(neuralBase):
 
 class sobolevModel(tf.keras.Model):
     # Sobolev implies, that the model outputs also its derivative
-    def __init__(self, coreModel, polyDegree=1, **opts):
+    def __init__(self, coreModel, polyDegree=1, spatialDim=1, **opts):
         super(sobolevModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.coreModel = coreModel  # must be a compiled tensorflow model
@@ -302,11 +303,20 @@ class sobolevModel(tf.keras.Model):
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.polyDegree = polyDegree
         self.nq = 100
-        [quadPts, quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
-        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)  # dims = (batchSIze x N x nq)
+
+        if spatialDim == 1:
+            [quadPts, quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
+            mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
+        elif spatialDim == 2:
+            [quadPts, quadWeights] = math.qGaussLegendre2D(self.nq)  # dims = nq
+            mBasis = math.computeMonomialBasis2D(quadPts, self.polyDegree)  # dims = (N x nq)
+        else:
+            print("spatial dimension not yet supported for sobolev wrapper")
+            exit()
+        self.quadPts = tf.constant(quadPts, shape=(spatialDim, self.nq),
+                                   dtype=tf.float32)  # dims = (ds x nq)
         self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
                                        dtype=tf.float32)  # dims = (batchSIze x N x nq)
-        mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
         self.inputDim = mBasis.shape[0]
         self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
                                        dtype=tf.float32)  # dims = (batchSIze x N x nq)

@@ -163,7 +163,7 @@ def main():
     options.loadmodel = int(options.loadmodel)
     options.training = int(options.training)
     options.processingmode = int(options.processingmode)
-    options.normalized = bool(options.normalized)
+    options.normalized = bool(int(options.normalized))
     options.networkwidth = int(options.networkwidth)
     options.networkdepth = int(options.networkdepth)
 
@@ -201,7 +201,10 @@ def main():
         trainingMode = True
         neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
                                             alphasampling=options.alphasampling,
-                                            normalizedData=neuralClosureModel.normalized)
+                                            normalizedData=False)  # neuralClosureModel.normalized)
+
+        # normalize data
+        neuralClosureModel.normalizeData()
         # train model
         neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
                                                  batchSize=options.batch, verbosity=options.verbosity,
