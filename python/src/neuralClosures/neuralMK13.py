@@ -131,7 +131,8 @@ class neuralMK13(neuralBase):
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build model
-        model = sobolevModel(coreModel, polyDegree=self.polyDegree, name="sobolev_icnn_wrapper")
+        model = sobolevModel(coreModel, polyDegree=self.polyDegree, spatialDim=self.spatialDim,
+                             name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
@@ -259,13 +260,13 @@ class neuralMK13(neuralBase):
                  h_predicted, dim = (nS x 1)
         """
         u_reduced = u_complete[:, 1:]  # chop of u_0
-        [h_predicted, alpha_predicted, u_0_predicted, tmp] = self.model(u_reduced)
+        [h_predicted, alpha_predicted, u_0_predicted] = self.model(u_reduced)
         alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
         u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
 
-    def call_scaled(self, u_non_normal):
+    def call_scaled_64(self, u_non_normal):
 
         """
         brief: Only works for maxwell Boltzmann entropy so far.
@@ -283,29 +284,92 @@ class neuralMK13(neuralBase):
         """
         u_non_normal = tf.constant(u_non_normal, dtype=tf.float32)
         u_downscaled = self.model.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
-        [u_complete_reconstructed, alpha_complete_predicted, h_predicted] = self.callNetwork(u_downscaled)
-        u_rescaled = self.model.scale_u(u_complete_reconstructed, u_non_normal[:, 0])  # upscaling
-        alpha_rescaled = self.model.scale_alpha(alpha_complete_predicted, u_non_normal[:, 0])  # upscaling
-        h_rescaled = self.model.compute_h(u_rescaled, alpha_rescaled)
+        #
+        #
+        #
+        u_reduced = u_downscaled[:, 1:]  # chop of u_0
+        [h_predicted, alpha_predicted, u_0_predicted] = self.model(u_reduced)
+        ### cast to fp64 ###
+        alpha_predicted = tf.cast(alpha_predicted, dtype=tf.float64, name=None)
+        mBasis = tf.cast(self.model.momentBasis, dtype=tf.float64, name=None)
+        qWeights = tf.cast(self.model.quadWeights, dtype=tf.float64, name=None)
+        # reconstruct alpha (with fp64)
+        tmp = tf.math.exp(tf.tensordot(alpha_predicted, mBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        alpha_0 = -tf.math.log(tf.tensordot(tmp, qWeights, axes=([1], [1])))  # ln(<tmp>)
+        alpha_complete_predicted = tf.concat([alpha_0, alpha_predicted], axis=1)  # concat [alpha_0,alpha]
+        #
+        # reconstruct_u
+        f_quad = tf.math.exp(tf.tensordot(alpha_complete_predicted, mBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.math.multiply(f_quad, qWeights)  # f*w
+        u_complete_reconstructed = tf.tensordot(tmp, mBasis[:, :], axes=([1], [1]))
+        #
+        # upscale u
+        u0 = tf.cast(u_non_normal[:, 0], dtype=tf.float64, name=None)
+        u_rescaled = self.model.scale_u(u_complete_reconstructed, u0)  # upscaling
+        alpha_rescaled = self.model.scale_alpha(alpha_complete_predicted, u0)  # upscaling
+        #
+        # compute h
+        f_quad = tf.math.exp(tf.tensordot(alpha_rescaled, mBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, qWeights, axes=([1], [1]))  # f*w
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha_rescaled, u_rescaled), axis=1, keepdims=True)
+        h_rescaled = tmp2 - tmp
 
         return [u_rescaled, alpha_rescaled, h_rescaled]
+
+    def normalizeData(self):
+
+        # load data
+        #
+        [u_t, alpha_t, h_t] = self.trainingData
+        mBasis = tf.cast(self.model.momentBasis, dtype=tf.float64, name=None)
+        qWeights = tf.cast(self.model.quadWeights, dtype=tf.float64, name=None)
+        #
+        #
+        u_non_normal = tf.constant(u_t, dtype=tf.float64)
+        alpha_non_normal = tf.constant(alpha_t, dtype=tf.float64)
+        h_non_normal = tf.constant(h_t, dtype=tf.float64)
+
+        # scale u and alpha
+        u_normal = self.model.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
+        alpha_normal = self.model.scale_alpha(alpha_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))
+
+        # compute h
+        f_quad = tf.math.exp(tf.tensordot(alpha_normal, mBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, qWeights, axes=([1], [1]))  # f*w
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha_normal, u_normal), axis=1, keepdims=True)
+        h_normal = tmp2 - tmp
+
+        self.trainingData = [u_normal[:, 1:], alpha_normal[:, 1:], h_normal]
+        return 0
 
 
 class sobolevModel(tf.keras.Model):
     # Sobolev implies, that the model outputs also its derivative
-    def __init__(self, coreModel, polyDegree=1, **opts):
+    def __init__(self, coreModel, polyDegree=1, spatialDim=1, **opts):
         super(sobolevModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.coreModel = coreModel  # must be a compiled tensorflow model
 
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.polyDegree = polyDegree
-        self.nq = 100
-        [quadPts, quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
-        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)  # dims = (batchSIze x N x nq)
+
+        if spatialDim == 1:
+            [quadPts, quadWeights] = math.qGaussLegendre1D(10 * polyDegree)  # dims = nq
+            mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
+            self.nq = quadWeights.size  # = 10 * polyDegree
+        elif spatialDim == 2:
+            [quadPts, quadWeights] = math.qGaussLegendre2D(10 * polyDegree)  # dims = nq
+            self.nq = quadWeights.size  # is not 10 * polyDegree
+            mBasis = math.computeMonomialBasis2D(quadPts, self.polyDegree)  # dims = (N x nq)
+        else:
+            print("spatial dimension not yet supported for sobolev wrapper")
+            exit()
+
+        self.quadPts = tf.constant(quadPts, shape=(self.nq, spatialDim),
+                                   dtype=tf.float32)  # dims = (ds x nq)
         self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
                                        dtype=tf.float32)  # dims = (batchSIze x N x nq)
-        mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
+
         self.inputDim = mBasis.shape[0]
         self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
                                        dtype=tf.float32)  # dims = (batchSIze x N x nq)

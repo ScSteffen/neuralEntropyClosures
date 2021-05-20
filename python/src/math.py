@@ -340,6 +340,7 @@ def computeMonomialBasis1D(quadPts, polyDegree):
 
 def computeMonomialBasis2D(quadPts, polyDegree):
     """
+    brief: hardcoded for polyDegree 1 right now ! # TODO
     params: quadPts = quadrature points to evaluate
             polyDegree = maximum degree of the basis
     return: monomial basis evaluated at quadrature points
