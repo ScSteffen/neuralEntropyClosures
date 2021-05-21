@@ -24,7 +24,7 @@ num_cores = multiprocessing.cpu_count()
 
 
 def main():
-    solver = MNSolver1D(traditional=True)
+    solver = MNSolver1D(traditional=True, polyDegree=3)
     # solver.solveAnimation(maxIter=100)
     solver.solveAnimationIterError(maxIter=200)
     # solver.solveIterError(maxIter=100)
@@ -34,11 +34,11 @@ def main():
 
 class MNSolver1D:
 
-    def __init__(self, traditional=False):
+    def __init__(self, traditional=False, polyDegree=2):
 
         # Prototype for  spatialDim=1, polyDegree=2
-        self.nSystem = 2
-        self.polyDegree = 1
+        self.nSystem = polyDegree + 1
+        self.polyDegree = polyDegree
         self.quadOrder = 10
         self.traditional = traditional
         [self.quadPts, self.quadWeights] = math.qGaussLegendre1D(self.quadOrder)  # dims = nq
@@ -73,10 +73,16 @@ class MNSolver1D:
         # Neural closure
         self.neuralClosure = None
         if not self.traditional:
-            self.neuralClosure = initNeuralClosure(modelNumber=11, polyDegree=2, spatialDim=1,
-                                                   folderName="002_sim_M2_1D", lossCombi=3,
-                                                   width=15, depth=7, normalized=True)
-            self.neuralClosure.loadModel("../../models/002_sim_M2_1D")
+            if self.polyDegree == 2:
+                self.neuralClosure = initNeuralClosure(modelNumber=11, polyDegree=2, spatialDim=1,
+                                                       folderName="002_sim_M2_1D", lossCombi=2,
+                                                       width=10, depth=4, normalized=True)
+                self.neuralClosure.loadModel("../../models/002_sim_M2_1D")
+            elif self.polyDegree == 3:
+                self.neuralClosure = initNeuralClosure(modelNumber=13, polyDegree=3, spatialDim=1,
+                                                       folderName="002_sim_M3_1D", lossCombi=2,
+                                                       width=20, depth=7, normalized=True)
+                self.neuralClosure.loadModel("../../models/002_sim_M3_1D")
 
         # Analysis variables
         self.errorMap = np.zeros((self.nSystem, self.nx))
@@ -98,15 +104,16 @@ class MNSolver1D:
         for i in range(self.nx):
             xKoor = self.x0 + (i - 0.5) * self.dx
             uIc[0, i] = sincos(x=xKoor)  # normal_dist(x=xKoor, mean=0, sd=0.001)  # all other moments are 0 (isotropic)
-            uIc[1, i] = 0.9 / 3.0 * uIc[0, i]
-            # uIc[2, i] = 0.001
+            for n in range(1, self.nSystem):
+                uIc[n, i] = 0.0
+
         return uIc
 
     def solve(self, maxIter=100):
         # self.showSolution(0)
         for idx_time in range(maxIter):  # time loop
-            self.solveIterNewton(idx_time)
-            # self.solverIterML(idx_time)
+            # self.solveIterNewton(idx_time)
+            self.solverIterML(idx_time)
             print("Iteration: " + str(idx_time))
             # self.errorAnalysis()
             # print iteration results
@@ -126,18 +133,20 @@ class MNSolver1D:
 
         def animate_func(i):
             # self.u2 = np.copy(self.u)
-            self.entropyClosureNewton()
-            self.realizabilityReconstruction()
+            # self.entropyClosureNewton()
+            # self.realizabilityReconstruction()
 
             # flux computation
-            self.computeFluxNewton()
+            # self.computeFluxNewton()
             # FVM update
-            self.FVMUpdateNewton()
+            # self.FVMUpdateNewton()
+            self.solveIterNewton(i)
+            # self.solverIterML(i)
 
             print("Iteration: " + str(i))
 
             x = np.linspace(self.x0, self.x1, self.nx)
-            line.set_data(x, self.u[0, :])
+            line.set_data(x, self.u2[0, :])
             return line,
 
         # anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=10000 * self.dt)
@@ -160,19 +169,20 @@ class MNSolver1D:
         self.FVMUpdateNewton()
         return 0
 
+    def solverIterML(self, t_idx):
+        # entropy closure and
+        self.entropyClosureML()
+        # flux computation
+        self.computeFluxML()
+        # FVM update
+        self.FVMUpdateML()
+        return 0
+
     def entropyClosureNewton(self):
 
         # if (self.traditional): # NEWTON
         for i in range(self.nx):
             self.entropyClosureSingleRow(i)
-
-        # resList = Parallel(n_jobs=num_cores)(delayed(self.entropyClosureSingleRow)(i) for i in range(self.nx))
-        # for i in range(self.nx):
-        #    for j in range(self.ny):
-        #        self.alpha[:, i, j] = resList[i][j]
-
-        # else: #TENSORFLOW
-
         return 0
 
     def entropyClosureSingleRow(self, i):
@@ -193,7 +203,8 @@ class MNSolver1D:
                                              jac=self.create_opti_entropy_prime(opti_u),
                                              tol=1e-7)
         if not opt_result.success:
-            print("Optimization unsuccessfull!")
+            print("Optimization unsuccessfull! u=" + str(opti_u))
+            exit(ValueError)
         else:
             self.alpha[:, i] = opt_result.x
             rowRes = opt_result.x
@@ -304,9 +315,60 @@ class MNSolver1D:
 
         return 0
 
+    def entropyClosureML(self):
+
+        tmp = np.copy(np.transpose(self.u2))
+        [u_pred, alpha_pred, h] = self.neuralClosure.call_scaled_64(np.asarray(tmp))
+
+        for i in range(self.nx):
+            self.u2[:, i] = u_pred[i, :]
+            self.alpha2[:, i] = alpha_pred[i, :]
+            # print("(" + str(self.u2[:, i]) + " | " + str(tmp[i, :]))
+
+        return 0
+
+    def computeFluxML(self):
+        """
+        for periodic boundaries, upwinding.
+        writes to xFlux and yFlux, uses alpha
+        """
+        for i in range(self.nx):
+
+            # Computation in x direction
+            im1 = i - 1
+            if i == 0:  # periodic boundaries
+                im1 = self.nx - 1
+            left = np.tensordot(self.alpha2[:, im1], self.mBasis, axes=([0], [0]))
+            right = np.tensordot(self.alpha2[:, i], self.mBasis, axes=([0], [0]))
+            fluxL = math.entropyDualPrime(left)
+            fluxR = math.entropyDualPrime(right)
+            flux = 0
+            for q in range(self.nq):  # integrate upwinding result
+                upwind = self.upwinding(fluxL[q], fluxR[q], self.quadPts[q])
+                flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
+            self.xFlux2[:, i] = flux
+        return 0
+
+    def FVMUpdateML(self):
+        for i in range(self.nx):
+            ip1 = i + 1
+            # periodic boundaries
+            if i == self.nx - 1:
+                ip1 = 0
+
+            # Advection
+            self.u2[:, i] = self.u2[:, i] + ((self.xFlux2[:, i] - self.xFlux2[:, ip1]) / self.dx) * self.dt
+            # Scattering
+            # self.u[0, i, j] = self.u[0, i, j] + (
+            #        self.sigmaS * self.u[0, i, j] - self.sigmaT * self.u[0, i, j]) * self.dt
+            # self.u[1:, i, j] = self.u[0, i, j] + (self.sigmaT * self.u[1:, i, j]) * self.dt
+
+        return 0
+
     def showSolution(self, idx):
+        plt.clf()
         x = np.linspace(self.x0, self.x1, self.nx)
-        plt.plot(x, self.u[0, :])
+        plt.plot(x, self.u2[0, :])
         plt.savefig("Periodic_" + str(idx) + ".png", dpi=150)
         # plt.show()
         return 0

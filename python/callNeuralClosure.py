@@ -201,10 +201,10 @@ def main():
         trainingMode = True
         neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
                                             alphasampling=options.alphasampling,
-                                            normalizedData=False)  # neuralClosureModel.normalized)
+                                            normalizedData=neuralClosureModel.normalized)
 
-        # normalize data
-        neuralClosureModel.normalizeData()
+        # normalize data (experimental)
+        # neuralClosureModel.normalizeData()
         # train model
         neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
                                                  batchSize=options.batch, verbosity=options.verbosity,
