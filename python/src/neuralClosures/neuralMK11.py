@@ -267,6 +267,56 @@ class neuralMK11(neuralBase):
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
 
+    def call_scaled_64(self, u_non_normal):
+
+        """
+        brief: Only works for maxwell Boltzmann entropy so far.
+        Calls the network with non normalized moments. (first the moments get normalized, then the network gets called,
+        then the upscaling mechanisms get called, then the original entropy gets computed.)
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: u_complete, dims = (nS x N)
+        returns: [u,alpha,h], where
+                 alpha_complete_predicted_scaled, dim = (nS x N)
+                 u_complete_reconstructed_scaled, dim = (nS x N)
+                 h_predicted_scaled, dim = (nS x 1)
+        """
+        u_non_normal = tf.constant(u_non_normal, dtype=tf.float32)
+        u_downscaled = self.model.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
+        #
+        #
+        #
+        u_reduced = u_downscaled[:, 1:]  # chop of u_0
+        [h_predicted, alpha_predicted, u_0_predicted] = self.model(u_reduced)
+        ### cast to fp64 ###
+        alpha_predicted = tf.cast(alpha_predicted, dtype=tf.float64, name=None)
+        mBasis = tf.cast(self.model.momentBasis, dtype=tf.float64, name=None)
+        qWeights = tf.cast(self.model.quadWeights, dtype=tf.float64, name=None)
+        # reconstruct alpha (with fp64)
+        tmp = tf.math.exp(tf.tensordot(alpha_predicted, mBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        alpha_0 = -tf.math.log(tf.tensordot(tmp, qWeights, axes=([1], [1])))  # ln(<tmp>)
+        alpha_complete_predicted = tf.concat([alpha_0, alpha_predicted], axis=1)  # concat [alpha_0,alpha]
+        #
+        # reconstruct_u
+        f_quad = tf.math.exp(tf.tensordot(alpha_complete_predicted, mBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.math.multiply(f_quad, qWeights)  # f*w
+        u_complete_reconstructed = tf.tensordot(tmp, mBasis[:, :], axes=([1], [1]))
+        #
+        # upscale u
+        u0 = tf.cast(u_non_normal[:, 0], dtype=tf.float64, name=None)
+        u_rescaled = self.model.scale_u(u_complete_reconstructed, u0)  # upscaling
+        alpha_rescaled = self.model.scale_alpha(alpha_complete_predicted, u0)  # upscaling
+        #
+        # compute h
+        f_quad = tf.math.exp(tf.tensordot(alpha_rescaled, mBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, qWeights, axes=([1], [1]))  # f*w
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha_rescaled, u_rescaled), axis=1, keepdims=True)
+        h_rescaled = tmp2 - tmp
+
+        return [u_rescaled, alpha_rescaled, h_rescaled]
+    
     def call_scaled(self, u_non_normal):
 
         """
