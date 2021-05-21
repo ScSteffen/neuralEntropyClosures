@@ -20,7 +20,7 @@ num_cores = multiprocessing.cpu_count()
 
 
 def main():
-    solver = MNSolver(traditional=False)
+    solver = MNSolver2D(traditional=False)
     # solver.solveAnimation(maxIter=100)
     solver.solveAnimationIterError(maxIter=60)
     # solver.solveIterError(maxIter=100)
@@ -28,7 +28,7 @@ def main():
     return 0
 
 
-class MNSolver:
+class MNSolver2D:
     def __init__(self, traditional=True):
 
         # Prototype for  spatialDim=2, polyDegree=1
