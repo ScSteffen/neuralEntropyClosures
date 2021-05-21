@@ -22,7 +22,7 @@ num_cores = multiprocessing.cpu_count()
 def main():
     solver = MNSolver(traditional=False)
     # solver.solveAnimation(maxIter=100)
-    solver.solveAnimationIterError(maxIter=50)
+    solver.solveAnimationIterError(maxIter=60)
     # solver.solveIterError(maxIter=100)
     # solver.solve(maxIter=100)
     return 0
@@ -46,8 +46,8 @@ class MNSolver:
         self.x1 = 1.5
         self.y0 = -1.5
         self.y1 = 1.5
-        self.nx = 30
-        self.ny = 30
+        self.nx = 100
+        self.ny = 100
         self.dx = (self.x1 - self.x0) / self.nx
         self.dy = (self.y1 - self.y0) / self.ny
 
@@ -343,7 +343,7 @@ class MNSolver:
                 # self.u2[:, i, j] = self.u[:, i, j]
                 a = np.reshape(self.alpha[:, i, j], (1, self.nSystem))
                 self.u[:, i, j] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
-                print("(" + str(self.u2[:, i, j]) + " | " + str(self.u[:, i, j]))
+                # print("(" + str(self.u2[:, i, j]) + " | " + str(self.u[:, i, j]))
         return 0
 
     def computeFluxNewton(self):
