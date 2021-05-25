@@ -349,22 +349,24 @@ class sobolevModel(tf.keras.Model):
         super(sobolevModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.coreModel = coreModel  # must be a compiled tensorflow model
+        self.reconsU_enabled = reconsU
 
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.polyDegree = polyDegree
-        self.nq = 100
 
-        self.reconsU_enabled = reconsU
         if spatialDim == 1:
-            [quadPts, quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
+            [quadPts, quadWeights] = math.qGaussLegendre1D(10 * polyDegree)  # dims = nq
             mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
+            self.nq = quadWeights.size  # = 10 * polyDegree
         elif spatialDim == 2:
-            [quadPts, quadWeights] = math.qGaussLegendre2D(self.nq)  # dims = nq
+            [quadPts, quadWeights] = math.qGaussLegendre2D(10 * polyDegree)  # dims = nq
+            self.nq = quadWeights.size  # is not 10 * polyDegree
             mBasis = math.computeMonomialBasis2D(quadPts, self.polyDegree)  # dims = (N x nq)
         else:
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
-        self.quadPts = tf.constant(quadPts, shape=(spatialDim, self.nq),
+
+        self.quadPts = tf.constant(quadPts, shape=(self.nq, spatialDim),
                                    dtype=tf.float64)  # dims = (ds x nq)
         self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
                                        dtype=tf.float64)  # dims = (batchSIze x N x nq)
