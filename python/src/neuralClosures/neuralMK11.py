@@ -316,7 +316,7 @@ class neuralMK11(neuralBase):
         h_rescaled = tmp2 - tmp
 
         return [u_rescaled, alpha_rescaled, h_rescaled]
-    
+
     def call_scaled(self, u_non_normal):
 
         """
@@ -364,12 +364,12 @@ class sobolevModel(tf.keras.Model):
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
         self.quadPts = tf.constant(quadPts, shape=(spatialDim, self.nq),
-                                   dtype=tf.float32)  # dims = (ds x nq)
+                                   dtype=tf.float64)  # dims = (ds x nq)
         self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
-                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
+                                       dtype=tf.float64)  # dims = (batchSIze x N x nq)
         self.inputDim = mBasis.shape[0]
         self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
-                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
+                                       dtype=tf.float64)  # dims = (batchSIze x N x nq)
 
     def call(self, x, training=False):
         """
@@ -385,7 +385,9 @@ class sobolevModel(tf.keras.Model):
             h = self.coreModel(x)
         alpha = grad_tape.gradient(h, x)
 
-        alpha_complete = self.reconstruct_alpha(alpha)
+        alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+
+        alpha_complete = self.reconstruct_alpha(alpha64)
         u_complete = self.reconstruct_u(alpha_complete)
         return [h, alpha, u_complete[:, 1:]]  # cutoff the 0th order moment, since it is 1 by construction
 
@@ -411,11 +413,11 @@ class sobolevModel(tf.keras.Model):
         returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
         """
         # Check the predicted alphas for +/- infinity or nan - raise error if found
-        checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
+        # checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
         # Clip the predicted alphas below the tf.exp overflow threshold
-        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+        # clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
 
-        tmp = tf.math.exp(tf.tensordot(clipped_alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        tmp = tf.math.exp(tf.tensordot(alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
         alpha_0 = -tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))  # ln(<tmp>)
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
@@ -432,12 +434,12 @@ class sobolevModel(tf.keras.Model):
         returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
         """
         # Check the predicted alphas for +/- infinity or nan - raise error if found
-        checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
+        # checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
         # Clip the predicted alphas below the tf.exp overflow threshold
-        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+        # clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
 
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(clipped_alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
 

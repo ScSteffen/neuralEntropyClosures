@@ -24,7 +24,7 @@ num_cores = multiprocessing.cpu_count()
 
 
 def main():
-    solver = MNSolver1D(traditional=True, polyDegree=3)
+    solver = MNSolver1D(traditional=False, polyDegree=2)
     # solver.solveAnimation(maxIter=100)
     solver.solveAnimationIterError(maxIter=200)
     # solver.solveIterError(maxIter=100)
@@ -103,10 +103,15 @@ class MNSolver1D:
 
         for i in range(self.nx):
             xKoor = self.x0 + (i - 0.5) * self.dx
-            uIc[0, i] = sincos(x=xKoor)  # normal_dist(x=xKoor, mean=0, sd=0.001)  # all other moments are 0 (isotropic)
-            for n in range(1, self.nSystem):
-                uIc[n, i] = 0.0
+            uIc[
+                0, i] = sincos(x=xKoor)  # normal_dist(x=xKoor, mean=0, sd=0.001)  # all other moments are 0 (isotropic)
+            uIc[1, i] = 0.2  # 0.5 * uIc[0, i]  # realizable
+            uIc[2, i] = 0.2 * 0.2 + 0.1  # uIc[1, i] ** 2 + (1 - uIc[1, i] ** 2) / 2  # realizable
 
+            if self.polyDegree == 3:
+                N1 = uIc[1, i] / uIc[0, i]
+                N2 = uIc[2, i] / uIc[0, i]
+                uIc[3, i] = -N2 + (N1 + N2) ** 2 / (1 + N1) + 0.002  # error!
         return uIc
 
     def solve(self, maxIter=100):
@@ -129,7 +134,11 @@ class MNSolver1D:
 
         ax.set_xlim((-1.5, 1.5))
         ax.set_ylim((0.5, 2.5))
-        line, = ax.plot([], [], lw=2)
+        line1, = ax.plot([], [], color="r", label="ML")
+        line2, = ax.plot([], [], color="g", label="Newton")
+        x = np.linspace(self.x0, self.x1, self.nx)
+
+        ax.legend()
 
         def animate_func(i):
             # self.u2 = np.copy(self.u)
@@ -141,13 +150,15 @@ class MNSolver1D:
             # FVM update
             # self.FVMUpdateNewton()
             self.solveIterNewton(i)
-            # self.solverIterML(i)
+            self.solverIterML(i)
 
             print("Iteration: " + str(i))
 
-            x = np.linspace(self.x0, self.x1, self.nx)
-            line.set_data(x, self.u2[0, :])
-            return line,
+            # ax.plot(x, self.u2[0, :])
+            line1.set_data(x, self.u2[0, :])
+            line2.set_data(x, self.u[0, :])
+
+            return [line1, line2]
 
         # anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=10000 * self.dt)
         anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=50000 * self.dt, blit=True)
@@ -264,7 +275,7 @@ class MNSolver1D:
 
     def realizabilityReconstruction(self):
         for i in range(self.nx):
-            self.u2[:, i] = np.copy(self.u[:, i])
+            # self.u2[:, i] = np.copy(self.u[:, i])
             a = np.reshape(self.alpha[:, i], (1, self.nSystem))
             self.u[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
             # print("(" + str(self.u2[:, i]) + " | " + str(self.u[:, i]))
