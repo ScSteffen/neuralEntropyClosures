@@ -28,7 +28,7 @@ def main():
     # plot2DMoments(u, h)
 
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("data/2D/Monomial_M1_2D_normal_alpha.csv", 3)
+    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_alpha.csv", 3)
     plotHoverNormalized_N1_N2(u, h)
 
     # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
