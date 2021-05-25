@@ -133,7 +133,7 @@ class neuralMK11(neuralBase):
 
         # build model
         model = sobolevModel(coreModel, polyDegree=self.polyDegree, spatialDim=self.spatialDim,
-                             name="sobolev_icnn_wrapper")
+                             reconsU=bool(self.lossWeights[2]), name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
@@ -345,7 +345,7 @@ class neuralMK11(neuralBase):
 
 class sobolevModel(tf.keras.Model):
     # Sobolev implies, that the model outputs also its derivative
-    def __init__(self, coreModel, polyDegree=1, spatialDim=1, **opts):
+    def __init__(self, coreModel, polyDegree=1, spatialDim=1, reconsU=False, **opts):
         super(sobolevModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.coreModel = coreModel  # must be a compiled tensorflow model
@@ -354,6 +354,7 @@ class sobolevModel(tf.keras.Model):
         self.polyDegree = polyDegree
         self.nq = 100
 
+        self.reconsU_enabled = reconsU
         if spatialDim == 1:
             [quadPts, quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
             mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
@@ -385,11 +386,16 @@ class sobolevModel(tf.keras.Model):
             h = self.coreModel(x)
         alpha = grad_tape.gradient(h, x)
 
-        alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
-
-        alpha_complete = self.reconstruct_alpha(alpha64)
-        u_complete = self.reconstruct_u(alpha_complete)
-        return [h, alpha, u_complete[:, 1:]]  # cutoff the 0th order moment, since it is 1 by construction
+        if self.reconsU_enabled:
+            print("Reconstruction of U enabled")
+            alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+            alpha_complete = self.reconstruct_alpha(alpha64)
+            u_complete = self.reconstruct_u(alpha_complete)
+            res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
+        else:
+            print("Reconstruction of U disabled. Output 3 is meaningless")
+            res = alpha
+        return [h, alpha, res]
 
     def callDerivative(self, x, training=False):
         with tf.GradientTape() as grad_tape:
@@ -413,11 +419,13 @@ class sobolevModel(tf.keras.Model):
         returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
         """
         # Check the predicted alphas for +/- infinity or nan - raise error if found
-        # checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
+        checked_alpha = tf.debugging.check_numerics(alpha,
+                                                    message='input tensor checking error at alpha = ' + str(alpha),
+                                                    name='checked')
         # Clip the predicted alphas below the tf.exp overflow threshold
-        # clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
 
-        tmp = tf.math.exp(tf.tensordot(alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        tmp = tf.math.exp(tf.tensordot(clipped_alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
         alpha_0 = -tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))  # ln(<tmp>)
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
@@ -434,12 +442,12 @@ class sobolevModel(tf.keras.Model):
         returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
         """
         # Check the predicted alphas for +/- infinity or nan - raise error if found
-        # checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
+        checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
         # Clip the predicted alphas below the tf.exp overflow threshold
-        # clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
 
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(clipped_alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
 
