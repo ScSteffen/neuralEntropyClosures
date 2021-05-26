@@ -204,7 +204,7 @@ def main():
                                             normalizedData=neuralClosureModel.normalized)
 
         # normalize data (experimental)
-        # neuralClosureModel.normalizeData()
+        neuralClosureModel.normalizeData()
         # train model
         neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
                                                  batchSize=options.batch, verbosity=options.verbosity,
