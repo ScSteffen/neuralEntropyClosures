@@ -38,7 +38,6 @@ class neuralMK11(neuralBase):
         self.model = self.createModel()
 
     def createModel(self):
-        K.set_floatx('float64')  # fp64 training
 
         layerDim = self.modelWidth
 
@@ -343,6 +342,32 @@ class neuralMK11(neuralBase):
         h_rescaled = self.model.compute_h(u_rescaled, alpha_rescaled)
 
         return [u_rescaled, alpha_rescaled, h_rescaled]
+
+    def normalizeData(self):
+
+        # load data
+        #
+        [u_t, alpha_t, h_t] = self.trainingData
+        mBasis = tf.cast(self.model.momentBasis, dtype=tf.float64, name=None)
+        qWeights = tf.cast(self.model.quadWeights, dtype=tf.float64, name=None)
+        #
+        #
+        u_non_normal = tf.constant(u_t, dtype=tf.float64)
+        alpha_non_normal = tf.constant(alpha_t, dtype=tf.float64)
+        h_non_normal = tf.constant(h_t, dtype=tf.float64)
+
+        # scale u and alpha
+        u_normal = self.model.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
+        alpha_normal = self.model.scale_alpha(alpha_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))
+
+        # compute h
+        f_quad = tf.math.exp(tf.tensordot(alpha_normal, mBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, qWeights, axes=([1], [1]))  # f*w
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha_normal, u_normal), axis=1, keepdims=True)
+        h_normal = tmp2 - tmp
+
+        self.trainingData = [u_normal[:, 1:], alpha_normal[:, 1:], h_normal]
+        return 0
 
 
 class sobolevModel(tf.keras.Model):

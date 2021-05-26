@@ -107,8 +107,10 @@ class neuralBase:
         Method to train network
         '''
 
-        # Set full precision training for CPU training
+        # Set double precision training for CPU training #TODO
         if processingMode == 0:
+            tf.keras.backend.set_floatx('float32')
+        elif processingMode == 1:
             tf.keras.backend.set_floatx('float32')
 
         # Create callbacks

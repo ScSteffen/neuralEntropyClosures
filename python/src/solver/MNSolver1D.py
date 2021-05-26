@@ -4,6 +4,7 @@ Author: Steffen Schotthöfer
 Date: 17.05.2021
 """
 import sys
+import csv
 
 sys.path.append('../..')
 import numpy as np
@@ -24,11 +25,11 @@ num_cores = multiprocessing.cpu_count()
 
 
 def main():
-    solver = MNSolver1D(traditional=False, polyDegree=2)
+    solver = MNSolver1D(traditional=True, polyDegree=2)
     # solver.solveAnimation(maxIter=100)
-    solver.solveAnimationIterError(maxIter=200)
+    # solver.solveAnimationIterError(maxIter=200)
     # solver.solveIterError(maxIter=100)
-    # solver.solve(maxIter=10)
+    solver.solve(maxIter=1000)
     return 0
 
 
@@ -117,12 +118,12 @@ class MNSolver1D:
     def solve(self, maxIter=100):
         # self.showSolution(0)
         for idx_time in range(maxIter):  # time loop
-            # self.solveIterNewton(idx_time)
-            self.solverIterML(idx_time)
+            self.solveIterNewton(idx_time)
+            # self.solverIterML(idx_time)
             print("Iteration: " + str(idx_time))
             # self.errorAnalysis()
             # print iteration results
-            self.showSolution(idx_time)
+            # self.showSolution(idx_time)
 
         return self.u
 
@@ -274,11 +275,22 @@ class MNSolver1D:
         return opti_entropy_prime
 
     def realizabilityReconstruction(self):
-        for i in range(self.nx):
-            # self.u2[:, i] = np.copy(self.u[:, i])
-            a = np.reshape(self.alpha[:, i], (1, self.nSystem))
-            self.u[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
-            # print("(" + str(self.u2[:, i]) + " | " + str(self.u[:, i]))
+        # open the file in the write mode
+        with open('csv_writeout/M2_1D.csv', 'a+', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+
+            # write a row to the csv file
+
+            for i in range(self.nx):
+                # self.u2[:, i] = np.copy(self.u[:, i])
+                a = np.reshape(self.alpha[:, i], (1, self.nSystem))
+                self.u[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
+                # print("(" + str(self.u2[:, i]) + " | " + str(self.u[:, i]))
+                h = self.create_opti_entropy(self.u[:, i])(self.alpha[:, i])
+                row = [self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i], self.alpha[2, i],
+                       h]
+                writer.writerow(row)
         return 0
 
     def computeFluxNewton(self):
