@@ -38,6 +38,7 @@ class neuralMK11(neuralBase):
         self.model = self.createModel()
 
     def createModel(self):
+        K.set_floatx('float64')  # fp64 training
 
         layerDim = self.modelWidth
 
@@ -159,6 +160,7 @@ class neuralMK11(neuralBase):
 
         # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
         # show_layer_names = True, rankdir = 'TB', expand_nested = True)
+        print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
 
         return model
 
