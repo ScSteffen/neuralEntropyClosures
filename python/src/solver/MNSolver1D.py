@@ -75,7 +75,7 @@ class MNSolver1D:
         if not self.traditional:
             if self.polyDegree == 2:
                 self.neuralClosure = initNeuralClosure(modelNumber=11, polyDegree=2, spatialDim=1,
-                                                       folderName="002_sim_M2_1D", lossCombi=2,
+                                                       folderName="002_sim_M2_1D_bigger", lossCombi=2,
                                                        width=10, depth=4, normalized=True)
                 self.neuralClosure.loadModel("../../models/002_sim_M2_1D")
             elif self.polyDegree == 3:
@@ -161,7 +161,7 @@ class MNSolver1D:
             return [line1, line2]
 
         # anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=10000 * self.dt)
-        anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=50000 * self.dt, blit=True)
+        anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=20000 * self.dt, blit=True)
         if self.traditional:
             filename = "newton_version.gif"
         else:
@@ -334,8 +334,8 @@ class MNSolver1D:
         for i in range(self.nx):
             self.u2[:, i] = u_pred[i, :]
             self.alpha2[:, i] = alpha_pred[i, :]
-            # print("(" + str(self.u2[:, i]) + " | " + str(tmp[i, :]))
-
+            print("(" + str(self.u2[:, i]) + " | " + str(tmp[i, :]) + " | " + str(
+                np.linalg.norm(self.u2[:, i] - tmp[i, :], 2)))
         return 0
 
     def computeFluxML(self):
