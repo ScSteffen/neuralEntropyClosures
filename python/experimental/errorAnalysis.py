@@ -12,29 +12,70 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 plt.style.use("kitish")
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Helvetica"]})
 
 
 def main():
-    filenameModel = "models/test2/best_model.h5"  # "models/01_errorAnalysis_M1_1D/best_model.h5"
-    filenameData = "data/1D/Monomial_M1_1D_normal.csv"
+    filenameModelAlpha = "models/001_alpha"  # "models/01_errorAnalysis_M1_1D/best_model.h5"
+    filenameModelU = "models/001_u"
+    filenameData = "Monomial_M1_1D_normal.csv"
     inputDim = 2
 
     # Load Model
-    model = utils.loadTFModel(filenameModel)
+    modelAlpha = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1,
+                                   folderName="001_alpha", lossCombi=2,
+                                   width=15, depth=7, normalized=True)
+    modelAlpha.loadModel("../models/001_alpha")
+    modelU = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1,
+                               folderName="001_alpha", lossCombi=2,
+                               width=15, depth=7, normalized=True)
+    modelU.loadModel("../models/001_u")
 
     # Load Data
     [u, alpha, h] = utils.loadData(filenameData, inputDim)
-
-    # Model Predictions
-    # [h_pred, alpha_pred] = model.predict(input)
-    h_pred = utils.evaluateModel(model, u)
-    alpha_pred = utils.evaluateModelDerivative(model, u)
-
+    [u_modelAlpha, alpha_modelAlpha, h_modelAlpha] = modelAlpha.call_scaled_64(u)
+    [u_modelU, alpha_modelU, h_modelU] = modelU.call_scaled_64(u)
     # plot results
-    utils.plot1D(u[:, 1], [h_pred[:, 0], h[:, 0]], ['h pred', 'h'], 'h_over_u', log=False)
+    utils.plot1D([u[:, 1], u[:, 1], u[:, 1]], [h_modelAlpha[:, 0], h_modelU[:, 0], h],
+                 [r'$h_{\theta}$ - uniform $\alpha$', r'$h_{\theta}$  - uniform $u$', r'$h$ test'],
+                 '000_h', folder_name="ValidationTest", log=False, show_fig=False, xlabel=r"$u_1$")
+    # plot results
+    utils.plot1D([u[:, 1], u[:, 1], u[:, 1]], [alpha_modelAlpha[:, 1], alpha_modelU[:, 1], alpha[:, 1]],
+                 [r'$\alpha_{1\theta}$ - uniform $\alpha$', r'$\alpha_{1\theta}$  - uniform $u$',
+                  r'$\alpha_1$ test'],
+                 '000_alpha', folder_name="ValidationTest", log=False, show_fig=False, xlabel=r"$u_1$")
+    # plot results
+    utils.plot1D([u[:, 1], u[:, 1], u[:, 1]], [u_modelAlpha[:, 1], u_modelU[:, 1], u[:, 1]],
+                 [r'$u_{1\theta}$ - uniform $\alpha$', r'$u_{1\theta}$  - uniform $u$', r'$u_1$ test'],
+                 '000_u', folder_name="ValidationTest", log=False, show_fig=False,
+                 xlabel=r"$u_1$")
 
     # plot errors
 
+    ys = [relDifferenceScalar(alpha[:, 1], alpha_modelAlpha[:, 1], maxMode=True),
+          relDifferenceScalar(alpha[:, 1], alpha_modelU[:, 1], maxMode=True)]
+    utils.plot1D([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
+                 '000_alphaErr', folder_name="ValidationTest", log=True, show_fig=False,
+                 ylabel=r"$|\alpha_1-\alpha_{1,\theta}|/|\alpha_1|$",
+                 xlabel=r"$u_1$")
+
+    ys = [relDifferenceScalar(u[:, 1], u_modelAlpha[:, 1], maxMode=True),
+          relDifferenceScalar(u[:, 1], u_modelU[:, 1], maxMode=True)]
+    utils.plot1D([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
+                 '000_uErr', folder_name="ValidationTest", log=True, show_fig=False,
+                 ylabel=r"$|\alpha_1-\alpha_{1,\theta}|/|\alpha_1|$",
+                 xlabel=r"$u_1$")
+    ys = [relDifferenceScalar(h, h_modelAlpha, maxMode=True),
+          relDifferenceScalar(h, h_modelU, maxMode=True)]
+    utils.plot1D([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
+                 '000_hErr', folder_name="ValidationTest", log=True, show_fig=False,
+                 ylabel=r"$|(h-h_{\theta)}|/|h|$",
+                 xlabel=r"$u_1$")
+
+    """
     x = u[:, 1]
     ys = [alpha[:, 1], alpha_pred[:, 1]]
     labels = ["alpha 1", "alpha 1 pred"]
@@ -72,6 +113,7 @@ def main():
     # for alpha_orig in alpha:
     # errorAnalysisUM1_normal(alpha, c)
     #    c += 1
+    """
     return 0
 
 
@@ -223,10 +265,9 @@ def relDifferenceScalar(x1, x2, maxMode=True):
     '''
     result = 0
     if maxMode:
-        result = abs((x1 - x2) / np.maximum(abs(x1), abs(x2)))
+        result = np.absolute((x1 - x2)) / np.maximum(np.maximum(np.absolute(x1), np.absolute(x2)), 1e-3)
     else:
-        result = abs((x1 - x2) / abs(x1))
-
+        result = np.absolute(x1 - x2) / np.absolute(x1)
     return result
 
 
@@ -239,7 +280,7 @@ def relDifference(x1, x2, maxMode=True):
     if maxMode == True:
         normalization = np.maximum(np.linalg.norm(x1, axis=1, ord=1), np.linalg.norm(x2, axis=1, ord=1))
     else:
-        normalization = np.linalg.norm(x1, axis=1, ord=1)
+        normalization = np.linalg.norm(x1, axis=0, ord=1)
     return absDiff / normalization
 
 

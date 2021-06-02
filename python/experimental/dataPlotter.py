@@ -12,8 +12,7 @@ import pandas as pd
 import time
 from src import utils
 
-
-# plt.style.use("kitish")
+plt.style.use("kitish")
 
 
 def main():
@@ -28,8 +27,11 @@ def main():
     # plot2DMoments(u, h)
 
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_alpha.csv", 3)
+    [u, alpha, h] = loadTrainingData("realizable_set_pictures/N2_alpha.csv", 3)
     plotHoverNormalized_N1_N2(u, h)
+    # Normalized Plots
+    # [u, alpha, h] = loadTrainingData("realizable_set_pictures/N2_alpha.csv", 3)
+    # plotHoverNormalized_N1_N2(u, h)
 
     # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
     # plotHoverNormalized_N2_N3(u, h)
@@ -130,23 +132,26 @@ def plotHoverNormalized_N1_N2(u, h):
         '''
         return (vmax - vmin) * np.random.rand(n) + vmin
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(4.7, 4), dpi=400)
     ax = fig.add_subplot(111)  # , projection='3d')
-    ax.grid(True, linestyle='-', color='0.75')
+    # ax.grid(True, linestyle='-', color='0.75')
     x = u[:, 1]
     y = u[:, 2]
     z = h
-    out = ax.scatter(x, y, s=20, c=z, cmap=cm.jet);
-
-    ax.set_title("h over N1 and N2", fontsize=14)
-    ax.set_xlabel("N1", fontsize=12)
-    ax.set_ylabel("N2", fontsize=12)
+    out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, vmin=-1.5, vmax=3.0)
+    plt.xlim(-1, 1)
+    plt.ylim(0, 1)
+    ax.set_title(r"$h$ over $\overline{\mathcal{R}}$", fontsize=14)
+    ax.set_xlabel(r"$u_1 / u_0$")
+    ax.set_ylabel(r"$u_2 / u_0$")
+    ax.set_aspect('auto')
     # ax.set_xlabel('N1')
     # ax.set_ylabel('N2')
     # ax.set_zlabel('h')
     # pos_neg_clipped = ax.imshow(z)
     cbar = fig.colorbar(out, ax=ax, extend='both')
-    plt.show()
+    # plt.show()
+    plt.savefig("realizable_set_pictures/N2_alpha.png", dpi=150)
 
     return 0
 
@@ -162,7 +167,7 @@ def plot2DMoments(u, h):
     x = u[:, 1]
     y = u[:, 2]
     z = h
-    out = ax.scatter(x, y, s=20, c=z, cmap=cm.jet);
+    out = ax.scatter(x, y, s=5, c=z, cmap=cm.jet);
 
     ax.set_title("h over u1 (2D)", fontsize=14)
     ax.set_xlabel("u1 1", fontsize=12)

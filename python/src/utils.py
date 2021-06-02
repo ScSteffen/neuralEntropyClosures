@@ -111,33 +111,42 @@ def loadTFModel(filename):
     return nn
 
 
-def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures", linetypes=[], show_fig=False):
+def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures", linetypes=[], show_fig=False,
+           ylim=None, xlabel=None, ylabel=None):
     plt.clf()
     if not linetypes:
-        linetypes = ['-', '--', '-.', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*', 'h',
+        linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
+                     'h',
                      'H',
-                     '+', 'x', 'D', 'd', '|', '_']
+                     '+', 'x', 'D', 'd', '|']
         linetypes = linetypes[0:len(labels)]
 
     if len(xs) == 1:
         x = xs[0]
         for y, lineType in zip(ys, linetypes):
-            plt.plot(x, y, lineType)
+            plt.plot(x, y, lineType, linewidth=1, markersize=1000)
         plt.legend(labels)
     elif len(xs) is not len(ys):
         print("Error: List of x entries must be of same length as y entries")
         exit(1)
     else:
         for x, y, lineType in zip(xs, ys, linetypes):
-            plt.plot(x, y, lineType)
-        plt.legend(labels)
-
+            plt.plot(x, y, lineType, linewidth=1)
+        plt.legend(labels)  # , prop={'size': 6})
     if log:
         plt.yscale('log')
 
     if show_fig:
         plt.show()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    if ylim is not None:
+        plt.ylim(ylim[0], ylim[1])
+    if xlabel is not None:
+        plt.xlabel(xlabel)  # , fontsize=8)
+        # plt.xticks(fontsize=6)
+        # plt.yticks(fontsize=6)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=6)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     return 0
 

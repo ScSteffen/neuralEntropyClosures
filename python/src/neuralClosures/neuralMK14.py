@@ -1,6 +1,6 @@
 '''
-Network class "MK11" for the neural entropy closure.
-MK7 ICNN with sobolev wrapper.
+Network class "MK14" for the neural entropy closure.
+Dense network to map u to alpha, with u and alpha loss.
 Author: Steffen Schotthöfer
 Version: 0.0
 Date 09.04.2020
@@ -165,13 +165,13 @@ class neuralMK11(neuralBase):
 
     def custom_mse(self, y_true, y_pred):
 
-        # calculating squared difference between target and predicted values 
+        # calculating squared difference between target and predicted values
         loss = K.square(y_pred - y_true)  # (batch_size, 2)
 
         # multiplying the values with weights along batch dimension
         loss = loss * [0.3, 0.7]  # (batch_size, 2)
 
-        # summing both loss values along batch dimension 
+        # summing both loss values along batch dimension
         loss = K.sum(loss, axis=1)  # (batch_size,)
 
         return loss
