@@ -11,20 +11,24 @@ from matplotlib import animation
 from matplotlib.colors import LogNorm
 import multiprocessing
 import pandas as pd
+import csv
+
 from joblib import Parallel, delayed
 
 # inpackage imports
 from src.neuralClosures.configModel import initNeuralClosure
+from src import utils
 
 num_cores = multiprocessing.cpu_count()
+plt.style.use("kitish")
 
 
 def main():
     solver = MNSolver2D(traditional=False)
-    # solver.solveAnimation(maxIter=100)
-    solver.solveAnimationIterError(maxIter=60)
+    # solver.solveAnimation(maxIter=2)
+    # solver.solveAnimationIterError(maxIter=60)
     # solver.solveIterError(maxIter=100)
-    # solver.solve(maxIter=100)
+    solver.solve(endTime=10)
     return 0
 
 
@@ -58,33 +62,51 @@ class MNSolver2D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.95
+        self.cfl = 0.3
         self.dt = self.cfl / 2 * (self.dx * self.dy) / (self.dx + self.dy)
+        self.dtMod = self.dt
+        self.realizabilityModifier = 1
 
+        self.T = 0
+        print("dt:" + str(self.dt))
         # Solver variables Traditional
         self.u = self.ICperiodic()  # periodic IC
+        self.uR = self.ICperiodic()  #
+        self.h = np.zeros((self.nx, self.ny))
+
         self.alpha = np.zeros((self.nSystem, self.nx, self.ny))
         self.xFlux = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
         self.yFlux = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
 
         self.u2 = self.ICperiodic()
+        self.h2 = np.zeros((self.nx, self.ny))
+        self.u2R = self.ICperiodic()
         self.alpha2 = np.zeros((self.nSystem, self.nx, self.ny))
         self.xFlux2 = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
         self.yFlux2 = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
         # Neural closure
         self.neuralClosure = None
         if not self.traditional:
-            self.neuralClosure = initNeuralClosure(modelNumber=13, polyDegree=1, spatialDim=2,
-                                                   folderName="002_sim_M1_2D", lossCombi=3,
-                                                   width=15, depth=7, normalized=True)
+            self.neuralClosure = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=2,
+                                                   folderName="002_sim_M1_2D", lossCombi=2,
+                                                   width=18, depth=8, normalized=True)
             self.neuralClosure.loadModel("../../models/002_sim_M1_2D")
 
         # Analysis variables
         self.errorMap = np.zeros((self.nSystem, self.nx, self.ny))
         self.normErrorMap = np.zeros((self.nx, self.ny))
+        self.normErrorMapAbsolute = np.zeros((self.nx, self.ny))
+        self.mass = []
         self.realizabilityMap = np.zeros((self.nx, self.ny))
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']  # , 'realizable']
         self.dfErrPoints = pd.DataFrame(columns=columns)
+
+        # mean absulote error
+        with open('errorAnalysis.csv', 'w', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            row = ["iter", "meanRe", "meanAe", "meanAu0", "meanAu1", "meanAu2", "mass"]
+            writer.writerow(row)
 
     def ICperiodic(self):
         def sincos(x, y):
@@ -101,15 +123,19 @@ class MNSolver2D:
                 uIc[2, i, j] = 0.9 / 3.0 * uIc[0, i, j]
         return uIc
 
-    def solve(self, maxIter=100):
+    def solve(self, endTime=0.5, maxIter=100):
         # self.showSolution(0)
-        for idx_time in range(maxIter):  # time loop
+        idx_time = 0
+        while self.T < endTime:
             self.solveIterNewton(idx_time)
             self.solverIterML(idx_time)
-            print("Iteration: " + str(idx_time))
-            self.errorAnalysis()
+            print("Iteration: " + str(idx_time) + ". Time " + str(self.T) + " of " +
+                  str(endTime))
+            self.errorAnalysis(idx_time)
             # print iteration results
             self.showSolution(idx_time)
+            idx_time += 1
+            self.T += self.dt
 
         return self.u
 
@@ -132,11 +158,19 @@ class MNSolver2D:
         fps = 1 / self.dt
 
         # First set up the figure, the axis, and the plot element we want to animate
-        fig = plt.figure(figsize=(10, 10))
+        # fig = plt.figure(figsize=(10, 10))
+        fig, ax = plt.subplots(1, 1)
 
-        im = plt.imshow(np.zeros((self.nx, self.ny)), cmap='hot', interpolation='nearest', vmin=1e-4, vmax=1.0,
+        im = plt.imshow(np.zeros((self.nx, self.ny)), extent=[self.x0, self.x1, self.y0, self.y1], cmap='hot',
+                        interpolation='none', vmin=1e-4, vmax=1.0,
                         norm=LogNorm())
+        plt.title("M1 2D periodic initial conditions. u0 over X")
 
+        x_label_list = ['-1.5', 'B2', 'C2', 'D2']
+
+        ax.set_xticks([-0.75, -0.25, 0.25, 0.75])
+
+        ax.set_xticklabels(x_label_list)
         # im = plt.imshow(np.zeros((self.nx, self.ny)), cmap='hot', interpolation='nearest', vmin=1, vmax=3.0)
         cbar = fig.colorbar(im)
 
@@ -145,7 +179,7 @@ class MNSolver2D:
             self.entropyClosureNewton()
             self.entropyClosureML()  # compare
             self.realizabilityReconstruction()
-            self.errorAnalysis()
+            self.errorAnalysis(i)
 
             # flux computation
             self.computeFluxNewton()
@@ -181,6 +215,10 @@ class MNSolver2D:
 
         # im = plt.imshow(np.zeros((self.nx, self.ny)), cmap='hot', interpolation='nearest', vmin=1e-4, vmax=1.0,
         #                norm=LogNorm())
+        im = plt.imshow(np.zeros((self.nx, self.ny)), extent=[self.x0, self.x1, self.y0, self.y1], cmap='hot',
+                        interpolation='spline16', vmin=1e-4, vmax=1.0,
+                        norm=LogNorm())
+        plt.title("M1 2D periodic initial conditions. u0 over X")
 
         im = plt.imshow(np.zeros((self.nx, self.ny)), cmap='hot', interpolation='nearest', vmin=0, vmax=3.0)
         cbar = fig.colorbar(im)
@@ -210,7 +248,7 @@ class MNSolver2D:
         # entropy closure and
         self.entropyClosureNewton()
         # reconstruction
-        self.realizabilityReconstruction()
+        # self.realizabilityReconstruction()
         # flux computation
         self.computeFluxNewton()
         # FVM update
@@ -220,10 +258,13 @@ class MNSolver2D:
     def solverIterML(self, t_idx):
         # entropy closure and
         self.entropyClosureML()
+        print("System closed")
         # flux computation
         self.computeFluxML()
+        print("Flux computed")
         # FVM update
         self.FVMUpdateML()
+        print("Solution updated")
         return 0
 
     def entropyClosureML(self):
@@ -239,8 +280,9 @@ class MNSolver2D:
         for i in range(self.nx):
             for j in range(self.ny):
                 # print(str(self.u[:, i, j]) + " | " + str(u_pred[count, :]))
-                self.u2[:, i, j] = u_pred[count, :]  # reconstruction
+                # self.u2[:, i, j] = u_pred[count, :]  # reconstruction
                 self.alpha2[:, i, j] = alpha[count, :]
+                self.h2[i, j] = h[count]
                 count = count + 1
 
         return 0
@@ -282,6 +324,8 @@ class MNSolver2D:
                 print("Optimization unsuccessfull!")
             else:
                 self.alpha[:, i, j] = opt_result.x
+                self.h[i, j] = opt_result.fun
+
                 rowRes.append(opt_result.x)
         return rowRes
 
@@ -388,6 +432,7 @@ class MNSolver2D:
         for periodic boundaries, upwinding.
         writes to xFlux and yFlux, uses alpha
         """
+
         for j in range(self.ny):
             for i in range(self.nx):
 
@@ -426,6 +471,13 @@ class MNSolver2D:
             return t * fluxL
         else:
             return t * fluxR
+
+    def computeRealizabilityModifier(self, alphaOld, alpha):
+        '''
+        input : alphaOld: alpha from last time step
+                alpha: solution of optimal control problem
+        '''
+        return 0
 
     def FVMUpdateNewton(self):
         for j in range(self.ny):
@@ -468,12 +520,96 @@ class MNSolver2D:
         return 0
 
     def showSolution(self, idx):
-        plt.imshow(self.u[0, :, :], cmap='hot', interpolation='nearest')
-        plt.savefig("Periodic_" + str(idx) + ".png", dpi=150)
+        plt.clf()
+        fig = plt.figure(figsize=(10, 10))
+        im = plt.imshow(self.u2[0, :, :], extent=[self.x0, self.x1, self.y0, self.y1], cmap='hot',
+                        interpolation='none', vmin=0.5, vmax=2.5)
+        plt.title(r"$u_0(x,y,t_i)$ over $(x,y)$", fontsize=30)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        cbar = fig.colorbar(im)
+        cbar.ax.tick_params(labelsize=20)
+        fig.savefig("Periodic_" + str(idx) + ".png", dpi=150)
+
+        ################################
+        plt.clf()
+        fig = plt.figure(figsize=(10, 10))
+        im = plt.imshow(self.normErrorMap[:, :], extent=[self.x0, self.x1, self.y0, self.y1], cmap='hot',
+                        interpolation='none', vmin=1e-4, vmax=1.0, norm=LogNorm())
+        plt.title(r"RE$(u_\theta(x,y,t_f),u(x,y,t_f))$ over $(x,y)$", fontsize=30)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        cbar = fig.colorbar(im)
+        cbar.ax.tick_params(labelsize=20)
+        fig.savefig("PeriodicNormErrorMap_" + str(idx) + ".png", dpi=150)
+        ####
+        plt.clf()
+        fig = plt.figure(figsize=(10, 10))
+        im = plt.imshow(self.normErrorMapAbsolute[:, :], extent=[self.x0, self.x1, self.y0, self.y1], cmap='hot',
+                        interpolation='none', vmin=1e-4, vmax=1.0, norm=LogNorm())
+        plt.title(r"$||u_\theta(x,y,t_f)-u(x,y,t_f)||_1$", fontsize=30)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        cbar = fig.colorbar(im)
+        cbar.ax.tick_params(labelsize=20)
+        fig.savefig("PeriodicNormErrorMapABS_" + str(idx) + ".png", dpi=150)
+
+        ########################
+        # plot cross sections
+        x = np.linspace(-1.5, 1.5, self.nx)
+        xSNewton_u0 = self.u[0, int(self.ny / 2), :]
+        xSNewton_u1 = self.u[1, int(self.ny / 2), :]
+        xSNewton_u2 = self.u[2, int(self.ny / 2), :]
+        xSML_u0 = self.u2[0, int(self.ny / 2), :]
+        xSML_u1 = self.u2[1, int(self.ny / 2), :]
+        xSML_u2 = self.u2[2, int(self.ny / 2), :]
+
+        plt.clf()
+
+        utils.plot1D([x, x, x, x, x, x],
+                     [xSNewton_u0, xSNewton_u1, xSNewton_u2, xSML_u0, xSML_u1, xSML_u1],
+                     [r'$u_0$ Newton', r'$u_1$ Newton', r'$u_2$ Newton', r'$u_0$ Neural', r'$u_1$ Neural',
+                      r'$u_2$ Neural'],
+                     '000_u', folder_name="000plot", log=False, show_fig=False,
+                     xlabel=r"$x$")
+        plt.clf()
+        plt.plot(x, xSNewton_u0, "k-", label="Newton closure")
+        plt.plot(x, xSML_u0, 'o', markersize=6, markerfacecolor='orange',
+
+                 markeredgewidth=1.5, markeredgecolor='k', label="Neural closure")
+        plt.xlim([-1.5, 1.5])
+        plt.ylim([0.5, 2.5])
+        plt.xlabel("x")
+        plt.ylabel("u0")
+        plt.legend()
+        plt.savefig("u_0_comparison_" + str(idx) + ".png", dpi=450)
+        plt.clf()
+
+        plt.plot(x, xSNewton_u1, "k-", label="Newton closure")
+        plt.plot(x, xSML_u1, 'o', markersize=6, markerfacecolor='orange',
+                 markeredgewidth=1.5, markeredgecolor='k', label="Neural closure")
+        plt.xlim([-1.5, 1.5])
+        plt.ylim([0.0, 1])
+        plt.xlabel("x")
+        plt.ylabel("u1")
+        plt.legend()
+        plt.savefig("u_1_comparison_" + str(idx) + ".png", dpi=450)
+        plt.clf()
+
+        plt.plot(x, xSNewton_u2, "k-", label="Newton closure")
+        plt.plot(x, xSML_u2, 'o', markersize=6, markerfacecolor='orange',
+                 markeredgewidth=1.5, markeredgecolor='k', label="Neural closure")
+        plt.xlim([-1.5, 1.5])
+        plt.ylim([0.0, 1])
+        plt.xlabel("x")
+        plt.ylabel("u2")
+        plt.legend()
+        plt.savefig("u_1_comparison_" + str(idx) + ".png", dpi=450)
+        plt.clf()
 
         return 0
 
-    def errorAnalysis(self):
+    def errorAnalysis(self, iter):
         # Compare both methods
         count = 0
         count2 = 0
@@ -482,11 +618,11 @@ class MNSolver2D:
         for i in range(self.nx):
             for j in range(self.ny):
                 for n in range(self.nSystem):
-                    self.errorMap[n, i, j] = np.abs(self.u[n, i, j] - self.u2[n, i, j]) / np.max([
-                        np.abs(self.u[n, i, j]), 0.0001])
+                    self.errorMap[n, i, j] = np.abs(self.u[n, i, j] - self.u2[n, i, j])  # / np.max([
+                    # np.abs(self.u[n, i, j]), 0.0001])
 
-                self.normErrorMap[i, j] = np.linalg.norm(self.u[:, i, j] - self.u2[:, i, j], 2) / np.max([
-                    np.linalg.norm(self.u[:, i, j], 2), 0.0001])
+                self.normErrorMap[i, j] = np.linalg.norm(self.u[:, i, j] - self.u2[:, i, j], 2)
+                self.normErrorMapAbsolute[i, j] = np.linalg.norm(self.u[:, i, j] - self.u2[:, i, j], 1)
                 self.realizabilityMap[i, j] = np.linalg.norm(self.u[1:, i, j], 2) / self.u[0, i, j]
 
                 if self.normErrorMap[i, j] > 0.01:  # rel error bigger than 5%
@@ -498,7 +634,7 @@ class MNSolver2D:
                 if self.normErrorMap[i, j] > 0.02:  # rel error bigger than 5%
                     count2 = count2 + 1
 
-                if self.normErrorMap[i, j] > 0.3:  # rel error bigger than 5%
+                if self.normErrorMap[i, j] > 0.03:  # rel error bigger than 5%
                     count3 = count3 + 1
 
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']
@@ -507,6 +643,23 @@ class MNSolver2D:
         print("percentage of points with error >1%: " + str(count / (self.nx * self.ny) * 100))
         print("percentage of points with error >2%: " + str(count2 / (self.nx * self.ny) * 100))
         print("percentage of points with error >3%: " + str(count3 / (self.nx * self.ny) * 100))
+
+        # mean relative error
+        meanRe = self.errorMap.mean()
+        meanAe = self.normErrorMapAbsolute.mean()
+        meanAu0 = self.errorMap[0, :, :].mean()
+        meanAu1 = self.errorMap[1, :, :].mean()
+        meanAu2 = self.errorMap[2, :, :].mean()
+        mass = self.u2[0, :, :].sum()
+        entropyOrig = self.h.sum() / 9.0
+        entropyML = self.h2.sum() / 9.0
+
+        # mean absulote error
+        with open('errorAnalysis.csv', 'a+', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            row = [iter, meanRe, meanAe, meanAu0, meanAu1, meanAu2, mass, entropyOrig, entropyML]
+            writer.writerow(row)
 
         # def printSolutionsToCSV(self):
 

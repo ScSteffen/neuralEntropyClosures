@@ -25,17 +25,17 @@ num_cores = multiprocessing.cpu_count()
 
 
 def main():
-    solver = MNSolver1D(traditional=True, polyDegree=2)
+    solver = MNSolver1D(traditional=False, polyDegree=2)
     # solver.solveAnimation(maxIter=100)
-    # solver.solveAnimationIterError(maxIter=200)
+    # solver.solveAnimationIterError(maxIter=100)
     # solver.solveIterError(maxIter=100)
-    solver.solve(maxIter=1000)
+    solver.solve(maxIter=10000)
     return 0
 
 
 class MNSolver1D:
 
-    def __init__(self, traditional=False, polyDegree=2):
+    def __init__(self, traditional=False, polyDegree=3):
 
         # Prototype for  spatialDim=1, polyDegree=2
         self.nSystem = polyDegree + 1
@@ -50,7 +50,7 @@ class MNSolver1D:
         # generate geometry
         self.x0 = -1.5
         self.x1 = 1.5
-        self.nx = 100
+        self.nx = 50
         self.dx = (self.x1 - self.x0) / self.nx
 
         # physics (homogeneous)
@@ -60,7 +60,7 @@ class MNSolver1D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.95
+        self.cfl = 0.001
         self.dt = self.cfl * self.dx
 
         # Solver variables Traditional
@@ -76,8 +76,8 @@ class MNSolver1D:
         if not self.traditional:
             if self.polyDegree == 2:
                 self.neuralClosure = initNeuralClosure(modelNumber=11, polyDegree=2, spatialDim=1,
-                                                       folderName="002_sim_M2_1D_bigger", lossCombi=2,
-                                                       width=10, depth=4, normalized=True)
+                                                       folderName="002_sim_M2_1D", lossCombi=2,
+                                                       width=15, depth=7, normalized=True)
                 self.neuralClosure.loadModel("../../models/002_sim_M2_1D")
             elif self.polyDegree == 3:
                 self.neuralClosure = initNeuralClosure(modelNumber=13, polyDegree=3, spatialDim=1,
@@ -98,32 +98,53 @@ class MNSolver1D:
             return prob_density
 
         def sincos(x):
-            return 1.5 + np.cos(2 * np.pi * x)
+            return 1.0 + 0.5 * np.cos(2 * np.pi * x)
 
         uIc = np.zeros((self.nSystem, self.nx))
 
         for i in range(self.nx):
             xKoor = self.x0 + (i - 0.5) * self.dx
-            uIc[
-                0, i] = sincos(x=xKoor)  # normal_dist(x=xKoor, mean=0, sd=0.001)  # all other moments are 0 (isotropic)
-            uIc[1, i] = 0.2  # 0.5 * uIc[0, i]  # realizable
-            uIc[2, i] = 0.2 * 0.2 + 0.1  # uIc[1, i] ** 2 + (1 - uIc[1, i] ** 2) / 2  # realizable
+            if xKoor < 1 and xKoor > -1:
+                uIc[0, i] = 1.0
+                uIc[1, i] = 0.0
+                uIc[2, i] = 0.5
+                if self.polyDegree == 3:
+                    N1 = uIc[1, i] / uIc[0, i]
+                    N2 = uIc[2, i] / uIc[0, i]
+                    upper = N2 - (N1 - N2) ** 2 / (1 - N1)
+                    lower = - N2 + (N1 + N2) ** 2 / (1 + N1)
+                    uIc[3, i] = (upper + lower / 2) * uIc[0, i]
+            else:
+                uIc[0, i] = 0.5
+                uIc[1, i] = 0.0
+                uIc[2, i] = 0.25
+                if self.polyDegree == 3:
+                    N1 = uIc[1, i] / uIc[0, i]
+                    N2 = uIc[2, i] / uIc[0, i]
+                    upper = N2 - (N1 - N2) ** 2 / (1 - N1)
+                    lower = - N2 + (N1 + N2) ** 2 / (1 + N1)
+                    uIc[3, i] = (upper + lower / 2) * uIc[0, i]
 
-            if self.polyDegree == 3:
-                N1 = uIc[1, i] / uIc[0, i]
-                N2 = uIc[2, i] / uIc[0, i]
-                uIc[3, i] = -N2 + (N1 + N2) ** 2 / (1 + N1) + 0.002  # error!
+            # uIc[0, i] = sincos(x=xKoor)
+            # uIc[1, i] = 0.0  # 0.8 * uIc[0, i]  # 0.5 * uIc[0, i]  # realizable
+            # uIc[2, i] = 0.1 * uIc[0, i]  # 1 + (0.8 ** 2 + 0.05) * uIc[
+            #    0, i]  # uIc[1, i] ** 2 + 0.1  # uIc[1, i] ** 2 + (1 - uIc[1, i] ** 2) / 2  # realizable
+
+            # if self.polyDegree == 3:
+            #    N1 = uIc[1, i] / uIc[0, i]
+            #    N2 = uIc[2, i] / uIc[0, i]
+            #    uIc[3, i] = -N2 + (N1 + N2) ** 2 / (1 + N1) + 0.002  # error!
         return uIc
 
     def solve(self, maxIter=100):
         # self.showSolution(0)
         for idx_time in range(maxIter):  # time loop
             self.solveIterNewton(idx_time)
-            # self.solverIterML(idx_time)
+            self.solverIterML(idx_time)
             print("Iteration: " + str(idx_time))
             # self.errorAnalysis()
             # print iteration results
-            # self.showSolution(idx_time)
+            self.showSolution(idx_time)
 
         return self.u
 
@@ -134,32 +155,65 @@ class MNSolver1D:
         fig, ax = plt.subplots()
 
         ax.set_xlim((-1.5, 1.5))
-        ax.set_ylim((0.5, 2.5))
-        line1, = ax.plot([], [], color="r", label="ML")
-        line2, = ax.plot([], [], color="g", label="Newton")
+        ax.set_ylim((-0.15, 1.15))
+        line1, = ax.plot([], [], "ro", label="u0_ML")
+        line2, = ax.plot([], [], "ro", label="u1_ML")
+        line3, = ax.plot([], [], "ro", label="u2_ML")
+
+        line4, = ax.plot([], [], "k-", label="u0_trad")
+        line5, = ax.plot([], [], "k--", label="u1_trad")
+        line6, = ax.plot([], [], "k:", label="u2_trad")
+
+        if self.polyDegree == 3:
+            line7, = ax.plot([], [], "ro", label="u3_ML")
+            line8, = ax.plot([], [], "k.", label="u3_trad")
+
         x = np.linspace(self.x0, self.x1, self.nx)
 
         ax.legend()
 
         def animate_func(i):
-            # self.u2 = np.copy(self.u)
-            # self.entropyClosureNewton()
-            # self.realizabilityReconstruction()
+            # entropy closure and
+            self.entropyClosureNewton()
+            # reconstruction
+            self.realizabilityReconstruction()
+            # entropy closure and
+            self.entropyClosureML()
+            self.compareAndRetrain()
 
             # flux computation
-            # self.computeFluxNewton()
+            self.computeFluxNewton()
             # FVM update
-            # self.FVMUpdateNewton()
-            self.solveIterNewton(i)
-            self.solverIterML(i)
+            self.FVMUpdateNewton()
+
+            # flux computation
+            self.computeFluxML()
+            # FVM update
+            self.FVMUpdateML()
+
+            # self.solveIterNewton(i)
+            # self.solverIterML(i)
+
+            # step by step execution
+
+            # self.compareAndRetrain()
 
             print("Iteration: " + str(i))
 
             # ax.plot(x, self.u2[0, :])
             line1.set_data(x, self.u2[0, :])
-            line2.set_data(x, self.u[0, :])
+            line2.set_data(x, self.u2[1, :])
+            line3.set_data(x, self.u2[2, :])
+            if self.polyDegree == 3:
+                line7.set_data(x, self.u2[3, :])
+            line4.set_data(x, self.u[0, :])
+            line5.set_data(x, self.u[1, :])
+            line6.set_data(x, self.u[2, :])
+            if self.polyDegree == 3:
+                line8.set_data(x, self.u[3, :])
+                return [line1, line2, line3, line4, line5, line6, line7, line8]
 
-            return [line1, line2]
+            return [line1, line2, line3, line4, line5, line6]
 
         # anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=10000 * self.dt)
         anim = animation.FuncAnimation(fig, animate_func, frames=maxIter, interval=20000 * self.dt, blit=True)
@@ -209,7 +263,9 @@ class MNSolver1D:
         # print(tp)
         normU = np.abs(self.u[1, i])
         u0 = self.u[0, i]
-        if (normU / u0 > 0.95):
+        if u0 == 0:
+            print("u0 = 0")
+        elif normU / u0 > 0.95:
             print("Warning")
         opt_result = scipy.optimize.minimize(fun=self.create_opti_entropy(opti_u), x0=alpha_init,
                                              jac=self.create_opti_entropy_prime(opti_u),
@@ -263,7 +319,7 @@ class MNSolver1D:
              used members: m    , dims = (N x nq)
                          w    , dims = nq
 
-             returns h = - alpha*u + <eta_*(alpha*m)>
+             returns h = - alpha + <m eta_*(alpha*m)>
             """
             # Currently only for maxwell Boltzmann entropy
 
@@ -274,22 +330,59 @@ class MNSolver1D:
 
         return opti_entropy_prime
 
+    def create_opti_entropy_prime2nd(self, u):
+
+        def opti_entropy_prime2nd(alpha):
+            """
+             brief: returns the derivative negative entropy functional with fixed u
+             nS = batchSize
+             N = basisSize
+             nq = number of quadPts
+
+             input: alpha, dims = (1 x N)
+                    u, dims = (1 x N)
+             used members: m    , dims = (N x nq)
+                         w    , dims = nq
+
+             returns h = <mxm eta_*(alpha*m)>
+            """
+            # Currently only for maxwell Boltzmann entropy
+
+            f_quad = np.exp(np.tensordot(alpha, self.mBasis, axes=([0], [0])))  # alpha*m
+            tmp = np.multiply(f_quad, self.quadWeights)  # f*w
+            t2 = np.tensordot(tmp, self.mBasis, axes=([0], [1]))  # f * w * momentBasis
+            return t2 - u
+
+        return opti_entropy_prime2nd
+
     def realizabilityReconstruction(self):
+
+        for i in range(self.nx):
+            # self.u2[:, i] = np.copy(self.u[:, i])
+            a = np.reshape(self.alpha[:, i], (1, self.nSystem))
+            self.u[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
+            # print("(" + str(self.u2[:, i]) + " | " + str(self.u[:, i]))
+            # h = self.create_opti_entropy(self.u[:, i])(self.alpha[:, i])
+            # row = [0, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
+            #       self.alpha[2, i], h]
+
+        return 0
+
+    def compareAndRetrain(self):
         # open the file in the write mode
-        with open('csv_writeout/M2_1D.csv', 'a+', newline='') as f:
+        with open('csv_writeout/Monomial_M2_1D.csv', 'a+', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
-
-            # write a row to the csv file
-
             for i in range(self.nx):
-                # self.u2[:, i] = np.copy(self.u[:, i])
-                a = np.reshape(self.alpha[:, i], (1, self.nSystem))
-                self.u[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
-                # print("(" + str(self.u2[:, i]) + " | " + str(self.u[:, i]))
                 h = self.create_opti_entropy(self.u[:, i])(self.alpha[:, i])
-                row = [self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i], self.alpha[2, i],
-                       h]
+                row = [0, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
+                       self.alpha[2, i], h]
+                writer.writerow(row)
+
+                h = self.create_opti_entropy(self.u2[:, i])(self.alpha2[:, i])
+                row = [1, self.u2[0, i], self.u2[1, i], self.u2[2, i], self.alpha2[0, i], self.alpha2[1, i],
+                       self.alpha2[2, i], h]
+                # write a row to the csv file
                 writer.writerow(row)
         return 0
 
@@ -339,15 +432,17 @@ class MNSolver1D:
         return 0
 
     def entropyClosureML(self):
-
         tmp = np.copy(np.transpose(self.u2))
         [u_pred, alpha_pred, h] = self.neuralClosure.call_scaled_64(np.asarray(tmp))
 
         for i in range(self.nx):
-            self.u2[:, i] = u_pred[i, :]
+            # self.u2[:, i] = u_pred[i, :]
+            t = alpha_pred[i, :].numpy()
+            a = t.reshape((1, self.nSystem))
+            self.u2[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
             self.alpha2[:, i] = alpha_pred[i, :]
-            print("(" + str(self.u2[:, i]) + " | " + str(tmp[i, :]) + " | " + str(
-                np.linalg.norm(self.u2[:, i] - tmp[i, :], 2)))
+            # print("(" + str(self.u2[:, i]) + " | " + str(tmp[i, :]) + " | " + str(
+            #    np.linalg.norm(self.u2[:, i] - tmp[i, :], 2)))
         return 0
 
     def computeFluxML(self):
@@ -391,8 +486,17 @@ class MNSolver1D:
     def showSolution(self, idx):
         plt.clf()
         x = np.linspace(self.x0, self.x1, self.nx)
-        plt.plot(x, self.u2[0, :])
-        plt.savefig("Periodic_" + str(idx) + ".png", dpi=150)
+
+        plt.plot(x, self.u[0, :], "k-", label="Newton closure")
+        plt.plot(x, self.u2[0, :], 'o', markersize=6, markerfacecolor='orange',
+                 markeredgewidth=1.5, markeredgecolor='k', label="Neural closure")
+        plt.xlim([-1.5, 1.5])
+        plt.ylim([0.4, 1.1])
+        plt.xlabel("x")
+        plt.ylabel("u1")
+        plt.legend()
+        plt.savefig("u_1_comparison_" + str(idx) + ".png", dpi=450)
+        plt.clf()
         # plt.show()
         return 0
 

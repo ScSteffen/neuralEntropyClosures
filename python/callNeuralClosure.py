@@ -142,7 +142,8 @@ def main():
     parser.add_option("-s", "--spatialDimension", dest="spatialDimension", default=3,
                       help="spatial dimension of closure", metavar="SPATIALDIM")
     parser.add_option("-t", "--training", dest="training", default=1,
-                      help="training mode (1) execution mode (0)", metavar="TRAINING")
+                      help="execution mode (0) training mode (1)  analysis mode (2) re-save mode (3)",
+                      metavar="TRAINING")
     parser.add_option("-v", "--verbosity", dest="verbosity", default=1,
                       help="output verbosity keras (0 or 1)", metavar="VERBOSITY")
     parser.add_option("-w", "--networkwidth", dest="networkwidth", default=10,
@@ -201,10 +202,10 @@ def main():
         trainingMode = True
         neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
                                             alphasampling=options.alphasampling,
-                                            normalizedData=neuralClosureModel.normalized)
+                                            normalizedData=neuralClosureModel.normalized)  # normalizedData=False)
 
         # normalize data (experimental)
-        neuralClosureModel.normalizeData()
+        # neuralClosureModel.normalizeData()
         # train model
         neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
                                                  batchSize=options.batch, verbosity=options.verbosity,
@@ -222,6 +223,20 @@ def main():
         neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True, normalizedData=False)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
         neuralClosureModel.evaluateModel(u, alpha, h)
+    elif options.training == 3:
+        print(
+            "Re-Save mode entered.")  # if training was not finished, models are not safed to .pb. this can be done here
+        neuralClosureModel.loadTrainingData(shuffleMode=False,
+                                            alphasampling=options.alphasampling,
+                                            normalizedData=neuralClosureModel.normalized)
+
+        # normalize data (experimental)
+        # neuralClosureModel.normalizeData()
+        # train model
+
+        neuralClosureModel.model(neuralClosureModel.trainingData[0])
+        # save model
+        neuralClosureModel.saveModel()
     else:
         # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
         print("pure execution mode")
