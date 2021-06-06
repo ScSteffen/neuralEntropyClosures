@@ -309,7 +309,7 @@ class neuralBase:
 
         # selectedCols = [True, False, True]
 
-        start = time.time()
+        start = time.perf_counter()
         if selectedCols[0] == True:
             df = pd.read_csv(filename, usecols=[i for i in uCols])
             uNParray = df.to_numpy()
@@ -337,7 +337,7 @@ class neuralBase:
             for idx in range(len(self.trainingData)):
                 self.trainingData[idx] = self.trainingData[idx][indices]
 
-        end = time.time()
+        end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
 
         return True
