@@ -9,6 +9,8 @@ Date 29.10.2020
 
 ### imports ###
 # internal modules
+import numpy as np
+
 from src.neuralClosures.configModel import initNeuralClosure
 from src import utils
 
@@ -16,6 +18,8 @@ from src import utils
 import tensorflow as tf
 import os
 from optparse import OptionParser
+import time
+import statistics
 
 
 ### global variable ###
@@ -237,6 +241,30 @@ def main():
         neuralClosureModel.model(neuralClosureModel.trainingData[0])
         # save model
         neuralClosureModel.saveModel()
+
+    elif options.training == 4:
+        # timing measurement
+        # startup
+        u_in = tf.zeros([2, neuralClosureModel.inputDim], tf.float32)
+        [u, alpha, h] = neuralClosureModel.model(u_in)
+
+        u_in = tf.ones([1000000, neuralClosureModel.inputDim], tf.float32)
+
+        # u_tf = tf.constant(u_in)
+        totduration = 0
+        durations = []
+        for i in range(0, 100):
+            print("Start computation")
+            start = time.perf_counter()
+            [u, alpha, h] = neuralClosureModel.model(u_in)
+            end = time.perf_counter()
+            totduration += end - start
+            durations.append(end - start)
+            print("Model executed. Elapsed time: " + str(end - start) + " in iteration " + str(i) + ".")
+        avg = totduration / 100
+        print("Average duration: " + str(avg) + " seconds")
+        stddev = statistics.stdev(durations)
+        print("Standard deviation:" + str(stddev) + "")
     else:
         # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
         print("pure execution mode")
