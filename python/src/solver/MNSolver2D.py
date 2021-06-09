@@ -28,7 +28,7 @@ def main():
     # solver.solveAnimation(maxIter=2)
     # solver.solveAnimationIterError(maxIter=60)
     # solver.solveIterError(maxIter=100)
-    solver.solve(endTime=10)
+    solver.solve(endTime=12)
     return 0
 
 
@@ -50,8 +50,8 @@ class MNSolver2D:
         self.x1 = 1.5
         self.y0 = -1.5
         self.y1 = 1.5
-        self.nx = 100
-        self.ny = 100
+        self.nx = 50
+        self.ny = 50
         self.dx = (self.x1 - self.x0) / self.nx
         self.dy = (self.y1 - self.y0) / self.ny
 
@@ -62,7 +62,7 @@ class MNSolver2D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.3
+        self.cfl = 0.1
         self.dt = self.cfl / 2 * (self.dx * self.dy) / (self.dx + self.dy)
         self.dtMod = self.dt
         self.realizabilityModifier = 1
@@ -99,7 +99,7 @@ class MNSolver2D:
         self.mass = []
         self.realizabilityMap = np.zeros((self.nx, self.ny))
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']  # , 'realizable']
-        self.dfErrPoints = pd.DataFrame(columns=columns)
+        # self.dfErrPoints = pd.DataFrame(columns=columns)
 
         # mean absulote error
         with open('errorAnalysis.csv', 'w', newline='') as f:
@@ -133,7 +133,7 @@ class MNSolver2D:
                   str(endTime))
             self.errorAnalysis(idx_time)
             # print iteration results
-            self.showSolution(idx_time)
+            # self.showSolution(idx_time)
             idx_time += 1
             self.T += self.dt
 
@@ -614,7 +614,7 @@ class MNSolver2D:
         count = 0
         count2 = 0
         count3 = 0
-        newEntries = []
+        # newEntries = []
         for i in range(self.nx):
             for j in range(self.ny):
                 for n in range(self.nSystem):
@@ -630,7 +630,7 @@ class MNSolver2D:
                     h = self.create_opti_entropy(self.u[:, i, j])(self.alpha[:, i, j])
                     entry = np.concatenate(
                         (self.u[:, i, j], self.alpha[:, i, j], [h]))  # , [self.realizabilityMap[i, j]]))
-                    newEntries.append(entry)
+                    # newEntries.append(entry)
                 if self.normErrorMap[i, j] > 0.02:  # rel error bigger than 5%
                     count2 = count2 + 1
 
@@ -638,8 +638,8 @@ class MNSolver2D:
                     count3 = count3 + 1
 
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']
-        df = pd.DataFrame(data=newEntries, columns=columns)
-        self.dfErrPoints = pd.concat([self.dfErrPoints, df])
+        # df = pd.DataFrame(data=newEntries, columns=columns)
+        # self.dfErrPoints = pd.concat([self.dfErrPoints, df])
         print("percentage of points with error >1%: " + str(count / (self.nx * self.ny) * 100))
         print("percentage of points with error >2%: " + str(count2 / (self.nx * self.ny) * 100))
         print("percentage of points with error >3%: " + str(count3 / (self.nx * self.ny) * 100))
@@ -651,8 +651,8 @@ class MNSolver2D:
         meanAu1 = self.errorMap[1, :, :].mean()
         meanAu2 = self.errorMap[2, :, :].mean()
         mass = self.u2[0, :, :].sum()
-        entropyOrig = self.h.sum() / 9.0
-        entropyML = self.h2.sum() / 9.0
+        entropyOrig = - self.h.sum() * (self.dx * self.dy)
+        entropyML = self.h2.sum() * (self.dx * self.dy)
 
         # mean absulote error
         with open('errorAnalysis.csv', 'a+', newline='') as f:
