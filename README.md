@@ -15,7 +15,7 @@ The problem is the following:
 	
 ### Training ### 
 
-To perform an end to end training for a network, call the "callNeuralClosure.py"
+To perform an end to end training for a network, call the "callNeuralClosure.py".
 
 Options: 
 
@@ -38,7 +38,7 @@ Options:
 
 Type  "callNeuralClosure.py --help" for information on the options
 
-### Employing a network with KiT-RT C++ framework ###
+### Employing a network with KiT-RT C++ framework ###.
 
-Use the [KiT-RT](https://github.com/CSMMLab/KiT-RT) kinetic simulation suite  (to be published soon). 
+Use the [KiT-RT](https://github.com/CSMMLab/KiT-RT) kinetic simulation suite. 
 
