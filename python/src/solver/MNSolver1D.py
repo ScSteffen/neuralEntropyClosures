@@ -29,7 +29,7 @@ def main():
     # solver.solveAnimation(maxIter=100)
     # solver.solveAnimationIterError(maxIter=100)
     # solver.solveIterError(maxIter=100)
-    solver.solve(maxIter=10000)
+    solver.solve(maxIter=2000)
     return 0
 
 
@@ -60,15 +60,17 @@ class MNSolver1D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.001
+        self.cfl = 0.3
         self.dt = self.cfl * self.dx
 
         # Solver variables Traditional
-        self.u = self.ICLinesource()  # periodic IC
+        self.u = self.ICperiodic()  # self.ICLinesource()  # periodic IC
         self.alpha = np.zeros((self.nSystem, self.nx))
         self.xFlux = np.zeros((self.nSystem, self.nx), dtype=float)
+        self.h = np.zeros(self.nx)
+        self.h2 = np.zeros(self.nx)
 
-        self.u2 = self.ICLinesource()
+        self.u2 = self.ICperiodic()  # self.ICLinesource()  # self.ICperiodic()
         self.alpha2 = np.zeros((self.nSystem, self.nx))
         self.xFlux2 = np.zeros((self.nSystem, self.nx), dtype=float)
         # Neural closure
@@ -91,6 +93,26 @@ class MNSolver1D:
         self.realizabilityMap = np.zeros(self.nx)
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']  # , 'realizable']
         self.dfErrPoints = pd.DataFrame(columns=columns)
+
+        with open('00errorAnalysis1D.csv', 'w', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            row = ["iter", "entropyOrig", "entropy"]
+            writer.writerow(row)
+
+    def ICperiodic(self):
+        def sincos(x):
+            return 1.5 + np.cos(2 * np.pi * x)
+
+        uIc = np.zeros((self.nSystem, self.nx))
+
+        for i in range(self.nx):
+            xKoor = self.x0 + (i - 0.5) * self.dx
+            uIc[0, i] = sincos(xKoor)
+            uIc[1, i] = 0.0
+            uIc[2, i] = 0.5 * uIc[0, i]
+
+        return uIc
 
     def ICLinesource(self):
         def normal_dist(x, mean, sd):
@@ -142,7 +164,7 @@ class MNSolver1D:
             self.solveIterNewton(idx_time)
             self.solverIterML(idx_time)
             print("Iteration: " + str(idx_time))
-            # self.errorAnalysis()
+            self.errorAnalysis(idx_time)
             # print iteration results
             self.showSolution(idx_time)
 
@@ -276,6 +298,7 @@ class MNSolver1D:
         else:
             self.alpha[:, i] = opt_result.x
             rowRes = opt_result.x
+            self.h[i] = opt_result.fun
         return rowRes
 
     def create_opti_entropy(self, u):
@@ -333,7 +356,7 @@ class MNSolver1D:
     def create_opti_entropy_prime2nd(self, u):
 
         def opti_entropy_prime2nd(alpha):
-            """
+            """ #TODO
              brief: returns the derivative negative entropy functional with fixed u
              nS = batchSize
              N = basisSize
@@ -439,8 +462,9 @@ class MNSolver1D:
             # self.u2[:, i] = u_pred[i, :]
             t = alpha_pred[i, :].numpy()
             a = t.reshape((1, self.nSystem))
-            self.u2[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
+            # self.u2[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
             self.alpha2[:, i] = alpha_pred[i, :]
+            self.h2[i] = h[i]
             # print("(" + str(self.u2[:, i]) + " | " + str(tmp[i, :]) + " | " + str(
             #    np.linalg.norm(self.u2[:, i] - tmp[i, :], 2)))
         return 0
@@ -495,9 +519,21 @@ class MNSolver1D:
         plt.xlabel("x")
         plt.ylabel("u1")
         plt.legend()
-        plt.savefig("u_1_comparison_" + str(idx) + ".png", dpi=450)
+        plt.savefig("00u_1_comparison_" + str(idx) + ".png", dpi=450)
         plt.clf()
         # plt.show()
+        return 0
+
+    def errorAnalysis(self, iter):
+        entropyOrig = - self.h.sum() * self.dx
+        entropyML = self.h2.sum() * self.dx
+
+        # mean absulote error
+        with open('00errorAnalysis1D.csv', 'a+', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            row = [iter, entropyOrig, entropyML]
+            writer.writerow(row)
         return 0
 
 

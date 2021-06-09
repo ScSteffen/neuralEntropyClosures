@@ -134,7 +134,7 @@ def main():
                       help="folder where the model is stored", metavar="FOLDER")
     parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
                       help="load model weights from file", metavar="LOADING")
-    parser.add_option("-m", "--model", dest="model", default=1,
+    parser.add_option("-m", "--model", dest="model", default=11,
                       help="choice of network model", metavar="MODEL")
     parser.add_option("-n", "--normalized", dest="normalized", default=0,
                       help="train on normalized moments", metavar="NORMALIZED")
