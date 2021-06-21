@@ -16,6 +16,7 @@ python/legacyCode/models/*
 *.h5
 *.png
 *.pb
+*.zip
 
 # images
 *.png
