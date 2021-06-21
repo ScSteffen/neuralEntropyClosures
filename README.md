@@ -37,6 +37,7 @@ Options:
 + -x (--networkDepth): Determine depth of the convex block (number of convex hidden layers)
 
 Type  "callNeuralClosure.py --help" for information on the options
+The runScript.sh provides a template for quick bash execution.
 
 ### Employing a network with KiT-RT C++ framework ###.
 
