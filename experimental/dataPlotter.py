@@ -27,7 +27,7 @@ def main():
     # plot2DMoments(u, h)
 
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("realizable_set_pictures/N2_alpha.csv", 3)
+    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3)
     plotHoverNormalized_N1_N2(u, h)
     # Normalized Plots
     # [u, alpha, h] = loadTrainingData("realizable_set_pictures/N2_alpha.csv", 3)
@@ -151,7 +151,7 @@ def plotHoverNormalized_N1_N2(u, h):
     # pos_neg_clipped = ax.imshow(z)
     cbar = fig.colorbar(out, ax=ax, extend='both')
     # plt.show()
-    plt.savefig("realizable_set_pictures/N2_alpha.png", dpi=150)
+    plt.savefig("N2_alpha.png", dpi=150)
 
     return 0
 
