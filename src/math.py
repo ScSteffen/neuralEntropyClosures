@@ -26,7 +26,7 @@ class EntropyTools:
     opti_m: np.ndarray
     opti_w: np.ndarray
 
-    def __init__(self, N=1):
+    def __init__(self, N=1) -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis

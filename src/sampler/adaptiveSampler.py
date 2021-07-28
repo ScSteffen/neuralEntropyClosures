@@ -108,13 +108,14 @@ class adaptiveSampler:
                         diam = temp_diam
         return diam
 
-    def compute_a(self, poi: np.ndarray) -> np.ndarray:
+    def compute_a(self, poi: np.ndarray) -> bool:
         """
         brief: Computes the gradient polygon for given points and the point of interest
+                ==> saves them in vertex_used
         params: pts = samplingpoints
                 grads = gradients of sampling points  (dim = (n_points x n_dim))
                 poi =  point of interest. must be element of the convex hull of pts (np array, dim = (n_dim))
-        returns: vert = vertices of the gradient polygon
+        returns: True, if completed succcessfully, else False
         """
         # Look only at the nearest neighbors (defined by knn_param)
         nearest_indices = self.get_nearest_nbrs(poi)
@@ -124,7 +125,7 @@ class adaptiveSampler:
         # Check, if poi is in the convex hull of pts
         if not interior_of_hull(self.nearest_pts, poi):
             print("Point of interest not in interior of convex hull")
-            exit(1)
+            return False
 
         # normalize knn data
         self.center_and_normalize(poi)
@@ -159,7 +160,7 @@ class adaptiveSampler:
                                 wrongSide[k, j] = True
         self.vertices_used = ~wrongSide
 
-        return self.vertices_used
+        return True
 
     def compute_vertex(self, i: int = 0, j: int = 1) -> np.ndarray:
         """
