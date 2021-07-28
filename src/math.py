@@ -16,7 +16,17 @@ class EntropyTools:
     Also uses Tensorflow
     """
 
-    def __init__(self, N):
+    polyDegree: int
+    nq: int
+    inputDim: int
+    quadPts: tf.Tensor  # dims = (batchSIze x N x nq)
+    quadWeights: tf.Tensor  # dims = (batchSIze x N x nq)
+    momentBasis: tf.Tensor  # dims = (batchSIze x N x nq)
+    opti_u: np.ndarray
+    opti_m: np.ndarray
+    opti_w: np.ndarray
+
+    def __init__(self, N=1):
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
@@ -26,18 +36,15 @@ class EntropyTools:
         self.polyDegree = N
         self.nq = 100
         [quadPts, quadWeights] = qGaussLegendre1D(self.nq)  # dims = nq
-        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)  # dims = (batchSIze x N x nq)
+        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)
         self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
-                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
+                                       dtype=tf.float32)
         mBasis = computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
         self.inputDim = mBasis.shape[0]
         self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
-                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
-        self.opti_u = 0
-        self.opti_m = 0
-        self.opti_w = 0
+                                       dtype=tf.float32)
 
-    def reconstruct_alpha(self, alpha):
+    def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
         """
         brief:  Reconstructs alpha_0 and then concats alpha_0 to alpha_1,... , from alpha1,...
                 Only works for maxwell Boltzmann entropy so far.
@@ -54,7 +61,7 @@ class EntropyTools:
         alpha_0 = -tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))  # ln(<tmp>)
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
-    def reconstruct_u(self, alpha):
+    def reconstruct_u(self, alpha: tf.Tensor) -> tf.Tensor:
         """
         brief: reconstructs u from alpha
 
@@ -72,7 +79,7 @@ class EntropyTools:
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
 
-    def compute_h(self, u, alpha):
+    def compute_h(self, u: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
         brief: computes the entropy functional h on u and alpha
 
@@ -94,13 +101,13 @@ class EntropyTools:
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         return tmp2 - tmp
 
-    def convert_to_tensorf(self, vector):
+    def convert_to_tensorf(self, vector: np.ndarray) -> tf.Tensor:
         """
         brief: converts to tensor, keeps dimensions
         """
         return tf.constant(vector, shape=vector.shape, dtype=tf.float32)
 
-    def minimize_entropy(self, u, start):
+    def minimize_entropy(self, u: tf.Tensor, start: tf.Tensor) -> tf.Tensor:
         """
         brief: computes the minimal entropy at u
         input: u = dims (1,N)
@@ -120,7 +127,7 @@ class EntropyTools:
             exit("Optimization unsuccessfull!")
         return tf.constant(opt_result.x, dtype=tf.float32, shape=(1, dim))
 
-    def opti_entropy(self, alpha):
+    def opti_entropy(self, alpha: np.ndarray) -> np.ndarray:
         """
         brief: returns the negative entropy functional with fixed u
 
@@ -143,7 +150,7 @@ class EntropyTools:
 
         return t1 - t2
 
-    def opti_entropy_prime(self, alpha):
+    def opti_entropy_prime(self, alpha: np.ndarray) -> np.ndarray:
         """
          brief: returns the derivative negative entropy functional with fixed u
          nS = batchSize
@@ -165,7 +172,7 @@ class EntropyTools:
         dim = t2.shape[1]
         return np.reshape(t2 - self.opti_u, (dim,))
 
-    def KL_divergence(self, alpha_true, alpha):
+    def KL_divergence(self, alpha_true: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
         brief: computes the Kullback-Leibler Divergence of the kinetic density w.r.t alpha given the kinetic density w.r.t
                 alpha_true
@@ -189,7 +196,7 @@ class EntropyTools:
 ### Integration
 
 
-def qGaussLegendre1D(order):
+def qGaussLegendre1D(order: int):
     """
     order: order of quadrature
     returns: [mu, weights] : quadrature points and weights
