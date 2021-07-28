@@ -7,7 +7,8 @@ from src.sampler.adaptiveSampler import adaptiveSampler
 
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utils import loadData
+from src.utils import loadData, scatterPlot2D
+from src.math import EntropyTools
 
 
 def testFunc(x):
@@ -54,22 +55,56 @@ def main():
     # print(a)
 
     """
-
+    """
+    # generate poi
+    entropy_tools = EntropyTools(N=2)
+    poi_grad = np.asarray([10, 10])
+    alpha_part = np.asarray([poi_grad])
+    alpha_recons = entropy_tools.reconstruct_alpha(entropy_tools.convert_to_tensorf(alpha_part))
+    u = entropy_tools.reconstruct_u(alpha_recons)
+    poi = u[0, 1:].numpy()
+    print("Point of interest: " + str(poi))
+    print("With gradient: " + str(poi_grad))
     # load sampled data
-    [u, alpha, h] = loadData("data/1D/Monomial_M2_1D_normal_alpha.csv", 3, [True, True, True])
+    [u, alpha, h] = loadData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
     u_normal = u[:, 1:]
     alpha_normal = alpha[:, 1:]
-    poi = np.asarray([0.9, 0.9])
-    samplerTest = adaptiveSampler(u_normal, alpha_normal, knn_param=3)
-    res = samplerTest.compute_a(poi)
-    resVert = samplerTest.vertices[res]
-    diam = samplerTest.compute_diam_a()
+    scatterPlot2D(x_in=u_normal, y_in=h, folder_name="delete", show_fig=False, log=False)
+    # Query max error bound
+    sampler_test = adaptiveSampler(u_normal, alpha_normal, knn_param=10)
+    res = sampler_test.compute_a(poi)
+    res_vert = sampler_test.vertices[res]
+    diam = sampler_test.compute_diam_a()
     print(diam)
-    allVertices = samplerTest.get_vertices()
+    allVertices = sampler_test.get_vertices()
     plt.plot(allVertices[:, 0], allVertices[:, 1], '*')
-    plt.plot(resVert[:, 0], resVert[:, 1], 'o')
-    # plt.plot(poiGrad[0], poiGrad[1], '+')
+    plt.plot(res_vert[:, 0], res_vert[:, 1], 'o')
+    plt.plot(poi_grad[0], poi_grad[1], '+')
     plt.show()
+    """
+    ### ---- Start here
+    # reference data
+    [u, alpha, h] = loadData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
+    u_normal = u[:, 1:]
+    alpha_normal = alpha[:, 1:]
+    sampler_test = adaptiveSampler(u_normal, alpha_normal, knn_param=10)
+
+    # Load query data
+    [u_query, alpha_query, h] = loadData("data/1D/Monomial_M2_1D_normal.csv", 3, [True, True, True])
+    u_query_normal = u_query[:, 1:]
+    diams = np.zeros(h.shape)
+    for i in range(0, len(u_query_normal)):
+        poi = u_query_normal[i]
+        success = sampler_test.compute_a(poi)
+        if success:
+            diam = sampler_test.compute_diam_a()
+        else:
+            diam = np.nan
+        print(str(i) + str("/") + str(len(u_query_normal)) + ". Diam = " + str(diam))
+        diams[i] = diam
+
+    scatterPlot2D(x_in=u_query_normal, y_in=diams, name="test", folder_name="delete", show_fig=False,
+                  log=True)
 
     return 0
 
