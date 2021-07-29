@@ -11,12 +11,12 @@ from src.utils import loadData, scatterPlot2D
 from src.math import EntropyTools
 
 
-def testFunc(x):
+def test_func(x):
     # quadratic function
     return 0.5 * (x[:, 0] ** 2 + x[:, 1] ** 2)
 
 
-def gradFunc(x):
+def grad_func(x):
     # gard of testFunc
     return x
 
@@ -93,19 +93,19 @@ def main():
     [u_query, alpha_query, h] = loadData("data/1D/Monomial_M2_1D_normal.csv", 3, [True, True, True])
     u_query_normal = u_query[:, 1:]
     diams = np.zeros(h.shape)
-    for i in range(0, len(u_query_normal)):
+    for i in range(1000, 1001):  # len(u_query_normal)):
         poi = u_query_normal[i]
         success = sampler_test.compute_a(poi)
         if success:
             diam = sampler_test.compute_diam_a()
+            sampler_test.sample_adative(poi, max_diam=0.05, max_iter=10)
         else:
             diam = np.nan
         print(str(i) + str("/") + str(len(u_query_normal)) + ". Diam = " + str(diam))
         diams[i] = diam
 
-    scatterPlot2D(x_in=u_query_normal, y_in=diams, name="test", folder_name="delete", show_fig=False,
+    scatterPlot2D(x_in=u_query_normal, y_in=diams, name="test_grid", folder_name="delete", show_fig=False,
                   log=True)
-
     return 0
 
 

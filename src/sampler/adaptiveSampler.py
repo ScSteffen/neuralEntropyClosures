@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import linprog
 from scipy.spatial import ConvexHull
+from src.math import EntropyTools
 
 
 def interior_of_hull(points: np.ndarray, x: np.ndarray):  # -> bool:
@@ -71,52 +72,72 @@ class adaptiveSampler:
     intersection_params: np.ndarray  # shape = (knn_param,knn_param) intersection_params[i,j] = parametrization point of line i to cut line j
     vertices: np.ndarray  # shape = (knn_param,knn_param, nDim)
     vertices_used: np.ndarray  # shape = (knn_param, knn_param) in each row, maximum 2 entries can be positive! matrix is symmetric
-    knn_param: int
+    point_cloud_size: int
+    initial_pt_cloud_size: int
 
     def __init__(self, points: np.ndarray = np.empty((0, 2,), dtype=float),
                  grads: np.ndarray = np.empty((0, 2), dtype=float), knn_param: int = 10):
         self.nDim = points.shape[1]
         self.nSize = points.shape[0]
-        self.knn_param = knn_param
+        self.point_cloud_size = knn_param
+        self.initial_pt_cloud_size = knn_param
         self.pts = points
         self.grads = grads
-        self.intersection_params = np.zeros((self.knn_param, self.knn_param), dtype=float)
-        self.vertices = np.zeros((self.knn_param, self.knn_param, self.nDim), dtype=float)
-        self.vertices_used = np.zeros((self.knn_param, self.knn_param), dtype=bool)
-        self.pts_normal_orto = np.zeros((self.knn_param, self.nDim), dtype=float)
-        self.pts_normal = np.zeros((self.knn_param, self.nDim), dtype=float)
+        # --- The following members change in size during execution ---
+        self.intersection_params = np.zeros((self.point_cloud_size, self.point_cloud_size), dtype=float)
+        self.vertices = np.zeros((self.point_cloud_size, self.point_cloud_size, self.nDim), dtype=float)
+        self.vertices_used = np.zeros((self.point_cloud_size, self.point_cloud_size), dtype=bool)
+        self.pts_normal_orto = np.zeros((self.point_cloud_size, self.nDim), dtype=float)
+        self.pts_normal = np.zeros((self.point_cloud_size, self.nDim), dtype=float)
 
-    def compute_diam_a(self) -> float:
+    def sample_adative(self, poi: np.ndarray, max_diam: float, max_iter: int) -> bool:
         """
-        Returns the diameter of the polygon spanned by all vertices of marked  in "vertices_used"
-        returns: float: diam
+        brief: Samples adaptively, until the diameter of the polygon is smaller than max_diam, or until max_iter is reached.
+               Adds all created points to the training data set.
+        params:
+                poi: point of interest. dim = (nDim)
+                max_diam: maximal allowed diameter of alpha
+                max_iter: maximum amount of iterations of the algorithm
+        returns: True, if the diameter has been reached, else false
         """
-        vertex_list: list = []
-        diam: float = 0
-        temp_diam: float = 0
-        for i in range(0, self.knn_param):  # get all used vertices
-            for j in range(i + 1, self.knn_param):  # look at upper tri diagonal matrix, to avoid dublicates
-                if self.vertices_used[i, j]:
-                    vertex_list.append(self.vertices[i, j])
-        # diameter is the maxium distance between two nodes
-        vertex_array: np.ndarray = np.asarray(vertex_list)
-        for i in range(0, len(vertex_array)):
-            for j in range(0, len(vertex_array)):
-                if i != j:
-                    temp_diam = np.linalg.norm(vertex_array[i] - vertex_array[j])
-                    if temp_diam > diam:
-                        diam = temp_diam
-        return diam
+
+        et = EntropyTools(N=2)
+        curr_vertices: np.ndarray
+        mean: float
+
+        self.compute_a(poi)
+        diam: float = self.compute_diam_a()
+        while diam > max_diam:
+            diam2 = diam
+            curr_vertices = self.get_vertices()
+            mean = np.mean(curr_vertices, axis=0).reshape((1, 2))
+            alpha_recons = et.reconstruct_alpha(et.convert_to_tensorf(mean))
+            u = et.reconstruct_u(alpha_recons).numpy()[:, 1:]
+            self.pts = np.append(self.pts, u, axis=0)
+            self.grads = np.append(self.grads, mean, axis=0)
+            self.nSize += 1
+            self.point_cloud_size += 1
+            self.compute_a(poi)
+            diam = self.compute_diam_a()
+            print("h")
+            print(diam)
+        return True
 
     def compute_a(self, poi: np.ndarray) -> bool:
         """
-        brief: Computes the gradient polygon for given points and the point of interest
+        brief: Computes the gradient polygon for given points and the point of interest. Considers the nearest neighbors
+
                 ==> saves them in vertex_used
-        params: pts = samplingpoints
-                grads = gradients of sampling points  (dim = (n_points x n_dim))
-                poi =  point of interest. must be element of the convex hull of pts (np array, dim = (n_dim))
+        params: poi =  point of interest. must be element of the convex hull of pts (np array, dim = (n_dim))
         returns: True, if completed succcessfully, else False
         """
+        # change sizes of arrays according to current point cloud size
+        self.intersection_params = np.zeros((self.point_cloud_size, self.point_cloud_size), dtype=float)
+        self.vertices = np.zeros((self.point_cloud_size, self.point_cloud_size, self.nDim), dtype=float)
+        self.vertices_used = np.zeros((self.point_cloud_size, self.point_cloud_size), dtype=bool)
+        self.pts_normal_orto = np.zeros((self.point_cloud_size, self.nDim), dtype=float)
+        self.pts_normal = np.zeros((self.point_cloud_size, self.nDim), dtype=float)
+
         # Look only at the nearest neighbors (defined by knn_param)
         nearest_indices = self.get_nearest_nbrs(poi)
         self.nearest_pts = self.pts[nearest_indices]
@@ -132,10 +153,10 @@ class adaptiveSampler:
         self.compute_orthogonal_complements()
 
         # Compute the intersection points
-        for i in range(0, self.knn_param):
+        for i in range(0, self.point_cloud_size):
             self.intersection_params[i, i] = np.nan
             self.vertices[i, i] = [np.nan, np.nan]
-            for j in range(i + 1, self.knn_param):
+            for j in range(i + 1, self.point_cloud_size):
                 if i is not j:
                     t = self.compute_intersection(i, j)
                     self.intersection_params[i, j] = t[0]
@@ -144,10 +165,10 @@ class adaptiveSampler:
                     self.vertices[j, i] = self.vertices[i, j]
 
         # go over all edges, select the points on the right side.
-        wrongSide = np.zeros((self.knn_param, self.knn_param), dtype=bool)
-        for i in range(0, self.knn_param):  # self.nSize):
-            for j in range(0, self.knn_param):
-                for k in range(0, self.knn_param):
+        wrongSide = np.zeros((self.point_cloud_size, self.point_cloud_size), dtype=bool)
+        for i in range(0, self.point_cloud_size):  # self.nSize):
+            for j in range(0, self.point_cloud_size):
+                for k in range(0, self.point_cloud_size):
                     if i != j and i != k:  # if i == j, all points are on line.  set False, to stabilize algo
                         if j == k:  # diagonal is a line intersecting with itself. not applicable
                             wrongSide[j, k] = True
@@ -162,12 +183,41 @@ class adaptiveSampler:
 
         return True
 
+    def compute_diam_a(self) -> float:
+        """
+        Returns the diameter of the polygon spanned by all vertices of marked  in "vertices_used"
+        returns: float: diam
+        """
+        vertex_array: np.ndarray = self.get_used_vertices()
+        diam: float = 0
+        temp_diam: float = 0
+        for i in range(0, len(vertex_array)):
+            for j in range(0, len(vertex_array)):
+                if i != j:
+                    temp_diam = np.linalg.norm(vertex_array[i] - vertex_array[j])
+                    if temp_diam > diam:
+                        diam = temp_diam
+        return diam
+
+    def get_vertex_array(self) -> np.ndarray:
+        """
+        returns an array of currently used vertices
+        """
+        vertex_list: list = []
+
+        for i in range(0, self.point_cloud_size):  # get all used vertices
+            for j in range(i + 1, self.point_cloud_size):  # look at upper tri diagonal matrix, to avoid dublicates
+                if self.vertices_used[i, j]:
+                    vertex_list.append(self.vertices[i, j])
+        # diameter is the maximum distance between two nodes
+        return np.asarray(vertex_list)
+
     def compute_vertex(self, i: int = 0, j: int = 1) -> np.ndarray:
         """
         Computes the coordinates of vertex between line i and j
         returns: vertex =  np.array(ndim)
         """
-        if i > self.knn_param or j > self.knn_param:
+        if i > self.point_cloud_size or j > self.point_cloud_size:
             print("Index out of bounds")
             exit(1)
         if np.isnan(self.intersection_params[i, j]):
@@ -175,7 +225,7 @@ class adaptiveSampler:
         return self.nearest_grads[i] + self.intersection_params[i, j] * self.pts_normal_orto[i]
 
     def compute_boundary(self, i: int) -> np.ndarray:
-        if i > self.knn_param:
+        if i > self.point_cloud_size:
             print("Index out of bounds")
             exit(1)
 
@@ -231,15 +281,15 @@ class adaptiveSampler:
         brief:  shifts the coordinate system s.t. poi = 0. normalizes the inputs
         """
         self.pts_normal = self.nearest_pts - poi
-        for i in range(0, self.knn_param):
+        for i in range(0, self.point_cloud_size):
             self.pts_normal[i, :] = self.pts_normal[i, :] / np.linalg.norm(self.pts_normal[i, :])
 
         return True
 
     def get_vertices(self) -> np.ndarray:
         res = []
-        for i in range(0, self.knn_param):
-            for j in range(i, self.knn_param):
+        for i in range(0, self.point_cloud_size):
+            for j in range(i, self.point_cloud_size):
                 if not np.isnan(self.vertices[i, j, 0]):
                     res.append(self.vertices[i, j])
 
@@ -247,8 +297,8 @@ class adaptiveSampler:
 
     def get_used_vertices(self) -> np.ndarray:
         res = []
-        for i in range(0, self.knn_param):
-            for j in range(i + 1, self.knn_param):
+        for i in range(0, self.point_cloud_size):
+            for j in range(i + 1, self.point_cloud_size):
                 if self.vertices_used[i, j]:
                     res.append(self.vertices[i, j])
 
@@ -259,4 +309,4 @@ class adaptiveSampler:
         brief: compute the k nearest neighbors of pts out of the cloud self.pts, specified by self.knn_param
         param:
         """
-        return np.argsort(np.linalg.norm(self.pts - query_pt, axis=1))[0:self.knn_param]
+        return np.argsort(np.linalg.norm(self.pts - query_pt, axis=1))[0:self.point_cloud_size]
