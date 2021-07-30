@@ -20,15 +20,16 @@ from src import utils
 ### class definitions ###
 class neuralBase:
 
-    def __init__(self, normalized, polyDegree, spatialDim, width, depth, lossCombi, customFolderName):
+    def __init__(self, normalized, polyDegree: int, spatialDim: int, width: int, depth: int, lossCombi: int,
+                 customFolderName: str):
         self.normalized = normalized
-        self.polyDegree = polyDegree
-        self.spatialDim = spatialDim
-        self.modelWidth = width
-        self.modelDepth = depth
-        self.optimizer = 'adam'
-        self.filename = "models/" + customFolderName
-        self.history = []
+        self.polyDegree: int = polyDegree
+        self.spatialDim: int = spatialDim
+        self.modelWidth: int = width
+        self.modelDepth: int = depth
+        self.optimizer: str = 'adam'
+        self.filename: str = "models/" + customFolderName
+        self.history: list = []
 
         # --- Determine loss combination ---
         if lossCombi == 0:
@@ -43,19 +44,19 @@ class neuralBase:
             self.lossWeights = [1, 0, 0, 0]
 
         # --- Determine inputDim by MaxDegree ---
-        if (spatialDim == 1):
+        if spatialDim == 1:
             self.inputDim = polyDegree + 1
-        elif (spatialDim == 3):
-            if (self.polyDegree == 0):
+        elif spatialDim == 3:
+            if self.polyDegree == 0:
                 self.inputDim = 1
-            elif (self.polyDegree == 1):
+            elif self.polyDegree == 1:
                 self.inputDim = 4
             else:
                 raise ValueError("Polynomial degeree higher than 1 not supported atm")
-        elif (spatialDim == 2):
-            if (self.polyDegree == 0):
+        elif spatialDim == 2:
+            if self.polyDegree == 0:
                 self.inputDim = 1
-            elif (self.polyDegree == 1):
+            elif self.polyDegree == 1:
                 self.inputDim = 3
             else:
                 raise ValueError("Polynomial degeree higher than 1 not supported atm")

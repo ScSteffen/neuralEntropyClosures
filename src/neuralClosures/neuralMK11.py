@@ -403,13 +403,12 @@ class sobolevModel(tf.keras.Model):
 
     def call(self, x, training=False):
         """
-        Defines the sobolev executio (does not return 0th order moment)
+        Defines the sobolev execution (does not return 0th order moment)
         input: x = [u_1,u_2,...,u_N]
         output: h = entropy of u,alpha
                 alpha = [alpha_1,...,alpha_N]
                 u = [u_1,u_2,...,u_N]
         """
-
         with tf.GradientTape() as grad_tape:
             grad_tape.watch(x)
             h = self.coreModel(x)
