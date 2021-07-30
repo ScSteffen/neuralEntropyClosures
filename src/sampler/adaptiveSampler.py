@@ -78,6 +78,7 @@ class Refiner:
         return 0
 
     def center_and_normalize(self):
+        return 0
 
 
 class AdaptiveSampler:
@@ -195,6 +196,105 @@ class AdaptiveSampler:
         self.vertices_used = ~wrong_side
 
         return True
+
+    def compute_a2(self, poi: np.ndarray, local_pts: np.ndarray, local_grads: np.ndarray) -> tuple:
+        """
+        Computes the best error approximation polygon A out of a local point cloud
+        returns: (index_list,vertices)
+                 index_list: indices of points of point cloud, that are used for the best polygon
+                 vertices: coordinates of vertices that form the polygon.
+        """
+        n_size: int = len(local_pts)
+        n_dim: int = local_pts.shape[1]
+        local_pts_normal: np.ndarray
+        local_pts_ortonormal: np.ndarray
+        intersection_params: np.ndarray = np.zeros(shape=(n_size, n_size), dtype=float)  # param, where i intersects j
+        vertices: np.ndarray = np.zeros(shape=(n_size, n_size, n_dim), dtype=float)  # intersection points from (i,j)
+        wrong_side: np.ndarray = np.zeros((self.knn_param, self.knn_param), dtype=bool)
+        index_list: list = []
+
+        # define helper functions
+        def center_and_normalize() -> np.ndarray:
+            """
+            brief:  shifts the coordinate system s.t. poi = 0. normalizes the inputs
+            """
+            normals = local_pts - poi
+            for i in range(0, n_size):
+                normals[i, :] = normals[i, :] / np.linalg.norm(normals[i, :])
+            return normals
+
+        def compute_orto_complement() -> np.ndarray:
+            """
+            computes the orthogonal complement of the points
+            """
+            ortogonals = np.asarray([local_pts_normal[:, 1], -local_pts_normal[:, 0]]).T
+            return ortogonals
+
+        def compute_intersection(idx_i: int, idx_j: int) -> np.ndarray:
+            """
+            brief: Compute the intersection between the boundary conditions given by point i and j of the conv hull
+            param : idx_i  = index of first point
+                    idx_j = index of second point
+            returns : [t_i, t_j] line parameters for boundary line i and j at the intersection point
+            """
+            # Compute linear system (only 2D right now)
+            a = np.asarray([local_pts_ortonormal[idx_i], -1 * local_pts_ortonormal[idx_j]]).T
+            b = - local_grads[idx_i] + local_grads[idx_j]
+            # check if a is singular
+            if np.linalg.matrix_rank(a) < n_dim:  # vectors are linearly dependent
+                return np.asarray([np.nan, np.nan])
+            else:
+                return np.linalg.solve(a, b)
+
+        def compute_vertex(idx_i: int, idx_j: int) -> np.ndarray:
+            """
+            Computes the coordinates of vertex between line i and j
+            returns: vertex =  np.array(ndim)
+            """
+            if idx_i >= n_size or idx_j >= n_size:
+                print("Index out of bounds")
+                exit(1)
+            if np.isnan(self.intersection_params[idx_i, idx_j]):
+                return np.asarray([np.nan, np.nan])
+            return local_grads[idx_i] + intersection_params[idx_i, idx_j] * local_pts_ortonormal[idx_i]
+
+        if not interior_of_hull(self.local_pts, poi):
+            print("Point of interest not in interior of convex hull")
+            return [], np.empty()
+
+        local_pts_normal = center_and_normalize()
+        local_pts_ortonormal = compute_orto_complement()
+
+        for i in range(0, n_size):  # Compute the intersection points
+            intersection_params[i, i] = np.nan
+            vertices[i, i] = [np.nan, np.nan]
+            for j in range(i + 1, n_size):
+                if i is not j:
+                    t = compute_intersection(i, j)
+                    intersection_params[i, j] = t[0]
+                    intersection_params[j, i] = t[1]
+                    vertices[i, j] = compute_vertex(i, j)
+                    vertices[j, i] = vertices[i, j]
+
+        # go over all edges, select the points on the right side.
+        for i in range(0, n_size):  # self.nSize):
+            for j in range(0, n_size):
+                for k in range(0, n_size):
+                    if i != j and i != k:  # if i == j, all points are on line.  set False, to stabilize algo
+                        if j == k:  # diagonal is a line intersecting with itself. not applicable
+                            wrong_side[j, k] = True
+                        if np.isnan(intersection_params[j, k]):
+                            wrong_side[j, k] = True
+                        else:
+                            if np.dot(self.vertices[j, k], self.local_pts_normal[i]) > np.dot(self.local_grads[i],
+                                                                                              self.local_pts_normal[i]):
+                                wrong_side[j, k] = True
+                                wrong_side[k, j] = True
+        for i in range(0, n_size):
+            for j in range(i + 1, n_size):
+                if not wrong_side[i, j]:
+                    index_list.append(i)
+        return index_list, vertices[~wrong_side]
 
     def compute_a(self, poi: np.ndarray) -> bool:
         """
