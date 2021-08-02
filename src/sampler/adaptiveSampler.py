@@ -11,33 +11,6 @@ from scipy.spatial import ConvexHull
 from src.math import EntropyTools
 
 
-def interior_of_hull(points: np.ndarray, x: np.ndarray):  # -> bool:
-    """
-     Checks if point is in the interior of a convex hull of points (currently in 2d)
-    params: points: point cloud that forms the convex hull
-            x = query point
-    return: True, if x is in the interiour of Conv(points)
-            False, if x is on the boundary or outside of Conv(points)
-    """
-    hull = ConvexHull(points)
-    boundary = points[hull.vertices]
-    a: np.ndarray = np.zeros(x.size)  # edge vector
-    b: np.ndarray = np.zeros(x.size)  # vector from first vertex to poi
-    determinant: float
-    inside: bool = True
-    for i in range(0, len(boundary)):  # boundary points are sorted counter clockwise
-        if i == len(boundary) - 1:
-            a = boundary[0] - boundary[i]
-            b = x - boundary[i]
-        else:
-            a = boundary[i + 1] - boundary[i]
-            b = x - boundary[i]
-        determinant = np.linalg.det([a.T, b.T])
-        if determinant <= 0:  # point is on the left or directly on the boundary at this edge
-            inside = False
-    return inside
-
-
 def in_hull(points: np.ndarray, x: np.ndarray) -> bool:
     """
     brief: helper function, that checks, if x is in the convex hull of points
@@ -51,34 +24,6 @@ def in_hull(points: np.ndarray, x: np.ndarray) -> bool:
     b = np.r_[x, np.ones(1)]
     lp = linprog(c, A_eq=A, b_eq=b)
     return lp.success
-
-
-def funcV2(x: np.ndarray, gradx: np.ndarray, v0: float):
-    # calculate boundary for triangle
-    rhs = np.dot(x, gradx)
-    return (rhs - x[0] * v0) / x[1]
-
-
-class Refiner:
-    normal_pts: np.ndarray
-    grads: np.ndarray
-    poi: np.ndarray
-
-    def __init__(self, points: np.ndarray, grads: np.ndarray, poi: np.ndarray):
-        self.pts = points
-        self.grads = grads
-        self.poi = poi
-
-    def refine(self, new_point: np.ndarray, new_grad: np.ndarray):
-        self.normal_pts = np.append(self.pts, new_point)
-        self.grads = np.append(self.grads, new_grad)
-
-        self.center_and_normalize()
-        self.compute_orthogonal_complements()
-        return 0
-
-    def center_and_normalize(self):
-        return 0
 
 
 class AdaptiveSampler:
@@ -282,6 +227,33 @@ class AdaptiveSampler:
                     if temp_diam > diam:
                         diam = temp_diam
         return diam
+
+    @staticmethod
+    def interior_of_hull(points: np.ndarray, x: np.ndarray):  # -> bool:
+        """
+         Checks if point is in the interior of a convex hull of points (currently in 2d)
+        params: points: point cloud that forms the convex hull
+                x = query point
+        return: True, if x is in the interiour of Conv(points)
+                False, if x is on the boundary or outside of Conv(points)
+        """
+        hull = ConvexHull(points)
+        boundary = points[hull.vertices]
+        a: np.ndarray = np.zeros(x.size)  # edge vector
+        b: np.ndarray = np.zeros(x.size)  # vector from first vertex to poi
+        determinant: float
+        inside: bool = True
+        for i in range(0, len(boundary)):  # boundary points are sorted counter clockwise
+            if i == len(boundary) - 1:
+                a = boundary[0] - boundary[i]
+                b = x - boundary[i]
+            else:
+                a = boundary[i + 1] - boundary[i]
+                b = x - boundary[i]
+            determinant = np.linalg.det([a.T, b.T])
+            if determinant <= 0:  # point is on the left or directly on the boundary at this edge
+                inside = False
+        return inside
 
     def compute_vertex(self, i: int = 0, j: int = 1) -> np.ndarray:
         """
