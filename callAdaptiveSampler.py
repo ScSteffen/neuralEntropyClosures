@@ -67,7 +67,7 @@ def main():
 
     # generate poi
     entropy_tools = EntropyTools(N=2)
-    poi_grad = np.asarray([0.4, 0.5])
+    poi_grad = np.asarray([0.2, 0.3])
     alpha_part = np.asarray([poi_grad])
     alpha_recons = entropy_tools.reconstruct_alpha(entropy_tools.convert_to_tensorf(alpha_part))
     u = entropy_tools.reconstruct_u(alpha_recons)
@@ -81,15 +81,19 @@ def main():
     # scatterPlot2D(x_in=u_normal, y_in=h, folder_name="delete", show_fig=False, log=False)
     # Query max error bound
     sampler_test = AdaptiveSampler(points=u_normal, grads=alpha_normal, knn_param=10)
+    """
     sampler_test.compute_a(poi)
     res_vert = sampler_test.get_used_vertices()
     diam = sampler_test.compute_diam_a(sampler_test.get_used_vertices())
     print(diam)
     allVertices = sampler_test.get_vertices()
-    plt.plot(allVertices[:, 0], allVertices[:, 1], '*')
+    # plt.plot(allVertices[:, 0], allVertices[:, 1], '*')
     plt.plot(res_vert[:, 0], res_vert[:, 1], 'o')
     plt.plot(poi_grad[0], poi_grad[1], '+')
     plt.show()
+    """
+    sampler_test.sample_adative(poi_grad, poi, max_diam=1e-7, max_iter=100)
+
     ### ---- Start here
 
     """

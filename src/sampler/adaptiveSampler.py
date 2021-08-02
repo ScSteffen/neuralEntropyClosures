@@ -111,7 +111,7 @@ class AdaptiveSampler:
         self.local_pts_normal_orto = np.zeros((self.knn_param, self.nDim), dtype=float)
         self.local_pts_normal = np.zeros((self.knn_param, self.nDim), dtype=float)
 
-    def sample_adative(self, poi: np.ndarray, max_diam: float, max_iter: int) -> bool:
+    def sample_adative(self, poi_grad: np.ndarray, poi: np.ndarray, max_diam: float, max_iter: int) -> bool:
         """
         brief: Samples adaptively, until the diameter of the polygon is smaller than max_diam, or until max_iter is reached.
                Adds all created points to the training data set.
@@ -124,24 +124,48 @@ class AdaptiveSampler:
 
         et = EntropyTools(N=2)
         curr_vertices: np.ndarray
+        curr_idx: np.ndarray = self.get_nearest_nbrs(poi)
+        curr_pts: np.ndarray = self.all_pts[curr_idx]
+        curr_grads: np.ndarray = self.all_grads[curr_idx]
         mean: float
 
-        self.compute_a(poi)
-        diam: float = self.compute_diam_a()
-        while diam > max_diam:
-            diam2 = diam
-            curr_vertices = self.get_used_vertices()
-            mean = np.mean(curr_vertices, axis=0).reshape((1, 2))
+        # self.compute_a(poi)
+        diam: float = np.infty
+        count: int = 0
+        while diam > max_diam and count < max_iter:
+            count += 1
+            # Compute the best polygon
+            (curr_idx, curr_vertices) = self.compute_a2(poi=poi, local_pts=curr_pts, local_grads=curr_grads,
+                                                        global_idx=curr_idx)
+            diam = self.compute_diam_a(curr_vertices)
+            # compute the geometric mean
+            mean = np.mean(curr_vertices, axis=0).reshape((1, 2))  # .reshape((1, 2))
+            # compute the new point u corresponding to the mean
             alpha_recons = et.reconstruct_alpha(et.convert_to_tensorf(mean))
             u = et.reconstruct_u(alpha_recons).numpy()[:, 1:]
-            self.all_pts = np.append(self.local_pts, u, axis=0)
-            self.all_grads = np.append(self.local_grads, mean, axis=0)
+            # append new point to the training points (since we have already computed it)
+            self.all_pts = np.append(self.all_pts, u, axis=0)
+            self.all_grads = np.append(self.all_grads, mean, axis=0)
             self.nSize += 1
-            self.local_cloud_size += 1
-            self.refine_a(poi)
-            diam = self.compute_diam_a()
-            print("h")
-            print(diam)
+            # refine the current polygon
+            # curr_pts2 = self.all_pts[curr_idx]
+            # curr_grads2 = self.all_grads[curr_idx]
+            # curr_pts3 = np.append(self.all_pts[curr_idx], u, axis=0)
+            # curr_grads3 = np.append(self.all_grads[curr_idx], mean, axis=0)
+            curr_idx = np.append(curr_idx, [self.nSize - 1], axis=0)
+            curr_pts = self.all_pts[curr_idx]
+            curr_grads = self.all_grads[curr_idx]
+            print("Current diameter:" + str(diam))
+            # print("____")
+            # plt.plot(allVertices[:, 0], allVertices[:, 1], '*')
+            plt.plot(curr_vertices[:, 0], curr_vertices[:, 1], 'o')
+            plt.plot(poi_grad[0], poi_grad[1], '+')
+            plt.plot(mean[0, 0], mean[0, 1], '*')
+            plt.xlim([0.0, 0.3])
+            plt.ylim([0.2, 0.45])
+            plt.savefig("iter_" + str(count) + ".png", dpi=150)
+            plt.clf()
+
         return True
 
     def refine_a(self, poi: np.ndarray, new_pt: np.ndarray, new_grad: np.ndarray) -> bool:
@@ -197,7 +221,8 @@ class AdaptiveSampler:
 
         return True
 
-    def compute_a2(self, poi: np.ndarray, local_pts: np.ndarray, local_grads: np.ndarray) -> tuple:
+    @staticmethod
+    def compute_a2(poi: np.ndarray, local_pts: np.ndarray, local_grads: np.ndarray, global_idx: np.ndarray) -> tuple:
         """
         Computes the best error approximation polygon A out of a local point cloud
         returns: (index_list,vertices)
@@ -210,8 +235,9 @@ class AdaptiveSampler:
         local_pts_ortonormal: np.ndarray
         intersection_params: np.ndarray = np.zeros(shape=(n_size, n_size), dtype=float)  # param, where i intersects j
         vertices: np.ndarray = np.zeros(shape=(n_size, n_size, n_dim), dtype=float)  # intersection points from (i,j)
-        wrong_side: np.ndarray = np.zeros((self.knn_param, self.knn_param), dtype=bool)
+        wrong_side: np.ndarray = np.zeros(shape=(n_size, n_size), dtype=bool)
         index_list: list = []
+        vertex_list: list = []
 
         # define helper functions
         def center_and_normalize() -> np.ndarray:
@@ -254,11 +280,11 @@ class AdaptiveSampler:
             if idx_i >= n_size or idx_j >= n_size:
                 print("Index out of bounds")
                 exit(1)
-            if np.isnan(self.intersection_params[idx_i, idx_j]):
+            if np.isnan(intersection_params[idx_i, idx_j]):
                 return np.asarray([np.nan, np.nan])
             return local_grads[idx_i] + intersection_params[idx_i, idx_j] * local_pts_ortonormal[idx_i]
 
-        if not interior_of_hull(self.local_pts, poi):
+        if not interior_of_hull(local_pts, poi):
             print("Point of interest not in interior of convex hull")
             return [], np.empty()
 
@@ -286,15 +312,18 @@ class AdaptiveSampler:
                         if np.isnan(intersection_params[j, k]):
                             wrong_side[j, k] = True
                         else:
-                            if np.dot(self.vertices[j, k], self.local_pts_normal[i]) > np.dot(self.local_grads[i],
-                                                                                              self.local_pts_normal[i]):
+                            if np.dot(vertices[j, k], local_pts_normal[i]) > np.dot(local_grads[i],
+                                                                                    local_pts_normal[i]):
                                 wrong_side[j, k] = True
                                 wrong_side[k, j] = True
         for i in range(0, n_size):
-            for j in range(i + 1, n_size):
+            for j in range(0, n_size):
                 if not wrong_side[i, j]:
-                    index_list.append(i)
-        return index_list, vertices[~wrong_side]
+                    if i not in index_list:
+                        index_list.append(i)
+                    if j > i:
+                        vertex_list.append(vertices[i, j])
+        return global_idx[index_list], np.asarray(vertex_list)
 
     def compute_a(self, poi: np.ndarray) -> bool:
         """
@@ -350,7 +379,8 @@ class AdaptiveSampler:
 
         return True
 
-    def compute_diam_a(self, used_vertices: np.ndarray) -> float:
+    @staticmethod
+    def compute_diam_a(used_vertices: np.ndarray) -> float:
         """
         Returns the diameter of the polygon spanned by all vertices of marked  in "vertices_used"
         returns: float: diam
