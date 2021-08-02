@@ -64,7 +64,6 @@ def main():
     """
     # a = samplerTest.vertices_used
     # print(a)
-
     # generate poi
     entropy_tools = EntropyTools(N=2)
     poi_grad = np.asarray([0.2, 0.3])
@@ -78,6 +77,7 @@ def main():
     [u, alpha, h] = loadData("data/1D/Monomial_M2_1D_normal.csv", 3, [True, True, True])
     u_normal = u[:, 1:]
     alpha_normal = alpha[:, 1:]
+
     # scatterPlot2D(x_in=u_normal, y_in=h, folder_name="delete", show_fig=False, log=False)
     # Query max error bound
     sampler_test = AdaptiveSampler(points=u_normal, grads=alpha_normal, knn_param=10)
@@ -92,7 +92,8 @@ def main():
     plt.plot(poi_grad[0], poi_grad[1], '+')
     plt.show()
     """
-    sampler_test.sample_adative(poi_grad, poi, max_diam=1e-7, max_iter=100)
+
+    sampler_test.sample_adative(poi, max_diam=1e-5, max_iter=100, poi_grad=poi_grad)
 
     ### ---- Start here
 
