@@ -111,7 +111,8 @@ class AdaptiveSampler:
         self.local_pts_normal_orto = np.zeros((self.knn_param, self.nDim), dtype=float)
         self.local_pts_normal = np.zeros((self.knn_param, self.nDim), dtype=float)
 
-    def sample_adative(self, poi_grad: np.ndarray, poi: np.ndarray, max_diam: float, max_iter: int) -> bool:
+    def sample_adative(self, poi: np.ndarray, max_diam: float, max_iter: int,
+                       poi_grad: np.ndarray = np.zeros((1, 2))) -> bool:
         """
         brief: Samples adaptively, until the diameter of the polygon is smaller than max_diam, or until max_iter is reached.
                Adds all created points to the training data set.
@@ -121,17 +122,17 @@ class AdaptiveSampler:
                 max_iter: maximum amount of iterations of the algorithm
         returns: True, if the diameter has been reached, else false
         """
-
+        # define local variables
         et = EntropyTools(N=2)
         curr_vertices: np.ndarray
         curr_idx: np.ndarray = self.get_nearest_nbrs(poi)
         curr_pts: np.ndarray = self.all_pts[curr_idx]
         curr_grads: np.ndarray = self.all_grads[curr_idx]
-        mean: float
-
-        # self.compute_a(poi)
+        mean: np.ndarray
         diam: float = np.infty
         count: int = 0
+
+        # run sampler
         while diam > max_diam and count < max_iter:
             count += 1
             # Compute the best polygon
@@ -148,81 +149,23 @@ class AdaptiveSampler:
             self.all_grads = np.append(self.all_grads, mean, axis=0)
             self.nSize += 1
             # refine the current polygon
-            # curr_pts2 = self.all_pts[curr_idx]
-            # curr_grads2 = self.all_grads[curr_idx]
-            # curr_pts3 = np.append(self.all_pts[curr_idx], u, axis=0)
-            # curr_grads3 = np.append(self.all_grads[curr_idx], mean, axis=0)
             curr_idx = np.append(curr_idx, [self.nSize - 1], axis=0)
             curr_pts = self.all_pts[curr_idx]
             curr_grads = self.all_grads[curr_idx]
-            print("Current diameter:" + str(diam))
-            # print("____")
-            # plt.plot(allVertices[:, 0], allVertices[:, 1], '*')
-            plt.plot(curr_vertices[:, 0], curr_vertices[:, 1], 'o')
-            plt.plot(poi_grad[0], poi_grad[1], '+')
-            plt.plot(mean[0, 0], mean[0, 1], '*')
-            plt.xlim([0.0, 0.3])
-            plt.ylim([0.2, 0.45])
-            plt.savefig("iter_" + str(count) + ".png", dpi=150)
-            plt.clf()
-
-        return True
-
-    def refine_a(self, poi: np.ndarray, new_pt: np.ndarray, new_grad: np.ndarray) -> bool:
-        """
-               brief: refines the gradient polygon for given points and the point of interest
-                       ==> saves them in vertex_used
-               params: pts = samplingpoints
-                       grads = gradients of sampling points  (dim = (n_points x n_dim))
-                       poi =  point of interest. must be element of the convex hull of pts (np array, dim = (n_dim))
-               returns: True, if completed succcessfully, else False
-        """
-        self.local_pts = np.append(self.get_used_vertices(), new_pt)
-        refinement_grads = np.append()  # self.all_grads[nearest_indices]
-
-        # Check, if poi is in the convex hull of pts
-        if not interior_of_hull(self.local_pts, poi):
-            print("Point of interest not in interior of convex hull")
-            return False
-
-        # normalize knn data
-        self.center_and_normalize(poi)
-        self.compute_orthogonal_complements()
-
-        # Compute the intersection points
-        for i in range(0, self.knn_param):
-            self.intersection_params[i, i] = np.nan
-            self.vertices[i, i] = [np.nan, np.nan]
-            for j in range(i + 1, self.knn_param):
-                if i is not j:
-                    t = self.compute_intersection(i, j)
-                    self.intersection_params[i, j] = t[0]
-                    self.intersection_params[j, i] = t[1]
-                    self.vertices[i, j] = self.compute_vertex(i, j)
-                    self.vertices[j, i] = self.vertices[i, j]
-
-        # go over all edges, select the points on the right side.
-        wrong_side = np.zeros((self.knn_param, self.knn_param), dtype=bool)
-        for i in range(0, self.knn_param):  # self.nSize):
-            for j in range(0, self.knn_param):
-                for k in range(0, self.knn_param):
-                    if i != j and i != k:  # if i == j, all points are on line.  set False, to stabilize algo
-                        if j == k:  # diagonal is a line intersecting with itself. not applicable
-                            wrong_side[j, k] = True
-                        if np.isnan(self.intersection_params[j, k]):
-                            wrong_side[j, k] = True
-                        else:
-                            if np.dot(self.vertices[j, k], self.local_pts_normal[i]) > np.dot(self.local_grads[i],
-                                                                                              self.local_pts_normal[i]):
-                                wrong_side[j, k] = True
-                                wrong_side[k, j] = True
-
-        self.vertices_used = ~wrong_side
-
+            """
+                print("Current diameter: " + str(diam) + " in iter " + str(count))
+                plt.plot(curr_vertices[:, 0], curr_vertices[:, 1], 'o')
+                plt.plot(poi_grad[0], poi_grad[1], '+')
+                plt.plot(mean[0, 0], mean[0, 1], '*')
+                plt.xlim([0.0, 0.3])
+                plt.ylim([0.2, 0.45])
+                plt.savefig("iter_" + str(count) + ".png", dpi=150)
+                plt.clf()
+            """
         return True
 
     @staticmethod
-    def compute_a2(poi: np.ndarray, local_pts: np.ndarray, local_grads: np.ndarray, global_idx: np.ndarray) -> tuple:
+    def compute_a(poi: np.ndarray, local_pts: np.ndarray, local_grads: np.ndarray, global_idx: np.ndarray) -> tuple:
         """
         Computes the best error approximation polygon A out of a local point cloud
         returns: (index_list,vertices)
@@ -324,60 +267,6 @@ class AdaptiveSampler:
                     if j > i:
                         vertex_list.append(vertices[i, j])
         return global_idx[index_list], np.asarray(vertex_list)
-
-    def compute_a(self, poi: np.ndarray) -> bool:
-        """
-        brief: Computes the gradient polygon for given points and the point of interest
-                ==> saves them in vertex_used
-        params: pts = samplingpoints
-                grads = gradients of sampling points  (dim = (n_points x n_dim))
-                poi =  point of interest. must be element of the convex hull of pts (np array, dim = (n_dim))
-        returns: True, if completed succcessfully, else False
-        """
-        # Look only at the nearest neighbors (defined by knn_param)
-        nearest_indices = self.get_nearest_nbrs(poi)
-        self.local_pts = self.all_pts[nearest_indices]
-        self.local_grads = self.all_grads[nearest_indices]
-
-        # Check, if poi is in the convex hull of pts
-        if not interior_of_hull(self.local_pts, poi):
-            print("Point of interest not in interior of convex hull")
-            return False
-
-        # normalize knn data
-        self.center_and_normalize(poi)
-        self.compute_orthogonal_complements()
-
-        # Compute the intersection points
-        for i in range(0, self.knn_param):
-            self.intersection_params[i, i] = np.nan
-            self.vertices[i, i] = [np.nan, np.nan]
-            for j in range(i + 1, self.knn_param):
-                if i is not j:
-                    t = self.compute_intersection(i, j)
-                    self.intersection_params[i, j] = t[0]
-                    self.intersection_params[j, i] = t[1]
-                    self.vertices[i, j] = self.compute_vertex(i, j)
-                    self.vertices[j, i] = self.vertices[i, j]
-
-        # go over all edges, select the points on the right side.
-        wrong_side = np.zeros((self.knn_param, self.knn_param), dtype=bool)
-        for i in range(0, self.knn_param):  # self.nSize):
-            for j in range(0, self.knn_param):
-                for k in range(0, self.knn_param):
-                    if i != j and i != k:  # if i == j, all points are on line.  set False, to stabilize algo
-                        if j == k:  # diagonal is a line intersecting with itself. not applicable
-                            wrong_side[j, k] = True
-                        if np.isnan(self.intersection_params[j, k]):
-                            wrong_side[j, k] = True
-                        else:
-                            if np.dot(self.vertices[j, k], self.local_pts_normal[i]) > np.dot(self.local_grads[i],
-                                                                                              self.local_pts_normal[i]):
-                                wrong_side[j, k] = True
-                                wrong_side[k, j] = True
-        self.vertices_used = ~wrong_side
-
-        return True
 
     @staticmethod
     def compute_diam_a(used_vertices: np.ndarray) -> float:
