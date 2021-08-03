@@ -153,7 +153,7 @@ def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures
 
 
 def scatterPlot2D(x_in: np.ndarray, y_in: np.ndarray, name: str = 'defaultName', log: bool = True,
-                  folder_name: str = "figures", show_fig: bool = False) -> bool:
+                  folder_name: str = "figures", show_fig: bool = False, z_lim: float = 0.0) -> bool:
     '''
     brief: Compute a scatter plot
     input: x_in = [x1,x2] function arguments
@@ -168,7 +168,7 @@ def scatterPlot2D(x_in: np.ndarray, y_in: np.ndarray, name: str = 'defaultName',
     y = x_in[:, 1]
     z = y_in
     if log:
-        out = ax.scatter(x, y, s=20, c=z, cmap=cm.hot, norm=colors.LogNorm())
+        out = ax.scatter(x, y, s=20, c=z, cmap=cm.hot, norm=colors.LogNorm(), vmax=z_lim)
     else:
         out = ax.scatter(x, y, s=20, c=z, cmap=cm.hot)
     ax.set_title(name, fontsize=14)
