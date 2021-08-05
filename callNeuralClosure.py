@@ -11,7 +11,7 @@ Date 29.10.2020
 # internal modules
 import numpy as np
 
-from src.neuralClosures.configModel import init_neural_closure
+from src.neuralClosures.configmodel import init_neural_closure
 from src import utils
 
 # python modules
@@ -238,17 +238,17 @@ def main():
         # neuralClosureModel.normalizeData()
         # train model
 
-        neuralClosureModel.model(neuralClosureModel.trainingData[0])
+        neuralClosureModel.model(neuralClosureModel.training_data[0])
         # save model
         neuralClosureModel.saveModel()
 
     elif options.training == 4:
         # timing measurement
         # startup
-        u_in = tf.zeros([2, neuralClosureModel.inputDim], tf.float32)
+        u_in = tf.zeros([2, neuralClosureModel.input_dim], tf.float32)
         [u, alpha, h] = neuralClosureModel.model(u_in)
 
-        u_in = tf.ones([1000000, neuralClosureModel.inputDim], tf.float32)
+        u_in = tf.ones([1000000, neuralClosureModel.input_dim], tf.float32)
 
         # u_tf = tf.constant(u_in)
         totduration = 0

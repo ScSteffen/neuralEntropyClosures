@@ -48,12 +48,12 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
         print("This model is deprecated. Visit branch <deprecated_models> to try them.")
         exit(1)
     elif network_mk == 11:
-        neural_closure_model = MK11Network(polyDegree=poly_degree, spatialDim=spatial_dim,
-                                           folderName=folder_name, lossCombi=loss_combination,
+        neural_closure_model = MK11Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
+                                           folder_name=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized)
     elif network_mk == 12:
-        neural_closure_model = MK12Network(polyDegree=poly_degree, spatialDim=spatial_dim,
-                                           folderName=folder_name, lossCombi=loss_combination,
+        neural_closure_model = MK12Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
+                                           folderName=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized)
     else:
         ValueError("No available network fits your preferences!")
