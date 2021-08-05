@@ -218,15 +218,15 @@ def writeConfigFile(options, neuralClosureModel):
     runScript = runScript + "--networkdepth=" + str(options.networkdepth)
 
     # Getting filename
-    rsFile = neuralClosureModel.filename + '/runScript_001_'
+    rsFile = neuralClosureModel.folder_name + '/runScript_001_'
     count = 0
 
     # create directory if it does not exist
-    make_directory(neuralClosureModel.filename)
+    make_directory(neuralClosureModel.folder_name)
 
     while os.path.isfile(rsFile + '.sh'):
         count += 1
-        rsFile = neuralClosureModel.filename + '/runScript_' + str(count).zfill(3) + '_'
+        rsFile = neuralClosureModel.folder_name + '/runScript_' + str(count).zfill(3) + '_'
 
     rsFile = rsFile + '.sh'
 
@@ -255,11 +255,11 @@ def writeConfigFile(options, neuralClosureModel):
 
     df = pd.DataFrame(data=d)
     count = 0
-    cfgFile = neuralClosureModel.filename + '/config_001_'
+    cfgFile = neuralClosureModel.folder_name + '/config_001_'
 
     while os.path.isfile(cfgFile + '.csv'):
         count += 1
-        cfgFile = neuralClosureModel.filename + '/config_' + str(count).zfill(3) + '_'
+        cfgFile = neuralClosureModel.folder_name + '/config_' + str(count).zfill(3) + '_'
 
     cfgFile = cfgFile + '.csv'
     df.to_csv(cfgFile, index=False)
