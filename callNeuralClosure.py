@@ -2,7 +2,7 @@
 This is the script that gets called from the C++ KiT-RT method MLOptimizer.cpp
 It initializes and loads a neural Closure
 The call method performs a prediction
-Author: Steffen Schotthöfer
+Author: Steffen Schotthoefer
 Version: 0.0
 Date 29.10.2020
 '''
@@ -204,9 +204,9 @@ def main():
     if options.training == 1:
         # create training Data
         trainingMode = True
-        neuralClosureModel.loadTrainingData(shuffleMode=trainingMode,
-                                            alphasampling=options.alphasampling,
-                                            normalizedData=neuralClosureModel.normalized)  # normalizedData=False)
+        neuralClosureModel.load_training_data(shuffleMode=trainingMode,
+                                              alphasampling=options.alphasampling,
+                                              normalizedData=neuralClosureModel.normalized)  # normalizedData=False)
 
         # normalize data (experimental)
         # neuralClosureModel.normalizeData()
@@ -220,19 +220,19 @@ def main():
     elif options.training == 2:
         print("Analysis mode entered.")
         print("Evaluate Model on normalized data...")
-        neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True, normalizedData=True)
+        neuralClosureModel.load_training_data(shuffleMode=False, loadAll=True, normalizedData=True)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
-        neuralClosureModel.evaluateModelNormalized(u, alpha, h)
+        neuralClosureModel.evaluate_model_normalized(u, alpha, h)
         print("Evaluate Model on non-normalized data...")
-        neuralClosureModel.loadTrainingData(shuffleMode=False, loadAll=True, normalizedData=False)
+        neuralClosureModel.load_training_data(shuffleMode=False, loadAll=True, normalizedData=False)
         [u, alpha, h] = neuralClosureModel.getTrainingData()
         neuralClosureModel.evaluateModel(u, alpha, h)
     elif options.training == 3:
         print(
             "Re-Save mode entered.")  # if training was not finished, models are not safed to .pb. this can be done here
-        neuralClosureModel.loadTrainingData(shuffleMode=False,
-                                            alphasampling=options.alphasampling,
-                                            normalizedData=neuralClosureModel.normalized)
+        neuralClosureModel.load_training_data(shuffleMode=False,
+                                              alphasampling=options.alphasampling,
+                                              normalizedData=neuralClosureModel.normalized)
 
         # normalize data (experimental)
         # neuralClosureModel.normalizeData()
