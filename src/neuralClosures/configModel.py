@@ -6,85 +6,57 @@ Date 29.10.2020
 '''
 
 ### imports ###
-from .neuralMK1 import neuralMK1
-from .neuralMK2 import neuralMK2
-from .neuralMK3 import neuralMK3
-from .neuralMK4 import neuralMK4
-from .neuralMK5 import neuralMK5
-from .neuralMK6 import neuralMK6
-from .neuralMK7 import neuralMK7
-from .neuralMK8 import neuralMK8
-from .neuralMK9 import neuralMK9
-from .neuralMK10 import neuralMK10
-from .neuralMK11 import neuralMK11
-from .neuralMK12 import neuralMK12
-from .neuralMK13 import neuralMK13
+from mk11 import MK11Network
+from mk12 import MK12Network
+from basenetwork import BaseNetwork
 
 
-### global functions ###
-def initNeuralClosure(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", lossCombi=0, width=10,
-                      depth=5, normalized=False):
+def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: int = 3,
+                        folder_name: str = "testFolder", loss_combination: int = 0, nw_width: int = 10,
+                        nw_depth: int = 5, normalized: bool = True):
     '''
-    modelNumber : Defines the used network model, i.e. MK1, MK2...
-    maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
+    params: network_mk = Defines the used network model, i.e. MK1, MK2...
+            poly_degree = Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
+            spatial_dim = spatial dimension of the closure
+            folder_name = name of the folder in which the model is saved
+            loss_combination =  combination of used network losses
+            nw_depth = number of layers of the network
+            nw_width = width of the hidden layers
+            normalized =  if true, the network uses normalized data
+    returns: a fully configured neural network
     '''
 
     # Catch obvious errors
-    if (polyDegree < 0):
+    if poly_degree < 0:
         ValueError("Negative number of basis functions not possible")
-    if (spatialDim < 0 or spatialDim > 3):
+        exit(1)
+    if spatial_dim < 0 or spatial_dim > 3:
         ValueError("Spatial dimension must be between 1 and 3.")
-    if (width < 1):
+        exit(1)
+    if nw_width < 1:
         ValueError("Model width must be bigger than 0.")
-    if (depth < 1):
+        exit(1)
+    if nw_depth < 1:
         ValueError("Model depth must be bigger than 0.")
+        exit(1)
 
-    msg = "Chosen Model: MK" + str(modelNumber) + ", Degree " + str(polyDegree)
+    msg = "Chosen Model: MK " + str(network_mk) + ", Degree " + str(poly_degree)
     print(msg)
-
+    neural_closure_model: BaseNetwork
     # Create the correct network
-    if (modelNumber == 1):
-        neuralClosureModel = neuralMK1(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 2):
-        neuralClosureModel = neuralMK2(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 3):
-        neuralClosureModel = neuralMK3(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 4):
-        neuralClosureModel = neuralMK4(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 5):
-        neuralClosureModel = neuralMK5(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 6):
-        neuralClosureModel = neuralMK6(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 7):
-        neuralClosureModel = neuralMK7(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 8):
-        neuralClosureModel = neuralMK8(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 9):
-        neuralClosureModel = neuralMK9(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                       lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 10):
-        neuralClosureModel = neuralMK10(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 11):
-        neuralClosureModel = neuralMK11(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 12):
-        neuralClosureModel = neuralMK12(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
-    elif (modelNumber == 13):
-        neuralClosureModel = neuralMK13(polyDegree=polyDegree, spatialDim=spatialDim, folderName=folderName,
-                                        lossCombi=lossCombi, width=width, depth=depth, normalized=normalized)
+    if network_mk < 11:
+        print("This model is deprecated. Visit branch <deprecated_models> to try them.")
+        exit(1)
+    elif network_mk == 11:
+        neural_closure_model = MK11Network(polyDegree=poly_degree, spatialDim=spatial_dim,
+                                           folderName=folder_name, lossCombi=loss_combination,
+                                           width=nw_width, depth=nw_depth, normalized=normalized)
+    elif network_mk == 12:
+        neural_closure_model = MK12Network(polyDegree=poly_degree, spatialDim=spatial_dim,
+                                           folderName=folder_name, lossCombi=loss_combination,
+                                           width=nw_width, depth=nw_depth, normalized=normalized)
     else:
-        ValueError("No network fits your preferences!")
-
+        ValueError("No available network fits your preferences!")
+        exit()
     print("Neural closure model created")
-
-    return neuralClosureModel
+    return neural_closure_model

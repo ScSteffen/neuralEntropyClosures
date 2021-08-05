@@ -20,7 +20,7 @@ import csv
 from joblib import Parallel, delayed
 
 # inpackage imports
-from src.neuralClosures.configModel import initNeuralClosure
+from src.neuralClosures.configModel import init_neural_closure
 from src import utils
 
 num_cores = multiprocessing.cpu_count()
@@ -91,9 +91,9 @@ class MNSolver2D:
         # Neural closure
         self.neuralClosure = None
         if not self.traditional:
-            self.neuralClosure = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=2,
-                                                   folderName="002_sim_M1_2D", lossCombi=2,
-                                                   width=18, depth=8, normalized=True)
+            self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=2,
+                                                     folder_name="002_sim_M1_2D", loss_combination=2,
+                                                     nw_width=18, nw_depth=8, normalized=True)
             self.neuralClosure.loadModel("../../models/002_sim_M1_2D")
 
         # Analysis variables

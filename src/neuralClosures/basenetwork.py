@@ -18,7 +18,7 @@ from src import utils
 
 
 ### class definitions ###
-class neuralBase:
+class BaseNetwork:
     normalized: bool  # Determines if model works with normalized data
     polyDegree: int  # Degree of basis function polynomials
     spatialDim: int  # spatial dimension of problem

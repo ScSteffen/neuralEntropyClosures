@@ -10,17 +10,6 @@ A Project to construct some neural networks to solve the minimal entropy problem
 
 ## Available network models ##
 
-* MK1: [Deprecated] Sequential model to train the mapping u to alpha (RMSE loss). Uses unscaled data.
-* MK2: [Deprecated] Sequential model to train the mapping u to alpha (loss is entropy functional). Uses unscaled data.
-* MK3: [Deprecated] ResNet model to train the mapping u to alpha (RMSE loss). Uses unscaled data.
-* MK4: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses unscaled data.
-* MK5: [Deprecated]
-* MK6: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled input data.
-* MK7: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled input data. Variable network size
-* MK8: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled data.
-* MK9: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled data. Quadratic activation
-* MK10: [Deprecated] ICNN model to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable network
-  size. Can reconstruct u
 * MK11: ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
   network size. Can reconstruct u. Different network call possibilities
 * MK12: Dense model (for comparison) with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized
