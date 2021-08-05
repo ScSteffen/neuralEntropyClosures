@@ -113,16 +113,16 @@ class BaseNetwork:
         """
         return self.call_network(u_non_normal)
 
-    def config_start_training(self, valSplit=0.1, epochCount=2, curriculum=1, batchSize=500, verbosity=1,
-                              processingMode=0):
+    def config_start_training(self, val_split: float = 0.1, epoch_count: int = 2, curriculum: int = 1,
+                              batch_size: int = 500, verbosity: int = 1, processing_mode: int = 0):
         '''
         Method to train network
         '''
 
         # Set double precision training for CPU training #TODO
-        if processingMode == 0:
+        if processing_mode == 0:
             tf.keras.backend.set_floatx('float32')
-        elif processingMode == 1:
+        elif processing_mode == 1:
             tf.keras.backend.set_floatx('float32')
 
         # Create callbacks
@@ -138,12 +138,12 @@ class BaseNetwork:
             #                                         verbose=1)
             epochChunks = 4
             # Split Training epochs
-            mini_epoch = int(epochCount / epochChunks)
+            mini_epoch = int(epoch_count / epochChunks)
 
             for i in range(0, curriculum):
                 print("Training with increasing batch size")
                 #  perform a batch doublication every 1/10th of the epoch count
-                print("Current Batch Size: " + str(batchSize))
+                print("Current Batch Size: " + str(batch_size))
 
                 # assemble callbacks
                 callbackList = []
@@ -154,9 +154,9 @@ class BaseNetwork:
                     callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
 
                 # start Training
-                self.history = self.call_training(val_split=valSplit, epoch_size=epochCount, batch_size=batchSize,
+                self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
                                                   verbosity_mode=verbosity, callback_list=callbackList)
-                batchSize = 2 * batchSize
+                batch_size = 2 * batch_size
 
             self.concat_history_files()
 
@@ -164,9 +164,9 @@ class BaseNetwork:
             print("Training with learning rate scheduler")
             # We only use this at the moment
             initial_lr = float(1e-3)
-            drop_rate = (epochCount / 3)
+            drop_rate = (epoch_count / 3)
             stop_tol = 1e-7
-            mt_patience = int(epochCount / 10)
+            mt_patience = int(epoch_count / 10)
             min_delta = stop_tol / 10
 
             # specific callbacks
@@ -186,7 +186,7 @@ class BaseNetwork:
                 callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, LR, HW, ES]
 
             # start Training
-            self.history = self.call_training(val_split=valSplit, epoch_size=epochCount, batch_size=batchSize,
+            self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
                                               verbosity_mode=verbosity, callback_list=callbackList)
 
         return self.history

@@ -125,7 +125,7 @@ def main():
     parser.add_option("-b", "--batch", dest="batch", default=128,
                       help="batch size", metavar="BATCH")
     parser.add_option("-c", "--curriculum", dest="curriculum", default=1,
-                      help="training curriculum", metavar="EPOCHCHUNK")
+                      help="training curriculum", metavar="CURRICULUM")
     parser.add_option("-d", "--degree", dest="degree", default=0,
                       help="max degree of moment", metavar="DEGREE")
     parser.add_option("-e", "--epoch", dest="epoch", default=1000,
@@ -211,9 +211,10 @@ def main():
         # normalize data (experimental)
         # neuralClosureModel.normalizeData()
         # train model
-        neuralClosureModel.config_start_training(valSplit=0.1, epochCount=options.epoch, curriculum=options.curriculum,
-                                                 batchSize=options.batch, verbosity=options.verbosity,
-                                                 processingMode=options.processingmode)
+        neuralClosureModel.config_start_training(val_split=0.1, epoch_count=options.epoch,
+                                                 curriculum=options.curriculum,
+                                                 batch_size=options.batch, verbosity=options.verbosity,
+                                                 processing_mode=options.processingmode)
         # save model
         neuralClosureModel.save_model()
 
