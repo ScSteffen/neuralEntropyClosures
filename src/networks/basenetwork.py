@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from os import path, makedirs, walk
 import time
+from sklearn.preprocessing import MinMaxScaler
 
 # intern modules
 from src import utils
@@ -30,7 +31,9 @@ class BaseNetwork:
     history: list  # list of training history objects
     loss_weights: list  # one hot vector to enable/disable loss functions
     model: tf.keras.Model  # the neural network model
-    training_data: list  # list of ndarrays containing the training data
+    training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
+    h_max: float  # for output scaling
+    h_min: float  # for output scaling
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int, width: int, depth: int,
                  loss_combination: int, save_folder: str):
@@ -42,6 +45,8 @@ class BaseNetwork:
         self.optimizer: str = 'adam'
         self.folder_name: str = "models/" + save_folder
         self.history: list = []
+        self.h_max = 1.0  # default is no scaling
+        self.h_min = 0.0  # default is no scaling
 
         # --- Determine loss combination ---
         if loss_combination == 0:
@@ -142,7 +147,7 @@ class BaseNetwork:
 
                 # assemble callbacks
                 callbackList = []
-                csv_logger = self.createCSVLoggerCallback()
+                csv_logger = self.create_csv_logger_cb()
                 if verbosity == 1:
                     callbackList = [mc_best, csv_logger]
                 else:
@@ -173,7 +178,7 @@ class BaseNetwork:
             HW = HaltWhenCallback('val_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
-            csv_logger = self.createCSVLoggerCallback()
+            csv_logger = self.create_csv_logger_cb()
 
             if verbosity == 1:
                 callbackList = [mc_best, csv_logger, LR, HW, ES]
@@ -229,7 +234,7 @@ class BaseNetwork:
         totalDF.to_csv(self.folder_name + '/historyLogs/CompleteHistory.csv', index=False)
         return 0
 
-    def createCSVLoggerCallback(self):
+    def create_csv_logger_cb(self):
         '''
         dynamically creates a csvlogger
         '''
@@ -250,7 +255,7 @@ class BaseNetwork:
 
         return csv_logger
 
-    def saveModel(self):
+    def save_model(self):
         """
         Saves best model to .pb file
         """
@@ -263,7 +268,7 @@ class BaseNetwork:
         #    json.dump(self.model.history.history, file)
         return 0
 
-    def loadModel(self, filename=None):
+    def load_model(self, filename=None):
         usedFileName = self.folder_name
         if filename != None:
             usedFileName = filename
@@ -277,7 +282,7 @@ class BaseNetwork:
         print("Model loaded from file ")
         return 0
 
-    def printWeights(self):
+    def print_weights(self):
         for layer in self.model.layers:
             weights = layer.get_weights()  # list of numpy arrays
             print(weights)
@@ -287,12 +292,12 @@ class BaseNetwork:
         self.model.summary()
         return 0
 
-    def load_training_data(self, shuffleMode=False, alphasampling=0, loadAll=False, normalizedData=False):
+    def load_training_data(self, shuffle_mode=False, alpha_sampling=0, load_all=False, normalized_data=False):
         """
-        Loads the trianing data
-        params: normalizedMoments = load normalized data  (u_0=1)
-                shuffleMode = shuffle loaded Data  (yes,no)
-                alphasampling = use data uniformly sampled in the space of Lagrange multipliers.
+        Loads the training data
+        params: normalized_moments = load normalized data  (u_0=1)
+                shuffle_mode = shuffle loaded Data  (yes,no)
+                alpha_sampling = use data uniformly sampled in the space of Lagrange multipliers.
         return: True, if loading successful
         """
         self.training_data = []
@@ -300,64 +305,77 @@ class BaseNetwork:
         ### Create trainingdata filename"
         filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
             self.spatial_dim) + "D"
-        if normalizedData:
+        if normalized_data:
             filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
                 self.spatial_dim) + "D_normal"
-        if alphasampling == 1:
+        if alpha_sampling == 1:
             filename = filename + "_alpha"
         filename = filename + ".csv"
 
         print("Loading Data from location: " + filename)
         # determine which cols correspond to u, alpha and h
-        uCols = list(range(1, self.csvInputDim + 1))
-        alphaCols = list(range(self.csvInputDim + 1, 2 * self.csvInputDim + 1))
-        hCol = [2 * self.csvInputDim + 1]
+        u_cols = list(range(1, self.csvInputDim + 1))
+        alpha_cols = list(range(self.csvInputDim + 1, 2 * self.csvInputDim + 1))
+        h_col = [2 * self.csvInputDim + 1]
 
-        selectedCols = self.select_training_data()  # outputs a boolean triple.
+        selected_cols = self.select_training_data()  # outputs a boolean triple.
 
-        # selectedCols = [True, False, True]
+        # selected_cols = [True, False, True]
 
         start = time.perf_counter()
-        if selectedCols[0] == True:
-            df = pd.read_csv(filename, usecols=[i for i in uCols])
-            uNParray = df.to_numpy()
-            if normalizedData and not loadAll:
+        if selected_cols[0]:
+            df = pd.read_csv(filename, usecols=[i for i in u_cols])
+            u_ndarray = df.to_numpy()
+            if normalized_data and not load_all:
                 # ignore first col of u
-                uNParray = uNParray[:, 1:]
+                u_ndarray = u_ndarray[:, 1:]
 
-            self.training_data.append(uNParray)
-        if selectedCols[1] == True:
-            df = pd.read_csv(filename, usecols=[i for i in alphaCols])
-            alphaNParray = df.to_numpy()
-            if normalizedData and not loadAll:
+            self.training_data.append(u_ndarray)
+        if selected_cols[1]:
+            df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
+            alpha_ndarray = df.to_numpy()
+            if normalized_data and not load_all:
                 # ignore first col of alpha
-                alphaNParray = alphaNParray[:, 1:]
-            self.training_data.append(alphaNParray)
-        if selectedCols[2] == True:
-            df = pd.read_csv(filename, usecols=[i for i in hCol])
-            hNParray = df.to_numpy()
-            self.training_data.append(hNParray)
+                alpha_ndarray = alpha_ndarray[:, 1:]
+            self.training_data.append(alpha_ndarray)
+        if selected_cols[2]:
+            df = pd.read_csv(filename, usecols=[i for i in h_col])
+            h_ndarray = df.to_numpy()
+            self.training_data.append(h_ndarray)
 
         # shuffle data
-        if (shuffleMode):
-            indices = np.arange(hNParray.shape[0])
+        if shuffle_mode:
+            indices = np.arange(h_ndarray.shape[0])
             np.random.shuffle(indices)
             for idx in range(len(self.training_data)):
                 self.training_data[idx] = self.training_data[idx][indices]
 
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
-
+        self.training_data_preprocessing()
+        print("Output of network has internal scaling with h_max=" + str(self.h_max) + " and h_min=" + str(self.h_min))
         return True
 
-    def getTrainingData(self):
+    def training_data_preprocessing(self):
+        """
+        Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
+        reconstruction of u during training and execution
+        """
+
+        scaler = MinMaxScaler()
+        scaler.fit(self.training_data[2])
+        self.h_max = float(scaler.data_max_)
+        self.h_min = float(scaler.data_min_)
+        self.training_data[2] = scaler.transform(self.training_data[2])
+        self.training_data[1] = self.training_data[2] / (self.h_max - self.h_min)
+
+        return 0
+
+    def get_training_data(self):
         return self.training_data
 
     def select_training_data(self):
         pass
-
-    def training_data_postprocessing(self):
-        return 0
 
     def evaluate_model_normalized(self, u_test, alpha_test, h_test):
         """
@@ -402,7 +420,7 @@ class BaseNetwork:
 
         return 0
 
-    def evaluateModel(self, u_test, alpha_test, h_test):
+    def evaluate_model(self, u_test, alpha_test, h_test):
         """
         brief: runs a number of tests and evalutations to determine test errors of the model.
         input: u_test, dim (nS, N)
@@ -415,20 +433,20 @@ class BaseNetwork:
         [u_pred_scaled, alpha_pred_scaled, h_pred_scaled] = self.call_scaled(u_test)
 
         # create the loss functions
-        def pointwiseDiff(trueSamples, predSamples):
+        def pointwise_diff(true_samples, pred_samples):
             """
             brief: computes the squared 2-norm for each sample point
             input: trueSamples, dim = (ns,N)
                    predSamples, dim = (ns,N)
             returns: mse(trueSamples-predSamples) dim = (ns,)
             """
-            loss_val = tf.keras.losses.mean_squared_error(trueSamples, predSamples)
+            loss_val = tf.keras.losses.mean_squared_error(true_samples, pred_samples)
             return loss_val
 
         # compute errors
-        # diff_h = pointwiseDiff(h_test, h_pred)
-        # diff_alpha = pointwiseDiff(alpha_test, alpha_pred)
-        diff_u = pointwiseDiff(u_test, u_pred_scaled)
+        # diff_h = pointwise_diff(h_test, h_pred)
+        # diff_alpha = pointwise_diff(alpha_test, alpha_pred)
+        diff_u = pointwise_diff(u_test, u_pred_scaled)
 
         # print losses
         utils.scatterPlot2D(u_test, diff_u, name="err in u over u", log=False, show_fig=False)

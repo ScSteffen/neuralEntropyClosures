@@ -4,7 +4,7 @@ Author: Steffen Schotthöfer
 Date: 15.03.2021
 '''
 
-from src.neuralClosures.configmodel import init_neural_closure
+from src.networks.configmodel import init_neural_closure
 import src.utils as utils
 import src.math as math
 import numpy as np
@@ -28,11 +28,11 @@ def main():
     modelAlpha = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1,
                                      folder_name="001_alpha", loss_combination=2,
                                      nw_width=15, nw_depth=7, normalized=True)
-    modelAlpha.loadModel("../models/001_alpha")
+    modelAlpha.load_model("../models/001_alpha")
     modelU = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1,
                                  folder_name="001_alpha", loss_combination=2,
                                  nw_width=15, nw_depth=7, normalized=True)
-    modelU.loadModel("../models/001_u")
+    modelU.load_model("../models/001_u")
 
     # Load Data
     [u, alpha, h] = utils.loadData(filenameData, inputDim)

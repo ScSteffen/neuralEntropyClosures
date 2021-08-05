@@ -9,8 +9,8 @@ import tensorflow as tf
 from tensorflow import keras as keras
 from tensorflow.keras import layers
 
-from basenetwork import BaseNetwork
-from sobolevmodel import SobolevModel
+from src.networks.basenetwork import BaseNetwork
+from src.networks.sobolevmodel import SobolevModel
 
 
 class MK12Network(BaseNetwork):
@@ -102,7 +102,7 @@ class MK12Network(BaseNetwork):
     def select_training_data(self):
         return [True, True, True]
 
-    def training_data_postprocessing(self):
+    def training_data_preprocessing(self):
         return 0
 
     def call_network(self, u_complete):

@@ -11,7 +11,7 @@ Date 29.10.2020
 # internal modules
 import numpy as np
 
-from src.neuralClosures.configmodel import init_neural_closure
+from src.networks.configmodel import init_neural_closure
 from src import utils
 
 # python modules
@@ -47,7 +47,7 @@ def initModelCpp(input):
 
     global neuralClosureModel
     neuralClosureModel = init_neural_closure(modelNumber, maxDegree_N, folderName)
-    neuralClosureModel.loadModel()
+    neuralClosureModel.load_model()
     neuralClosureModel.model.summary()
     print("|")
     print("| Tensorflow neural closure initialized.")
@@ -197,16 +197,16 @@ def main():
     if options.loadmodel == 1 or options.training == 0 or options.training == 2:
         # in execution mode the model must be loaded.
         # load model weights
-        neuralClosureModel.loadModel()
+        neuralClosureModel.load_model()
     else:
         print("Start training with new weights")
 
     if options.training == 1:
         # create training Data
         trainingMode = True
-        neuralClosureModel.load_training_data(shuffleMode=trainingMode,
-                                              alphasampling=options.alphasampling,
-                                              normalizedData=neuralClosureModel.normalized)  # normalizedData=False)
+        neuralClosureModel.load_training_data(shuffle_mode=trainingMode,
+                                              alpha_sampling=options.alphasampling,
+                                              normalized_data=neuralClosureModel.normalized)  # normalizedData=False)
 
         # normalize data (experimental)
         # neuralClosureModel.normalizeData()
@@ -215,24 +215,24 @@ def main():
                                                  batchSize=options.batch, verbosity=options.verbosity,
                                                  processingMode=options.processingmode)
         # save model
-        neuralClosureModel.saveModel()
+        neuralClosureModel.save_model()
 
     elif options.training == 2:
         print("Analysis mode entered.")
         print("Evaluate Model on normalized data...")
-        neuralClosureModel.load_training_data(shuffleMode=False, loadAll=True, normalizedData=True)
-        [u, alpha, h] = neuralClosureModel.getTrainingData()
+        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=True)
+        [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model_normalized(u, alpha, h)
         print("Evaluate Model on non-normalized data...")
-        neuralClosureModel.load_training_data(shuffleMode=False, loadAll=True, normalizedData=False)
-        [u, alpha, h] = neuralClosureModel.getTrainingData()
-        neuralClosureModel.evaluateModel(u, alpha, h)
+        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=False)
+        [u, alpha, h] = neuralClosureModel.get_training_data()
+        neuralClosureModel.evaluate_model(u, alpha, h)
     elif options.training == 3:
         print(
             "Re-Save mode entered.")  # if training was not finished, models are not safed to .pb. this can be done here
-        neuralClosureModel.load_training_data(shuffleMode=False,
-                                              alphasampling=options.alphasampling,
-                                              normalizedData=neuralClosureModel.normalized)
+        neuralClosureModel.load_training_data(shuffle_mode=False,
+                                              alpha_sampling=options.alphasampling,
+                                              normalized_data=neuralClosureModel.normalized)
 
         # normalize data (experimental)
         # neuralClosureModel.normalizeData()
@@ -240,7 +240,7 @@ def main():
 
         neuralClosureModel.model(neuralClosureModel.training_data[0])
         # save model
-        neuralClosureModel.saveModel()
+        neuralClosureModel.save_model()
 
     elif options.training == 4:
         # timing measurement

@@ -242,7 +242,7 @@ def writeConfigFile(options, neuralClosureModel):
          'degree': [options.degree],
          'epoch': [options.epoch],
          'folder': [options.folder],
-         'loadmodel': [options.loadmodel],
+         'loadModel': [options.loadmodel],
          'model': [options.model],
          'normalized moments': [options.normalized],
          'objective': [options.objective],

@@ -4,6 +4,7 @@ Author: Steffen Schotthöfer
 Version: 0.0
 Date 05.08.2021
 '''
+from abc import ABC
 
 import tensorflow as tf
 from tensorflow import Tensor
@@ -11,7 +12,7 @@ from tensorflow import Tensor
 from src import math
 
 
-class SobolevModel(tf.keras.Model):
+class SobolevModel(tf.keras.Model, ABC):
     # Sobolev implies, that the model outputs also its derivative
     core_model: tf.keras.Model
     enable_recons_u: bool
@@ -21,15 +22,17 @@ class SobolevModel(tf.keras.Model):
     quad_weights: Tensor
     input_dim: int
     moment_basis: Tensor
+    derivative_scale_factor: Tensor  # for scaled input data, we need to rescale the derivative to correclty reconstruct u
 
-    def __init__(self, core_model, polynomial_degree=1, spatial_dimension=1, reconstruct_u=False, **opts):
+    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
+                 reconstruct_u: bool = False, scale_factor: float = 1.0, **opts):
         super(SobolevModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.core_model = core_model  # must be a compiled tensorflow model
         self.enable_recons_u = reconstruct_u
-
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.poly_degree = polynomial_degree
+        self.derivative_scale_factor = tf.constant(scale_factor, dtype=tf.float64)
 
         if spatial_dimension == 1:
             [quad_pts, quad_weights] = math.qGaussLegendre1D(10 * polynomial_degree)  # dims = nq
@@ -43,13 +46,11 @@ class SobolevModel(tf.keras.Model):
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
 
-        self.quad_pts = tf.constant(quad_pts, shape=(self.nq, spatial_dimension),
-                                    dtype=tf.float64)  # dims = (ds x nq)
-        self.quad_weights = tf.constant(quad_weights, shape=(1, self.nq),
-                                        dtype=tf.float64)  # dims = (batchSIze x N x nq)
+        self.quad_pts = tf.constant(quad_pts, shape=(self.nq, spatial_dimension), dtype=tf.float64)  # dims = (ds x nq)
+        self.quad_weights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)  # dims=(batchSIze x N x nq)
         self.input_dim = m_basis.shape[0]
         self.moment_basis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
-                                        dtype=tf.float64)  # dims = (batchSIze x N x nq)
+                                        dtype=tf.float64)  # dims=(batchSIze x N x nq)
 
     def call(self, x, training=False):
         """
@@ -65,8 +66,8 @@ class SobolevModel(tf.keras.Model):
         alpha = grad_tape.gradient(h, x)
 
         if self.enable_recons_u:
-            print("Reconstruction of U enabled")
-            alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+            print("(Scaled) reconstruction of U enabled")
+            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
