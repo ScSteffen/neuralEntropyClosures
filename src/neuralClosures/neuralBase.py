@@ -19,16 +19,28 @@ from src import utils
 
 ### class definitions ###
 class neuralBase:
+    normalized: bool  # Determines if model works with normalized data
+    polyDegree: int  # Degree of basis function polynomials
+    spatialDim: int  # spatial dimension of problem
+    inputDim: int  # dimension of network input
+    modelWidth: int  # width of the hidden layers
+    modelDepth: int  # number of hidden layers (or ICNN blocks)
+    optimizer: str  # choice of optimizer
+    filename: str  # place where model and logs are stored
+    history: list  # list of training history objects
+    lossWeights: list  # one hot vector to enable/disable loss functions
+    model: tf.keras.Model  # the neural network model
 
-    def __init__(self, normalized, polyDegree, spatialDim, width, depth, lossCombi, customFolderName):
+    def __init__(self, normalized, polyDegree: int, spatialDim: int, width: int, depth: int, lossCombi: int,
+                 customFolderName: str):
         self.normalized = normalized
-        self.polyDegree = polyDegree
-        self.spatialDim = spatialDim
-        self.modelWidth = width
-        self.modelDepth = depth
-        self.optimizer = 'adam'
-        self.filename = "models/" + customFolderName
-        self.history = []
+        self.polyDegree: int = polyDegree
+        self.spatialDim: int = spatialDim
+        self.modelWidth: int = width
+        self.modelDepth: int = depth
+        self.optimizer: str = 'adam'
+        self.filename: str = "models/" + customFolderName
+        self.history: list = []
 
         # --- Determine loss combination ---
         if lossCombi == 0:
@@ -43,19 +55,19 @@ class neuralBase:
             self.lossWeights = [1, 0, 0, 0]
 
         # --- Determine inputDim by MaxDegree ---
-        if (spatialDim == 1):
+        if spatialDim == 1:
             self.inputDim = polyDegree + 1
-        elif (spatialDim == 3):
-            if (self.polyDegree == 0):
+        elif spatialDim == 3:
+            if self.polyDegree == 0:
                 self.inputDim = 1
-            elif (self.polyDegree == 1):
+            elif self.polyDegree == 1:
                 self.inputDim = 4
             else:
                 raise ValueError("Polynomial degeree higher than 1 not supported atm")
-        elif (spatialDim == 2):
-            if (self.polyDegree == 0):
+        elif spatialDim == 2:
+            if self.polyDegree == 0:
                 self.inputDim = 1
-            elif (self.polyDegree == 1):
+            elif self.polyDegree == 1:
                 self.inputDim = 3
             else:
                 raise ValueError("Polynomial degeree higher than 1 not supported atm")
@@ -64,13 +76,13 @@ class neuralBase:
 
         self.csvInputDim = self.inputDim  # only for reading csv data
 
-        if normalized:
+        if self.normalized:
             self.inputDim = self.inputDim - 1
 
     def createModel(self):
         pass
 
-    def callNetwork(self, u):
+    def callNetwork(self, u) -> list:
         """
         Brief: This does not reconstruct u, but returns original u. Careful here!
 
@@ -275,11 +287,11 @@ class neuralBase:
             print(weights)
             print("---------------------------------------------")
 
-    def showModel(self):
+    def show_model(self):
         self.model.summary()
         return 0
 
-    def loadTrainingData(self, shuffleMode=False, alphasampling=0, loadAll=False, normalizedData=False):
+    def load_training_data(self, shuffleMode=False, alphasampling=0, loadAll=False, normalizedData=False):
         """
         Loads the trianing data
         params: normalizedMoments = load normalized data  (u_0=1)
@@ -348,10 +360,10 @@ class neuralBase:
     def selectTrainingData(self):
         pass
 
-    def trainingDataPostprocessing(self):
+    def training_data_postprocessing(self):
         return 0
 
-    def evaluateModelNormalized(self, u_test, alpha_test, h_test):
+    def evaluate_model_normalized(self, u_test, alpha_test, h_test):
         """
         brief: runs a number of tests and evalutations to determine test errors of the model.
         input: u_test, dim (nS, N)
@@ -363,19 +375,19 @@ class neuralBase:
         [u_pred, alpha_pred, h_pred] = self.callNetwork(u_test)
 
         # create the loss functions
-        def pointwiseDiff(trueSamples, predSamples):
+        def pointwise_diff(true_samples, pred_samples):
             """
             brief: computes the squared 2-norm for each sample point
             input: trueSamples, dim = (ns,N)
                    predSamples, dim = (ns,N)
             returns: mse(trueSamples-predSamples) dim = (ns,)
             """
-            loss_val = tf.keras.losses.mean_squared_error(trueSamples, predSamples)
+            loss_val = tf.keras.losses.mean_squared_error(true_samples, pred_samples)
             return loss_val
 
-        diff_h = pointwiseDiff(h_test, h_pred)
-        diff_alpha = pointwiseDiff(alpha_test, alpha_pred)
-        diff_u = pointwiseDiff(u_test, u_pred)
+        diff_h = pointwise_diff(h_test, h_pred)
+        diff_alpha = pointwise_diff(alpha_test, alpha_pred)
+        diff_u = pointwise_diff(u_test, u_pred)
         np.linspace(0, 1, 10)
         utils.plot1D([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
                      'test', log=False)

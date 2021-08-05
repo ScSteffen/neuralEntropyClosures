@@ -9,6 +9,7 @@ import time
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from matplotlib import colors
 from matplotlib import cm
 import random
 import os
@@ -151,11 +152,13 @@ def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures
     return 0
 
 
-def scatterPlot2D(x_in, y_in, name='defaultName', log=True, folder_name="figures", show_fig=False):
+def scatterPlot2D(x_in: np.ndarray, y_in: np.ndarray, name: str = 'defaultName', log: bool = True,
+                  folder_name: str = "figures", show_fig: bool = False, z_lim: float = 0.0) -> bool:
     '''
     brief: Compute a scatter plot
     input: x_in = [x1,x2] function arguments
            y_in = function values
+    return: True if exit successfully
     '''
     plt.clf()
     fig = plt.figure()
@@ -164,8 +167,10 @@ def scatterPlot2D(x_in, y_in, name='defaultName', log=True, folder_name="figures
     x = x_in[:, 0]
     y = x_in[:, 1]
     z = y_in
-    out = ax.scatter(x, y, s=20, c=z, cmap=cm.jet);
-
+    if log:
+        out = ax.scatter(x, y, s=20, c=z, cmap=cm.hot, norm=colors.LogNorm(), vmax=z_lim)
+    else:
+        out = ax.scatter(x, y, s=20, c=z, cmap=cm.hot)
     ax.set_title(name, fontsize=14)
     ax.set_xlabel("u1", fontsize=12)
     ax.set_ylabel("u2", fontsize=12)
@@ -175,14 +180,11 @@ def scatterPlot2D(x_in, y_in, name='defaultName', log=True, folder_name="figures
     # pos_neg_clipped = ax.imshow(z)
     cbar = fig.colorbar(out, ax=ax, extend='both')
 
-    if log:
-        ax.set_yscale('log')
-
     if show_fig:
         plt.show()
     plt.savefig(folder_name + "/" + name + ".png", dpi=150)
 
-    return 0
+    return True
 
 
 def shuffleTrainData(x, y, mode="random"):
