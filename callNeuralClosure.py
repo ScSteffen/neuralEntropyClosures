@@ -11,7 +11,7 @@ Date 29.10.2020
 # internal modules
 import numpy as np
 
-from src.neuralClosures.configModel import initNeuralClosure
+from src.neuralClosures.configModel import init_neural_closure
 from src import utils
 
 # python modules
@@ -46,7 +46,7 @@ def initModelCpp(input):
     folderName = "neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber)
 
     global neuralClosureModel
-    neuralClosureModel = initNeuralClosure(modelNumber, maxDegree_N, folderName)
+    neuralClosureModel = init_neural_closure(modelNumber, maxDegree_N, folderName)
     neuralClosureModel.loadModel()
     neuralClosureModel.model.summary()
     print("|")
@@ -64,9 +64,9 @@ def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder"
     '''
 
     global neuralClosureModel
-    neuralClosureModel = initNeuralClosure(modelNumber=modelNumber, polyDegree=polyDegree, spatialDim=spatialDim,
-                                           folderName=folderName, lossCombi=lossCombi, depth=depth,
-                                           width=width, normalized=normalized)
+    neuralClosureModel = init_neural_closure(network_mk=modelNumber, poly_degree=polyDegree, spatial_dim=spatialDim,
+                                             folder_name=folderName, loss_combination=lossCombi, nw_depth=depth,
+                                             nw_width=width, normalized=normalized)
 
     return 0
 

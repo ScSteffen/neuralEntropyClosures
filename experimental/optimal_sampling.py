@@ -9,7 +9,7 @@ import numpy as np
 import scipy.optimize
 import tensorflow as tf
 
-from src.neuralClosures.configModel import initNeuralClosure
+from src.neuralClosures.configModel import init_neural_closure
 from src import utils
 
 
@@ -265,14 +265,14 @@ def main():
     '''
 
     ### Compare all models
-    model_smart = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                    optimizer='adam', width=10, depth=5, normalized=True)
-    model_uniform = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                      optimizer='adam', width=10, depth=5, normalized=True)
-    model_smart_dense = initNeuralClosure(modelNumber=12, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                          optimizer='adam', width=10, depth=5, normalized=True)
-    model_uniform_dense = initNeuralClosure(modelNumber=12, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                            optimizer='adam', width=10, depth=5, normalized=True)
+    model_smart = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                      optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
+    model_uniform = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                        optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
+    model_smart_dense = init_neural_closure(network_mk=12, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                            optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
+    model_uniform_dense = init_neural_closure(network_mk=12, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                              optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
 
     model_smart.model.load_weights('model_smart_1e-1/best_model.h5')
     model_uniform.model.load_weights('model_uniform_1e-1/best_model.h5')

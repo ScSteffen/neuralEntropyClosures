@@ -9,7 +9,7 @@ import numpy as np
 import scipy.optimize
 import tensorflow as tf
 
-from src.neuralClosures.configModel import initNeuralClosure
+from src.neuralClosures.configModel import init_neural_closure
 from src import utils
 from src import math
 
@@ -213,12 +213,12 @@ def main():
 
     ### Compare networks with different samplings
 
-    model_smart = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                    width=15, depth=5, normalized=True, lossCombi=1)
-    model_u = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                width=15, depth=5, normalized=True, lossCombi=1)
-    model_alpha = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                    width=15, depth=5, normalized=True, lossCombi=1)
+    model_smart = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                      nw_width=15, nw_depth=5, normalized=True, loss_combination=1)
+    model_u = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                  nw_width=15, nw_depth=5, normalized=True, loss_combination=1)
+    model_alpha = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                      nw_width=15, nw_depth=5, normalized=True, loss_combination=1)
 
     mc_best_smart = tf.keras.callbacks.ModelCheckpoint('model_smart/best_model.h5', monitor='loss', mode='min',
                                                        save_best_only=True, verbose=0)

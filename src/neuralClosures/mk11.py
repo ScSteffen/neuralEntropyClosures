@@ -5,8 +5,8 @@ Author: Steffen Schotthöfer
 Version: 0.0
 Date 09.04.2020
 '''
-from .neuralBase import neuralBase
-from .neuralBase import LossAndErrorPrintingCallback
+from .basenetwork import BaseNetwork
+from .basenetwork import LossAndErrorPrintingCallback
 
 import numpy as np
 import tensorflow as tf
@@ -18,7 +18,7 @@ from tensorflow import Tensor
 from src import math
 
 
-class neuralMK11(neuralBase):
+class MK11Network(BaseNetwork):
     '''
     MK4 Model: Train u to h and alpha
     Training data generation: b) read solver data from file: Uses C++ Data generator
@@ -32,8 +32,8 @@ class neuralMK11(neuralBase):
         else:
             customFolderName = folderName
 
-        super(neuralMK11, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
-                                         customFolderName)
+        super(MK11Network, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
+                                          customFolderName)
 
         self.model = self.createModel()
 

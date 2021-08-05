@@ -19,7 +19,7 @@ from joblib import Parallel, delayed
 # inpackage imports
 # from neuralClosures.configModel import initNeuralClosure
 from src import math
-from src.neuralClosures.configModel import initNeuralClosure
+from src.neuralClosures.configModel import init_neural_closure
 
 num_cores = multiprocessing.cpu_count()
 
@@ -77,14 +77,14 @@ class MNSolver1D:
         self.neuralClosure = None
         if not self.traditional:
             if self.polyDegree == 2:
-                self.neuralClosure = initNeuralClosure(modelNumber=11, polyDegree=2, spatialDim=1,
-                                                       folderName="002_sim_M2_1D", lossCombi=2,
-                                                       width=15, depth=7, normalized=True)
+                self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=1,
+                                                         folder_name="002_sim_M2_1D", loss_combination=2,
+                                                         nw_width=15, nw_depth=7, normalized=True)
                 self.neuralClosure.loadModel("../../models/002_sim_M2_1D")
             elif self.polyDegree == 3:
-                self.neuralClosure = initNeuralClosure(modelNumber=13, polyDegree=3, spatialDim=1,
-                                                       folderName="002_sim_M3_1D", lossCombi=2,
-                                                       width=20, depth=7, normalized=True)
+                self.neuralClosure = init_neural_closure(network_mk=13, poly_degree=3, spatial_dim=1,
+                                                         folder_name="002_sim_M3_1D", loss_combination=2,
+                                                         nw_width=20, nw_depth=7, normalized=True)
                 self.neuralClosure.loadModel("../../models/002_sim_M3_1D")
 
         # Analysis variables

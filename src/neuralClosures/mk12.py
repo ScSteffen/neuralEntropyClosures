@@ -5,8 +5,8 @@ Author: Steffen Schotthöfer
 Version: 0.0
 Date 09.04.2020
 '''
-from .neuralBase import neuralBase
-from .neuralBase import LossAndErrorPrintingCallback
+from .basenetwork import BaseNetwork
+from .basenetwork import LossAndErrorPrintingCallback
 
 import numpy as np
 import tensorflow as tf
@@ -17,7 +17,7 @@ from tensorflow import Tensor
 from src import math
 
 
-class neuralMK12(neuralBase):
+class MK12Network(BaseNetwork):
 
     def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", lossCombi=0, width=10, depth=5,
                  normalized=False):
@@ -26,8 +26,8 @@ class neuralMK12(neuralBase):
         else:
             customFolderName = folderName
 
-        super(neuralMK12, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
-                                         customFolderName)
+        super(MK12Network, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
+                                          customFolderName)
 
         self.model = self.createModel()
 
