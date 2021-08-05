@@ -114,7 +114,7 @@ class MK11Network(BaseNetwork):
                               kernel_regularizer=l1l2_regularizer, bias_initializer='zeros', name="first_dense")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
-            hidden = convex_layer(hidden, input_, layer_idx=idx)
+            hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
         hidden = convex_layer(hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
         pre_output = convex_output_layer(hidden, input_)  # outputlayer
         # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
