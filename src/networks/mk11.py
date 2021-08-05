@@ -2,10 +2,9 @@
 Network class "MK11" for the neural entropy closure.
 ICNN with sobolev wrapper.
 Author: Steffen Schotthöfer
-Version: 0.0
-Date 09.04.2020
+Version: 1.0
+Date 09.04.2021
 '''
-from abc import ABC
 
 import numpy as np
 import tensorflow as tf
@@ -15,8 +14,8 @@ from tensorflow.keras import layers
 from tensorflow.keras.constraints import NonNeg
 from tensorflow import Tensor
 
-from basenetwork import BaseNetwork
-from sobolevmodel import SobolevModel
+from src.networks.basenetwork import BaseNetwork
+from src.networks.sobolevmodel import SobolevModel
 
 
 class MK11Network(BaseNetwork):
@@ -38,7 +37,8 @@ class MK11Network(BaseNetwork):
         self.model = self.create_model()
 
     def create_model(self) -> tf.keras.Model:
-
+        h_max_tensor: Tensor = tf.constant(self.h_max)
+        h_min_tensor: Tensor = tf.constant(self.h_min)
         # Weight initializer
         # 1. This is a modified Kaiming inititalization with a first-order taylor expansion of the
         # softplus activation function (see S. Kumar "On Weight Initialization in
@@ -60,24 +60,25 @@ class MK11Network(BaseNetwork):
             initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
 
             # Weighted sum of previous layers output plus bias
-            weightedNonNegSum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=initializer,
-                                               kernel_regularizer=l1l2_regularizer,
-                                               use_bias=True, bias_initializer='zeros',
-                                               name='non_neg_component_' + str(
-                                                   layer_idx)
-                                               )(layer_input_z)
+            weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,
+                                                  kernel_initializer=initializer,
+                                                  kernel_regularizer=l1l2_regularizer,
+                                                  use_bias=True, bias_initializer='zeros',
+                                                  name='non_neg_component_' + str(
+                                                      layer_idx)
+                                                  )(layer_input_z)
             # Weighted sum of network input
-            weightedSum_x = layers.Dense(layer_dim, activation=None,
-                                         kernel_initializer=initializer,
-                                         kernel_regularizer=l1l2_regularizer,
-                                         use_bias=False, name='dense_component_' + str(layer_idx)
-                                         )(nw_input_x)
+            weighted_sum_x = layers.Dense(layer_dim, activation=None,
+                                          kernel_initializer=initializer,
+                                          kernel_regularizer=l1l2_regularizer,
+                                          use_bias=False, name='dense_component_' + str(layer_idx)
+                                          )(nw_input_x)
             # Wz+Wx+b
-            intermediateSum = layers.Add(name='add_component_' + str(layer_idx))([weightedSum_x, weightedNonNegSum_z])
+            intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
+                [weighted_sum_x, weighted_non_neg_sum_z])
 
             # activation
-            out = tf.keras.activations.softplus(intermediateSum)
+            out = tf.keras.activations.softplus(intermediate_sum)
             # batch normalization
             # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
             return out
@@ -88,50 +89,45 @@ class MK11Network(BaseNetwork):
             initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
 
             # Weighted sum of previous layers output plus bias
-            weighted_nn_sum_z = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                             kernel_initializer=initializer,
-                                             kernel_regularizer=l1l2_regularizer,
-                                             use_bias=True,
-                                             bias_initializer='zeros'
-                                             # name='in_z_NN_Dense'
-                                             )(layer_input_z)
+            weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
+                                                     kernel_initializer=initializer,
+                                                     kernel_regularizer=l1l2_regularizer,
+                                                     use_bias=True,
+                                                     bias_initializer='zeros'
+                                                     # name='in_z_NN_Dense'
+                                                     )(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x = layers.Dense(1, activation=None, kernel_initializer=initializer,
-                                          kernel_regularizer=l1l2_regularizer,
-                                          use_bias=False
-                                          # name='in_x_Dense'
-                                          )(net_input_x)
+            weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
+                                                  kernel_regularizer=l1l2_regularizer,
+                                                  use_bias=False
+                                                  # name='in_x_Dense'
+                                                  )(net_input_x)
             # Wz+Wx+b
-            intermediate_sum = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
+            intermediate_sum: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
 
-            # activation
-            # out = tf.keras.activations.softplus(intermediateSum)
-            # batch normalization
-            # out = layers.BatchNormalization()(out)
             return intermediate_sum
 
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
-        hidden = layers.Dense(self.model_width, activation="softplus",
-                              kernel_initializer=input_initializer,
-                              kernel_regularizer=l1l2_regularizer,
-                              bias_initializer='zeros',
-                              name="first_dense"
-                              )(input_)
+        hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
+                              kernel_regularizer=l1l2_regularizer, bias_initializer='zeros', name="first_dense")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, input_, layer_idx=idx)
         hidden = convex_layer(hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
-        output_ = convex_output_layer(hidden, input_)  # outputlayer
+        pre_output = convex_output_layer(hidden, input_)  # outputlayer
+        # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
+        # output_ = tf.add(tf.math.scalar_mul((h_max_tensor - h_min_tensor), pre_output), h_max_tensor)
 
         # Create the core model
-        core_model = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
+        core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="Icnn_closure")
 
-        # build model
+        # build sobolev wrapper
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
-                             reconstruct_u=bool(self.loss_weights[2]), name="sobolev_icnn_wrapper")
-
+                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.h_max - self.h_min,
+                             name="sobolev_icnn_wrapper")
+        # build graph
         batch_size: int = 2  # dummy entry
         model.build(input_shape=(batch_size, self.inputDim))
 

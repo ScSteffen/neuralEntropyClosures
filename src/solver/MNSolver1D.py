@@ -17,9 +17,9 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 # inpackage imports
-# from neuralClosures.configModel import initNeuralClosure
+# from networks.configModel import initNeuralClosure
 from src import math
-from src.neuralClosures.configmodel import init_neural_closure
+from src.networks.configmodel import init_neural_closure
 
 num_cores = multiprocessing.cpu_count()
 

@@ -34,7 +34,7 @@ Options:
 * -d (--degree): Determines degree of the basis functions (monomials)
 * -e (--epoch): Determines number of epochs
 * -f (--folder): Determines subfolder of "models"
-* -l (--loadModel): Determines if programm loads existing model weights
+* -l (--load_model): Determines if programm loads existing model weights
 * -m (--model): Choice of model version. It is recommended to use version 11
 * -n (--normalized): Determine if training happens on normalized data (recommended)
 * -o (--objective): Determines choice of training objective

@@ -20,7 +20,7 @@ import csv
 from joblib import Parallel, delayed
 
 # inpackage imports
-from src.neuralClosures.configmodel import init_neural_closure
+from src.networks.configmodel import init_neural_closure
 from src import utils
 
 num_cores = multiprocessing.cpu_count()

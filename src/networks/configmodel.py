@@ -6,9 +6,9 @@ Date 29.10.2020
 '''
 
 ### imports ###
-from mk11 import MK11Network
-from mk12 import MK12Network
-from basenetwork import BaseNetwork
+from src.networks.mk11 import MK11Network
+from src.networks.mk12 import MK12Network
+from src.networks.basenetwork import BaseNetwork
 
 
 def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: int = 3,
@@ -49,11 +49,11 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
         exit(1)
     elif network_mk == 11:
         neural_closure_model = MK11Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
-                                           folder_name=folder_name, loss_combination=loss_combination,
+                                           save_folder=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized)
     elif network_mk == 12:
         neural_closure_model = MK12Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
-                                           folderName=folder_name, loss_combination=loss_combination,
+                                           save_folder=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized)
     else:
         ValueError("No available network fits your preferences!")
