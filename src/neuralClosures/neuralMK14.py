@@ -246,7 +246,7 @@ class neuralMK11(neuralBase):
     def selectTrainingData(self):
         return [True, True, True]
 
-    def trainingDataPostprocessing(self):
+    def training_data_postprocessing(self):
         return 0
 
     def callNetwork(self, u_complete):

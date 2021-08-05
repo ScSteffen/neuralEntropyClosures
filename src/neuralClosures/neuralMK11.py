@@ -84,34 +84,33 @@ class neuralMK11(neuralBase):
             # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
             return out
 
-        def convexLayerOutput(layerInput_z: Tensor, netInput_x: Tensor) -> Tensor:
+        def convexLayerOutput(layer_input_z: Tensor, net_input_x: Tensor) -> Tensor:
             stddev = np.sqrt(
                 (1 / 1.1) * (1 / 1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
             initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
 
             # Weighted sum of previous layers output plus bias
-            weightedNonNegSum_z = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                               kernel_initializer=initializer,
-                                               kernel_regularizer=l1l2Regularizer,
-                                               use_bias=True,
-                                               bias_initializer='zeros'
-                                               # name='in_z_NN_Dense'
-                                               )(layerInput_z)
+            weighted_nn_sum_z = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
+                                             kernel_initializer=initializer,
+                                             kernel_regularizer=l1l2Regularizer,
+                                             use_bias=True,
+                                             bias_initializer='zeros'
+                                             # name='in_z_NN_Dense'
+                                             )(layer_input_z)
             # Weighted sum of network input
-            weightedSum_x = layers.Dense(1, activation=None,
-                                         kernel_initializer=initializer,
-                                         kernel_regularizer=l1l2Regularizer,
-                                         use_bias=False
-                                         # name='in_x_Dense'
-                                         )(netInput_x)
+            weighted_sum_x = layers.Dense(1, activation=None, kernel_initializer=initializer,
+                                          kernel_regularizer=l1l2Regularizer,
+                                          use_bias=False
+                                          # name='in_x_Dense'
+                                          )(net_input_x)
             # Wz+Wx+b
-            intermediateSum = layers.Add()([weightedSum_x, weightedNonNegSum_z])
+            intermediate_sum = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
 
             # activation
             # out = tf.keras.activations.softplus(intermediateSum)
             # batch normalization
             # out = layers.BatchNormalization()(out)
-            return intermediateSum
+            return intermediate_sum
 
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
@@ -163,7 +162,8 @@ class neuralMK11(neuralBase):
 
         return model
 
-    def custom_mse(self, y_true, y_pred):
+    @staticmethod
+    def relative_mse(self, y_true, y_pred):
 
         # calculating squared difference between target and predicted values 
         loss = K.square(y_pred - y_true)  # (batch_size, 2)
@@ -176,7 +176,8 @@ class neuralMK11(neuralBase):
 
         return loss
 
-    def KL_divergence_loss(self, mB, qW):
+    @staticmethod
+    def KL_divergence_loss(m_b, q_W):
 
         """
         KL divergence between f_u and f_true  using alpha and alpha_true.
@@ -205,8 +206,8 @@ class neuralMK11(neuralBase):
             clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50,
                                              name='checkedandclipped')
 
-            tmp = tf.math.exp(tf.tensordot(clipped_alpha, mB[1:, :], axes=([1], [0])))  # tmp = alpha * m
-            alpha_0 = -tf.math.log(tf.tensordot(tmp, qW, axes=([1], [1])))  # ln(<tmp>)
+            tmp = tf.math.exp(tf.tensordot(clipped_alpha, m_b[1:, :], axes=([1], [0])))  # tmp = alpha * m
+            alpha_0 = -tf.math.log(tf.tensordot(tmp, q_W, axes=([1], [1])))  # ln(<tmp>)
             return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
         def KL_divergence(y_true, y_pred):
@@ -223,10 +224,10 @@ class neuralMK11(neuralBase):
             alpha_pred_recon = reconstruct_alpha(y_pred)
             # compute KL_divergence
             diff = alpha_true_recon - alpha_pred_recon
-            t1 = tf.math.exp(tf.tensordot(alpha_true_recon, mB, axes=([1], [0])))
-            t2 = tf.tensordot(diff, mB, axes=([1], [0]))
+            t1 = tf.math.exp(tf.tensordot(alpha_true_recon, m_b, axes=([1], [0])))
+            t2 = tf.tensordot(diff, m_b, axes=([1], [0]))
             integrand = tf.math.multiply(t1, t2)
-            return tf.tensordot(integrand, qW, axes=([1], [1]))
+            return tf.tensordot(integrand, q_W, axes=([1], [1]))
 
         return KL_divergence
 
@@ -246,7 +247,7 @@ class neuralMK11(neuralBase):
     def selectTrainingData(self):
         return [True, True, True]
 
-    def trainingDataPostprocessing(self):
+    def training_data_postprocessing(self):
         return 0
 
     def callNetwork(self, u_complete):

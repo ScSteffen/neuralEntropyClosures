@@ -7,6 +7,7 @@ import os
 import numpy as np
 from multiprocessing import Pool
 from functools import partial
+import csv
 
 from src.utils import loadData, scatterPlot2D
 from src.sampler.adaptiveSampler import AdaptiveSampler
@@ -146,6 +147,14 @@ def main():
             count += 1
     print(len(diams))
     # print(diams)
+
+    with open('diameters.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(pois[:, 0])
+        writer.writerow(pois[:, 0])
+        writer.writerow(diams)
+
     scatterPlot2D(x_in=pois, y_in=diams, folder_name="delete", name="triangle_diameter_at_query_point", show_fig=False,
                   log=True,
                   z_lim=100)

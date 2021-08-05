@@ -121,7 +121,7 @@ class neuralMK9(neuralBase):
     def selectTrainingData(self):
         return [True, False, True]
 
-    def trainingDataPostprocessing(self):
+    def training_data_postprocessing(self):
         # find the maximum of u_0
         u0Max = max(self.trainingData[0][:, 0])
         self.trainingData[0] / u0Max
