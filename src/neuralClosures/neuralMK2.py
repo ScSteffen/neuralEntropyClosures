@@ -61,7 +61,7 @@ class neuralMK2(neuralBase):
     def selectTrainingData(self):
         return [True, False, True]
 
-    def trainingDataPostprocessing(self):
+    def training_data_postprocessing(self):
         # dublicate u
         self.trainingData.append(self.trainingData[0])
         print("Moments U dublicated")

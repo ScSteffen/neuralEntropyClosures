@@ -23,7 +23,7 @@ class neuralMK7(neuralBase):
     def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", lossCombi=0, width=10, depth=5,
                  normalized=False):
         if (folderName == "testFolder"):
-            customFolderName = "MK1_N" + str(polyDegree) + "_D" + str(spatialDim)
+            customFolderName = "MK7_N" + str(polyDegree) + "_D" + str(spatialDim)
         else:
             customFolderName = folderName
 
@@ -115,7 +115,7 @@ class neuralMK7(neuralBase):
     def selectTrainingData(self):
         return [True, False, True]
 
-    def trainingDataPostprocessing(self):
+    def training_data_postprocessing(self):
         # find the maximum of u_0
         # u0Max = max(self.trainingData[0][:, 0])
         # self.trainingData[0] / u0Max
