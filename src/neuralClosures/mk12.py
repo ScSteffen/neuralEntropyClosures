@@ -5,35 +5,30 @@ Author: Steffen Schotthöfer
 Version: 0.0
 Date 09.04.2020
 '''
-from .basenetwork import BaseNetwork
-from .basenetwork import LossAndErrorPrintingCallback
-
-import numpy as np
 import tensorflow as tf
 from tensorflow import keras as keras
 from tensorflow.keras import layers
-from tensorflow.keras.constraints import NonNeg
-from tensorflow import Tensor
-from src import math
+
+from basenetwork import BaseNetwork
+from sobolevmodel import SobolevModel
 
 
 class MK12Network(BaseNetwork):
 
-    def __init__(self, polyDegree=0, spatialDim=1, folderName="testFolder", lossCombi=0, width=10, depth=5,
-                 normalized=False):
-        if (folderName == "testFolder"):
-            customFolderName = "MK11_N" + str(polyDegree) + "_D" + str(spatialDim)
+    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int, width: int, depth: int,
+                 loss_combination: int, save_folder: str = ""):
+        if save_folder == "":
+            custom_folder_name = "MK12_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
-            customFolderName = folderName
+            custom_folder_name = save_folder
+        super(MK12Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
+                                          spatial_dimension=spatial_dimension, width=width, depth=depth,
+                                          loss_combination=loss_combination, save_folder=custom_folder_name)
+        self.model = self.create_model()
 
-        super(MK12Network, self).__init__(normalized, polyDegree, spatialDim, width, depth, lossCombi,
-                                          customFolderName)
+    def create_model(self):
 
-        self.model = self.createModel()
-
-    def createModel(self):
-
-        layerDim = self.modelWidth
+        layerDim = self.model_width
 
         # Weight initializer
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
@@ -51,8 +46,8 @@ class MK12Network(BaseNetwork):
                               name="first_dense"
                               )(input_)
         # other layers are convexLayers
-        for idx in range(0, self.modelDepth):
-            hidden = layers.Dense(self.modelWidth, activation="softplus",
+        for idx in range(0, self.model_depth):
+            hidden = layers.Dense(self.model_width, activation="softplus",
                                   kernel_initializer=initializer,
                                   kernel_regularizer=l1l2Regularizer,
                                   bias_initializer='zeros',
@@ -69,7 +64,7 @@ class MK12Network(BaseNetwork):
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build model
-        model = sobolevModel(coreModel, polyDegree=self.polyDegree, name="sobolev_icnn_wrapper")
+        model = SobolevModel(coreModel, polyDegree=self.poly_degree, name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
@@ -96,21 +91,21 @@ class MK12Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        xData = self.trainingData[0]
-        yData = [self.trainingData[2], self.trainingData[1]]
+        xData = self.training_data[0]
+        yData = [self.training_data[2], self.training_data[1]]
         self.model.fit(x=xData, y=yData,
                        validation_split=val_split, epochs=epoch_size,
                        batch_size=batch_size, verbose=verbosity_mode,
                        callbacks=callback_list, shuffle=True)
         return self.history
 
-    def selectTrainingData(self):
+    def select_training_data(self):
         return [True, True, True]
 
     def training_data_postprocessing(self):
         return 0
 
-    def callNetwork(self, u_complete):
+    def call_network(self, u_complete):
         """
         brief: Only works for maxwell Boltzmann entropy so far.
         nS = batchSize
@@ -128,75 +123,3 @@ class MK12Network(BaseNetwork):
         u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
-
-
-class sobolevModel(tf.keras.Model):
-    # Sobolev implies, that the model outputs also its derivative
-    def __init__(self, coreModel, polyDegree=1, **opts):
-        super(sobolevModel, self).__init__()
-        # Member is only the model we want to wrap with sobolev execution
-        self.coreModel = coreModel  # must be a compiled tensorflow model
-
-        # Create quadrature and momentBasis. Currently only for 1D problems
-        self.polyDegree = polyDegree
-        self.nq = 100
-        [quadPts, quadWeights] = math.qGaussLegendre1D(self.nq)  # dims = nq
-        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)  # dims = (batchSIze x N x nq)
-        self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
-                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
-        mBasis = math.computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
-        self.inputDim = mBasis.shape[0]
-        self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
-                                       dtype=tf.float32)  # dims = (batchSIze x N x nq)
-
-    def call(self, x, training=False):
-        """
-        Defines the sobolev execution
-        """
-
-        with tf.GradientTape() as grad_tape:
-            grad_tape.watch(x)
-            h = self.coreModel(x)
-        alpha = grad_tape.gradient(h, x)
-
-        return [h, alpha]
-
-    def callDerivative(self, x, training=False):
-        with tf.GradientTape() as grad_tape:
-            grad_tape.watch(x)
-            y = self.coreModel(x)
-        derivativeNet = grad_tape.gradient(y, x)
-
-        return derivativeNet
-
-    def reconstruct_alpha(self, alpha):
-        """
-        brief: Only works for maxwell Boltzmann entropy so far.
-        nS = batchSize
-        N = basisSize
-        nq = number of quadPts
-
-        input: alpha, dims = (nS x N-1)
-               m    , dims = (N x nq)
-               w    , dims = nq
-        returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
-        """
-        tmp = tf.math.exp(tf.tensordot(alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
-        alpha_0 = -tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))  # ln(<tmp>)
-        return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
-
-    def reconstruct_u(self, alpha):
-        """
-        nS = batchSize
-        N = basisSize
-        nq = number of quadPts
-
-        input: alpha, dims = (nS x N)
-               m    , dims = (N x nq)
-               w    , dims = nq
-        returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
-        """
-        # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
-        tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
-        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis

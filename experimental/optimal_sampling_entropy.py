@@ -9,7 +9,7 @@ import numpy as np
 import scipy.optimize
 import tensorflow as tf
 
-from src.neuralClosures.configModel import init_neural_closure
+from src.neuralClosures.configmodel import init_neural_closure
 from src import utils
 from src import math
 

@@ -4,7 +4,7 @@ Author: Steffen Schotthöfer
 Date: 15.03.2021
 '''
 
-from src.neuralClosures.configModel import init_neural_closure
+from src.neuralClosures.configmodel import init_neural_closure
 import src.utils as utils
 import src.math as math
 import numpy as np
