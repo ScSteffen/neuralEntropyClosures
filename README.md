@@ -27,8 +27,6 @@ A Project to construct some neural networks to solve the minimal entropy problem
   data. Variable network size. Can reconstruct u. Different network call possibilities
 * MK13: [Test bench for MK11] ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses
   normalized data. Variable network size. Can reconstruct u. Different network call possibilities
-* MK14: [Not yet used] ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized
-  data. Variable network size. Can reconstruct u. Different network call possibilities
 
 ## How to use ## 
 
