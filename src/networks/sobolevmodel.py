@@ -24,7 +24,7 @@ class SobolevModel(tf.keras.Model, ABC):
     moment_basis: Tensor
     derivative_scale_factor: Tensor  # for scaled input data, we need to rescale the derivative to correclty reconstruct u
 
-    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
+    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
                  reconstruct_u: bool = False, scale_factor: float = 1.0, **opts):
         super(SobolevModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
@@ -52,7 +52,7 @@ class SobolevModel(tf.keras.Model, ABC):
         self.moment_basis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
                                         dtype=tf.float64)  # dims=(batchSIze x N x nq)
 
-    def call(self, x, training=False):
+    def call(self, x: Tensor, training=False) -> list:
         """
         Defines the sobolev execution (does not return 0th order moment)
         input: x = [u_1,u_2,...,u_N]
@@ -67,8 +67,11 @@ class SobolevModel(tf.keras.Model, ABC):
 
         if self.enable_recons_u:
             print("(Scaled) reconstruction of U enabled")
-            # alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
-            alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
+            # alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+            # alpha64 = tf.cast(x, dtype=tf.float64, name=None)
+            # alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(x, dtype=tf.float64, name=None))
+            # h = alpha64
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction

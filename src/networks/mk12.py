@@ -15,17 +15,15 @@ from src.networks.sobolevmodel import SobolevModel
 
 class MK12Network(BaseNetwork):
 
-    def __init__(self, scaled_output: bool, normalized: bool, polynomial_degree: int, spatial_dimension: int,
+    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
             custom_folder_name = "MK12_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
-        super(MK12Network, self).__init__(normalized=normalized, scaled_output=scaled_output,
-                                          polynomial_degree=polynomial_degree,
+        super(MK12Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name)
-        self.create_model()
 
     def create_model(self) -> bool:
 

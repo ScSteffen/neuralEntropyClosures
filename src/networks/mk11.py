@@ -24,17 +24,15 @@ class MK11Network(BaseNetwork):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, scaled_output: bool, normalized: bool, polynomial_degree: int, spatial_dimension: int,
+    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
             custom_folder_name = "MK11_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
-        super(MK11Network, self).__init__(normalized=normalized, scaled_output=scaled_output,
-                                          polynomial_degree=polynomial_degree,
+        super(MK11Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name)
-        self.model = self.create_model()
 
     def create_model(self) -> bool:
         # Weight initializer
@@ -152,8 +150,8 @@ class MK11Network(BaseNetwork):
         # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
         # show_layer_names = True, rankdir = 'TB', expand_nested = True)
         print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
-
-        return model
+        self.model = model
+        return True
 
     def call_training(self, val_split: float = 0.1, epoch_size: int = 2, batch_size: int = 128, verbosity_mode: int = 1,
                       callback_list: list = []) -> list:
