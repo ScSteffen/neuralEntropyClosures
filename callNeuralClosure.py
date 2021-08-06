@@ -68,7 +68,7 @@ def initModel(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int 
     neuralClosureModel = init_neural_closure(network_mk=network_mk, poly_degree=polynomial_degree,
                                              spatial_dim=spatial_dim,
                                              folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
-                                             nw_width=width, normalized=normalized, scaled_output=scaled_output)
+                                             nw_width=width, normalized=normalized)
 
     return 0
 
@@ -189,15 +189,35 @@ def main():
         else:
             print("Disabled GPU. Using CPU")
 
-    # --- initialize model
+    # --- initialize model framework
     print("Initialize model")
     initModel(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatialDimension,
-              folder_name=options.folder, normalized=options.normalized, scaled_output=options.scaledOutput,
-              loss_combination=options.objective, width=options.networkwidth, depth=options.networkdepth)
-    neuralClosureModel.model.summary()
-
+              folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
+              width=options.networkwidth, depth=options.networkdepth)
     # Save options and runscript to file
     utils.writeConfigFile(options, neuralClosureModel)
+
+    # --- load model data before creating model (important for data scaling) todo: incorporate scalings in execution
+    if options.training == 1:
+        # create training Data
+        neuralClosureModel.load_training_data(shuffle_mode=True,
+                                              alpha_sampling=options.alphasampling,
+                                              normalized_data=neuralClosureModel.normalized,
+                                              scaled_output=options.scaledOutput)
+    neuralClosureModel.create_model()
+    neuralClosureModel.model.summary()
+
+    """
+    z = neuralClosureModel.model(tf.constant(neuralClosureModel.training_data[1]))
+    model_alpha = z[1].numpy()
+    tru_alpha = neuralClosureModel.training_data[1]
+    
+    model_scaled_alpha = z[0].numpy()
+    tru_scaledapha = neuralClosureModel.training_data[3]
+    
+    model_u = z[2].numpy()
+    tru_u = neuralClosureModel.training_data[0]
+    """
 
     if options.loadmodel == 1 or options.training == 0 or options.training == 2:
         # in execution mode the model must be loaded.
@@ -207,14 +227,6 @@ def main():
         print("Start training with new weights")
 
     if options.training == 1:
-        # create training Data
-        trainingMode = True
-        neuralClosureModel.load_training_data(shuffle_mode=trainingMode,
-                                              alpha_sampling=options.alphasampling,
-                                              normalized_data=neuralClosureModel.normalized)  # normalizedData=False)
-
-        # normalize data (experimental)
-        # neuralClosureModel.normalizeData()
         # train model
         neuralClosureModel.config_start_training(val_split=0.1, epoch_count=options.epoch,
                                                  curriculum=options.curriculum,

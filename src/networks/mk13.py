@@ -25,17 +25,15 @@ class MK13Network(BaseNetwork):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, scaled_output: bool, normalized: bool, polynomial_degree: int, spatial_dimension: int,
+    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
             custom_folder_name = "MK13_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
-        super(MK13Network, self).__init__(normalized=normalized, scaled_output=scaled_output,
-                                          polynomial_degree=polynomial_degree,
+        super(MK13Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name)
-        self.create_model()
 
     def create_model(self) -> bool:
         # Weight initializer
@@ -154,7 +152,7 @@ class MK13Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        x_data = self.training_data[0]
+        x_data = self.training_data[1]
         # y_data = [h,alpha,u, alpha (for KLDivergence)]
         y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
         self.history = self.model.fit(x=x_data, y=y_data,

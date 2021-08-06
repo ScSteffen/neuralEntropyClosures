@@ -20,7 +20,6 @@ from src import utils
 
 ### class definitions ###
 class BaseNetwork:
-    scaled_output: bool  # Determines if entropy is scaled to range (0,1) (other outputs scaled accordingly)
     normalized: bool  # Determines if model works with normalized data
     poly_degree: int  # Degree of basis function polynomials
     spatial_dim: int  # spatial dimension of problem
@@ -36,10 +35,9 @@ class BaseNetwork:
     h_max: float  # for output scaling
     h_min: float  # for output scaling
 
-    def __init__(self, normalized: bool, scaled_output: bool, polynomial_degree: int, spatial_dimension: int,
+    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str):
         self.normalized = normalized
-        self.scaled_output = scaled_output
         self.poly_degree: int = polynomial_degree
         self.spatial_dim: int = spatial_dimension
         self.model_width: int = width
@@ -295,12 +293,14 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, alpha_sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False) -> bool:
+                           normalized_data: bool = False, scaled_output: bool = False) -> bool:
         """
         Loads the training data
         params: normalized_moments = load normalized data  (u_0=1)
                 shuffle_mode = shuffle loaded Data  (yes,no)
                 alpha_sampling = use data uniformly sampled in the space of Lagrange multipliers.
+                scaled_output: bool = Determines if entropy is scaled to range (0,1) (other outputs scaled accordingly)
+
         return: True, if loading successful
         """
         self.training_data = []
@@ -355,11 +355,11 @@ class BaseNetwork:
 
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
-        self.training_data_preprocessing()
+        self.training_data_preprocessing(scaled_output=scaled_output)
         print("Output of network has internal scaling with h_max=" + str(self.h_max) + " and h_min=" + str(self.h_min))
         return True
 
-    def training_data_preprocessing(self) -> bool:
+    def training_data_preprocessing(self, scaled_output: bool = False) -> bool:
         """
         Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
         reconstruction of u during training and execution
@@ -367,13 +367,13 @@ class BaseNetwork:
         self.h_max = 1.0
         self.h_min = 0.0
         self.training_data.append(self.training_data[1])
-        if self.scaled_output:
+        if scaled_output:
             scaler = MinMaxScaler()
             scaler.fit(self.training_data[2])
             self.h_max = float(scaler.data_max_)
             self.h_min = float(scaler.data_min_)
             self.training_data[2] = scaler.transform(self.training_data[2])
-            self.training_data[1] = self.training_data[2] / (self.h_max - self.h_min)
+            self.training_data[1] = self.training_data[1] / (self.h_max - self.h_min)
         return True
 
     def get_training_data(self):
