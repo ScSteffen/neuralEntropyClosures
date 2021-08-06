@@ -26,14 +26,14 @@ class EntropyTools:
     opti_m: np.ndarray
     opti_w: np.ndarray
 
-    def __init__(self, N=1) -> object:
+    def __init__(self, polynomial_degree=1) -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
         """
 
         # Create quadrature and momentBasis. Currently only for 1D problems
-        self.polyDegree = N
+        self.polyDegree = polynomial_degree
         self.nq = 100
         [quadPts, quadWeights] = qGaussLegendre1D(self.nq)  # dims = nq
         self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)

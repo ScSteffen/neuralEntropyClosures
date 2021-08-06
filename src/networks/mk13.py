@@ -1,6 +1,7 @@
 '''
-Network class "MK11" for the neural entropy closure.
+Network class "MK13" for the neural entropy closure.
 ICNN with sobolev wrapper.
+Hierachical model that trains iteratively on the moment hierachy, starting at M1
 Author: Steffen Schotthöfer
 Version: 1.0
 Date 09.04.2021
@@ -17,7 +18,7 @@ from src.networks.basenetwork import BaseNetwork
 from src.networks.sobolevmodel import SobolevModel
 
 
-class MK11Network(BaseNetwork):
+class MK13Network(BaseNetwork):
     '''
     MK11 Model: Multi purpose sobolev based convex model
     Training data generation: b) read solver data from file: Uses C++ Data generator
@@ -27,14 +28,14 @@ class MK11Network(BaseNetwork):
     def __init__(self, scaled_output: bool, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
-            custom_folder_name = "MK11_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
+            custom_folder_name = "MK13_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
-        super(MK11Network, self).__init__(normalized=normalized, scaled_output=scaled_output,
+        super(MK13Network, self).__init__(normalized=normalized, scaled_output=scaled_output,
                                           polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name)
-        self.model = self.create_model()
+        self.create_model()
 
     def create_model(self) -> bool:
         # Weight initializer
@@ -106,7 +107,7 @@ class MK11Network(BaseNetwork):
 
             return intermediate_sum
 
-        ### build the core network with icnn closure architecture ###
+        # --- build the core network with icnn closure architecture ---
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
@@ -114,13 +115,12 @@ class MK11Network(BaseNetwork):
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-        hidden = convex_layer(hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
-        pre_output = convex_output_layer(hidden, input_)  # outputlayer
-        # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
-        # output_ = tf.add(tf.math.scalar_mul((h_max_tensor - h_min_tensor), pre_output), h_max_tensor)
+        hidden_compressor = convex_layer(hidden, input_, layer_idx=self.model_depth + 1,
+                                         layer_dim=int(self.model_width / 2))
+        output_ = convex_output_layer(hidden_compressor, input_)  # outputlayer
 
         # Create the core model
-        core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="Icnn_closure")
+        core_model = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build sobolev wrapper
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
@@ -130,12 +130,6 @@ class MK11Network(BaseNetwork):
         batch_size: int = 2  # dummy entry
         model.build(input_shape=(batch_size, self.inputDim))
 
-        # test
-        # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
-        # a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
-        # a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
-        # a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
-
         # print(tf.keras.losses.MeanSquaredError()(a3, a2))
         # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
         # print(self.custom_mse(a2, a3))
@@ -143,7 +137,7 @@ class MK11Network(BaseNetwork):
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
                   'output_3': tf.keras.losses.MeanSquaredError()},
             # 'output_4': self.KL_divergence_loss(model.momentBasis, model.quadWeights)},  # self.custom_mse},
-            loss_weights={'output_1': self.loss_weights[0], 'output_2': 10.0 * self.loss_weights[1],
+            loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
                           'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
@@ -152,8 +146,8 @@ class MK11Network(BaseNetwork):
         # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
         # show_layer_names = True, rankdir = 'TB', expand_nested = True)
         print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
-
-        return model
+        self.model = model
+        return True
 
     def call_training(self, val_split: float = 0.1, epoch_size: int = 2, batch_size: int = 128, verbosity_mode: int = 1,
                       callback_list: list = []) -> list:

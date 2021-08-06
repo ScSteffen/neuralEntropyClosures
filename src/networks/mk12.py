@@ -15,18 +15,19 @@ from src.networks.sobolevmodel import SobolevModel
 
 class MK12Network(BaseNetwork):
 
-    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int, width: int, depth: int,
-                 loss_combination: int, save_folder: str = ""):
+    def __init__(self, scaled_output: bool, normalized: bool, polynomial_degree: int, spatial_dimension: int,
+                 width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
             custom_folder_name = "MK12_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
-        super(MK12Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
+        super(MK12Network, self).__init__(normalized=normalized, scaled_output=scaled_output,
+                                          polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name)
-        self.model = self.create_model()
+        self.create_model()
 
-    def create_model(self):
+    def create_model(self) -> bool:
 
         layerDim = self.model_width
 
@@ -81,11 +82,10 @@ class MK12Network(BaseNetwork):
             metrics=['mean_absolute_error'])
 
         # model.summary()
-
         # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
         # show_layer_names = True, rankdir = 'TB', expand_nested = True)
-
-        return model
+        self.model = model
+        return True
 
     def call_training(self, val_split=0.1, epoch_size=2, batch_size=128, verbosity_mode=1, callback_list=[]):
         '''

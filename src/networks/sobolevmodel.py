@@ -67,7 +67,8 @@ class SobolevModel(tf.keras.Model, ABC):
 
         if self.enable_recons_u:
             print("(Scaled) reconstruction of U enabled")
-            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
+            # alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
+            alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction

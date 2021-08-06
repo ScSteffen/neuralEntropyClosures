@@ -27,11 +27,18 @@ def main():
     # plot2DMoments(u, h)
 
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3)
-    plotHoverNormalized_N1_N2(u, h)
+    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M3_1D_normal_alpha.csv", 4)
+    # u = u[1500:2000, :]
+    # h = h[1500:2000]
+    plot_h_over_n1_n2_n3(u, h)
+    plot_h_over_n1_n2(u[:, [0, 1, 3]], h)
+
+    # Normalized Plots
+    # [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3)
+    # plot_h_over_n1_n2(u, h)
     # Normalized Plots
     # [u, alpha, h] = loadTrainingData("realizable_set_pictures/N2_alpha.csv", 3)
-    # plotHoverNormalized_N1_N2(u, h)
+    # plot_h_over_n1_n2(u, h)
 
     # [u, alpha, h] = loadTrainingData("data/1_stage/1D/Monomial_M3_D1_normalized.csv", 4)
     # plotHoverNormalized_N2_N3(u, h)
@@ -81,6 +88,33 @@ def loadTrainingData(filename, lenU):
     return trainingData
 
 
+def plot_h_over_n1_n2_n3(u, h):
+    fig = plt.figure(figsize=(4.7, 4), dpi=400)
+    ax = fig.add_subplot(111, projection='3d')
+    # ax.grid(True, linestyle='-', color='0.75')
+    x = u[:, 1]
+    y = u[:, 2]
+    z = u[:, 3]
+    out = ax.scatter(x, y, z, s=6, c=h, cmap=cm.hot)  # , vmin=-1.5, vmax=3.0)
+    plt.xlim(-1, 1)
+    plt.ylim(0, 1)
+    # plt.zlim(-1, 1)
+    ax.set_title(r"$h$ over $\overline{\mathcal{R}}$", fontsize=14)
+    ax.set_xlabel(r"$u_1 / u_0$")
+    ax.set_ylabel(r"$u_2 / u_0$")
+    ax.set_zlabel(r"$u_3 / u_0$")
+    ax.set_aspect('auto')
+    # ax.set_xlabel('N1')
+    # ax.set_ylabel('N2')
+    # ax.set_zlabel('h')
+    # pos_neg_clipped = ax.imshow(z)
+    cbar = fig.colorbar(out, ax=ax, extend='both')
+    plt.savefig("N3_alpha.png", dpi=150)
+    # plt.show()
+
+    return 0
+
+
 def plotHoverNormalized_N2_N3(u, h):
     '''
     Plot h over relative moments corresponding to Monreals diss
@@ -117,7 +151,7 @@ def plotHoverNormalized_N2_N3(u, h):
     return 0
 
 
-def plotHoverNormalized_N1_N2(u, h):
+def plot_h_over_n1_n2(u, h):
     '''
     Plot h over relative moments corresponding to Monreals diss
     '''
@@ -138,9 +172,9 @@ def plotHoverNormalized_N1_N2(u, h):
     x = u[:, 1]
     y = u[:, 2]
     z = h
-    out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, vmin=-1.5, vmax=3.0)
+    out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot)  # , vmin=-1.5, vmax=3.0)
     plt.xlim(-1, 1)
-    plt.ylim(0, 1)
+    plt.ylim(-1, 1)
     ax.set_title(r"$h$ over $\overline{\mathcal{R}}$", fontsize=14)
     ax.set_xlabel(r"$u_1 / u_0$")
     ax.set_ylabel(r"$u_2 / u_0$")
