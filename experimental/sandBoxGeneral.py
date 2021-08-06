@@ -14,10 +14,33 @@ from src.utils import finiteDiff, integrate, loadData, evaluateModel
 
 plt.style.use("kitish")
 
+from src.math import EntropyTools
+import numpy as np
+
 
 # ------  Code starts here --------
 
 def main():
+    et = EntropyTools(polynomial_degree=3)
+
+    ns = 1000
+    x = np.linspace(-0.1, 0.1, ns)
+    alpha = np.zeros((ns, 3))
+    for i in range(len(x)):
+        alpha[i] = np.asarray([4.0, 1.7, 2.3]) + np.asarray([0.1, 0.1, 0.1]) * x[i]
+    alpha = tf.constant(alpha, dtype=tf.float32)
+    alpha_full = et.reconstruct_alpha(tf.constant(alpha))
+    u = et.reconstruct_u(alpha_full)
+    u_np = u.numpy()
+    fig, axis = plt.subplots(nrows=2, ncols=2)
+    axis[0, 0].plot(x, u[:, 0])
+    axis[0, 1].plot(x, u[:, 1])
+    axis[1, 0].plot(x, u[:, 2])
+    axis[1, 1].plot(x, u[:, 3])
+    plt.show()
+    print(u_np)
+
+    """
     y = [6.51778e-55,
          9.20148e-53,
          1.1754e-50,
@@ -148,7 +171,7 @@ def main():
     # model1.load_weights(filenameInit)
 
     multistepTraining(xL, yL, model1, maxIter, epochCount, batchSize)
-
+    """
     return 0
 
 

@@ -8,12 +8,14 @@ Date 29.10.2020
 ### imports ###
 from src.networks.mk11 import MK11Network
 from src.networks.mk12 import MK12Network
+from src.networks.mk13 import MK13Network
+
 from src.networks.basenetwork import BaseNetwork
 
 
 def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: int = 3,
                         folder_name: str = "testFolder", loss_combination: int = 0, nw_width: int = 10,
-                        nw_depth: int = 5, normalized: bool = True):
+                        nw_depth: int = 5, normalized: bool = True, scaled_output: bool = False):
     '''
     params: network_mk = Defines the used network model, i.e. MK1, MK2...
             poly_degree = Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -23,6 +25,7 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
             nw_depth = number of layers of the network
             nw_width = width of the hidden layers
             normalized =  if true, the network uses normalized data
+            scaled_output = if true, the range of the entropy functional is scaled to [0,1] and the training data is scaled accordingly
     returns: a fully configured neural network
     '''
 
@@ -50,13 +53,20 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
     elif network_mk == 11:
         neural_closure_model = MK11Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
-                                           width=nw_width, depth=nw_depth, normalized=normalized)
+                                           width=nw_width, depth=nw_depth, normalized=normalized,
+                                           scaled_output=scaled_output)
     elif network_mk == 12:
         neural_closure_model = MK12Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
-                                           width=nw_width, depth=nw_depth, normalized=normalized)
+                                           width=nw_width, depth=nw_depth, normalized=normalized,
+                                           scaled_output=scaled_output)
+    elif network_mk == 13:
+        neural_closure_model = MK13Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
+                                           save_folder=folder_name, loss_combination=loss_combination,
+                                           width=nw_width, depth=nw_depth, normalized=normalized,
+                                           scaled_output=scaled_output)
     else:
-        ValueError("No available network fits your preferences!")
+        print("No available network fits your preferences!")
         exit()
     print("Neural closure model created")
     return neural_closure_model

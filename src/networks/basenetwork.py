@@ -20,6 +20,7 @@ from src import utils
 
 ### class definitions ###
 class BaseNetwork:
+    scaled_output: bool  # Determines if entropy is scaled to range (0,1) (other outputs scaled accordingly)
     normalized: bool  # Determines if model works with normalized data
     poly_degree: int  # Degree of basis function polynomials
     spatial_dim: int  # spatial dimension of problem
@@ -35,9 +36,10 @@ class BaseNetwork:
     h_max: float  # for output scaling
     h_min: float  # for output scaling
 
-    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int, width: int, depth: int,
-                 loss_combination: int, save_folder: str):
+    def __init__(self, normalized: bool, scaled_output: bool, polynomial_degree: int, spatial_dimension: int,
+                 width: int, depth: int, loss_combination: int, save_folder: str):
         self.normalized = normalized
+        self.scaled_output = scaled_output
         self.poly_degree: int = polynomial_degree
         self.spatial_dim: int = spatial_dimension
         self.model_width: int = width
@@ -85,7 +87,7 @@ class BaseNetwork:
         if self.normalized:
             self.inputDim = self.inputDim - 1
 
-    def create_model(self) -> tf.keras.Model:
+    def create_model(self) -> bool:
         pass
 
     def call_network(self, u) -> list:
@@ -288,11 +290,12 @@ class BaseNetwork:
             print(weights)
             print("---------------------------------------------")
 
-    def show_model(self):
+    def show_model(self) -> bool:
         self.model.summary()
-        return 0
+        return True
 
-    def load_training_data(self, shuffle_mode=False, alpha_sampling=0, load_all=False, normalized_data=False):
+    def load_training_data(self, shuffle_mode: bool = False, alpha_sampling: int = 0, load_all: bool = False,
+                           normalized_data: bool = False) -> bool:
         """
         Loads the training data
         params: normalized_moments = load normalized data  (u_0=1)
@@ -356,20 +359,22 @@ class BaseNetwork:
         print("Output of network has internal scaling with h_max=" + str(self.h_max) + " and h_min=" + str(self.h_min))
         return True
 
-    def training_data_preprocessing(self):
+    def training_data_preprocessing(self) -> bool:
         """
         Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
         reconstruction of u during training and execution
         """
-
-        scaler = MinMaxScaler()
-        scaler.fit(self.training_data[2])
-        self.h_max = float(scaler.data_max_)
-        self.h_min = float(scaler.data_min_)
-        self.training_data[2] = scaler.transform(self.training_data[2])
-        self.training_data[1] = self.training_data[2] / (self.h_max - self.h_min)
-
-        return 0
+        self.h_max = 1.0
+        self.h_min = 0.0
+        self.training_data.append(self.training_data[1])
+        if self.scaled_output:
+            scaler = MinMaxScaler()
+            scaler.fit(self.training_data[2])
+            self.h_max = float(scaler.data_max_)
+            self.h_min = float(scaler.data_min_)
+            self.training_data[2] = scaler.transform(self.training_data[2])
+            self.training_data[1] = self.training_data[2] / (self.h_max - self.h_min)
+        return True
 
     def get_training_data(self):
         return self.training_data
@@ -454,6 +459,34 @@ class BaseNetwork:
         # utils.plot1D(u_test[:, 1], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1', log=False)
 
         return 0
+
+    """
+    def normalize_data(self):
+
+        # load data
+        #
+        [u_t, alpha_t, h_t] = self.training_data
+        mBasis = tf.cast(self.model.momentBasis, dtype=tf.float64, name=None)
+        qWeights = tf.cast(self.model.quadWeights, dtype=tf.float64, name=None)
+        #
+        #
+        u_non_normal = tf.constant(u_t, dtype=tf.float64)
+        alpha_non_normal = tf.constant(alpha_t, dtype=tf.float64)
+        h_non_normal = tf.constant(h_t, dtype=tf.float64)
+
+        # scale u and alpha
+        u_normal = self.model.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
+        alpha_normal = self.model.scale_alpha(alpha_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))
+
+        # compute h
+        f_quad = tf.math.exp(tf.tensordot(alpha_normal, mBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, qWeights, axes=([1], [1]))  # f*w
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha_normal, u_normal), axis=1, keepdims=True)
+        h_normal = tmp2 - tmp
+
+        self.training_data = [u_normal[:, 1:], alpha_normal[:, 1:], h_normal]
+        return 0
+    """
 
 
 class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):

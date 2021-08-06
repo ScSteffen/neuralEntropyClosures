@@ -56,17 +56,19 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(modelNumber=1, polyDegree=0, spatialDim=3, folderName="testFolder", lossCombi=0, width=10, depth=5,
-              normalized=False):
+def initModel(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: int = "testFolder",
+              loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
+              scaled_output: bool = False):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
     '''
 
     global neuralClosureModel
-    neuralClosureModel = init_neural_closure(network_mk=modelNumber, poly_degree=polyDegree, spatial_dim=spatialDim,
-                                             folder_name=folderName, loss_combination=lossCombi, nw_depth=depth,
-                                             nw_width=width, normalized=normalized)
+    neuralClosureModel = init_neural_closure(network_mk=network_mk, poly_degree=polynomial_degree,
+                                             spatial_dim=spatial_dim,
+                                             folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
+                                             nw_width=width, normalized=normalized, scaled_output=scaled_output)
 
     return 0
 
@@ -132,6 +134,8 @@ def main():
                       help="epoch count for neural network", metavar="EPOCH")
     parser.add_option("-f", "--folder", dest="folder", default="testFolder",
                       help="folder where the model is stored", metavar="FOLDER")
+    parser.add_option("-g", "--scaledOutput", dest="scaledOutput", default="0",
+                      help="train on scaled entropy values", metavar="SCALEDOUTPUT")
     parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
                       help="load model weights from file", metavar="LOADING")
     parser.add_option("-m", "--model", dest="model", default=11,
@@ -165,6 +169,7 @@ def main():
     options.curriculum = int(options.curriculum)
     options.batch = int(options.batch)
     options.verbosity = int(options.verbosity)
+    options.scaledOutput = bool(int(options.scaledOutput))
     options.loadmodel = int(options.loadmodel)
     options.training = int(options.training)
     options.processingmode = int(options.processingmode)
@@ -186,9 +191,9 @@ def main():
 
     # --- initialize model
     print("Initialize model")
-    initModel(modelNumber=options.model, polyDegree=options.degree, spatialDim=options.spatialDimension,
-              folderName=options.folder, normalized=options.normalized,
-              lossCombi=options.objective, width=options.networkwidth, depth=options.networkdepth)
+    initModel(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatialDimension,
+              folder_name=options.folder, normalized=options.normalized, scaled_output=options.scaledOutput,
+              loss_combination=options.objective, width=options.networkwidth, depth=options.networkdepth)
     neuralClosureModel.model.summary()
 
     # Save options and runscript to file
