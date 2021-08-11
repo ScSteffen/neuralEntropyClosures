@@ -181,9 +181,9 @@ class BaseNetwork:
             csv_logger = self.create_csv_logger_cb()
 
             if verbosity == 1:
-                callbackList = [mc_best, csv_logger, LR, HW, ES]
+                callbackList = [mc_best, csv_logger, HW, ES]  # LR,
             else:
-                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, LR, HW, ES]
+                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, HW, ES]  # LR,
 
             # start Training
             self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,

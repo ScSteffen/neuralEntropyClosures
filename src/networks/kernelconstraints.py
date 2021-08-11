@@ -27,10 +27,10 @@ class ClipByValueConstraint(tf.keras.constraints.Constraint):
     """
 
     def __init__(self, clip_l):
-        self.ref_value = 0.0
+        self.clip_l = clip_l
 
     def __call__(self, w):
-        return tf.math.abs(w)
+        return w * tf.math_ops.cast(tf.math_ops.greater_equal(w, self.clip_l), tf.backend.floatx())
 
     def get_config(self):
         return {'ref_value': self.ref_value}

@@ -34,7 +34,7 @@ class MK12Network(BaseNetwork):
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
         initializer = tf.keras.initializers.LecunNormal()
         # Weight regularizer
-        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.0, l2=0.0)  # L1 + L2 penalties
+        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
 
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
@@ -48,14 +48,14 @@ class MK12Network(BaseNetwork):
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = layers.Dense(self.model_width, activation="softplus",
-                                  kernel_constraint=NonNeg(),
+                                  # kernel_constraint=NonNeg(),
                                   kernel_initializer=initializer,
                                   kernel_regularizer=l1l2Regularizer,
                                   bias_initializer='zeros',
                                   name="dense_" + str(idx)
                                   )(hidden)
         output_ = layers.Dense(1, activation="relu",
-                               kernel_constraint=NonNeg(),
+                               # kernel_constraint=NonNeg(),
                                kernel_initializer=initializer,
                                kernel_regularizer=l1l2Regularizer,
                                bias_initializer='zeros',

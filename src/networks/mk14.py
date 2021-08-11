@@ -1,5 +1,5 @@
 '''
-Network class "MK13" for the neural entropy closure.
+Network class "MK14" for the neural entropy closure.
 ICNN with sobolev wrapper.
 Experimentation field for weight constraints
 Author: Steffen Schotthöfer
@@ -15,7 +15,8 @@ from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.sobolevmodel import SobolevModel
-from src.networks.kernelconstraints import AbsWeightConstraint
+from src.networks.kernelconstraints import ClipByValueConstraint
+from tensorflow.keras.constraints import NonNeg
 
 
 class MK14Network(BaseNetwork):
@@ -28,7 +29,7 @@ class MK14Network(BaseNetwork):
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
-            custom_folder_name = "MK13_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
+            custom_folder_name = "MK14_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
         super(MK14Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
@@ -36,48 +37,41 @@ class MK14Network(BaseNetwork):
                                           loss_combination=loss_combination, save_folder=custom_folder_name)
 
     def create_model(self) -> bool:
-        # Weight initializer
-        # 1. This is a modified Kaiming inititalization with a first-order taylor expansion of the
-        # softplus activation function (see S. Kumar "On Weight Initialization in
-        # Deep Neural Networks").
-        # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
-        # input_stddev: float = np.sqrt(
-        #    (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
         input_initializer = tf.keras.initializers.LecunNormal()
-        # keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
-        # Weight initializer (uniform bounded)
-        # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
-        # initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
-
-        # Weight regularizer
+        l2_regularizer_nn = tf.keras.regularizers.L1L2(l2=0.001)  # L1 + L2 penalties
         l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
-        def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
-            # stddev = np.sqrt(
-            #    (1 / 1.1) * (1 / layer_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            ##initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+        def shifted_convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0,
+                                 layer_dim: int = 10, input_shape: int = 10) -> Tensor:
             initializer = tf.keras.initializers.LecunNormal()
+            shift_tensor = tf.ones(shape=(layer_dim, input_shape), dtype=tf.dtypes.float32, name=None)
 
             # Weighted sum of previous layers output plus bias
-            weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=AbsWeightConstraint(), activation=None,
-                                                  kernel_initializer=initializer,
-                                                  kernel_regularizer=l1l2_regularizer,
-                                                  use_bias=True, bias_initializer='zeros',
-                                                  name='non_neg_component_' + str(
-                                                      layer_idx)
-                                                  )(layer_input_z)
+            weighted_non_neg_sum_z = layers.Dense(layer_dim,  # kernel_constraint=ClipByValueConstraint(-1.0),
+                                                  activation=None, kernel_initializer=initializer,
+                                                  kernel_regularizer=l2_regularizer_nn, use_bias=True,
+                                                  bias_initializer='zeros',
+                                                  name='non_neg_component_' + str(layer_idx))(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x = layers.Dense(layer_dim, activation=None,
-                                          kernel_initializer=initializer,
-                                          kernel_regularizer=l1l2_regularizer,
-                                          use_bias=False, name='dense_component_' + str(layer_idx)
-                                          )(nw_input_x)
+            weighted_sum_x = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
+                                          kernel_regularizer=l1l2_regularizer, use_bias=False,
+                                          name='dense_component_' + str(layer_idx))(nw_input_x)
             # Wz+Wx+b
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
+            # input shift: ones*z == [sum(z),...]
+            shift = tf.math.reduce_sum(layer_input_z, axis=1, keepdims=False,
+                                       name='shift_component_' + str(layer_idx))
+            # shift_bc = tf.broadcast_to(shift, shape=(None, layer_dim), name="broadcaster")
 
+            # shift: Tensor = layers.Dot(axes=1, name='shift_component_' + str(layer_idx))(
+            #   [layer_input_z, shift_tensor])
+            # shift = tf.reshape(shift, shape=(shift.shape[1], layer_dim))
+            # add to current layer: # Wz+Wx+b + 1z
+            intermediate_sum = layers.Add(name='add_shift_' + str(layer_idx))(
+                [intermediate_sum, shift])
             # activation
-            out = tf.keras.activations.elu(intermediate_sum)
+            out = tf.keras.activations.softplus(intermediate_sum)
             # out = tf.keras.activations.selu(intermediate_sum)
             # batch normalization
             # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
@@ -90,7 +84,7 @@ class MK14Network(BaseNetwork):
             # keras.initializers.RandomNormal(mean=0., stddev=stddev)
 
             # Weighted sum of previous layers output plus bias
-            weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=AbsWeightConstraint(), activation=None,
+            weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
                                                      kernel_initializer=initializer,
                                                      kernel_regularizer=l1l2_regularizer,
                                                      use_bias=True,
@@ -112,12 +106,15 @@ class MK14Network(BaseNetwork):
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
-        hidden = layers.Dense(self.model_width, activation="selu", kernel_initializer=input_initializer,
-                              kernel_regularizer=l1l2_regularizer, bias_initializer='zeros', name="first_dense")(input_)
+        hidden1 = layers.Dense(self.model_width, activation="selu", kernel_initializer=input_initializer,
+                               kernel_regularizer=l1l2_regularizer, bias_initializer='zeros', name="first_dense")(
+            input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
-            hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-        hidden = convex_layer(hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
+            hidden = shifted_convex_layer(hidden1, input_, layer_idx=idx, layer_dim=self.model_width,
+                                          input_shape=self.model_width)
+        hidden = shifted_convex_layer(hidden, input_, layer_idx=self.model_depth + 1,
+                                      layer_dim=int(self.model_width / 2), input_shape=self.model_width)
         pre_output = convex_output_layer(hidden, input_)  # outputlayer
         # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
         # output_ = tf.add(tf.math.scalar_mul((h_max_tensor - h_min_tensor), pre_output), h_max_tensor)
