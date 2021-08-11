@@ -11,6 +11,7 @@ from tensorflow.keras import layers
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.sobolevmodel import SobolevModel
+from tensorflow.keras.constraints import NonNeg
 
 
 class MK12Network(BaseNetwork):
@@ -31,7 +32,7 @@ class MK12Network(BaseNetwork):
 
         # Weight initializer
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
-        initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
+        initializer = tf.keras.initializers.LecunNormal()
         # Weight regularizer
         l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.0, l2=0.0)  # L1 + L2 penalties
 
@@ -47,12 +48,14 @@ class MK12Network(BaseNetwork):
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = layers.Dense(self.model_width, activation="softplus",
+                                  kernel_constraint=NonNeg(),
                                   kernel_initializer=initializer,
                                   kernel_regularizer=l1l2Regularizer,
                                   bias_initializer='zeros',
                                   name="dense_" + str(idx)
                                   )(hidden)
-        output_ = layers.Dense(1, activation="linear",
+        output_ = layers.Dense(1, activation="relu",
+                               kernel_constraint=NonNeg(),
                                kernel_initializer=initializer,
                                kernel_regularizer=l1l2Regularizer,
                                bias_initializer='zeros',
@@ -63,7 +66,9 @@ class MK12Network(BaseNetwork):
         coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
 
         # build model
-        model = SobolevModel(coreModel, polyDegree=self.poly_degree, name="sobolev_icnn_wrapper")
+        model = SobolevModel(coreModel, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
+                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.h_max - self.h_min,
+                             name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
         model.build(input_shape=(batchSize, self.inputDim))
@@ -74,10 +79,11 @@ class MK12Network(BaseNetwork):
         #              optimizer='adam',
         #              metrics=['mean_absolute_error', 'mean_squared_error'])
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError()},
-            loss_weights={'output_1': 1, 'output_2': 1},
-            optimizer='adam',
-            metrics=['mean_absolute_error'])
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
+                  'output_3': tf.keras.losses.MeanSquaredError()},
+            loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
+                          'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
+            optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
         # model.summary()
         # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
@@ -89,9 +95,9 @@ class MK12Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        xData = self.training_data[0]
-        yData = [self.training_data[2], self.training_data[1]]
-        self.model.fit(x=xData, y=yData,
+        x_data = self.training_data[0]
+        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
+        self.model.fit(x=x_data, y=y_data,
                        validation_split=val_split, epochs=epoch_size,
                        batch_size=batch_size, verbose=verbosity_mode,
                        callbacks=callback_list, shuffle=True)
@@ -99,9 +105,6 @@ class MK12Network(BaseNetwork):
 
     def select_training_data(self):
         return [True, True, True]
-
-    def training_data_preprocessing(self):
-        return 0
 
     def call_network(self, u_complete):
         """

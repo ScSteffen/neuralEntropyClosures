@@ -188,6 +188,7 @@ class BaseNetwork:
             # start Training
             self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
                                               verbosity_mode=verbosity, callback_list=callbackList)
+            print("Model saved to location: " + self.folder_name)
 
         return self.history
 
