@@ -43,14 +43,16 @@ class MK11Network(BaseNetwork):
         # input_stddev: float = np.sqrt(
         #    (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
         input_initializer = tf.keras.initializers.LecunNormal()
+        initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
+
         # keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
         # Weight initializer (uniform bounded)
         # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
         # initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
 
         # Weight regularizer
-        l2_regularizer_nn = tf.keras.regularizers.L2(l2=0.01)  # L1 + L2 penalties
-        l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.01, l2=0.01)  # L1 + L2 penalties
+        l2_regularizer_nn = tf.keras.regularizers.L1L2(l2=0.001)  # L1 + L2 penalties
+        l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
             # stddev = np.sqrt(
@@ -60,7 +62,7 @@ class MK11Network(BaseNetwork):
 
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,
-                                                  kernel_initializer=initializer,
+                                                  kernel_initializer=initializerNonNeg,
                                                   kernel_regularizer=l2_regularizer_nn,
                                                   use_bias=True, bias_initializer='zeros',
                                                   name='non_neg_component_' + str(
@@ -77,7 +79,7 @@ class MK11Network(BaseNetwork):
                 [weighted_sum_x, weighted_non_neg_sum_z])
 
             # activation
-            out = tf.keras.activations.selu(intermediate_sum)
+            out = tf.keras.activations.softplus(intermediate_sum)
             # out = tf.keras.activations.selu(intermediate_sum)
             # batch normalization
             # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
@@ -91,7 +93,7 @@ class MK11Network(BaseNetwork):
 
             # Weighted sum of previous layers output plus bias
             weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                                     kernel_initializer=initializer,
+                                                     kernel_initializer=initializerNonNeg,
                                                      kernel_regularizer=l2_regularizer_nn,
                                                      use_bias=True,
                                                      bias_initializer='zeros'
@@ -112,7 +114,7 @@ class MK11Network(BaseNetwork):
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
-        hidden = layers.Dense(self.model_width, activation="selu", kernel_initializer=input_initializer,
+        hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
                               kernel_regularizer=l1l2_regularizer, bias_initializer='zeros', name="first_dense")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
