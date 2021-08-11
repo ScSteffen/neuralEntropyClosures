@@ -42,7 +42,10 @@ class MK11Network(BaseNetwork):
         # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
         # input_stddev: float = np.sqrt(
         #    (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        input_initializer = tf.keras.initializers.LecunNormal()
+        input_stddev: float = np.sqrt(
+            (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
+        # input_initializer = tf.keras.initializers.LecunNormal()
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
 
         # keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
