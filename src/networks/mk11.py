@@ -58,10 +58,10 @@ class MK11Network(BaseNetwork):
         l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
-            # stddev = np.sqrt(
-            #    (1 / 1.1) * (1 / layer_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            ##initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
-            initializer = tf.keras.initializers.LecunNormal()
+            stddev = np.sqrt(
+                (1 / 1.1) * (1 / layer_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+            # initializer = tf.keras.initializers.LecunNormal()
 
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,

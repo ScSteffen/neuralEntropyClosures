@@ -35,7 +35,10 @@ class MK12Network(BaseNetwork):
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
         input_stddev: float = np.sqrt(
             (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
+        initializer_input = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
+        stddev = np.sqrt(
+            (1 / 1.1) * (1 / self.model_width) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
         # initializer = tf.keras.initializers.LecunNormal()
         # Weight regularizer
         l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
@@ -44,7 +47,7 @@ class MK12Network(BaseNetwork):
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(layerDim, activation="softplus",
-                              kernel_initializer=initializer,
+                              kernel_initializer=initializer_input,
                               kernel_regularizer=l1l2Regularizer,
                               bias_initializer='zeros',
                               name="first_dense"
