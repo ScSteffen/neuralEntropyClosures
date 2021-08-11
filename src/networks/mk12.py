@@ -8,6 +8,7 @@ Date 09.04.2020
 import tensorflow as tf
 from tensorflow import keras as keras
 from tensorflow.keras import layers
+import numpy as np
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.sobolevmodel import SobolevModel
@@ -32,7 +33,10 @@ class MK12Network(BaseNetwork):
 
         # Weight initializer
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
-        initializer = tf.keras.initializers.LecunNormal()
+        input_stddev: float = np.sqrt(
+            (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
+        # initializer = tf.keras.initializers.LecunNormal()
         # Weight regularizer
         l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
 
