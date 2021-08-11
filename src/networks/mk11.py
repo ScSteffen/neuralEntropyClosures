@@ -89,10 +89,8 @@ class MK11Network(BaseNetwork):
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor) -> Tensor:
-            # stddev = np.sqrt(
-            #    (1 / 1.1) * (1 / 1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            initializer = tf.keras.initializers.LecunNormal()
-            # keras.initializers.RandomNormal(mean=0., stddev=stddev)
+            stddev = np.sqrt((1 / 1.1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)  # tf.keras.initializers.LecunNormal()
 
             # Weighted sum of previous layers output plus bias
             weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
