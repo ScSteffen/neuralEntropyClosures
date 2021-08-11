@@ -9,8 +9,6 @@ Date 29.10.2020
 
 ### imports ###
 # internal modules
-import numpy as np
-
 from src.networks.configmodel import init_neural_closure
 from src import utils
 
@@ -20,6 +18,8 @@ import os
 from optparse import OptionParser
 import time
 import statistics
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 ### global variable ###
@@ -219,7 +219,7 @@ def main():
     tru_u = neuralClosureModel.training_data[0]
     """
 
-    if options.loadmodel == 1 or options.training == 0 or options.training == 2:
+    if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
         # in execution mode the model must be loaded.
         # load model weights
         neuralClosureModel.load_model()
@@ -283,6 +283,26 @@ def main():
         print("Average duration: " + str(avg) + " seconds")
         stddev = statistics.stdev(durations)
         print("Standard deviation:" + str(stddev) + "")
+    elif options.training == 5:  # print weights mode
+        all_layers = neuralClosureModel.model.trainable_weights
+        layer_list = []
+        count = 0
+        for layer in all_layers:
+            t = layer
+            # print(t)
+            tn = t.numpy().flatten()
+            layer_list.append(tn)
+            print(layer.shape)
+            print("max weight:  " + str(np.max(tn)) + " min weight: " + str(np.min(tn)))
+            # hist, bin_edges = np.histogram(tn, bins=10, density=True)
+            plt.hist(tn, density=True)  # arguments are passed to np.histogram
+            plt.title("Histogram with 'auto' bins in layer " + str(count))
+            # Text(0.5, 1.0, "Histogram with 'auto' bins")
+            plt.show()
+            plt.clf()
+            count += 1
+        # bin the weight value of each layer.
+
     else:
         # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
         print("pure execution mode")

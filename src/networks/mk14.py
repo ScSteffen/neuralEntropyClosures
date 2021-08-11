@@ -1,6 +1,7 @@
 '''
-Network class "MK11" for the neural entropy closure.
+Network class "MK13" for the neural entropy closure.
 ICNN with sobolev wrapper.
+Experimentation field for weight constraints
 Author: Steffen Schotthöfer
 Version: 1.0
 Date 09.04.2021
@@ -10,14 +11,14 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras as keras
 from tensorflow.keras import layers
-from tensorflow.keras.constraints import NonNeg
 from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.sobolevmodel import SobolevModel
+from src.networks.kernelconstraints import AbsWeightConstraint
 
 
-class MK11Network(BaseNetwork):
+class MK14Network(BaseNetwork):
     '''
     MK11 Model: Multi purpose sobolev based convex model
     Training data generation: b) read solver data from file: Uses C++ Data generator
@@ -27,10 +28,10 @@ class MK11Network(BaseNetwork):
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
-            custom_folder_name = "MK11_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
+            custom_folder_name = "MK13_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
-        super(MK11Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
+        super(MK14Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name)
 
@@ -49,8 +50,7 @@ class MK11Network(BaseNetwork):
         # initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
 
         # Weight regularizer
-        l2_regularizer_nn = tf.keras.regularizers.L2(l2=0.01)  # L1 + L2 penalties
-        l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.01, l2=0.01)  # L1 + L2 penalties
+        l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
             # stddev = np.sqrt(
@@ -59,9 +59,9 @@ class MK11Network(BaseNetwork):
             initializer = tf.keras.initializers.LecunNormal()
 
             # Weighted sum of previous layers output plus bias
-            weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,
+            weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=AbsWeightConstraint(), activation=None,
                                                   kernel_initializer=initializer,
-                                                  kernel_regularizer=l2_regularizer_nn,
+                                                  kernel_regularizer=l1l2_regularizer,
                                                   use_bias=True, bias_initializer='zeros',
                                                   name='non_neg_component_' + str(
                                                       layer_idx)
@@ -77,7 +77,7 @@ class MK11Network(BaseNetwork):
                 [weighted_sum_x, weighted_non_neg_sum_z])
 
             # activation
-            out = tf.keras.activations.selu(intermediate_sum)
+            out = tf.keras.activations.elu(intermediate_sum)
             # out = tf.keras.activations.selu(intermediate_sum)
             # batch normalization
             # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
@@ -90,9 +90,9 @@ class MK11Network(BaseNetwork):
             # keras.initializers.RandomNormal(mean=0., stddev=stddev)
 
             # Weighted sum of previous layers output plus bias
-            weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
+            weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=AbsWeightConstraint(), activation=None,
                                                      kernel_initializer=initializer,
-                                                     kernel_regularizer=l2_regularizer_nn,
+                                                     kernel_regularizer=l1l2_regularizer,
                                                      use_bias=True,
                                                      bias_initializer='zeros'
                                                      # name='in_z_NN_Dense'
