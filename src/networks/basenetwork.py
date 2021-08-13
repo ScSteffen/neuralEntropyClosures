@@ -32,8 +32,8 @@ class BaseNetwork:
     loss_weights: list  # one hot vector to enable/disable loss functions
     model: tf.keras.Model  # the neural network model
     training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
-    h_max: float  # for output scaling
-    h_min: float  # for output scaling
+    scaler_max: float  # for output scaling
+    scaler_min: float  # for output scaling
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str):
@@ -45,8 +45,8 @@ class BaseNetwork:
         self.optimizer: str = 'adam'
         self.folder_name: str = "models/" + save_folder
         self.history: list = []
-        self.h_max = 1.0  # default is no scaling
-        self.h_min = 0.0  # default is no scaling
+        self.scaler_max = 1.0  # default is no scaling
+        self.scaler_min = 0.0  # default is no scaling
 
         # --- Determine loss combination ---
         if loss_combination == 0:
@@ -357,7 +357,8 @@ class BaseNetwork:
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
         self.training_data_preprocessing(scaled_output=scaled_output)
-        print("Output of network has internal scaling with h_max=" + str(self.h_max) + " and h_min=" + str(self.h_min))
+        print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
+            self.scaler_min))
         return True
 
     def training_data_preprocessing(self, scaled_output: bool = False) -> bool:
@@ -365,16 +366,16 @@ class BaseNetwork:
         Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
         reconstruction of u during training and execution
         """
-        self.h_max = 1.0
-        self.h_min = 0.0
+        self.scaler_max = 1.0
+        self.scaler_min = 0.0
         self.training_data.append(self.training_data[1])
         if scaled_output:
             scaler = MinMaxScaler()
             scaler.fit(self.training_data[2])
-            self.h_max = float(scaler.data_max_)
-            self.h_min = float(scaler.data_min_)
+            self.scaler_max = float(scaler.data_max_)
+            self.scaler_min = float(scaler.data_min_)
             self.training_data[2] = scaler.transform(self.training_data[2])
-            self.training_data[1] = self.training_data[1] / (self.h_max - self.h_min)
+            self.training_data[1] = self.training_data[1] / (self.scaler_max - self.scaler_min)
         return True
 
     def get_training_data(self):
@@ -392,7 +393,8 @@ class BaseNetwork:
         return: True, if run successfully. Prints several plots and pictures to file.
         """
 
-        [u_pred, alpha_pred, h_pred] = self.call_network(u_test)
+        # [u_pred, alpha_pred, h_pred] = self.call_network(u_test)
+        alpha = self.call_network(u_test)
 
         # create the loss functions
         def pointwise_diff(true_samples, pred_samples):
@@ -498,12 +500,7 @@ class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):
     #    print("For batch {}, loss is {:7.2f}.".format(batch, logs["loss"]))
 
     def on_epoch_end(self, epoch, logs=None):
-        print(
-            "The average loss for epoch {} is {:7.2f} "
-            "and mean absolute error is {:7.2f}.".format(
-                epoch, logs["loss"], logs["mean_absolute_error"]
-            )
-        )
+        print("The average loss for epoch {} is {:7.2f} .".format(epoch, logs["loss"]))
 
 
 class HaltWhenCallback(tf.keras.callbacks.Callback):

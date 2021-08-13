@@ -12,7 +12,10 @@ from tensorflow import Tensor
 from src import math
 
 
-class SobolevModel(tf.keras.Model, ABC):
+class EntropyModel(tf.keras.Model, ABC):
+    """
+    model that wraps entropy tools around a given core model to reconstruct moments, scale lagrange multipliers etc
+    """
     # Sobolev implies, that the model outputs also its derivative
     core_model: tf.keras.Model
     enable_recons_u: bool
@@ -26,7 +29,7 @@ class SobolevModel(tf.keras.Model, ABC):
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
                  reconstruct_u: bool = False, scale_factor: float = 1.0, **opts):
-        super(SobolevModel, self).__init__()
+        super(EntropyModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.core_model = core_model  # must be a compiled tensorflow model
         self.enable_recons_u = reconstruct_u
@@ -56,37 +59,22 @@ class SobolevModel(tf.keras.Model, ABC):
         """
         Defines the sobolev execution (does not return 0th order moment)
         input: x = [u_1,u_2,...,u_N]
-        output: h = entropy of u,alpha
-                alpha = [alpha_1,...,alpha_N]
+        output: alpha = [alpha_1,...,alpha_N]
                 u = [u_1,u_2,...,u_N]
         """
-        with tf.GradientTape() as grad_tape:
-            grad_tape.watch(x)
-            h = self.core_model(x)
-        alpha = grad_tape.gradient(h, x)
+
+        alpha = self.core_model(x)
 
         if self.enable_recons_u:
             print("(Scaled) reconstruction of U enabled")
             alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
-            # alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
-            # alpha64 = tf.cast(x, dtype=tf.float64, name=None)
-            # alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(x, dtype=tf.float64, name=None))
-            # h = alpha64
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
         else:
             print("Reconstruction of U disabled. Output 3 is meaningless")
             res = alpha
-        return [h, alpha, res]
-
-    def call_derivative(self, x, training=False):
-        with tf.GradientTape() as grad_tape:
-            grad_tape.watch(x)
-            y = self.core_model(x)
-        derivative_net = grad_tape.gradient(y, x)
-
-        return derivative_net
+        return [alpha, alpha, res]
 
     def reconstruct_alpha(self, alpha):
         """
@@ -175,3 +163,52 @@ class SobolevModel(tf.keras.Model, ABC):
         tmp = tf.tensordot(f_quad, self.quad_weights, axes=([1], [1]))  # f*w
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         return tmp2 - tmp
+
+
+class SobolevModel(EntropyModel):
+    """
+    model that wraps a sobolev layer around a given core model.
+    Allows to train on derivatives of the core model
+    """
+
+    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
+                 reconstruct_u: bool = False, scale_factor: float = 1.0, **opts):
+        super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
+                                           spatial_dimension=spatial_dimension, reconstruct_u=reconstruct_u,
+                                           scale_factor=scale_factor)
+
+    def call(self, x: Tensor, training=False) -> list:
+        """
+        Defines the sobolev execution (does not return 0th order moment)
+        input: x = [u_1,u_2,...,u_N]
+        output: h = entropy of u,alpha
+                alpha = [alpha_1,...,alpha_N]
+                u = [u_1,u_2,...,u_N]
+        """
+        with tf.GradientTape() as grad_tape:
+            grad_tape.watch(x)
+            h = self.core_model(x)
+        alpha = grad_tape.gradient(h, x)
+
+        if self.enable_recons_u:
+            print("(Scaled) reconstruction of U enabled")
+            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
+            # alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+            # alpha64 = tf.cast(x, dtype=tf.float64, name=None)
+            # alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(x, dtype=tf.float64, name=None))
+            # h = alpha64
+            alpha_complete = self.reconstruct_alpha(alpha64)
+            u_complete = self.reconstruct_u(alpha_complete)
+            res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
+        else:
+            print("Reconstruction of U disabled. Output 3 is meaningless")
+            res = alpha
+        return [h, alpha, res]
+
+    def call_derivative(self, x, training=False):
+        with tf.GradientTape() as grad_tape:
+            grad_tape.watch(x)
+            y = self.core_model(x)
+        derivative_net = grad_tape.gradient(y, x)
+
+        return derivative_net
