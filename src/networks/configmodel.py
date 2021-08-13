@@ -10,6 +10,7 @@ from src.networks.mk11 import MK11Network
 from src.networks.mk12 import MK12Network
 from src.networks.mk13 import MK13Network
 from src.networks.mk14 import MK14Network
+from src.networks.mk15 import MK15Network
 
 from src.networks.basenetwork import BaseNetwork
 
@@ -65,6 +66,10 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
                                            width=nw_width, depth=nw_depth, normalized=normalized)
     elif network_mk == 14:
         neural_closure_model = MK14Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
+                                           save_folder=folder_name, loss_combination=loss_combination,
+                                           width=nw_width, depth=nw_depth, normalized=normalized)
+    elif network_mk == 15:
+        neural_closure_model = MK15Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized)
     else:

@@ -14,7 +14,7 @@ from tensorflow.keras.constraints import NonNeg
 from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.sobolevmodel import SobolevModel
+from src.networks.custommodels import SobolevModel
 
 
 class MK11Network(BaseNetwork):
@@ -64,23 +64,22 @@ class MK11Network(BaseNetwork):
             # initializer = tf.keras.initializers.LecunNormal()
 
             # Weighted sum of previous layers output plus bias
-            weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,
-                                                  kernel_initializer=initializerNonNeg,
+            weighted_non_neg_sum_z = layers.Dense(units=layer_dim, kernel_constraint=NonNeg(), activation=None,
+                                                  kernel_initializer=initializer,
                                                   kernel_regularizer=l2_regularizer_nn,
-                                                  use_bias=True, bias_initializer='zeros',
-                                                  name='non_neg_component_' + str(
-                                                      layer_idx)
+                                                  use_bias=True, bias_initializer=initializer,
+                                                  bias_regularizer=l1l2_regularizer,
+                                                  name='layer_' + str(layer_idx) + 'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x = layers.Dense(layer_dim, activation=None,
+            weighted_sum_x = layers.Dense(units=layer_dim, activation=None,
                                           kernel_initializer=initializer,
                                           kernel_regularizer=l1l2_regularizer,
-                                          use_bias=False, name='dense_component_' + str(layer_idx)
+                                          use_bias=False, name='layer_' + str(layer_idx) + 'dense_component'
                                           )(nw_input_x)
             # Wz+Wx+b
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
-
             # activation
             out = tf.keras.activations.softplus(intermediate_sum)
             # out = tf.keras.activations.selu(intermediate_sum)
@@ -88,52 +87,54 @@ class MK11Network(BaseNetwork):
             # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
             return out
 
-        def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor) -> Tensor:
-            stddev = np.sqrt((1 / 1.1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)  # tf.keras.initializers.LecunNormal()
-
+        def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
             # Weighted sum of previous layers output plus bias
             weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                                     kernel_initializer=initializerNonNeg,
+                                                     kernel_initializer=tf.keras.initializers.HeNormal(),
                                                      kernel_regularizer=l2_regularizer_nn,
-                                                     use_bias=True,
-                                                     bias_initializer='zeros'
-                                                     # name='in_z_NN_Dense'
+                                                     use_bias=True, bias_regularizer=l1l2_regularizer,
+                                                     bias_initializer=tf.keras.initializers.HeNormal(),
+                                                     name='layer_' + str(layer_idx) + 'nn_component'
                                                      )(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
+            weighted_sum_x: Tensor = layers.Dense(1, activation=None,
+                                                  kernel_initializer=tf.keras.initializers.HeNormal(),
                                                   kernel_regularizer=l1l2_regularizer,
-                                                  use_bias=False
-                                                  # name='in_x_Dense'
+                                                  use_bias=False,
+                                                  name='layer_' + str(layer_idx) + 'dense_component'
                                                   )(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
-            # if self.h_max - self.h_min != 1.0:  # if output is scaled, use sigmoid.
-            out = tf.keras.activations.relu(out)  # does not break convexity (Sarath Sivaprasad et al.)
+            if self.scaler_max - self.scaler_min != 1.0:  # if output is scaled, use relu.
+                out = tf.keras.activations.relu(out)  # does not break convexity (Sarath Sivaprasad et al.)
             return out
 
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
-                              kernel_regularizer=l1l2_regularizer, bias_initializer='zeros', name="first_dense")(input_)
+                              kernel_regularizer=l1l2_regularizer, use_bias=True, bias_initializer=input_initializer,
+                              bias_regularizer=l1l2_regularizer, name="layer_-1_input")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
         hidden = convex_layer(hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
-        pre_output = convex_output_layer(hidden, input_)  # outputlayer
+        pre_output = convex_output_layer(hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
         # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
         # output_ = tf.add(tf.math.scalar_mul((h_max_tensor - h_min_tensor), pre_output), h_max_tensor)
 
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="Icnn_closure")
+        print("The core model overview")
+        core_model.summary()
+        print("The sobolev wrapped model overview")
 
         # build sobolev wrapper
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
-                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.h_max - self.h_min,
+                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.scaler_max - self.scaler_min,
                              name="sobolev_icnn_wrapper")
         # build graph
-        batch_size: int = 2  # dummy entry
+        batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.inputDim))
 
         # test
