@@ -98,7 +98,7 @@ def main():
     entropy_tools = EntropyTools(N=2)
     poi_grad = np.asarray([0.2, 0.3])
     alpha_part = np.asarray([poi_grad])
-    alpha_recons = entropy_tools.reconstruct_alpha(entropy_tools.convert_to_tensorf(alpha_part))
+    alpha_recons = entropy_tools.reconstruct_alpha(entropy_tools.convert_to_tensor_float(alpha_part))
     u = entropy_tools.reconstruct_u(alpha_recons)
     poi = u[0, 1:].numpy()
     print("Point of interest: " + str(poi))

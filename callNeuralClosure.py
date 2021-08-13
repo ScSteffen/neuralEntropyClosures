@@ -238,7 +238,8 @@ def main():
     elif options.training == 2:
         print("Analysis mode entered.")
         print("Evaluate Model on normalized data...")
-        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=True)
+        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=True,
+                                              scaled_output=options.scaledOutput)
         [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model_normalized(u, alpha, h)
         print("Evaluate Model on non-normalized data...")
@@ -296,10 +297,23 @@ def main():
             print("max weight:  " + str(np.max(tn)) + " min weight: " + str(np.min(tn)))
             # hist, bin_edges = np.histogram(tn, bins=10, density=True)
             plt.hist(tn, density=True)  # arguments are passed to np.histogram
-            plt.title("Histogram with 'auto' bins in layer " + str(count))
+            name = layer.name
+            name = name.replace(':', '')
+            name = name.replace('/', '_')
+            plt.title("Histogram of weights in layer " + name)
             # Text(0.5, 1.0, "Histogram with 'auto' bins")
-            plt.show()
+            plt.savefig(neuralClosureModel.folder_name + "/" + name + ".png")
+            # plt.show()
             plt.clf()
+            # if "nn_component" in name:
+            #    tn_sm = tf.nn.relu(tn)
+            #    print(max(tn_sm))
+            #    print(min(tn_sm))
+            #    plt.hist(tn_sm, density=True)
+            #    name = name + "_relu"
+            #    plt.title("Histogram of weights in layer " + name)
+            #    plt.savefig(neuralClosureModel.folder_name + "/" + name + ".png")
+            #    plt.clf()
             count += 1
         # bin the weight value of each layer.
 

@@ -157,7 +157,7 @@ def main():
 
     alpha_1 = np.linspace(-50, 50, batchSize)
     alpha_1 = alpha_1.reshape((batchSize, N))
-    alpha_1 = entropy_tools.convert_to_tensorf(alpha_1)
+    alpha_1 = entropy_tools.convert_to_tensor_float(alpha_1)
     alpha = entropy_tools.reconstruct_alpha(alpha_1)
     u = entropy_tools.reconstruct_u(alpha)
     h = entropy_tools.compute_h(u, alpha)
@@ -190,7 +190,7 @@ def main():
 
     tolerance = 0.1
 
-    alpha_1 = entropy_tools.convert_to_tensorf(np.asarray([-50, 50]).reshape((2, N)))
+    alpha_1 = entropy_tools.convert_to_tensor_float(np.asarray([-50, 50]).reshape((2, N)))
     alpha_ini = entropy_tools.reconstruct_alpha(alpha_1)
     u_ini = entropy_tools.reconstruct_u(alpha_ini)
     h_ini = entropy_tools.compute_h(u_ini, alpha_ini)

@@ -21,8 +21,55 @@ import numpy as np
 # ------  Code starts here --------
 
 def main():
-    et = EntropyTools(polynomial_degree=3)
+    et2 = EntropyTools(polynomial_degree=2)
+    alpha_1 = tf.constant([-1.42096, 1.40992, 0.1], shape=(1, 3), dtype=tf.float32)
+    alpha_2 = tf.constant([-1.42096, 1.40992, 0.0], shape=(1, 3), dtype=tf.float32)
+    div = et2.KL_divergence(alpha_1, alpha_2)
+    # print(div)
 
+    et1 = EntropyTools(polynomial_degree=1)
+    alpha = tf.constant([-1.42096, 1.40992], shape=(1, 2), dtype=tf.float32)
+    pts = et2.quadPts
+
+    f1 = et1.compute_kinetic_density(alpha)
+    f2 = et2.compute_kinetic_density(alpha_2)
+    plt.plot(pts[0, :], f1[0, :])
+    plt.plot(pts[0, :], f2[0, :])
+    # plt.show()
+    u1 = et1.compute_u(f1)
+    u2 = et2.compute_u(f2)
+    print(u1)
+    print(u2)
+
+    et3 = EntropyTools(polynomial_degree=3)
+    alpha_full = np.asarray([-3.20452, -10.109, 1.60217, 14.1154])
+
+    # alpha = tf.constant(alpha, shape=(1, 3), dtype=tf.float32)
+    # alpha_full = et3.reconstruct_alpha(tf.constant(alpha))
+    u = et3.reconstruct_u(tf.constant(alpha_full, shape=(1, 4), dtype=tf.float32))
+    u_np = u.numpy()
+    print(u_np)
+    print(u_np / u_np[0, 0])
+
+    """
+    et2 = EntropyTools(polynomial_degree=2)
+    alpha_full = np.asarray([1, 1, 1])
+    # alpha = tf.constant(alpha, shape=(1, 2), dtype=tf.float32)
+    # alpha_full = et2.reconstruct_alpha(tf.constant(alpha))
+    u = et2.reconstruct_u(tf.constant(alpha_full, shape=(1, 3), dtype=tf.float32))
+    u_np = u.numpy()
+    print(u_np)
+    print(u_np / u_np[0, 0])
+    et1 = EntropyTools(polynomial_degree=1)
+    alpha_full = np.asarray([1, 1])
+    # alpha = tf.constant(alpha, shape=(1, 1), dtype=tf.float32)
+    # alpha_full = et1.reconstruct_alpha(tf.constant(alpha))
+    u = et1.reconstruct_u(tf.constant(alpha_full, shape=(1, 2), dtype=tf.float32))
+    u_np = u.numpy()
+    print(u_np)
+    print(u_np / u_np[0, 0])
+    """
+    """
     ns = 1000
     x = np.linspace(-0.1, 0.1, ns)
     alpha = np.zeros((ns, 3))
@@ -39,7 +86,7 @@ def main():
     axis[1, 1].plot(x, u[:, 3])
     plt.show()
     print(u_np)
-
+    """
     """
     y = [6.51778e-55,
          9.20148e-53,
