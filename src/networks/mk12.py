@@ -11,7 +11,7 @@ from tensorflow.keras import layers
 import numpy as np
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.sobolevmodel import SobolevModel
+from src.networks.custommodels import SobolevModel
 from tensorflow.keras.constraints import NonNeg
 
 
@@ -74,7 +74,7 @@ class MK12Network(BaseNetwork):
 
         # build model
         model = SobolevModel(coreModel, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
-                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.h_max - self.h_min,
+                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.scaler_max - self.scaler_min,
                              name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
