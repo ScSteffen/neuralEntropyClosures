@@ -19,8 +19,8 @@ class EntropyTools:
     polyDegree: int
     nq: int
     inputDim: int
-    quadPts: tf.Tensor  # dims = (batchSIze x N x nq)
-    quadWeights: tf.Tensor  # dims = (batchSIze x N x nq)
+    quadPts: tf.Tensor  # dims = (1 x nq)
+    quadWeights: tf.Tensor  # dims = (1 x nq)
     momentBasis: tf.Tensor  # dims = (batchSIze x N x nq)
     opti_u: np.ndarray
     opti_m: np.ndarray
@@ -79,6 +79,21 @@ class EntropyTools:
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
 
+    def compute_u(self, f: tf.Tensor) -> tf.Tensor:
+        """
+                brief: reconstructs u from kinetic density f
+                nS = batchSize
+                N = basisSize
+                nq = number of quadPts
+
+                input: f, dims = (nS x nq)
+                used members: m    , dims = (N x nq)
+                              w    , dims = nq
+                returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+                """
+        tmp = tf.math.multiply(f, self.quadWeights)  # f*w
+        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
+
     def compute_h(self, u: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
         brief: computes the entropy functional h on u and alpha
@@ -101,7 +116,7 @@ class EntropyTools:
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         return tmp2 - tmp
 
-    def convert_to_tensorf(self, vector: np.ndarray) -> tf.Tensor:
+    def convert_to_tensor_float(self, vector: np.ndarray) -> tf.Tensor:
         """
         brief: converts to tensor, keeps dimensions
         """
@@ -190,7 +205,23 @@ class EntropyTools:
         res = tf.tensordot(integrand, self.quadWeights, axes=([1], [1]))
         return res
 
-    ### Standalone features
+    def compute_kinetic_density(self, alpha: tf.Tensor) -> tf.Tensor:
+        """
+                brief: computes the kinetic density w.r.t alpha
+                input: alpha , dim = (ns, N+1)
+                output: kinetic density, dim  = ns x nq
+        """
+        return tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))
+
+    def compute_maxwellian(self):
+        """
+        returns the maxwellian distribution at quadpts
+        return: maxwellian, dims = (1,nq)
+        """
+        return 0
+
+
+### Standalone features
 
 
 ### Integration
