@@ -66,7 +66,7 @@ class AdaptiveSampler(object):
             # compute the geometric mean
             mean = np.mean(curr_vertices, axis=0).reshape((1, 2))  # .reshape((1, 2))
             # compute the new point u corresponding to the mean
-            alpha_recons = et.reconstruct_alpha(et.convert_to_tensorf(mean))
+            alpha_recons = et.reconstruct_alpha(et.convert_to_tensor_float(mean))
             u = et.reconstruct_u(alpha_recons).numpy()[:, 1:]
             # append new point to the training points (since we have already computed it)
             self.all_pts = np.append(self.all_pts, u, axis=0)
