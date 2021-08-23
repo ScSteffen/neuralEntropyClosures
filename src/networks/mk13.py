@@ -59,7 +59,7 @@ class MK13Network(BaseNetwork):
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(layer_dim, kernel_constraint=NonNeg(), activation=None,
                                                   kernel_initializer=initializer,
-                                                  kernel_regularizer=l1l2_regularizer,
+                                                  kernel_regularizer=None,
                                                   use_bias=True, bias_initializer='zeros',
                                                   name='non_neg_component_' + str(
                                                       layer_idx)
@@ -67,7 +67,7 @@ class MK13Network(BaseNetwork):
             # Weighted sum of network input
             weighted_sum_x = layers.Dense(layer_dim, activation=None,
                                           kernel_initializer=initializer,
-                                          kernel_regularizer=l1l2_regularizer,
+                                          kernel_regularizer=None,
                                           use_bias=False, name='dense_component_' + str(layer_idx)
                                           )(nw_input_x)
             # Wz+Wx+b
@@ -89,14 +89,14 @@ class MK13Network(BaseNetwork):
             # Weighted sum of previous layers output plus bias
             weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
                                                      kernel_initializer=initializer,
-                                                     kernel_regularizer=l1l2_regularizer,
+                                                     kernel_regularizer=None,
                                                      use_bias=True,
                                                      bias_initializer='zeros'
                                                      # name='in_z_NN_Dense'
                                                      )(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
-                                                  kernel_regularizer=l1l2_regularizer,
+                                                  kernel_regularizer=None,
                                                   use_bias=False
                                                   # name='in_x_Dense'
                                                   )(net_input_x)
@@ -109,7 +109,7 @@ class MK13Network(BaseNetwork):
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
-                              kernel_regularizer=l1l2_regularizer, bias_initializer='zeros', name="first_dense")(input_)
+                              kernel_regularizer=None, bias_initializer='zeros', name="first_dense")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
