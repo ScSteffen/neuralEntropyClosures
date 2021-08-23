@@ -52,8 +52,7 @@ class MK14Network(BaseNetwork):
             initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
             # initializer = tf.keras.initializers.LecunNormal()
             # Weighted sum of previous layers output plus bias
-            weighted_non_neg_sum_z = PositiveWeightLayer(layer_dim, kernel_constraint=None, activation=None,
-                                                         kernel_initializer=initializer,
+            weighted_non_neg_sum_z = PositiveWeightLayer(layer_dim, kernel_initializer=initializer,
                                                          kernel_regularizer=l1l2_regularizer,
                                                          use_bias=True, bias_initializer=initializer,
                                                          bias_regularizer=l1l2_regularizer,
