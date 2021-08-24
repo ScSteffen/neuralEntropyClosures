@@ -14,9 +14,10 @@ class MonotonicFunctionLoss(Loss):
 
     def call(self, u_true, alpha_pred):
         ns = tf.shape(u_true)[0]
+        ns_int = u_true.shape.as_list()[0]
         ns_f = tf.cast(ns, dtype=tf.float32)
         loss = tf.constant([0.0], dtype=tf.float32)
-        for i in range(ns):
+        for i in range(ns_int):
             t1 = tf.math.subtract(u_true, u_true[i, :])
             t2 = tf.math.subtract(alpha_pred, alpha_pred[i, :])
             t3 = t1 * t2
