@@ -90,13 +90,7 @@ class MK15Network(BaseNetwork):
 
         batch_size = 3  # dummy entry
         model.build(input_shape=(batch_size, self.inputDim))
-
-        # model.compile(loss=tf.keras.losses.MeanSquaredError(),
-        #              # loss={'output_1': tf.keras.losses.MeanSquaredError()},
-        #              # loss_weights={'output_1': 1, 'output_2': 0},
-        #              optimizer='adam',
-        #              metrics=['mean_absolute_error', 'mean_squared_error'])
-
+       
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(),
                   'output_2': MonotonicFunctionLoss(), 'output_3': tf.keras.losses.MeanSquaredError()},
