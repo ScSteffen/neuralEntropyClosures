@@ -46,7 +46,7 @@ class MK12Network(BaseNetwork):
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.inputDim,))
         # First Layer is a std dense layer
-        hidden = layers.Dense(layerDim, activation="softplus",
+        hidden = layers.Dense(layerDim, activation="selu",
                               kernel_initializer=initializer_input,
                               kernel_regularizer=l1l2Regularizer,
                               bias_initializer='zeros',
@@ -54,7 +54,7 @@ class MK12Network(BaseNetwork):
                               )(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
-            hidden = layers.Dense(self.model_width, activation="softplus",
+            hidden = layers.Dense(self.model_width, activation="selu",
                                   # kernel_constraint=NonNeg(),
                                   kernel_initializer=initializer,
                                   kernel_regularizer=l1l2Regularizer,
@@ -62,9 +62,8 @@ class MK12Network(BaseNetwork):
                                   name="dense_" + str(idx)
                                   )(hidden)
         output_ = layers.Dense(1, activation="relu",
-                               # kernel_constraint=NonNeg(),
                                kernel_initializer=initializer,
-                               kernel_regularizer=l1l2Regularizer,
+                               # kernel_regularizer=l1l2Regularizer,
                                bias_initializer='zeros',
                                name="dense_output"
                                )(hidden)  # outputlayer

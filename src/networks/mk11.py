@@ -84,7 +84,7 @@ class MK11Network(BaseNetwork):
             out = tf.keras.activations.softplus(intermediate_sum)
             # out = tf.keras.activations.selu(intermediate_sum)
             # batch normalization
-            # out = layers.BatchNormalization(name='bn_' + str(layerIdx))(out)
+            out = layers.BatchNormalization(name='bn_' + str(layer_idx))(out)
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:

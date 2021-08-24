@@ -38,44 +38,52 @@ class MK15Network(BaseNetwork):
 
         # Weight initializer
         initializer = tf.keras.initializers.LecunNormal()
+
         # Weight regularizer
-        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
+        # l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
 
         ### build the core network ###
 
         # Define Residual block
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
-            y = layers.Dense(layer_dim, activation="relu", kernel_initializer=initializer,
-                             bias_initializer=initializer,
-                             name="block_" + str(layer_idx) + "_layer_0")(x)
-            y = layers.Dense(layer_dim, activation="relu", kernel_initializer=initializer,
-                             bias_initializer=initializer,
-                             name="block_" + str(layer_idx) + "_layer_1")(y)
-            out = keras.layers.Add()([x, y])
-            out = tf.keras.activations.selu(out)
-            # out = keras.layers.BatchNormalization()(out)
+            x = keras.activations.selu(x)  # 1) activation
+            x = keras.layers.BatchNormalization()(x)  # 2) BN that normalizes each feature individually (axis=-1)
+            y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
+                             bias_initializer=initializer, name="block_" + str(layer_idx) + "_layer_0")(x)  # 3) layer
+            y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
+                             bias_initializer=initializer, name="block_" + str(layer_idx) + "_layer_1")(y)  # 4) layer
+            out = keras.layers.Add()([x, y])  # 5) add skip connection
             return out
 
         input_ = keras.Input(shape=(self.inputDim,))
-
-        hidden = layers.Dense(self.model_width, activation="relu", kernel_initializer=initializer,
+        hidden = layers.Dense(self.model_width, activation="selu", kernel_initializer=initializer,
                               use_bias=True, bias_initializer=initializer,
                               name="layer_input")(input_)
         # build resnet blocks
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
+        hidden = keras.layers.BatchNormalization()(hidden)  # BN that normalizes each feature individually (axis=-1)
         if self.scaler_max - self.scaler_min != 1.0:
-            output_ = layers.Dense(self.inputDim, activation=None,
+            output_ = layers.Dense(self.inputDim, activation="relu",
                                    kernel_initializer=initializer,
                                    use_bias=True, bias_initializer=initializer,
                                    name="output")(hidden)
         else:
             output_ = layers.Dense(self.inputDim, activation=None,
                                    kernel_initializer=initializer,
-                                   use_bias=True, bias_initializer=initializer,  # kernel_regularizer=l1l2Regularizer,
-                                   name="output")(hidden)  # bias_regularizer=l1l2Regularizer,
+                                   use_bias=True, bias_initializer=initializer,
+                                   name="output")(hidden)
+
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[output_], name="Direct_ResNet")
+
+        # core_model.build(input_shape=(3, self.inputDim))
+        # core_model.compile(
+        #    loss={'output': tf.keras.losses.MeanSquaredError()},
+        #    loss_weights={'output': self.loss_weights[0]},
+        #    optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
+        # x = np.ones((100, self.inputDim), dtype=float)
+        # core_model.fit(x, x, epochs=10, batch_size=32)
 
         # build model
         model = EntropyModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
@@ -90,6 +98,7 @@ class MK15Network(BaseNetwork):
         #              # loss_weights={'output_1': 1, 'output_2': 0},
         #              optimizer='adam',
         #              metrics=['mean_absolute_error', 'mean_squared_error'])
+
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(),
                   'output_2': MonotonicFunctionLoss(), 'output_3': tf.keras.losses.MeanSquaredError()},
