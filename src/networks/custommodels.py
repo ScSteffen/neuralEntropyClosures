@@ -36,7 +36,8 @@ class EntropyModel(tf.keras.Model, ABC):
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.poly_degree = polynomial_degree
         self.derivative_scale_factor = tf.constant(scale_factor, dtype=tf.float64)
-
+        
+        print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
         if spatial_dimension == 1:
             [quad_pts, quad_weights] = math.qGaussLegendre1D(10 * polynomial_degree)  # dims = nq
             m_basis = math.computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
@@ -64,10 +65,13 @@ class EntropyModel(tf.keras.Model, ABC):
         """
 
         alpha = self.core_model(x)
-
         if self.enable_recons_u:
             print("(Scaled) reconstruction of U enabled")
-            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
+            # clipped_alpha = tf.clip_by_value(alpha, clip_value_min=10.0 / self.alpha_min,
+            #                                 clip_value_max=10.0 / self.alpha_max,
+            #                                 name='clipped')
+            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor,
+                                         tf.cast(alpha, dtype=tf.float64, name=None))
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction

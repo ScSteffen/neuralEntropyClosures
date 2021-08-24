@@ -291,7 +291,7 @@ class BaseNetwork:
         self.model.summary()
         return True
 
-    def load_training_data(self, shuffle_mode: bool = False, alpha_sampling: int = 0, load_all: bool = False,
+    def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
                            normalized_data: bool = False, scaled_output: bool = False) -> bool:
         """
         Loads the training data
@@ -310,8 +310,10 @@ class BaseNetwork:
         if normalized_data:
             filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
                 self.spatial_dim) + "D_normal"
-        if alpha_sampling == 1:
+        if sampling == 1:
             filename = filename + "_alpha"
+        elif sampling == 2:
+            filename = filename + "_gaussian"
         filename = filename + ".csv"
 
         print("Loading Data from location: " + filename)

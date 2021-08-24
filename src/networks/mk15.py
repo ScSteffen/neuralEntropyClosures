@@ -75,17 +75,10 @@ class MK15Network(BaseNetwork):
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[output_], name="Direct_ResNet")
 
-        # core_model.build(input_shape=(3, self.inputDim))
-        # core_model.compile(
-        #    loss={'output': tf.keras.losses.MeanSquaredError()},
-        #    loss_weights={'output': self.loss_weights[0]},
-        #    optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
-        # x = np.ones((100, self.inputDim), dtype=float)
-        # core_model.fit(x, x, epochs=10, batch_size=32)
-
         # build model
         model = EntropyModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
-                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.scaler_max - self.scaler_min,
+                             reconstruct_u=bool(self.loss_weights[2]),
+                             scale_factor=(self.scaler_max - self.scaler_min) / 2.0,
                              name="entropy_wrapper")
 
         batch_size = 3  # dummy entry
@@ -109,11 +102,13 @@ class MK15Network(BaseNetwork):
         Calls training depending on the MK model
         '''
         x_data = self.training_data[0]
+        # print(self.model(self.training_data[1])[2] - tf.constant(self.training_data[0])) #sanity check
         y_data = [tf.constant(self.training_data[1], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float32)]
         self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size,
                        batch_size=batch_size, verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
+
         return self.history
 
     def select_training_data(self):
@@ -135,7 +130,7 @@ class MK15Network(BaseNetwork):
             scaler.fit(output)
             self.scaler_max = float(scaler.data_max_)
             self.scaler_min = float(scaler.data_min_)
-            self.training_data[1] = self.training_data[1] / (self.scaler_max - self.scaler_min)
+            self.training_data[1] = 2 * self.training_data[1] / (self.scaler_max - self.scaler_min)
         return True
 
     def call_network(self, u_complete):
@@ -156,5 +151,3 @@ class MK15Network(BaseNetwork):
         u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
 
         return [u_complete_reconstructed, alpha_complete_predicted]
-
-    # loss  # tf.constant([0.0])
