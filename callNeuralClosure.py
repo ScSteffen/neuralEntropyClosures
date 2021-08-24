@@ -122,8 +122,9 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
-    parser.add_option("-a", "--alphasampling", dest="alphasampling", default=0,
-                      help="uses data sampled in alpha", metavar="ALPHA")
+    parser.add_option("-a", "--sampling", dest="sampling", default=0,
+                      help="uses data sampled in alpha:\n 0: uniform in u\n 1: uniform in alpha\n 2: gaussian in alpha",
+                      metavar="SAMPLING")
     parser.add_option("-b", "--batch", dest="batch", default=128,
                       help="batch size", metavar="BATCH")
     parser.add_option("-c", "--curriculum", dest="curriculum", default=1,
@@ -161,7 +162,7 @@ def main():
 
     (options, args) = parser.parse_args()
     options.objective = int(options.objective)
-    options.alphasampling = int(options.alphasampling)
+    options.sampling = int(options.sampling)
     options.degree = int(options.degree)
     options.spatialDimension = int(options.spatialDimension)
     options.model = int(options.model)
@@ -201,7 +202,7 @@ def main():
     if options.training == 1:
         # create training Data
         neuralClosureModel.load_training_data(shuffle_mode=True,
-                                              alpha_sampling=options.alphasampling,
+                                              sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized,
                                               scaled_output=options.scaledOutput)
     neuralClosureModel.create_model()
@@ -250,7 +251,7 @@ def main():
         print(
             "Re-Save mode entered.")  # if training was not finished, models are not safed to .pb. this can be done here
         neuralClosureModel.load_training_data(shuffle_mode=False,
-                                              alpha_sampling=options.alphasampling,
+                                              sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized)
 
         # normalize data (experimental)

@@ -197,10 +197,10 @@ def shuffleTrainData(x, y, mode="random"):
     return [np.asarray(x), np.asarray(y)]
 
 
-def writeConfigFile(options, neuralClosureModel):
+def writeConfigFile(options, neural_closure_model):
     # create String to create a python runscript
     runScript = "python callNeuralClosure.py \\\n"
-    runScript = runScript + "--alphasampling=" + str(int(options.alphasampling)) + " \\\n"
+    runScript = runScript + "--sampling=" + str(int(options.sampling)) + " \\\n"
     runScript = runScript + "--batch=" + str(options.batch) + " \\\n"
     runScript = runScript + "--curriculum=" + str(options.curriculum) + " \\\n"
     runScript = runScript + "--degree=" + str(options.degree) + " \\\n"
@@ -219,15 +219,15 @@ def writeConfigFile(options, neuralClosureModel):
     runScript = runScript + "--networkdepth=" + str(options.networkdepth)
 
     # Getting filename
-    rsFile = neuralClosureModel.folder_name + '/runScript_001_'
+    rsFile = neural_closure_model.folder_name + '/runScript_001_'
     count = 0
 
     # create directory if it does not exist
-    make_directory(neuralClosureModel.folder_name)
+    make_directory(neural_closure_model.folder_name)
 
     while os.path.isfile(rsFile + '.sh'):
         count += 1
-        rsFile = neuralClosureModel.folder_name + '/runScript_' + str(count).zfill(3) + '_'
+        rsFile = neural_closure_model.folder_name + '/runScript_' + str(count).zfill(3) + '_'
 
     rsFile = rsFile + '.sh'
 
@@ -237,7 +237,7 @@ def writeConfigFile(options, neuralClosureModel):
     f.close()
 
     # Print chosen options to csv
-    d = {'alphasampling': [options.alphasampling],
+    d = {'sampling': [options.sampling],
          'batch': [options.batch],
          'curriculum': [options.curriculum],
          'degree': [options.degree],
@@ -257,11 +257,11 @@ def writeConfigFile(options, neuralClosureModel):
 
     df = pd.DataFrame(data=d)
     count = 0
-    cfgFile = neuralClosureModel.folder_name + '/config_001_'
+    cfgFile = neural_closure_model.folder_name + '/config_001_'
 
     while os.path.isfile(cfgFile + '.csv'):
         count += 1
-        cfgFile = neuralClosureModel.folder_name + '/config_' + str(count).zfill(3) + '_'
+        cfgFile = neural_closure_model.folder_name + '/config_' + str(count).zfill(3) + '_'
 
     cfgFile = cfgFile + '.csv'
     df.to_csv(cfgFile, index=False)
