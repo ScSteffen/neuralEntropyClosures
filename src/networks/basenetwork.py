@@ -126,7 +126,7 @@ class BaseNetwork:
             tf.keras.backend.set_floatx('float32')
 
         # Create callbacks
-        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model.h5', monitor='loss', mode='min',
+        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model', monitor='loss', mode='min',
                                                      save_best_only=True,
                                                      verbose=verbosity)  # , save_weights_only = True, save_freq = 50, verbose=0)
         es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
@@ -260,9 +260,7 @@ class BaseNetwork:
         """
         Saves best model to .pb file
         """
-        # load best h5 file
-        usedFileName = self.folder_name
-        self.model.load_weights(self.folder_name + '/best_model.h5')
+        # self.model.load_weights(self.folder_name + '/best_model.h5')
         self.model.save(self.folder_name + '/best_model')
         print("Model successfully saved to file and .h5")
         # with open(self.filename + '/trainingHistory.json', 'w') as file:
@@ -274,7 +272,7 @@ class BaseNetwork:
         if filename != None:
             usedFileName = filename
 
-        usedFileName = usedFileName + '/best_model.h5'
+        usedFileName = usedFileName + '/best_model'
 
         if path.exists(usedFileName) == False:
             print("Model does not exists at this path: " + usedFileName)
