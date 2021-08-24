@@ -34,10 +34,8 @@ class MK15Network(BaseNetwork):
 
     def create_model(self) -> bool:
 
-        layerDim = self.model_width
-
         # Weight initializer
-        initializer = tf.keras.initializers.LecunNormal()
+        initializer = keras.initializers.LecunNormal()
 
         # Weight regularizer
         # l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
