@@ -62,7 +62,7 @@ class MK15Network(BaseNetwork):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
         hidden = keras.layers.BatchNormalization()(hidden)  # BN that normalizes each feature individually (axis=-1)
         if self.scaler_max - self.scaler_min != 1.0:
-            output_ = layers.Dense(self.inputDim, activation="relu",
+            output_ = layers.Dense(self.inputDim, activation=None,
                                    kernel_initializer=initializer,
                                    use_bias=True, bias_initializer=initializer,
                                    name="output")(hidden)
@@ -90,7 +90,7 @@ class MK15Network(BaseNetwork):
 
         batch_size = 3  # dummy entry
         model.build(input_shape=(batch_size, self.inputDim))
-       
+
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(),
                   'output_2': MonotonicFunctionLoss(), 'output_3': tf.keras.losses.MeanSquaredError()},
