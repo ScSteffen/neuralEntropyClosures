@@ -106,7 +106,7 @@ class MK11Network(BaseNetwork):
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
             if self.scaler_max - self.scaler_min != 1.0:  # if output is scaled, use relu.
-                out = tf.keras.activations.relu(out)  # does not break convexity (Sarath Sivaprasad et al.)
+                out = tf.keras.activations.relu(out)
             return out
 
         ### build the core network with icnn closure architecture ###
