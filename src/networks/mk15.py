@@ -48,6 +48,8 @@ class MK15Network(BaseNetwork):
             x = keras.layers.BatchNormalization()(x)  # 2) BN that normalizes each feature individually (axis=-1)
             y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
                              bias_initializer=initializer, name="block_" + str(layer_idx) + "_layer_0")(x)  # 3) layer
+            y = keras.layers.BatchNormalization()(y)  # 2) BN that normalizes each feature individually (axis=-1)
+
             y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
                              bias_initializer=initializer, name="block_" + str(layer_idx) + "_layer_1")(y)  # 4) layer
             out = keras.layers.Add()([x, y])  # 5) add skip connection

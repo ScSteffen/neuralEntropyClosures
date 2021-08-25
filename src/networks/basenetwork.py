@@ -375,7 +375,8 @@ class BaseNetwork:
             self.scaler_max = float(scaler.data_max_)
             self.scaler_min = float(scaler.data_min_)
             self.training_data[2] = scaler.transform(self.training_data[2])
-            self.training_data[1] = self.training_data[1] / (self.scaler_max - self.scaler_min)
+            self.training_data[1] = (self.training_data[1] - self.scaler_min) / (self.scaler_max - self.scaler_min)
+            # * 2 - 1
         return True
 
     def get_training_data(self):
