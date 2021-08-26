@@ -7,7 +7,7 @@ Date: 16.03.21
 from numpy.polynomial.legendre import leggauss
 import numpy as np
 import tensorflow as tf
-import scipy
+import scipy.optimize as opt
 
 
 class EntropyTools:
@@ -135,8 +135,17 @@ class EntropyTools:
 
         opti_start = np.reshape(start.numpy(), (dim,))
 
-        opt_result = scipy.optimize.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
-                                             tol=1e-4)
+        # test objective functions
+        # t = self.opti_entropy(opti_start)
+        # tp = self.opti_entropy_prime(opti_start)
+        # tpp = self.opti_entropy_prime2(opti_start)#
+
+        # print(t)
+        # print(tp)
+        # print(tpp)
+
+        opt_result = opt.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
+                                  hess=self.opti_entropy_prime2, tol=1e-6)
 
         if not opt_result.success:
             exit("Optimization unsuccessfull!")
@@ -177,7 +186,7 @@ class EntropyTools:
          used members: m    , dims = (N x nq)
                      w    , dims = nq
 
-         returns h = - alpha*u + <eta_*(alpha*m)>
+         returns h = -u + <m*eta_*(alpha*m)>
         """
         # Currently only for maxwell Boltzmann entropy
 
@@ -186,6 +195,31 @@ class EntropyTools:
         t2 = np.tensordot(tmp, self.opti_m[:, :], axes=([1], [1]))  # f * w * momentBasis
         dim = t2.shape[1]
         return np.reshape(t2 - self.opti_u, (dim,))
+
+    def opti_entropy_prime2(self, alpha: np.ndarray) -> np.ndarray:
+        """
+         brief: returns the 2nd derivative negative entropy functional with fixed u
+         nS = batchSize
+         N = basisSize
+         nq = number of quadPts
+
+         input: alpha, dims = (1 x N)
+                u, dims = (1 x N)
+         used members: m    , dims = (N x nq)
+                     w    , dims = nq
+
+         returns h =  <mxm*eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = np.exp(np.tensordot(alpha, self.opti_m, axes=([0], [0])))  # exp(alpha*m)
+        tmp = np.multiply(f_quad, self.opti_w)  # f*w
+
+        # mm = np.zeros(shape=(self.nq, self.inputDim, self.inputDim))
+        t2 = 0
+        for i in range(self.nq):
+            t = np.tensordot(self.opti_m[:, i], self.opti_m[:, i], axes=0)
+            t2 += t * tmp[0, i]
+        return t2
 
     def KL_divergence(self, alpha_true: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
