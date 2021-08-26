@@ -35,7 +35,7 @@ def main():
     modelU.load_model("../models/001_u")
 
     # Load Data
-    [u, alpha, h] = utils.loadData(filenameData, inputDim)
+    [u, alpha, h] = utils.load_data(filenameData, inputDim)
     [u_modelAlpha, alpha_modelAlpha, h_modelAlpha] = modelAlpha.call_scaled_64(u)
     [u_modelU, alpha_modelU, h_modelU] = modelU.call_scaled_64(u)
     # plot results

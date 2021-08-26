@@ -14,7 +14,7 @@ def main():
     filenameData = "data/1D/Monomial_M2_1D_normal.csv"
     inputDim = 3
 
-    [u, alpha, h] = utils.loadData(filenameData, inputDim)
+    [u, alpha, h] = utils.load_data(filenameData, inputDim)
     uN = u[:, 1:]
     alphaN = alpha[:, 1:]
     knn = NearestNeighbors(n_neighbors=8)

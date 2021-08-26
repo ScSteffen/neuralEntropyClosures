@@ -9,7 +9,7 @@ from multiprocessing import Pool
 from functools import partial
 import csv
 
-from src.utils import loadData, scatterPlot2D
+from src.utils import load_data, scatterPlot2D
 from src.sampler.adaptiveSampler import AdaptiveSampler
 
 
@@ -106,7 +106,7 @@ def main():
     # load sampled data
     """
 
-    [u, alpha, h] = loadData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
+    [u, alpha, h] = load_data("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
     u_normal = u[:, 1:]
     alpha_normal = alpha[:, 1:]
 
@@ -165,13 +165,13 @@ def main():
 
     """
     # reference data
-    [u, alpha, h] = loadData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
+    [u, alpha, h] = load_data("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
     u_normal = u[:, 1:]
     alpha_normal = alpha[:, 1:]
     sampler_test = adaptiveSampler(u_normal, alpha_normal, knn_param=10)
 
     # Load query data
-    [u_query, alpha_query, h] = loadData("data/1D/Monomial_M2_1D_normal.csv", 3, [True, True, True])
+    [u_query, alpha_query, h] = load_data("data/1D/Monomial_M2_1D_normal.csv", 3, [True, True, True])
     u_query_normal = u_query[:, 1:]
     diams = np.zeros(h.shape)
     for i in range(1000, 1001):  # len(u_query_normal)):

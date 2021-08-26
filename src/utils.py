@@ -49,40 +49,40 @@ def integrate(x, y):
     return integral
 
 
-def loadData(filename, inputDim, selectedCols=[True, True, True]):
+def load_data(filename: str, input_dim: int, selected_cols: list = [True, True, True]) -> list:
     '''
     Load training Data from csv file <filename>
     u, alpha have length <inputDim>
-    returns: trainingData = [u,alpha,h]
+    returns: training_data = [u,alpha,h]
     '''
 
-    trainingData = []
+    training_data = []
 
     print("Loading Data from location: " + filename)
     # determine which cols correspond to u, alpha and h
-    uCols = list(range(1, inputDim + 1))
-    alphaCols = list(range(inputDim + 1, 2 * inputDim + 1))
-    hCol = [2 * inputDim + 1]
+    u_cols = list(range(1, input_dim + 1))
+    alpha_cols = list(range(input_dim + 1, 2 * input_dim + 1))
+    h_col = [2 * input_dim + 1]
 
     # selectedCols = self.selectTrainingData() #outputs a boolean triple.
     start = time.time()
-    if selectedCols[0] == True:
-        df = pd.read_csv(filename, usecols=[i for i in uCols])
+    if selected_cols[0]:
+        df = pd.read_csv(filename, usecols=[i for i in u_cols])
         uNParray = df.to_numpy()
-        trainingData.append(uNParray)
-    if selectedCols[1] == True:
-        df = pd.read_csv(filename, usecols=[i for i in alphaCols])
+        training_data.append(uNParray)
+    if selected_cols[1]:
+        df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
         alphaNParray = df.to_numpy()
-        trainingData.append(alphaNParray)
-    if selectedCols[2] == True:
-        df = pd.read_csv(filename, usecols=[i for i in hCol])
+        training_data.append(alphaNParray)
+    if selected_cols[2]:
+        df = pd.read_csv(filename, usecols=[i for i in h_col])
         hNParray = df.to_numpy()
-        trainingData.append(hNParray)
+        training_data.append(hNParray)
 
     end = time.time()
     print("Data loaded. Elapsed time: " + str(end - start))
 
-    return trainingData
+    return training_data
 
 
 def evaluateModel(model, input):
