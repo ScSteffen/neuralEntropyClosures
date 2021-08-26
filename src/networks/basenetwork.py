@@ -16,9 +16,12 @@ from sklearn.preprocessing import MinMaxScaler
 
 # intern modules
 from src import utils
+from src.networks.customcallbacks import HaltWhenCallback, LossAndErrorPrintingCallback
 
 
 ### class definitions ###
+
+
 class BaseNetwork:
     normalized: bool  # Determines if model works with normalized data
     poly_degree: int  # Degree of basis function polynomials
@@ -490,38 +493,3 @@ class BaseNetwork:
         self.training_data = [u_normal[:, 1:], alpha_normal[:, 1:], h_normal]
         return 0
     """
-
-
-class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):
-    # def on_train_batch_end(self, batch, logs=None):
-    #    print("For batch {}, loss is {:7.2f}.".format(batch, logs["loss"]))
-
-    # def on_test_batch_end(self, batch, logs=None):
-    #    print("For batch {}, loss is {:7.2f}.".format(batch, logs["loss"]))
-
-    def on_epoch_end(self, epoch, logs=None):
-        print("The average loss for epoch {} is {:7.2f} .".format(epoch, logs["loss"]))
-
-
-class HaltWhenCallback(tf.keras.callbacks.Callback):
-    def __init__(self, quantity, tol):
-        """
-        Should be used in conjunction with
-        the saving criterion for the model; otherwise
-        training will stop without saving the model with quantity <= tol
-        """
-        super(HaltWhenCallback, self).__init__()
-        if type(quantity) == str:
-            self.quantity = quantity
-        else:
-            raise TypeError('HaltWhen(quantity,tol); quantity must be a string for a monitored quantity')
-        self.tol = tol
-
-    def on_epoch_end(self, epoch, logs=None):
-        if epoch > 1:
-            if logs.get(self.quantity) < self.tol:
-                print('\n\n', self.quantity, ' has reached', logs.get(self.quantity), ' < = ', self.tol,
-                      '. End Training.')
-                self.model.stop_training = True
-        else:
-            pass

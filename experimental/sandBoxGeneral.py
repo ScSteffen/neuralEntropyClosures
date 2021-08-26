@@ -10,7 +10,7 @@ import src.utils as utils
 # import tensorflow.keras.backend as K
 import matplotlib.pyplot as plt
 
-from src.utils import finiteDiff, integrate, loadData, evaluateModel
+from src.utils import finiteDiff, integrate, load_data, evaluateModel
 
 plt.style.use("kitish")
 
