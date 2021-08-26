@@ -21,6 +21,7 @@ import numpy as np
 # ------  Code starts here --------
 
 def main():
+    """
     et2 = EntropyTools(polynomial_degree=4)
     alpha_1 = tf.constant([-1.42096, 1.40992, 0.1, 0.1, 2.0], shape=(1, 5), dtype=tf.float32)
     alpha_2 = tf.constant([-1.42096, 1.40992, 0.0], shape=(1, 3), dtype=tf.float32)
@@ -42,7 +43,7 @@ def main():
     print("u2:")
     print(u2)
 
-    plt.show()
+    # plt.show()
 
     et3 = EntropyTools(polynomial_degree=3)
     alpha_full = np.asarray([-3.20452, -10.109, 1.60217, 14.1154])
@@ -53,7 +54,25 @@ def main():
     u_np = u.numpy()
     print(u_np)
     print(u_np / u_np[0, 0])
+    """
+    et2 = EntropyTools(polynomial_degree=2)
+    opti = [[1, 0.0, 0.3]]
+    alpha_init = [[0, 0, 0]]
+    alpha = et2.minimize_entropy(u=tf.constant(opti), start=tf.constant(alpha_init))
+    f1 = et2.compute_kinetic_density(alpha)
+    pts = et2.quadPts
 
+    et3 = EntropyTools(polynomial_degree=3)
+    opti = [[1, 0.0, 0.3, 0.2]]
+    alpha_init = [[0, 0, 0, 0.0]]
+    alpha3 = et3.minimize_entropy(u=tf.constant(opti), start=tf.constant(alpha_init))
+    f3 = et3.compute_kinetic_density(alpha3)
+    pts3 = et3.quadPts
+
+    plt.plot(pts3[0, :], f3[0, :], '--')
+    plt.plot(pts[0, :], f1[0, :], '-.')
+    plt.show()
+    print("Here")
     """
     et2 = EntropyTools(polynomial_degree=2)
     alpha_full = np.asarray([1, 1, 1])

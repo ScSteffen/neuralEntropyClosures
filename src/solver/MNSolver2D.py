@@ -322,8 +322,7 @@ class MNSolver2D:
             if (normU / u0 > 0.95):
                 print("Warning")
             opt_result = scipy.optimize.minimize(fun=self.create_opti_entropy(opti_u), x0=alpha_init,
-                                                 jac=self.create_opti_entropy_prime(opti_u),
-                                                 tol=1e-7)
+                                                 jac=self.create_opti_entropy_prime(opti_u), tol=1e-7)
             if not opt_result.success:
                 print("Optimization unsuccessfull!")
             else:
