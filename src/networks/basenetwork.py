@@ -222,7 +222,6 @@ class BaseNetwork:
         print(historyLogs)
 
         historyLogsDF = []
-        count = 0
         for log in historyLogs:
             historyLogsDF.append(pd.read_csv(self.folder_name + '/historyLogs/' + log))
 

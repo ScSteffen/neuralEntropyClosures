@@ -14,6 +14,7 @@ from matplotlib import cm
 import random
 import os
 from pathlib import Path
+import git
 
 
 def finiteDiff(x, y):
@@ -236,8 +237,12 @@ def writeConfigFile(options, neural_closure_model):
     f.write(runScript)
     f.close()
 
+    repo = git.Repo(search_parent_directories=True)
+    sha = repo.head.object.hexsha
+
     # Print chosen options to csv
-    d = {'sampling': [options.sampling],
+    d = {'git_version': [sha],
+         'sampling': [options.sampling],
          'batch': [options.batch],
          'curriculum': [options.curriculum],
          'degree': [options.degree],
@@ -255,17 +260,14 @@ def writeConfigFile(options, neural_closure_model):
          'network width': [options.networkwidth],
          'network depth': [options.networkdepth]}
 
-    df = pd.DataFrame(data=d)
     count = 0
-    cfgFile = neural_closure_model.folder_name + '/config_001_'
+    cfg_file = neural_closure_model.folder_name + '/config_001_'
 
-    while os.path.isfile(cfgFile + '.csv'):
+    while os.path.isfile(cfg_file + '.csv'):
         count += 1
-        cfgFile = neural_closure_model.folder_name + '/config_' + str(count).zfill(3) + '_'
-
-    cfgFile = cfgFile + '.csv'
-    df.to_csv(cfgFile, index=False)
-
+        cfg_file = neural_closure_model.folder_name + '/config_' + str(count).zfill(3) + '_'
+    cfg_file = cfg_file + '.csv'
+    pd.DataFrame.from_dict(data=d, orient='index').to_csv(cfg_file, header=False, sep=';')
     return True
 
 

@@ -21,10 +21,10 @@ import numpy as np
 # ------  Code starts here --------
 
 def main():
-    et2 = EntropyTools(polynomial_degree=2)
-    alpha_1 = tf.constant([-1.42096, 1.40992, 0.1], shape=(1, 3), dtype=tf.float32)
+    et2 = EntropyTools(polynomial_degree=4)
+    alpha_1 = tf.constant([-1.42096, 1.40992, 0.1, 0.1, 2.0], shape=(1, 5), dtype=tf.float32)
     alpha_2 = tf.constant([-1.42096, 1.40992, 0.0], shape=(1, 3), dtype=tf.float32)
-    div = et2.KL_divergence(alpha_1, alpha_2)
+    # div = et2.KL_divergence(alpha_1, alpha_2)
     # print(div)
 
     et1 = EntropyTools(polynomial_degree=1)
@@ -32,14 +32,17 @@ def main():
     pts = et2.quadPts
 
     f1 = et1.compute_kinetic_density(alpha)
-    f2 = et2.compute_kinetic_density(alpha_2)
-    plt.plot(pts[0, :], f1[0, :])
-    plt.plot(pts[0, :], f2[0, :])
-    # plt.show()
+    f2 = et2.compute_kinetic_density(alpha_1)
+    plt.plot(pts[0, :], f1[0, :], '--')
+    plt.plot(pts[0, :], f2[0, :], '-.')
     u1 = et1.compute_u(f1)
     u2 = et2.compute_u(f2)
+    print("u1:")
     print(u1)
+    print("u2:")
     print(u2)
+
+    plt.show()
 
     et3 = EntropyTools(polynomial_degree=3)
     alpha_full = np.asarray([-3.20452, -10.109, 1.60217, 14.1154])
