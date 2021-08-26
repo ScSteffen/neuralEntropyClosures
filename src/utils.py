@@ -239,7 +239,7 @@ def writeConfigFile(options, neural_closure_model):
 
     repo = git.Repo(search_parent_directories=True)
     sha = repo.head.object.hexsha
-
+    print("Current git checkout: " + str(sha))
     # Print chosen options to csv
     d = {'git_version': [sha],
          'sampling': [options.sampling],
