@@ -5,7 +5,6 @@ date: 26.08.21
 """
 
 import numpy as np
-import scipy
 
 
 class DataStatistics:
@@ -15,4 +14,7 @@ class DataStatistics:
         self.data = data
 
     def get_mean(self):
-        return scipy.mean(self.data, axis=1)
+        return np.mean(self.data, axis=0)
+
+    def get_cov(self):
+        return np.cov(self.data, rowvar=False)
