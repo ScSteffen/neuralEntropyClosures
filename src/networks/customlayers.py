@@ -32,6 +32,27 @@ class MeanShiftLayer(layers.Layer):
         return inputs - self.mu
 
 
+class DecorrelationLayer(layers.Layer):
+    """
+    Layer that linearly transforms the (mean free!) inputs to have a diagonal dataset covariance matrix.
+    Correlation of input data is then 0.
+    """
+
+    def __init__(self, input_dim=32, ev_cov_mat=np.zeros((32, 32), ), **kwargs):
+        """
+        ev_cov_mat: matrix with eigenvectors of covariance matrix.
+        """
+        super(DecorrelationLayer, self).__init__()
+
+        ev_init = tf.zeros_initializer()
+        self.ev_cov_mat = tf.Variable(initial_value=ev_init(shape=(input_dim, input_dim)), trainable=False)
+        self.ev_cov_mat.assign(ev_cov_mat)
+
+    def call(self, inputs):
+        """the layer performs operation (ev.T*data.T).T, which is data*ev"""
+        return tf.matmul(inputs, self.ev_cov_mat)
+
+
 class PositiveWeightLayer(layers.Dense):
     """
     Layer that obtains a positive weight matrix by pointwise applying softmax to it.

@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 from src.networks.basenetwork import BaseNetwork
 from src.networks.customlosses import MonotonicFunctionLoss
 from src.networks.custommodels import EntropyModel
-from src.networks.customlayers import MeanShiftLayer
+from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 
 
 class MK15Network(BaseNetwork):
@@ -58,6 +58,7 @@ class MK15Network(BaseNetwork):
 
         input_ = keras.Input(shape=(self.input_dim,))
         hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+        hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
         hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
                               use_bias=True, bias_initializer=initializer,
                               name="layer_input")(hidden)
@@ -92,7 +93,7 @@ class MK15Network(BaseNetwork):
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': MonotonicFunctionLoss(),
                   'output_3': tf.keras.losses.MeanSquaredError(), 'output_4': tf.keras.losses.MeanSquaredError()},
             loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
-                          'output_3': 100 * self.loss_weights[2], 'output_4': self.loss_weights[2]},
+                          'output_3': self.loss_weights[2], 'output_4': self.loss_weights[2]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
         # model.summary()
