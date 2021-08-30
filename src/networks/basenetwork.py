@@ -26,7 +26,7 @@ class BaseNetwork:
     normalized: bool  # Determines if model works with normalized data
     poly_degree: int  # Degree of basis function polynomials
     spatial_dim: int  # spatial dimension of problem
-    inputDim: int  # dimension of network input
+    input_dim: int  # dimension of network input
     model_width: int  # width of the hidden layers
     model_depth: int  # number of hidden layers (or ICNN blocks)
     optimizer: str  # choice of optimizer
@@ -37,6 +37,7 @@ class BaseNetwork:
     training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
     scaler_max: float  # for output scaling
     scaler_min: float  # for output scaling
+    mean_u: np.ndarray  # mean value of the input moments
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str):
@@ -50,7 +51,6 @@ class BaseNetwork:
         self.history: list = []
         self.scaler_max = 1.0  # default is no scaling
         self.scaler_min = 0.0  # default is no scaling
-
         # --- Determine loss combination ---
         if loss_combination == 0:
             self.loss_weights = [1, 0, 0, 0]
@@ -65,28 +65,31 @@ class BaseNetwork:
 
         # --- Determine inputDim by MaxDegree ---
         if spatial_dimension == 1:
-            self.inputDim = polynomial_degree + 1
+            self.input_dim = polynomial_degree + 1
         elif spatial_dimension == 3:
             if self.poly_degree == 0:
-                self.inputDim = 1
+                self.input_dim = 1
             elif self.poly_degree == 1:
-                self.inputDim = 4
+                self.input_dim = 4
             else:
                 raise ValueError("Polynomial degeree higher than 1 not supported atm")
         elif spatial_dimension == 2:
             if self.poly_degree == 0:
-                self.inputDim = 1
+                self.input_dim = 1
             elif self.poly_degree == 1:
-                self.inputDim = 3
+                self.input_dim = 3
             else:
                 raise ValueError("Polynomial degeree higher than 1 not supported atm")
         else:
             raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
 
-        self.csvInputDim = self.inputDim  # only for reading csv data
+        self.csvInputDim = self.input_dim  # only for reading csv data
 
         if self.normalized:
-            self.inputDim = self.inputDim - 1
+            self.input_dim = self.input_dim - 1
+
+        self.mean_u = np.zeros(shape=(self.input_dim,), dtype=float)
+        self.cov_u = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
 
     def create_model(self) -> bool:
         pass
@@ -358,6 +361,11 @@ class BaseNetwork:
 
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
+        if selected_cols[0]:
+            self.mean_u = np.mean(u_ndarray, axis=0)
+            self.cov_u = np.cov(self.data, rowvar=False)
+        else:
+            print("Warning: Mean of training data moments was not computed")
         self.training_data_preprocessing(scaled_output=scaled_output)
         print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
             self.scaler_min))

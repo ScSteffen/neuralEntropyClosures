@@ -100,7 +100,7 @@ class MK14Network(BaseNetwork):
             return out
 
         ### build the core network with icnn closure architecture ###
-        input_ = keras.Input(shape=(self.inputDim,))
+        input_ = keras.Input(shape=(self.input_dim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
                               kernel_regularizer=l1l2_regularizer, use_bias=True, bias_initializer=input_initializer,
@@ -124,7 +124,7 @@ class MK14Network(BaseNetwork):
                              name="sobolev_icnn_wrapper")
         # build graph
         batch_size: int = 2  # dummy entry
-        model.build(input_shape=(batch_size, self.inputDim))
+        model.build(input_shape=(batch_size, self.input_dim))
 
         # test
         # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)

@@ -34,7 +34,7 @@ class MK12Network(BaseNetwork):
         # Weight initializer
         initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
         input_stddev: float = np.sqrt(
-            (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            (1 / 1.1) * (1 / self.input_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
         initializer_input = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
         stddev = np.sqrt(
             (1 / 1.1) * (1 / self.model_width) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
@@ -44,7 +44,7 @@ class MK12Network(BaseNetwork):
         l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
 
         ### build the core network with icnn closure architecture ###
-        input_ = keras.Input(shape=(self.inputDim,))
+        input_ = keras.Input(shape=(self.input_dim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(layerDim, activation="selu",
                               kernel_initializer=initializer_input,
@@ -77,7 +77,7 @@ class MK12Network(BaseNetwork):
                              name="sobolev_icnn_wrapper")
 
         batchSize = 2  # dummy entry
-        model.build(input_shape=(batchSize, self.inputDim))
+        model.build(input_shape=(batchSize, self.input_dim))
 
         # model.compile(loss=tf.keras.losses.MeanSquaredError(),
         #              # loss={'output_1': tf.keras.losses.MeanSquaredError()},
