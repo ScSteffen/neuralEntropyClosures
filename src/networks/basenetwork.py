@@ -363,7 +363,7 @@ class BaseNetwork:
         print("Data loaded. Elapsed time: " + str(end - start))
         if selected_cols[0]:
             self.mean_u = np.mean(u_ndarray, axis=0)
-            self.cov_u = np.cov(self.data, rowvar=False)
+            self.cov_u = np.cov(u_ndarray, rowvar=False)
         else:
             print("Warning: Mean of training data moments was not computed")
         self.training_data_preprocessing(scaled_output=scaled_output)
