@@ -55,22 +55,42 @@ def main():
     print(u_np)
     print(u_np / u_np[0, 0])
     """
-    et2 = EntropyTools(polynomial_degree=2)
-    opti = [[1, 0.0, 0.3]]
-    alpha_init = [[0, 0, 0]]
-    alpha = et2.minimize_entropy(u=tf.constant(opti), start=tf.constant(alpha_init))
-    f1 = et2.compute_kinetic_density(alpha)
-    pts = et2.quadPts
+
+    et4 = EntropyTools(polynomial_degree=4)
+    alpha_generator = [[-0.0, 1.0, -1.0, 0.0]]
+    alpha_full = et4.reconstruct_alpha(tf.constant(alpha_generator))
+    opti4 = et4.reconstruct_u(alpha_full)
+    alpha_init = [[0, 0, 0, 0, 0.0]]
+    alpha3 = et4.minimize_entropy(u=opti4, start=tf.constant(alpha_init))
+    f4 = et4.compute_kinetic_density(alpha3)
+    pt4 = et4.quadPts
 
     et3 = EntropyTools(polynomial_degree=3)
-    opti = [[1, 0.0, 0.3, 0.2]]
-    alpha_init = [[0, 0, 0, 0.0]]
-    alpha3 = et3.minimize_entropy(u=tf.constant(opti), start=tf.constant(alpha_init))
-    f3 = et3.compute_kinetic_density(alpha3)
+    opti3 = tf.constant(opti4[:, :-1])
+    alpha_init = [[0, 0, 0, 0]]
+    alpha = et3.minimize_entropy(u=opti3, start=tf.constant(alpha_init))
+    f3 = et3.compute_kinetic_density(alpha)
     pts3 = et3.quadPts
 
-    plt.plot(pts3[0, :], f3[0, :], '--')
-    plt.plot(pts[0, :], f1[0, :], '-.')
+    et2 = EntropyTools(polynomial_degree=2)
+    opti2 = tf.constant(opti3[:, :-1])
+    alpha_init = [[0, 0, 0]]
+    alpha = et2.minimize_entropy(u=opti2, start=tf.constant(alpha_init))
+    f2 = et2.compute_kinetic_density(alpha)
+    pts2 = et2.quadPts
+
+    et1 = EntropyTools(polynomial_degree=1)
+    opti1 = tf.constant(opti2[:, :-1])
+    alpha_init = [[0, 0]]
+    alpha = et1.minimize_entropy(u=opti1, start=tf.constant(alpha_init))
+    f1 = et1.compute_kinetic_density(alpha)
+    pts1 = et1.quadPts
+
+    plt.plot(pt4[0, :], f4[0, :], '--')
+    plt.plot(pts3[0, :], f3[0, :], '.')
+    plt.plot(pts2[0, :], f2[0, :], '-.')
+    plt.plot(pts1[0, :], f1[0, :], '-')
+    plt.legend(['M4', 'M3', 'M2', 'M1'])
     plt.show()
     print("Here")
     """

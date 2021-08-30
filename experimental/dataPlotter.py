@@ -26,11 +26,11 @@ def main():
     # [u, alpha, h] = loadTrainingData("disc_Moments.csv", 3)
     # plot2DMoments(u, h)
 
-    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M1_1D_normal_stdnormal.csv", 2)
+    # [u, alpha, h] = loadTrainingData("data/1D/Monomial_M1_1D_normal_stdnormal.csv", 2)
     # u = u[1500:2000, :]
     # h = h[1500:2000]
 
-    plot_h_over_n1(u[:, 1], alpha[:, 1])
+    # plot_h_over_n1(u[:, 1], alpha[:, 1])
     # plot_h_over_n1_n2_n3(u, h)
     # plot_h_over_n1_n2(u[:, [0, 1, 3]], h)
 
@@ -40,6 +40,7 @@ def main():
     # h = h[1500:2000]
     plot_h_over_n1_n2_n3(u, h)
     plot_h_over_n1_n2(u[:, [0, 1, 3]], h)
+    plot_h_over_n1_n2(u[:, [0, 1, 2]], h)
 
     # Normalized Plots
     # [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3)

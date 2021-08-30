@@ -36,7 +36,7 @@ class EntropyModel(tf.keras.Model, ABC):
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.poly_degree = polynomial_degree
         self.derivative_scale_factor = tf.constant(scale_factor, dtype=tf.float64)
-        
+
         print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
         if spatial_dimension == 1:
             [quad_pts, quad_weights] = math.qGaussLegendre1D(10 * polynomial_degree)  # dims = nq
@@ -66,19 +66,21 @@ class EntropyModel(tf.keras.Model, ABC):
 
         alpha = self.core_model(x)
         if self.enable_recons_u:
-            print("(Scaled) reconstruction of U enabled")
-            # clipped_alpha = tf.clip_by_value(alpha, clip_value_min=10.0 / self.alpha_min,
-            #                                 clip_value_max=10.0 / self.alpha_max,
-            #                                 name='clipped')
+            print("(Scaled) reconstruction of u and h enabled")
             alpha64 = tf.math.scalar_mul(self.derivative_scale_factor,
                                          tf.cast(alpha, dtype=tf.float64, name=None))
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
-            res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
+            u_res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
+
+            # compute entropy functional h
+            h_res = self.compute_h_fast(u=u_complete, alpha=alpha_complete)
         else:
-            print("Reconstruction of U disabled. Output 3 is meaningless")
-            res = alpha
-        return [alpha, alpha, res]
+            print("Reconstruction of u and h disabled. Output 3 is meaningless")
+            u_res = alpha
+            h_res = alpha
+
+        return [alpha, alpha, u_res, h_res]
 
     def reconstruct_alpha(self, alpha):
         """
@@ -122,7 +124,7 @@ class EntropyModel(tf.keras.Model, ABC):
         clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
 
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(clipped_alpha, self.moment_basis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(clipped_alpha, self.moment_basis, axes=([1], [0])))  # exp(alpha*m)
         tmp = tf.math.multiply(f_quad, self.quad_weights)  # f*w
         return tf.tensordot(tmp, self.moment_basis[:, :], axes=([1], [1]))  # f * w * momentBasis
 
@@ -163,10 +165,31 @@ class EntropyModel(tf.keras.Model, ABC):
         returns h = alpha*u - <eta_*(alpha*m)>
         """
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(alpha, self.moment_basis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.moment_basis, axes=([1], [0])))  # exp(alpha*m)
         tmp = tf.tensordot(f_quad, self.quad_weights, axes=([1], [1]))  # f*w
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         return tmp2 - tmp
+
+    def compute_h_fast(self, u, alpha):
+        """
+        brief: computes the entropy functional h on u and alpha using that <exp(alpha*m)> = u_0 = 1 for normalized moments
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+               u, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = alpha*u - <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.moment_basis, axes=([1], [0])))  # exp(alpha*m)
+        tmp = tf.tensordot(f_quad, self.quad_weights, axes=([1], [1]))  # f*w
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
+        return tmp2 - u[:, 0]
 
 
 class SobolevModel(EntropyModel):
