@@ -42,7 +42,7 @@ class MK13Network(BaseNetwork):
         # Deep Neural Networks").
         # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
         input_stddev: float = np.sqrt(
-            (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            (1 / 1.1) * (1 / self.input_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
         input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
         # Weight initializer (uniform bounded)
         # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
@@ -106,7 +106,7 @@ class MK13Network(BaseNetwork):
             return intermediate_sum
 
         # --- build the core network with icnn closure architecture ---
-        input_ = keras.Input(shape=(self.inputDim,))
+        input_ = keras.Input(shape=(self.input_dim,))
         # First Layer is a std dense layer
         hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
                               kernel_regularizer=None, bias_initializer='zeros', name="first_dense")(input_)
@@ -126,7 +126,7 @@ class MK13Network(BaseNetwork):
                              name="sobolev_icnn_wrapper")
         # build graph
         batch_size: int = 2  # dummy entry
-        model.build(input_shape=(batch_size, self.inputDim))
+        model.build(input_shape=(batch_size, self.input_dim))
 
         # print(tf.keras.losses.MeanSquaredError()(a3, a2))
         # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))

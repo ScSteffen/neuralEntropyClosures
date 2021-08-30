@@ -18,6 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 from src.networks.basenetwork import BaseNetwork
 from src.networks.customlosses import MonotonicFunctionLoss
 from src.networks.custommodels import EntropyModel
+from src.networks.customlayers import MeanShiftLayer
 
 
 class MK15Network(BaseNetwork):
@@ -55,21 +56,22 @@ class MK15Network(BaseNetwork):
             out = keras.layers.Add()([x, y])  # 5) add skip connection
             return out
 
-        input_ = keras.Input(shape=(self.inputDim,))
-        hidden = layers.Dense(self.model_width, activation="selu", kernel_initializer=initializer,
+        input_ = keras.Input(shape=(self.input_dim,))
+        hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+        hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
                               use_bias=True, bias_initializer=initializer,
-                              name="layer_input")(input_)
+                              name="layer_input")(hidden)
         # build resnet blocks
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
         hidden = keras.layers.BatchNormalization()(hidden)  # BN that normalizes each feature individually (axis=-1)
         if self.scaler_max - self.scaler_min != 1.0:
-            output_ = layers.Dense(self.inputDim, activation=None,
+            output_ = layers.Dense(self.input_dim, activation=None,
                                    kernel_initializer=initializer,
                                    use_bias=True, bias_initializer=initializer,
                                    name="output")(hidden)
         else:
-            output_ = layers.Dense(self.inputDim, activation=None,
+            output_ = layers.Dense(self.input_dim, activation=None,
                                    kernel_initializer=initializer,
                                    use_bias=True, bias_initializer=initializer,
                                    name="output")(hidden)
@@ -84,13 +86,13 @@ class MK15Network(BaseNetwork):
                              name="entropy_wrapper")
 
         batch_size = 3  # dummy entry
-        model.build(input_shape=(batch_size, self.inputDim))
+        model.build(input_shape=(batch_size, self.input_dim))
 
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': MonotonicFunctionLoss(),
                   'output_3': tf.keras.losses.MeanSquaredError(), 'output_4': tf.keras.losses.MeanSquaredError()},
             loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
-                          'output_3': self.loss_weights[2], 'output_4': self.loss_weights[2]},
+                          'output_3': 100 * self.loss_weights[2], 'output_4': self.loss_weights[2]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
         # model.summary()
