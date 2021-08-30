@@ -76,7 +76,7 @@ class MK15Network(BaseNetwork):
 
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[output_], name="Direct_ResNet")
-
+        core_model.summary()
         # build model
         model = EntropyModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]),
@@ -87,10 +87,10 @@ class MK15Network(BaseNetwork):
         model.build(input_shape=(batch_size, self.inputDim))
 
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(),
-                  'output_2': MonotonicFunctionLoss(), 'output_3': tf.keras.losses.MeanSquaredError()},
-            loss_weights={'output_1': self.loss_weights[0], 'output_2': 0 * self.loss_weights[1],
-                          'output_3': self.loss_weights[2]},
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': MonotonicFunctionLoss(),
+                  'output_3': tf.keras.losses.MeanSquaredError(), 'output_4': tf.keras.losses.MeanSquaredError()},
+            loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
+                          'output_3': self.loss_weights[2], 'output_4': self.loss_weights[2]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
         # model.summary()
@@ -107,7 +107,8 @@ class MK15Network(BaseNetwork):
         # print(self.model(self.training_data[1])[2] - tf.constant(self.training_data[0])) #sanity check
         y_data = [tf.constant(self.training_data[1], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float32),
-                  tf.constant(self.training_data[0], dtype=tf.float32)]
+                  tf.constant(self.training_data[0], dtype=tf.float32),
+                  tf.constant(self.training_data[2], dtype=tf.float32)]
         self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size,
                        batch_size=batch_size, verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
 
