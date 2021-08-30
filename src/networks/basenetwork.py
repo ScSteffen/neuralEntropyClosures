@@ -38,6 +38,8 @@ class BaseNetwork:
     scaler_max: float  # for output scaling
     scaler_min: float  # for output scaling
     mean_u: np.ndarray  # mean value of the input moments
+    cov_u: np.ndarray  # covariance of input moments
+    cov_ev: np.ndarray  # eigenvalues of cov matrix of input moments
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str):
@@ -90,6 +92,7 @@ class BaseNetwork:
 
         self.mean_u = np.zeros(shape=(self.input_dim,), dtype=float)
         self.cov_u = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
+        self.cov_ev = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
 
     def create_model(self) -> bool:
         pass
@@ -362,8 +365,15 @@ class BaseNetwork:
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
         if selected_cols[0]:
+            print("Computing input data statistics")
             self.mean_u = np.mean(u_ndarray, axis=0)
+            print("Training data mean (of u) is")
+            print(self.mean_u)
+            print("Training data covariance (of u) is")
             self.cov_u = np.cov(u_ndarray, rowvar=False)
+            print(self.cov_u)
+            [_, self.cov_ev] = np.linalg.eigh(self.cov_u)
+            print("Shifting the data accordingly if network architecture is MK15 or newer...")
         else:
             print("Warning: Mean of training data moments was not computed")
         self.training_data_preprocessing(scaled_output=scaled_output)
