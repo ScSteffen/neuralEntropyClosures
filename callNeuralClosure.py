@@ -56,9 +56,9 @@ def initModelCpp(input):
 
 
 ### function definitions ###
-def initModel(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: int = "testFolder",
-              loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
-              scaled_output: bool = False):
+def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: str = "testFolder",
+               loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
+               input_decorrelation: bool = False):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -68,12 +68,13 @@ def initModel(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int 
     neuralClosureModel = init_neural_closure(network_mk=network_mk, poly_degree=polynomial_degree,
                                              spatial_dim=spatial_dim,
                                              folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
-                                             nw_width=width, normalized=normalized)
+                                             nw_width=width, normalized=normalized,
+                                             input_decorrelation=input_decorrelation)
 
     return 0
 
 
-def callNetwork(input):
+def call_network(input):
     '''
     # Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
     # Output: Gradient of the network wrt input
@@ -92,9 +93,9 @@ def callNetwork(input):
     return gradients
 
 
-def callNetworkBatchwise(inputNetwork):
+def call_network_batchwise(network_input):
     # Transform npArray to tfEagerTensor
-    x_model = tf.Variable(inputNetwork)
+    x_model = tf.Variable(network_input)
 
     # Compute Autodiff tape
     with tf.GradientTape() as tape:
@@ -108,13 +109,13 @@ def callNetworkBatchwise(inputNetwork):
     # ---- Convert gradients from eagerTensor to numpy array and then to flattened c array ----
 
     # Note: Use inputNetwork as array, since a newly generated npArray seems to cause a Segfault in cpp
-    (dimCell, dimBase) = inputNetwork.shape
+    (dimCell, dimBase) = network_input.shape
 
     for i in range(0, dimCell):
         for j in range(0, dimBase):
-            inputNetwork[i, j] = gradients[i, j]
+            network_input[i, j] = gradients[i, j]
 
-    return inputNetwork
+    return network_input
 
 
 def main():
@@ -137,6 +138,8 @@ def main():
                       help="folder where the model is stored", metavar="FOLDER")
     parser.add_option("-g", "--scaledOutput", dest="scaledOutput", default="0",
                       help="train on scaled entropy values", metavar="SCALEDOUTPUT")
+    parser.add_option("-i", "--decorrInput", dest="decorrInput", default="0",
+                      help="train normalized and decorrelated input moments", metavar="SCALEDINPUT")
     parser.add_option("-l", "--loadModel", dest="loadmodel", default=1,
                       help="load model weights from file", metavar="LOADING")
     parser.add_option("-m", "--model", dest="model", default=11,
@@ -171,6 +174,7 @@ def main():
     options.batch = int(options.batch)
     options.verbosity = int(options.verbosity)
     options.scaledOutput = bool(int(options.scaledOutput))
+    options.decorrInput = bool(int(options.decorrInput))
     options.loadmodel = int(options.loadmodel)
     options.training = int(options.training)
     options.processingmode = int(options.processingmode)
@@ -192,9 +196,9 @@ def main():
 
     # --- initialize model framework
     print("Initialize model")
-    initModel(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatialDimension,
-              folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
-              width=options.networkwidth, depth=options.networkdepth)
+    init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatialDimension,
+               folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
+               width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput)
     # Save options and runscript to file
     utils.writeConfigFile(options, neuralClosureModel)
 
@@ -319,7 +323,7 @@ def main():
         # bin the weight value of each layer.
 
     else:
-        # --- in execution mode,  callNetwork or callNetworkBatchwise get called from c++ directly ---
+        # --- in execution mode,  call_network or call_network_batchwise get called from c++ directly ---
         print("pure execution mode")
     print("Neural Entropy Closure Suite finished successfully.")
     return 0
