@@ -40,10 +40,14 @@ class BaseNetwork:
     mean_u: np.ndarray  # mean value of the input moments
     cov_u: np.ndarray  # covariance of input moments
     cov_ev: np.ndarray  # eigenvalues of cov matrix of input moments
+    input_decorrelation: bool  # flag to turn on decorrelation of input variables
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
-                 width: int, depth: int, loss_combination: int, save_folder: str):
+                 width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool):
         self.normalized = normalized
+        self.input_decorrelation = input_decorrelation
+        if self.input_decorrelation:
+            print("Model is build with mean shift and decorrelation layers.")
         self.poly_degree: int = polynomial_degree
         self.spatial_dim: int = spatial_dimension
         self.model_width: int = width
@@ -117,7 +121,7 @@ class BaseNetwork:
 
     def call_scaled(self, u_non_normal):
         """
-        Brief: By default the same behaviour as callNetwork.
+        Brief: By default the same behaviour as call_network.
               This method is subclassed by all networks, that only take normalized moments (MK11 and newer)
         """
         return self.call_network(u_non_normal)

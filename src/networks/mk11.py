@@ -15,6 +15,7 @@ from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.custommodels import SobolevModel
+from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 
 
 class MK11Network(BaseNetwork):
@@ -24,7 +25,7 @@ class MK11Network(BaseNetwork):
     Loss function:  MSE between h_pred and real_h
     '''
 
-    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
+    def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
             custom_folder_name = "MK11_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
@@ -32,7 +33,8 @@ class MK11Network(BaseNetwork):
             custom_folder_name = save_folder
         super(MK11Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
-                                          loss_combination=loss_combination, save_folder=custom_folder_name)
+                                          loss_combination=loss_combination, save_folder=custom_folder_name,
+                                          input_decorrelation=input_decorrelation)
 
     def create_model(self) -> bool:
         # Weight initializer
@@ -111,10 +113,20 @@ class MK11Network(BaseNetwork):
 
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.input_dim,))
-        # First Layer is a std dense layer
-        hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
-                              kernel_regularizer=l1l2_regularizer, use_bias=True, bias_initializer=input_initializer,
-                              bias_regularizer=l1l2_regularizer, name="layer_-1_input")(input_)
+        if self.input_decorrelation:  # input data decorellation and shift
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            # First Layer is a std dense layer
+            hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
+                                  kernel_regularizer=l1l2_regularizer, use_bias=True,
+                                  bias_initializer=input_initializer,
+                                  bias_regularizer=l1l2_regularizer, name="layer_-1_input")(hidden)
+        else:
+            # First Layer is a std dense layer
+            hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
+                                  kernel_regularizer=l1l2_regularizer, use_bias=True,
+                                  bias_initializer=input_initializer,
+                                  bias_regularizer=l1l2_regularizer, name="layer_-1_input")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)

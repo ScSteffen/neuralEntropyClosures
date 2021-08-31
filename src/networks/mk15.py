@@ -23,7 +23,7 @@ from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 
 class MK15Network(BaseNetwork):
 
-    def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
+    def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = ""):
         if save_folder == "":
             custom_folder_name = "MK15_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
@@ -31,7 +31,8 @@ class MK15Network(BaseNetwork):
             custom_folder_name = save_folder
         super(MK15Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
-                                          loss_combination=loss_combination, save_folder=custom_folder_name)
+                                          loss_combination=loss_combination, save_folder=custom_folder_name,
+                                          input_decorrelation=input_decorrelation)
 
     def create_model(self) -> bool:
 
@@ -57,11 +58,16 @@ class MK15Network(BaseNetwork):
             return out
 
         input_ = keras.Input(shape=(self.input_dim,))
-        hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
-        hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
-        hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
-                              use_bias=True, bias_initializer=initializer,
-                              name="layer_input")(hidden)
+        if self.input_decorrelation:
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
+                                  use_bias=True, bias_initializer=initializer,
+                                  name="layer_input")(hidden)
+        else:
+            hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
+                                  use_bias=True, bias_initializer=initializer,
+                                  name="layer_input")(input_)
         # build resnet blocks
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
@@ -112,6 +118,7 @@ class MK15Network(BaseNetwork):
                   tf.constant(self.training_data[0], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float32),
                   tf.constant(self.training_data[2], dtype=tf.float32)]
+
         self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size,
                        batch_size=batch_size, verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
 
