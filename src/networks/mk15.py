@@ -46,18 +46,22 @@ class MK15Network(BaseNetwork):
 
         # Define Residual block
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
-            x = keras.activations.selu(x)  # 1) activation
-            x = keras.layers.BatchNormalization()(x)  # 2) BN that normalizes each feature individually (axis=-1)
+            # x = keras.activations.selu(x)  # 1) activation
+            # x = keras.layers.BatchNormalization()(x)  # 2) BN that normalizes each feature individually (axis=-1)
+            # 1) layer
             y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
-                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(
-                x)  # 3) layer
-            y = keras.layers.BatchNormalization()(y)  # 2) BN that normalizes each feature individually (axis=-1)
+                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(x)
+            # 2) BN that normalizes each feature individually (axis=-1)
+            y = keras.layers.BatchNormalization()(y)
+            # 3) layer
             y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
-                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(
-                y)  # 4) layer
-            out = keras.layers.Add()([x, y])  # 5) add skip connection
+                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(y)
+            # 4) BN that normalizes each feature individually (axis=-1)
+            y = keras.layers.BatchNormalization()(y)
+            # 5) add skip connection
+            out = keras.layers.Add()([x, y])
             return out
 
         input_ = keras.Input(shape=(self.input_dim,))
@@ -74,15 +78,15 @@ class MK15Network(BaseNetwork):
         # build resnet blocks
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
-        hidden = keras.layers.BatchNormalization()(hidden)  # BN that normalizes each feature individually (axis=-1)
+        # hidden = keras.layers.BatchNormalization()(hidden)  # BN that normalizes each feature individually (axis=-1)
         if self.scaler_max - self.scaler_min != 1.0:
             output_ = layers.Dense(self.input_dim, activation=None, kernel_initializer=initializer,
                                    use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
-                                   bias_regularizer=l2_regularizer, name="output")(hidden)
+                                   bias_regularizer=l2_regularizer, name="layer_output")(hidden)
         else:
             output_ = layers.Dense(self.input_dim, activation=None, kernel_initializer=initializer,
                                    use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
-                                   bias_regularizer=l2_regularizer, name="output")(hidden)
+                                   bias_regularizer=l2_regularizer, name="layer_output")(hidden)
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[output_], name="Direct_ResNet")
         core_model.summary()
