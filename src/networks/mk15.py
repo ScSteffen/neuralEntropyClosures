@@ -61,7 +61,7 @@ class MK15Network(BaseNetwork):
             return out
 
         input_ = keras.Input(shape=(self.input_dim,))
-        if self.input_decorrelation:
+        if self.input_decorrelation and self.input_dim > 1:
             hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
             hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,

@@ -260,7 +260,7 @@ class BaseNetwork:
         count = 1
         while path.isfile(logName + '.csv'):
             count += 1
-            logFile = self.folder_name + '/historyLogs/history_' + str(count).zfill(3) + '_'
+            logName = self.folder_name + '/historyLogs/history_' + str(count).zfill(3) + '_'
 
         logFile = logName + '.csv'
         # create logger callback
