@@ -211,6 +211,7 @@ def writeConfigFile(options, neural_closure_model):
     runScript = runScript + "--model=" + str(options.model) + " \\\n"
     runScript = runScript + "--normalized=" + str(int(options.normalized)) + " \\\n"
     runScript = runScript + "--scaledOutput=" + str(int(options.scaledOutput)) + " \\\n"
+    runScript = runScript + "--decorrInput=" + str(int(options.decorrInput)) + " \\\n"
     runScript = runScript + "--objective=" + str(options.objective) + " \\\n"
     runScript = runScript + "--processingmode=" + str(options.processingmode) + " \\\n"
     runScript = runScript + "--spatialDimension=" + str(options.spatialDimension) + " \\\n"
@@ -251,6 +252,7 @@ def writeConfigFile(options, neural_closure_model):
          'loadModel': [options.loadmodel],
          'model': [options.model],
          'normalized moments': [options.normalized],
+         'decorrelate inputs': [options.decorrInput],
          'scaled outputs': [options.scaledOutput],
          'objective': [options.objective],
          'processingmode': [options.processingmode],

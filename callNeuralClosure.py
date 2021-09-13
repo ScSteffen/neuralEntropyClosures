@@ -320,7 +320,39 @@ def main():
             #    plt.savefig(neuralClosureModel.folder_name + "/" + name + ".png")
             #    plt.clf()
             count += 1
-        # bin the weight value of each layer.
+
+        # print non trainable weights
+        all_layers = neuralClosureModel.model.trainable_weights
+        layer_list = []
+        count = 0
+        for layer in all_layers:
+            t = layer
+            # print(t)
+            tn = t.numpy().flatten()
+            layer_list.append(tn)
+            print(layer.shape)
+            print("max weight:  " + str(np.max(tn)) + " min weight: " + str(np.min(tn)))
+            # hist, bin_edges = np.histogram(tn, bins=10, density=True)
+            plt.hist(tn, density=True)  # arguments are passed to np.histogram
+            name = layer.name
+            name = name.replace(':', '')
+            name = name.replace('/', '_')
+            plt.title("Histogram of weights in layer " + name)
+            # Text(0.5, 1.0, "Histogram with 'auto' bins")
+            plt.savefig(neuralClosureModel.folder_name + "/" + name + ".png")
+            # plt.show()
+            plt.clf()
+            # if "nn_component" in name:
+            #    tn_sm = tf.nn.relu(tn)
+            #    print(max(tn_sm))
+            #    print(min(tn_sm))
+            #    plt.hist(tn_sm, density=True)
+            #    name = name + "_relu"
+            #    plt.title("Histogram of weights in layer " + name)
+            #    plt.savefig(neuralClosureModel.folder_name + "/" + name + ".png")
+            #    plt.clf()
+            count += 1
+
 
     else:
         # --- in execution mode,  call_network or call_network_batchwise get called from c++ directly ---

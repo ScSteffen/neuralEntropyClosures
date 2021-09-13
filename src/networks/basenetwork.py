@@ -376,7 +376,10 @@ class BaseNetwork:
             print("Training data covariance (of u) is")
             self.cov_u = np.cov(u_ndarray, rowvar=False)
             print(self.cov_u)
-            [_, self.cov_ev] = np.linalg.eigh(self.cov_u)
+            if self.input_dim > 1:
+                [_, self.cov_ev] = np.linalg.eigh(self.cov_u)
+            else:
+                self.cov_ev = self.cov_u  # 1D case
             print("Shifting the data accordingly if network architecture is MK15 or newer...")
         else:
             print("Warning: Mean of training data moments was not computed")
