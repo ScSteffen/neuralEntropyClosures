@@ -191,12 +191,12 @@ class BaseNetwork:
             HW = HaltWhenCallback('val_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
-            csv_logger = self.create_csv_logger_cb()
+            csv_logger, tensorboard_logger = self.create_csv_logger_cb()
 
             if verbosity == 1:
-                callbackList = [mc_best, csv_logger, HW, ES]  # LR,
+                callbackList = [mc_best, csv_logger, tensorboard_logger, HW, ES]  # LR,
             else:
-                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, HW, ES]  # LR,
+                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, tensorboard_logger, HW, ES]  # LR,
 
             # start Training
             self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
@@ -249,24 +249,24 @@ class BaseNetwork:
 
     def create_csv_logger_cb(self):
         '''
-        dynamically creates a csvlogger
+        dynamically creates a csvlogger and tensorboard logger
         '''
         # check if dir exists
         if not path.exists(self.folder_name + '/historyLogs/'):
             makedirs(self.folder_name + '/historyLogs/')
 
         # checkfirst, if history file exists.
-        logFile = self.folder_name + '/historyLogs/history_001_'
+        logName = self.folder_name + '/historyLogs/history_001_'
         count = 1
-        while path.isfile(logFile + '.csv'):
+        while path.isfile(logName + '.csv'):
             count += 1
             logFile = self.folder_name + '/historyLogs/history_' + str(count).zfill(3) + '_'
 
-        logFile = logFile + '.csv'
+        logFile = logName + '.csv'
         # create logger callback
         csv_logger = tf.keras.callbacks.CSVLogger(logFile)
-
-        return csv_logger
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logName, histogram_freq=1)
+        return csv_logger, tensorboard_callback
 
     def save_model(self):
         """
