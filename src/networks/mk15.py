@@ -40,7 +40,7 @@ class MK15Network(BaseNetwork):
         initializer = keras.initializers.LecunNormal()
 
         # Weight regularizer
-        # l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
+        l2_regularizer = tf.keras.regularizers.L2(l2=0.001)  # L1 + L2 penalties
 
         ### build the core network ###
 
@@ -49,11 +49,14 @@ class MK15Network(BaseNetwork):
             x = keras.activations.selu(x)  # 1) activation
             x = keras.layers.BatchNormalization()(x)  # 2) BN that normalizes each feature individually (axis=-1)
             y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
-                             bias_initializer=initializer, name="block_" + str(layer_idx) + "_layer_0")(x)  # 3) layer
+                             bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(
+                x)  # 3) layer
             y = keras.layers.BatchNormalization()(y)  # 2) BN that normalizes each feature individually (axis=-1)
-
             y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
-                             bias_initializer=initializer, name="block_" + str(layer_idx) + "_layer_1")(y)  # 4) layer
+                             bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(
+                y)  # 4) layer
             out = keras.layers.Add()([x, y])  # 5) add skip connection
             return out
 
@@ -62,27 +65,24 @@ class MK15Network(BaseNetwork):
             hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
             hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
-                                  use_bias=True, bias_initializer=initializer,
-                                  name="layer_input")(hidden)
+                                  use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                                  bias_regularizer=l2_regularizer, name="layer_input")(hidden)
         else:
             hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
-                                  use_bias=True, bias_initializer=initializer,
-                                  name="layer_input")(input_)
+                                  use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                                  bias_regularizer=l2_regularizer, name="layer_input")(input_)
         # build resnet blocks
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
         hidden = keras.layers.BatchNormalization()(hidden)  # BN that normalizes each feature individually (axis=-1)
         if self.scaler_max - self.scaler_min != 1.0:
-            output_ = layers.Dense(self.input_dim, activation=None,
-                                   kernel_initializer=initializer,
-                                   use_bias=True, bias_initializer=initializer,
-                                   name="output")(hidden)
+            output_ = layers.Dense(self.input_dim, activation=None, kernel_initializer=initializer,
+                                   use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                                   bias_regularizer=l2_regularizer, name="output")(hidden)
         else:
-            output_ = layers.Dense(self.input_dim, activation=None,
-                                   kernel_initializer=initializer,
-                                   use_bias=True, bias_initializer=initializer,
-                                   name="output")(hidden)
-
+            output_ = layers.Dense(self.input_dim, activation=None, kernel_initializer=initializer,
+                                   use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                                   bias_regularizer=l2_regularizer, name="output")(hidden)
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[output_], name="Direct_ResNet")
         core_model.summary()
