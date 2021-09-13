@@ -46,21 +46,20 @@ class MK15Network(BaseNetwork):
 
         # Define Residual block
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
-            # x = keras.activations.selu(x)  # 1) activation
-            # x = keras.layers.BatchNormalization()(x)  # 2) BN that normalizes each feature individually (axis=-1)
-            # 1) layer
-            y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
+            # ResNet architecture by https://arxiv.org/abs/1603.05027
+            y = keras.layers.BatchNormalization()(x)  # 1) BN that normalizes each feature individually (axis=-1)
+            y = keras.activations.selu(y)  # 2) activation
+            # 3) layer without activation
+            y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
-                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(x)
-            # 2) BN that normalizes each feature individually (axis=-1)
-            y = keras.layers.BatchNormalization()(y)
-            # 3) layer
-            y = layers.Dense(layer_dim, activation="selu", kernel_initializer=initializer,
+                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(y)
+            y = keras.layers.BatchNormalization()(y)  # 4) BN that normalizes each feature individually (axis=-1)
+            y = keras.activations.selu(y)  # 5) activation
+            # 6) layer
+            y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                              bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(y)
-            # 4) BN that normalizes each feature individually (axis=-1)
-            y = keras.layers.BatchNormalization()(y)
-            # 5) add skip connection
+            # 7) add skip connection
             out = keras.layers.Add()([x, y])
             return out
 
