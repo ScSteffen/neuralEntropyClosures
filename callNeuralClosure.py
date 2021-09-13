@@ -212,21 +212,9 @@ def main():
     neuralClosureModel.create_model()
     neuralClosureModel.model.summary()
 
-    """
-    z = neuralClosureModel.model(tf.constant(neuralClosureModel.training_data[1]))
-    model_alpha = z[1].numpy()
-    tru_alpha = neuralClosureModel.training_data[1]
-    
-    model_scaled_alpha = z[0].numpy()
-    tru_scaledapha = neuralClosureModel.training_data[3]
-    
-    model_u = z[2].numpy()
-    tru_u = neuralClosureModel.training_data[0]
-    """
-
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
         # in execution mode the model must be loaded.
-        # load model weights
+        # load model weights (trainable and non trainable!)
         neuralClosureModel.load_model()
     else:
         print("Start training with new weights")
@@ -322,10 +310,10 @@ def main():
             count += 1
 
         # print non trainable weights
-        all_layers = neuralClosureModel.model.trainable_weights
+        all_layers_nt = neuralClosureModel.model.non_trainable_weights
         layer_list = []
         count = 0
-        for layer in all_layers:
+        for layer in all_layers_nt:
             t = layer
             # print(t)
             tn = t.numpy().flatten()
@@ -340,20 +328,11 @@ def main():
             plt.title("Histogram of weights in layer " + name)
             # Text(0.5, 1.0, "Histogram with 'auto' bins")
             plt.savefig(neuralClosureModel.folder_name + "/" + name + ".png")
-            # plt.show()
             plt.clf()
-            # if "nn_component" in name:
-            #    tn_sm = tf.nn.relu(tn)
-            #    print(max(tn_sm))
-            #    print(min(tn_sm))
-            #    plt.hist(tn_sm, density=True)
-            #    name = name + "_relu"
-            #    plt.title("Histogram of weights in layer " + name)
-            #    plt.savefig(neuralClosureModel.folder_name + "/" + name + ".png")
-            #    plt.clf()
             count += 1
-
-
+        if options.decorrInput:
+            print(all_layers_nt[0])
+            print(all_layers_nt[1])
     else:
         # --- in execution mode,  call_network or call_network_batchwise get called from c++ directly ---
         print("pure execution mode")
