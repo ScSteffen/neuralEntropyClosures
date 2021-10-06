@@ -53,6 +53,36 @@ def compute_diams(pois, points, grads, knn_param):
     return diams
 
 
+def compute_diams_relative(pois_n_pois_grads, points, grads, knn_param):
+    pois = pois_n_pois_grads[0]
+    pois_grads = pois_n_pois_grads[1]
+
+    adap_sampler = AdaptiveSampler(points, grads, knn_param)
+    # print(len(pois))
+    diam_list: list = []
+    count = 0
+    count_good = 0
+    count_bad = 0
+    for poi_idx in range(len(pois)):
+        # for poi in pois:
+        vertices, success = adap_sampler.compute_a_wrapper(pois[poi_idx])
+        # --- Preprocess Vertices ---
+        if success:
+            diam_list.append(adap_sampler.compute_diam_a(vertices) / (np.linalg.norm(pois_grads[poi_idx]) + 0.00001))
+            count_good += 1
+        else:
+            count_bad += 1
+            diam_list.append(np.nan)
+        count += 1
+        if count % 100 == 0:
+            print("Poi count: " + str(count) + "/" + str(len(pois)) + ". Diam: " + str(diam_list[count - 1]))
+    print("count Bad: " + str(count_bad))
+    print("count Good: " + str(count_good))
+    diams: np.ndarray = np.asarray(diam_list)
+    # print(diams)
+    return diams
+
+
 def main2():
     et = EntropyTools(2)
     alpha = [[1.0, 1.1], [1.0, 1.0], [1.1, 1.1]]
@@ -75,7 +105,9 @@ def main2():
 def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-    [u, alpha, h] = load_data("data/1D/Monomial_M2_1D_normal_alpha_grid.csv", 3, [True, True, True])
+    [u, alpha, h] = load_data("data/1D/Monomial_M2_1D_normal_alpha.csv", 3, [True, True, True])
+    lim_x_in = (-1, 1)  # (-0.5, -0.35)
+    lim_y_in = (0, 1)  # (0.2, 0.3)
 
     def preprocess(u_p, a_p, h_p, lim_x, lim_y):
         keep_idx = []
@@ -84,18 +116,20 @@ def main():
                 keep_idx.append(idx)
         return u_p[keep_idx, :], a_p[keep_idx, :], h_p[keep_idx, :]
 
-    u, alpha, h = preprocess(u, alpha, h, lim_x=(-0.5, -0.35), lim_y=(0.2, 0.3))
+    u, alpha, h = preprocess(u, alpha, h, lim_x=lim_x_in, lim_y=lim_y_in)
     t = u[:, 1:]
-    scatter_plot_2d(x_in=t, z_in=h, lim_x=(-0.5, -0.35), lim_y=(0.2, 0.3), lim_z=5,
+    scatter_plot_2d(x_in=t, z_in=h, lim_x=lim_x_in, lim_y=lim_y_in, lim_z=(-1, 5),
                     title=r"diam($h$) over ${\mathcal{R}^r}$",
-                    folder_name="delete", name="subset_u", show_fig=False, log=False)
+                    folder_name="delete", name="test", show_fig=False, log=False)
 
     [u_pois, alpha_pois, h_pois] = load_data("data/1D/pois_M2.csv", 3, [True, True, True])
-    u_pois, alpha_pois, h_pois = preprocess(u_pois, alpha_pois, h_pois, lim_x=(-0.5, -0.35), lim_y=(0.2, 0.3))
+    u_pois, alpha_pois, h_pois = preprocess(u_pois, alpha_pois, h_pois, lim_x=lim_x_in, lim_y=lim_y_in)
     # u_pois = u_pois[:1000, :]
     u_normal = u[:, 1:]
     alpha_normal = alpha[:, 1:]
     pois = u_pois[:, 1:]
+    pois_grads = alpha_pois[:, 1:]
+
     # ada_sampler = AdaptiveSampler(points=u_normal, grads=alpha_normal, knn_param=20)
     # pois = ada_sampler.compute_pois()
 
@@ -103,11 +137,17 @@ def main():
     # split pois across processes
     chunk: int = int(len(pois) / process_count)
     pois_chunk = []
+    pois_n_grads_chunk = []
     for i in range(process_count - 1):
         pois_chunk.append(pois[i * chunk:(i + 1) * chunk])
+        pois_n_grads_chunk.append([pois[i * chunk:(i + 1) * chunk], pois_grads[i * chunk:(i + 1) * chunk]])
     pois_chunk.append(pois[(process_count - 1) * chunk:])
+    pois_n_grads_chunk.append([pois[(process_count - 1) * chunk:], pois_grads[(process_count - 1) * chunk:]])
     with Pool(process_count) as p:
-        diams_chunk = p.map(partial(compute_diams, points=u_normal, grads=alpha_normal, knn_param=20), pois_chunk)
+        # diams_chunk = p.map(partial(compute_diams, points=u_normal, grads=alpha_normal, knn_param=20),
+        #                    pois_chunk)
+        diams_chunk = p.map(partial(compute_diams_relative, points=u_normal, grads=alpha_normal, knn_param=20),
+                            pois_n_grads_chunk)
 
     # merge the computed chunks
     diams: np.ndarray = np.zeros(len(pois))
@@ -131,9 +171,9 @@ def main():
     #
     #                     name: str = 'defaultName', log: bool = True, folder_name: str = "figures",
     #                     show_fig: bool = False, ):
-    scatter_plot_2d(x_in=pois, z_in=diams, lim_x=(-0.5, -0.35), lim_y=(0.2, 0.3), lim_z=100,
-                    title=r"diam($A_{x^*}$) over ${\mathcal{R}^r}$",
-                    folder_name="delete", name="diam_A_boundary_uni_alpha", show_fig=False, log=True)
+    scatter_plot_2d(x_in=pois, z_in=diams, lim_x=lim_x_in, lim_y=lim_y_in, lim_z=(0.01, 10),
+                    title=r"diam($A_{x^*}$)$/|\alpha|$ over ${\mathcal{R}^r}$",
+                    folder_name="delete", name="diam_A_relative_alpha", show_fig=False, log=True)
 
     return 0
 

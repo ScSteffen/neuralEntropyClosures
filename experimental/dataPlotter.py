@@ -43,13 +43,13 @@ def main():
     # plot_h_over_n1_n2(u[:, [0, 1, 2]], h)
 
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_alpha_grid.csv", 3)
-    utils.scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=4,
+    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_gaussian2.csv", 3)
+    utils.scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(-1, 4),
                           title=r"$h$ over ${\mathcal{R}^r}$",
-                          folder_name="delete", name="h_over_u__grid_alha", show_fig=False, log=False)
-    utils.scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-30, 30), lim_y=(-30, 30), lim_z=4,
+                          folder_name="delete", name="h_over_u__alpha_gauss", show_fig=False, log=False)
+    utils.scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-30, 30), lim_y=(-30, 30), lim_z=(-1, 4),
                           title=r"$h$ over ${\alpha_u^r}$",
-                          folder_name="delete", name="h_over_alpha__grid_alha", show_fig=False, log=False)
+                          folder_name="delete", name="h_over_alpha__alpha_gauss", show_fig=False, log=False)
     plot_h_over_n1_n2(alpha, h, lim_x=(-40, 40), lim_y=(-40, 40),
                       label_x=r"$\alpha_1^r$", label_y=r"$\alpha_2^r$",
                       title=r"$h$ over $\alpha^r$")
