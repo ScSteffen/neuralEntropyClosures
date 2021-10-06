@@ -16,7 +16,8 @@ import os
 from pathlib import Path
 import git
 
-plt.style.use("kitish")
+
+# plt.style.use("kitish")
 
 
 def finiteDiff(x, y):
