@@ -156,7 +156,7 @@ def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures
 
 
 def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
-                    lim_z: float = 1000, label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
+                    lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
                     title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
                     folder_name: str = "figures", show_fig: bool = False, ):
     '''
@@ -172,9 +172,9 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     y = x_in[:, 1]
     z = z_in
     if log:
-        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, norm=colors.LogNorm(), vmax=lim_z)
+        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, norm=colors.LogNorm(), vmin=lim_z[0], vmax=lim_z[1])
     else:
-        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, vmax=lim_z)
+        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, vmin=lim_z[0], vmax=lim_z[1])
     plt.xlim(lim_x[0], lim_x[1])
     plt.ylim(lim_y[0], lim_y[1])
     ax.set_title(title, fontsize=14)
