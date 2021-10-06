@@ -16,6 +16,8 @@ import os
 from pathlib import Path
 import git
 
+plt.style.use("kitish")
+
 
 def finiteDiff(x, y):
     '''
@@ -153,39 +155,37 @@ def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures
     return 0
 
 
-def scatterPlot2D(x_in: np.ndarray, y_in: np.ndarray, name: str = 'defaultName', log: bool = True,
-                  folder_name: str = "figures", show_fig: bool = False, z_lim: float = 0.0) -> bool:
+def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
+                    lim_z: float = 1000, label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
+                    title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
+                    folder_name: str = "figures", show_fig: bool = False, ):
     '''
     brief: Compute a scatter plot
     input: x_in = [x1,x2] function arguments
            y_in = function values
     return: True if exit successfully
     '''
-    plt.clf()
-    fig = plt.figure()
+
+    fig = plt.figure(figsize=(4.7, 4), dpi=400)
     ax = fig.add_subplot(111)  # , projection='3d')
-    ax.grid(True, linestyle='-', color='0.75')
     x = x_in[:, 0]
     y = x_in[:, 1]
-    z = y_in
+    z = z_in
     if log:
-        out = ax.scatter(x, y, s=20, c=z, cmap=cm.hot, norm=colors.LogNorm(), vmax=z_lim)
+        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, norm=colors.LogNorm(), vmax=lim_z)
     else:
-        out = ax.scatter(x, y, s=20, c=z, cmap=cm.hot)
-    ax.set_title(name, fontsize=14)
-    ax.set_xlabel("u1", fontsize=12)
-    ax.set_ylabel("u2", fontsize=12)
-    # ax.set_xlabel('N1')
-    # ax.set_ylabel('N2')
-    # ax.set_zlabel('h')
-    # pos_neg_clipped = ax.imshow(z)
+        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, vmax=lim_z)
+    plt.xlim(lim_x[0], lim_x[1])
+    plt.ylim(lim_y[0], lim_y[1])
+    ax.set_title(title, fontsize=14)
+    ax.set_xlabel(label_x)
+    ax.set_ylabel(label_y)
+    ax.set_aspect('auto')
     cbar = fig.colorbar(out, ax=ax, extend='both')
-
     if show_fig:
         plt.show()
     plt.savefig(folder_name + "/" + name + ".png", dpi=150)
-
-    return True
+    return 0
 
 
 def shuffleTrainData(x, y, mode="random"):
