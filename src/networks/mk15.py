@@ -35,7 +35,7 @@ class MK15Network(BaseNetwork):
                                           input_decorrelation=input_decorrelation)
 
     def create_model(self) -> bool:
-        
+
         # Weight initializer
         initializer = keras.initializers.LecunNormal()
 
@@ -100,8 +100,8 @@ class MK15Network(BaseNetwork):
         model.build(input_shape=(batch_size, self.input_dim))
 
         model.compile(
-            loss={'output_1': RelativeMAELoss(), 'output_2': MonotonicFunctionLoss(),
-                  'output_3': RelativeMAELoss(), 'output_4': RelativeMAELoss()},
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': MonotonicFunctionLoss(),
+                  'output_3': tf.keras.losses.MeanSquaredError(), 'output_4': tf.keras.losses.MeanSquaredError()},
             loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
                           'output_3': self.loss_weights[2], 'output_4': self.loss_weights[2]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
