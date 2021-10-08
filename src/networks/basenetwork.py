@@ -194,9 +194,10 @@ class BaseNetwork:
             csv_logger, tensorboard_logger = self.create_csv_logger_cb()
 
             if verbosity == 1:
-                callbackList = [mc_best, csv_logger, tensorboard_logger, HW, ES]  # LR,
+                callbackList = [mc_best, csv_logger, tensorboard_logger, HW]  # , ES]  # LR,
             else:
-                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, tensorboard_logger, HW, ES]  # LR,
+                callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, tensorboard_logger,
+                                HW]  # , ES]  # LR,
 
             # start Training
             self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
@@ -485,7 +486,7 @@ class BaseNetwork:
         diff_u = pointwise_diff(u_test, u_pred_scaled)
 
         # print losses
-        utils.scatterPlot2D(u_test, diff_u, name="err in u over u", log=False, show_fig=False)
+        utils.scatter_plot_2d(u_test, diff_u, name="err in u over u", log=False, show_fig=False)
         # utils.plot1D(u_test[:, 1], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1', log=False)
         # utils.plot1D(u_test[:, 1], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1', log=False)
 
