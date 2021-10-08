@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 from src.utils import finiteDiff, integrate, load_data, evaluateModel
 
-plt.style.use("kitish")
+# plt.style.use("kitish")
 
 from src.math import EntropyTools
 import numpy as np
@@ -57,7 +57,7 @@ def main():
     """
 
     et4 = EntropyTools(polynomial_degree=4)
-    alpha_generator = [[-0.0, 1.0, -1.0, 0.0]]
+    alpha_generator = [[-0.0, 0.2, -0.20, 20]]
     alpha_full = et4.reconstruct_alpha(tf.constant(alpha_generator))
     opti4 = et4.reconstruct_u(alpha_full)
     alpha_init = [[0, 0, 0, 0, 0.0]]
