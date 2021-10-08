@@ -8,9 +8,12 @@ import numpy as np
 from multiprocessing import Pool
 from functools import partial
 import csv
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
-from src.utils import load_data, scatterPlot2D
+from src.utils import load_data, scatter_plot_2d
 from src.sampler.adaptiveSampler import AdaptiveSampler
+from src.math import EntropyTools
 
 
 def test_func(x):
@@ -41,6 +44,36 @@ def compute_diams(pois, points, grads, knn_param):
             count_bad += 1
             diam_list.append(np.nan)
         count += 1
+        # if count % 100 == 0:
+        print("Poi count: " + str(count) + "/" + str(len(pois)) + ". Diam: " + str(diam_list[count - 1]))
+    print("count Bad: " + str(count_bad))
+    print("count Good: " + str(count_good))
+    diams: np.ndarray = np.asarray(diam_list)
+    # print(diams)
+    return diams
+
+
+def compute_diams_relative(pois_n_pois_grads, points, grads, knn_param):
+    pois = pois_n_pois_grads[0]
+    pois_grads = pois_n_pois_grads[1]
+
+    adap_sampler = AdaptiveSampler(points, grads, knn_param)
+    # print(len(pois))
+    diam_list: list = []
+    count = 0
+    count_good = 0
+    count_bad = 0
+    for poi_idx in range(len(pois)):
+        # for poi in pois:
+        vertices, success = adap_sampler.compute_a_wrapper(pois[poi_idx])
+        # --- Preprocess Vertices ---
+        if success:
+            diam_list.append(adap_sampler.compute_diam_a(vertices) / (np.linalg.norm(pois_grads[poi_idx]) + 0.00001))
+            count_good += 1
+        else:
+            count_bad += 1
+            diam_list.append(np.nan)
+        count += 1
         if count % 100 == 0:
             print("Poi count: " + str(count) + "/" + str(len(pois)) + ". Diam: " + str(diam_list[count - 1]))
     print("count Bad: " + str(count_bad))
@@ -50,92 +83,71 @@ def compute_diams(pois, points, grads, knn_param):
     return diams
 
 
+def main2():
+    et = EntropyTools(2)
+    alpha = [[1.0, 1.1], [1.0, 1.0], [1.1, 1.1]]
+    alpha_c = et.reconstruct_alpha(tf.constant(alpha))
+    u = et.reconstruct_u(alpha_c)
+    u_poi = (u[0] + u[1] + u[2]) / 3
+    u_poi = u_poi[1:].numpy()
+    alpha_normal = np.asarray(alpha)
+    u_normal = u[:, 1:].numpy()
+    ada_sampler = AdaptiveSampler(points=u_normal, grads=alpha_normal, knn_param=3)
+    vertices, success = ada_sampler.compute_a_wrapper(u_poi)
+
+    plt.plot(vertices[:, 0], vertices[:, 1], '--')
+    plt.plot(alpha_normal[:, 0], alpha_normal[:, 1], '+')
+    plt.show()
+
+    return 0
+
+
 def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    """
-    # sample some test points
-    # x = np.asarray([[0.1, 0.1], [0.13, 0.1], [0.1, 0.13], [0.13, 0.13]])
 
-    x = np.asarray([[0.1, 0.1], [0.13, 0.1], [0.16, 0.1], [0.2, 0.1],
-                    [0.1, 0.13], [0.13, 0.13], [0.16, 0.13], [0.2, 0.13],
-                    [0.1, 0.16], [0.13, 0.16], [0.16, 0.16], [0.2, 0.16],
-                    [0.1, 0.2], [0.13, 0.2], [0.16, 0.2], [0.2, 0.2]])
+    [u, alpha, h] = load_data("data/1D/Monomial_M2_1D_normal_alpha.csv", 3, [True, True, True])
+    lim_x_in = (-1, 1)  # (-0.5, -0.35)
+    lim_y_in = (0, 1)  # (0.2, 0.3)
 
-    y = test_func(x)
-    grads = grad_func(x)
-    cloud_knn = 10
+    def preprocess(u_p, a_p, h_p, lim_x, lim_y):
+        keep_idx = []
+        for idx in range(len(u_p)):
+            if lim_x[0] <= u_p[idx, 1] <= lim_x[1] and lim_y[0] <= u_p[idx, 2] <= lim_y[1]:
+                keep_idx.append(idx)
+        return u_p[keep_idx, :], a_p[keep_idx, :], h_p[keep_idx, :]
 
-    poi = np.asarray([0.111, 0.1101])
-    poiGrad = grad_func(poi)
+    u, alpha, h = preprocess(u, alpha, h, lim_x=lim_x_in, lim_y=lim_y_in)
+    t = u[:, 1:]
+    scatter_plot_2d(x_in=t, z_in=h, lim_x=lim_x_in, lim_y=lim_y_in, lim_z=(-1, 5),
+                    title=r"diam($h$) over ${\mathcal{R}^r}$",
+                    folder_name="delete", name="test", show_fig=False, log=False)
 
-    # plt.plot(x[:, 0], x[:, 1], '*')
-    # plt.plot(poi[0], poi[1], '+')
-    # plt.show()
-    s_t = adaptiveSampler(points=x, grads=grads, local_cloud_size=cloud_knn)
-    s_t.compute_a(poi)
-    resVert = s_t.get_used_vertices()
-
-    t0 = s_t.local_vertices[:, :, 0]
-    t1 = s_t.local_vertices[:, :, 1]
-    diam = s_t.compute_diam_a()
-    print(diam)
-
-    for i in range(0, cloud_knn):
-        l_0 = s_t.compute_boundary(i)
-    plt.plot(l_0[:, 0], l_0[:, 1], '--')
-
-    allVertices = s_t.get_all_vertices()
-    plt.plot(allVertices[:, 0], allVertices[:, 1], '*')
-    plt.plot(resVert[:, 0], resVert[:, 1], 'o')
-    plt.plot(poiGrad[0], poiGrad[1], '+')
-    plt.show()
-    """
-    """
-    # a = samplerTest.vertices_used
-    # print(a)
-    # generate poi
-
-    entropy_tools = EntropyTools(N=2)
-    poi_grad = np.asarray([0.2, 0.3])
-    alpha_part = np.asarray([poi_grad])
-    alpha_recons = entropy_tools.reconstruct_alpha(entropy_tools.convert_to_tensor_float(alpha_part))
-    u = entropy_tools.reconstruct_u(alpha_recons)
-    poi = u[0, 1:].numpy()
-    print("Point of interest: " + str(poi))
-    print("With gradient: " + str(poi_grad))
-    # load sampled data
-    """
-
-    [u, alpha, h] = load_data("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
+    [u_pois, alpha_pois, h_pois] = load_data("data/1D/pois_M2.csv", 3, [True, True, True])
+    u_pois, alpha_pois, h_pois = preprocess(u_pois, alpha_pois, h_pois, lim_x=lim_x_in, lim_y=lim_y_in)
+    # u_pois = u_pois[:1000, :]
     u_normal = u[:, 1:]
     alpha_normal = alpha[:, 1:]
+    pois = u_pois[:, 1:]
+    pois_grads = alpha_pois[:, 1:]
 
-    # scatterPlot2D(x_in=u_normal, y_in=h, folder_name="delete", show_fig=False, log=False)
-    # Query max error bound
-    """
-    sampler_test.compute_a(poi)
-    res_vert = sampler_test.get_used_vertices()
-    diam = sampler_test.compute_diam_a(sampler_test.get_used_vertices())
-    print(diam)
-    allVertices = sampler_test.get_vertices()
-    # plt.plot(allVertices[:, 0], allVertices[:, 1], '*')
-    plt.plot(res_vert[:, 0], res_vert[:, 1], 'o')
-    plt.plot(poi_grad[0], poi_grad[1], '+')
-    plt.show()
-    """
-
-    ada_sampler = AdaptiveSampler(points=u_normal, grads=alpha_normal, knn_param=20)
-    pois = ada_sampler.compute_pois()
+    # ada_sampler = AdaptiveSampler(points=u_normal, grads=alpha_normal, knn_param=20)
+    # pois = ada_sampler.compute_pois()
 
     process_count = 24
     # split pois across processes
     chunk: int = int(len(pois) / process_count)
     pois_chunk = []
+    pois_n_grads_chunk = []
     for i in range(process_count - 1):
         pois_chunk.append(pois[i * chunk:(i + 1) * chunk])
+        pois_n_grads_chunk.append([pois[i * chunk:(i + 1) * chunk], pois_grads[i * chunk:(i + 1) * chunk]])
     pois_chunk.append(pois[(process_count - 1) * chunk:])
+    pois_n_grads_chunk.append([pois[(process_count - 1) * chunk:], pois_grads[(process_count - 1) * chunk:]])
     with Pool(process_count) as p:
-        diams_chunk = p.map(partial(compute_diams, points=u_normal, grads=alpha_normal, knn_param=15), pois_chunk)
+        # diams_chunk = p.map(partial(compute_diams, points=u_normal, grads=alpha_normal, knn_param=20),
+        #                    pois_chunk)
+        diams_chunk = p.map(partial(compute_diams_relative, points=u_normal, grads=alpha_normal, knn_param=20),
+                            pois_n_grads_chunk)
 
     # merge the computed chunks
     diams: np.ndarray = np.zeros(len(pois))
@@ -155,43 +167,17 @@ def main():
         writer.writerow(pois[:, 0])
         writer.writerow(diams)
 
-    scatterPlot2D(x_in=pois, y_in=diams, folder_name="delete", name="triangle_diameter_at_query_point", show_fig=False,
-                  log=True,
-                  z_lim=100)
-
-    # sampler_test.sample_adative(poi, max_diam=1e-5, max_iter=100, poi_grad=poi_grad)
-
-    ### ---- Start here
-
-    """
-    # reference data
-    [u, alpha, h] = load_data("data/1D/Monomial_M2_1D_normal_alpha_big.csv", 3, [True, True, True])
-    u_normal = u[:, 1:]
-    alpha_normal = alpha[:, 1:]
-    sampler_test = adaptiveSampler(u_normal, alpha_normal, knn_param=10)
-
-    # Load query data
-    [u_query, alpha_query, h] = load_data("data/1D/Monomial_M2_1D_normal.csv", 3, [True, True, True])
-    u_query_normal = u_query[:, 1:]
-    diams = np.zeros(h.shape)
-    for i in range(1000, 1001):  # len(u_query_normal)):
-        poi = u_query_normal[i]
-    success = sampler_test.compute_a(poi)
-    if success:
-        diam = sampler_test.compute_diam_a()
-    sampler_test.sample_adative(poi, max_diam=0.05, max_iter=10)
-    else:
-    diam = np.nan
-    print(str(i) + str("/") + str(len(u_query_normal)) + ". Diam = " + str(diam))
-    diams[i] = diam
-
-    scatterPlot2D(x_in=u_query_normal, y_in=diams, name="test_grid", folder_name="delete", show_fig=False,
-                  log=True)
-
-    """
+    # (x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
+    #
+    #                     name: str = 'defaultName', log: bool = True, folder_name: str = "figures",
+    #                     show_fig: bool = False, ):
+    scatter_plot_2d(x_in=pois, z_in=diams, lim_x=lim_x_in, lim_y=lim_y_in, lim_z=(0.01, 10),
+                    title=r"diam($A_{x^*}$)$/|\alpha|$ over ${\mathcal{R}^r}$",
+                    folder_name="delete", name="diam_A_relative_alpha", show_fig=False, log=True)
 
     return 0
 
 
 if __name__ == '__main__':
+    # main2()
     main()

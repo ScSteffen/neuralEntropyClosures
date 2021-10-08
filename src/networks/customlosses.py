@@ -4,6 +4,7 @@ brief: Selection of custom subclassed losses
 
 from tensorflow.keras.losses import Loss
 import tensorflow as tf
+from keras import backend
 
 
 class MonotonicFunctionLoss(Loss):
@@ -24,3 +25,24 @@ class MonotonicFunctionLoss(Loss):
             t4 = tf.reduce_mean(tf.keras.activations.relu(-1 * tf.reduce_sum(t3, 1)))
             loss += t4
         return tf.divide(loss, ns_f)
+
+
+class RelativeMAELoss(Loss):
+    """
+    Computes the relative mean absolute  error between `y_true` and `y_pred`.
+    `loss =  (y_true - y_pred) / (y_true)
+    """
+
+    def call(self, y_true, y_pred):
+        # y_pred = tf.convert_to_tensor(y_pred)
+        # y_true = tf.cast(y_true, y_pred.dtype)
+        # t1 = tf.math.subtract(y_true, y_pred)
+        # t2 = t1 * t1
+        # t1 = tf.math.squared_difference(y_pred, y_true)
+        # t2 = tf.math.squared_difference(y_true, 2 * y_true)  # tf.square(y_pred)
+        # t3 = tf.divide(t1, t2)
+
+        y_pred = tf.convert_to_tensor(y_pred)
+        y_true = tf.cast(y_true, y_pred.dtype)
+        diff = tf.abs((y_true - y_pred) / backend.maximum(tf.abs(y_true), backend.epsilon()))
+        return backend.mean(diff, axis=-1)

@@ -16,11 +16,16 @@ from src.utils import finiteDiff, integrate, load_data, evaluateModel
 
 from src.math import EntropyTools
 import numpy as np
+import scipy.stats
 
 
 # ------  Code starts here --------
 
 def main():
+    x = np.linspace(-10, 10, 100)
+    plt.plot(x, scipy.stats.norm(0, 10).pdf(x))
+    plt.show()
+
     """
     et2 = EntropyTools(polynomial_degree=4)
     alpha_1 = tf.constant([-1.42096, 1.40992, 0.1, 0.1, 2.0], shape=(1, 5), dtype=tf.float32)

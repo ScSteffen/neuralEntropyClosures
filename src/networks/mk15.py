@@ -16,7 +16,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.customlosses import MonotonicFunctionLoss
+from src.networks.customlosses import MonotonicFunctionLoss, RelativeMAELoss
 from src.networks.custommodels import EntropyModel
 from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 
@@ -35,7 +35,7 @@ class MK15Network(BaseNetwork):
                                           input_decorrelation=input_decorrelation)
 
     def create_model(self) -> bool:
-
+        
         # Weight initializer
         initializer = keras.initializers.LecunNormal()
 
@@ -45,6 +45,7 @@ class MK15Network(BaseNetwork):
         ### build the core network ###
 
         # Define Residual block
+
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
             # ResNet architecture by https://arxiv.org/abs/1603.05027
             y = keras.layers.BatchNormalization()(x)  # 1) BN that normalizes each feature individually (axis=-1)
@@ -99,8 +100,8 @@ class MK15Network(BaseNetwork):
         model.build(input_shape=(batch_size, self.input_dim))
 
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': MonotonicFunctionLoss(),
-                  'output_3': tf.keras.losses.MeanSquaredError(), 'output_4': tf.keras.losses.MeanSquaredError()},
+            loss={'output_1': RelativeMAELoss(), 'output_2': MonotonicFunctionLoss(),
+                  'output_3': RelativeMAELoss(), 'output_4': RelativeMAELoss()},
             loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
                           'output_3': self.loss_weights[2], 'output_4': self.loss_weights[2]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
