@@ -133,7 +133,7 @@ class MK15Network(BaseNetwork):
 
     def training_data_preprocessing(self, scaled_output: bool = False) -> bool:
         """
-        Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
+        Performs a scaling on the output data alpha. Sets a scale factor for the
         reconstruction of u during training and execution
         """
         self.scaler_max = 1.0
@@ -142,12 +142,16 @@ class MK15Network(BaseNetwork):
         if scaled_output:
             new_len = self.training_data[1].shape[0] * self.training_data[1].shape[1]
             output = np.reshape(self.training_data[1], (new_len, 1))
-
             scaler = MinMaxScaler()
             scaler.fit(output)
             self.scaler_max = float(scaler.data_max_)
             self.scaler_min = float(scaler.data_min_)
             self.training_data[1] = 2 * self.training_data[1] / (self.scaler_max - self.scaler_min)
+        print(
+            "Output of network has internal scaling with alpha_max= " + str(self.scaler_max) + " and alpha_min= " + str(
+                self.scaler_min))
+        print("New alpha_min= " + str(self.training_data[1].min()) + ". New alpha_max= " + str(
+            self.training_data[1].max()))
         return True
 
     def call_network(self, u_complete):

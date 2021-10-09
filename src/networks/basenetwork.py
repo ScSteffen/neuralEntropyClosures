@@ -385,8 +385,7 @@ class BaseNetwork:
         else:
             print("Warning: Mean of training data moments was not computed")
         self.training_data_preprocessing(scaled_output=scaled_output)
-        print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
-            self.scaler_min))
+
         return True
 
     def training_data_preprocessing(self, scaled_output: bool = False) -> bool:
@@ -405,6 +404,8 @@ class BaseNetwork:
             self.training_data[2] = scaler.transform(self.training_data[2])
             self.training_data[1] = (self.training_data[1] - self.scaler_min) / (self.scaler_max - self.scaler_min)
             # * 2 - 1
+        print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
+            self.scaler_min))
         return True
 
     def get_training_data(self):
