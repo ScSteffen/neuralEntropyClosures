@@ -39,7 +39,7 @@ class EntropyModel(tf.keras.Model, ABC):
         self.poly_degree = polynomial_degree
         self.derivative_scaler_min = tf.constant(scaler_min, dtype=tf.float64)
         self.derivative_scaler_max = tf.constant(scaler_max, dtype=tf.float64)
-        self.derivative_scale_factor = tf.constant(scaler_max - scaler_min, dtype=tf.float64)
+        self.derivative_scale_factor = tf.constant((scaler_max - scaler_min) * 0.5, dtype=tf.float64)
         print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
         if spatial_dimension == 1:
             [quad_pts, quad_weights] = math.qGaussLegendre1D(10 * polynomial_degree)  # dims = nq
@@ -72,8 +72,7 @@ class EntropyModel(tf.keras.Model, ABC):
             print("(Scaled) reconstruction of u and h enabled")
             # scale to [scaler_min, scaler_max]
             t1 = tf.add(tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
-            factor = tf.math.scalar_mul(self.derivative_scale_factor, tf.constant(0.5, dtype=tf.float64))
-            t2 = tf.math.scalar_mul(factor, t1)  # scale
+            t2 = tf.math.scalar_mul(self.derivative_scale_factor, t1)  # scale
             alpha64 = tf.add(t2, self.derivative_scaler_min)  # shift
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
@@ -209,6 +208,7 @@ class SobolevModel(EntropyModel):
         super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
                                            spatial_dimension=spatial_dimension, reconstruct_u=reconstruct_u,
                                            scaler_min=scaler_min, scaler_max=scaler_max)
+        self.derivative_scale_factor = tf.constant(scaler_max - scaler_min, dtype=tf.float64)
 
     def call(self, x: Tensor, training=False) -> list:
         """
