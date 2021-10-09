@@ -93,7 +93,7 @@ class MK15Network(BaseNetwork):
         # build model
         model = EntropyModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]),
-                             scale_factor=(self.scaler_max - self.scaler_min) / 2.0,
+                             scaler_max=self.scaler_max, scaler_min=self.scaler_min,
                              name="entropy_wrapper")
 
         batch_size = 3  # dummy entry
@@ -117,7 +117,9 @@ class MK15Network(BaseNetwork):
         Calls training depending on the MK model
         '''
         x_data = self.training_data[0]
-        # print(self.model(self.training_data[1])[2] - tf.constant(self.training_data[0])) #sanity check
+
+        # print(self.model(self.training_data[1][:1000, :])[2] - tf.constant(
+        #    self.training_data[0][:1000, :]))  # sanity check
         y_data = [tf.constant(self.training_data[1], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float32),
@@ -146,7 +148,10 @@ class MK15Network(BaseNetwork):
             scaler.fit(output)
             self.scaler_max = float(scaler.data_max_)
             self.scaler_min = float(scaler.data_min_)
-            self.training_data[1] = 2 * self.training_data[1] / (self.scaler_max - self.scaler_min)
+            # scale to [-1,1]
+            self.training_data[1] = -1.0 + 2 / (self.scaler_max - self.scaler_min) * (
+                    self.training_data[1] - self.scaler_min)
+            # 2 * self.training_data[1] / (self.scaler_max - self.scaler_min)
         print(
             "Output of network has internal scaling with alpha_max= " + str(self.scaler_max) + " and alpha_min= " + str(
                 self.scaler_min))

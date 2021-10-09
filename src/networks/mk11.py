@@ -144,8 +144,8 @@ class MK11Network(BaseNetwork):
 
         # build sobolev wrapper
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
-                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.scaler_max - self.scaler_min,
-                             name="sobolev_icnn_wrapper")
+                             reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
+                             scaler_min=self.scaler_min, name="sobolev_icnn_wrapper")
         # build graph
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
