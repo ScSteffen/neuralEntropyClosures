@@ -309,7 +309,7 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False, scaled_output: bool = False) -> bool:
+                           normalized_data: bool = False, scaled_output: bool = False, test_mode: bool = False) -> bool:
         """
         Loads the training data
         params: normalized_moments = load normalized data  (u_0=1)
@@ -351,7 +351,6 @@ class BaseNetwork:
             if normalized_data and not load_all:
                 # ignore first col of u
                 u_ndarray = u_ndarray[:, 1:]
-
             self.training_data.append(u_ndarray)
         if selected_cols[1]:
             df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
@@ -374,7 +373,7 @@ class BaseNetwork:
 
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
-        if selected_cols[0]:
+        if selected_cols[0] and not test_mode:
             print("Computing input data statistics")
             self.mean_u = np.mean(u_ndarray, axis=0)
             print("Training data mean (of u) is")
@@ -389,7 +388,8 @@ class BaseNetwork:
             print("Shifting the data accordingly if network architecture is MK15 or newer...")
         else:
             print("Warning: Mean of training data moments was not computed")
-        self.training_data_preprocessing(scaled_output=scaled_output)
+        if not test_mode:
+            self.training_data_preprocessing(scaled_output=scaled_output)
 
         return True
 
@@ -427,7 +427,9 @@ class BaseNetwork:
                h_test, dim(nS,1)
         return: True, if run successfully. Prints several plots and pictures to file.
         """
-
+        u_test = u_test[:10000, :]
+        alpha_test = alpha_test[:10000, :]
+        h_test = h_test[:10000, :]
         [u_pred, alpha_pred, h_pred] = self.call_network(u_test)
 
         # alpha = self.call_network(u_test)
