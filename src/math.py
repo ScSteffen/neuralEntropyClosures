@@ -15,8 +15,8 @@ class EntropyTools:
     Same functions implemented in the sobolev Network.
     Also uses Tensorflow
     """
-
-    polyDegree: int
+    spatial_dimension: int
+    poly_degree: int
     nq: int
     inputDim: int
     quadPts: tf.Tensor  # dims = (1 x nq)
@@ -26,22 +26,31 @@ class EntropyTools:
     opti_m: np.ndarray
     opti_w: np.ndarray
 
-    def __init__(self, polynomial_degree=1) -> object:
+    def __init__(self, polynomial_degree=1, spatial_dimension=1) -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
         """
 
         # Create quadrature and momentBasis. Currently only for 1D problems
-        self.polyDegree = polynomial_degree
-        self.nq = 100
-        [quadPts, quadWeights] = qGaussLegendre1D(self.nq)  # dims = nq
-        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)
-        self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
+        self.poly_degree = polynomial_degree
+        self.spatial_dimension = spatial_dimension
+        quad_order = 10
+        if spatial_dimension == 1:
+            self.nq = quad_order
+            [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
+            m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
+        if spatial_dimension == 2:
+            [quad_pts, quad_weights] = qGaussLegendre2D(quad_order)  # dims = nq
+            self.nq = quad_weights.size  # is not 10 * polyDegree
+            m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
+
+        self.quadPts = tf.constant(quad_pts, shape=(self.spatial_dimension, self.nq), dtype=tf.float32)
+        self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq),
                                        dtype=tf.float32)
-        mBasis = computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
-        self.inputDim = mBasis.shape[0]
-        self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
+
+        self.inputDim = m_basis.shape[0]
+        self.momentBasis = tf.constant(m_basis, shape=(self.inputDim, self.nq),
                                        dtype=tf.float32)
 
     def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
@@ -279,9 +288,9 @@ def qGaussLegendre2D(Qorder):
         """Quadrature points for GaussLegendre quadrature. Read from file."""
         mu, _ = leggauss(order)
         phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
-        xy = np.zeros((2 * order * order, 2))
+        xy = np.zeros((order * order, 2))
         count = 0
-        for i in range(order):
+        for i in range(int(order / 2)):
             for j in range(2 * order):
                 mui = mu[i]
                 phij = phi[j]
@@ -295,15 +304,12 @@ def qGaussLegendre2D(Qorder):
     def computequadweights(order):
         """Quadrature weights for GaussLegendre quadrature. Read from file."""
         _, leggaussweights = leggauss(order)
-        w = np.zeros(2 * order * order)
+        w = np.zeros(order * order)
         count = 0
-        for i in range(order):
+        for i in range(int(order / 2)):
             for j in range(2 * order):
-                w[count] = 2 * np.pi / order * leggaussweights[i]
+                w[count] = 0.5 * np.pi / order * leggaussweights[i]
                 count += 1
-
-        w /= sum(w)
-        w *= 4 * np.pi
         return w
 
     pts = computequadpoints(Qorder)

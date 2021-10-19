@@ -22,9 +22,9 @@ import scipy.stats
 # ------  Code starts here --------
 
 def main():
-    x = np.linspace(-10, 10, 100)
-    plt.plot(x, scipy.stats.norm(0, 10).pdf(x))
-    plt.show()
+    # x = np.linspace(-10, 10, 100)
+    # plt.plot(x, scipy.stats.norm(0, 10).pdf(x))
+    # plt.show()
 
     """
     et2 = EntropyTools(polynomial_degree=4)
@@ -61,11 +61,11 @@ def main():
     print(u_np / u_np[0, 0])
     """
 
-    et4 = EntropyTools(polynomial_degree=4)
-    alpha_generator = [[-0.0, 0.2, -0.20, 20]]
+    et4 = EntropyTools(polynomial_degree=1, spatial_dimension=2)
+    alpha_generator = [[-0.20, 20]]
     alpha_full = et4.reconstruct_alpha(tf.constant(alpha_generator))
     opti4 = et4.reconstruct_u(alpha_full)
-    alpha_init = [[0, 0, 0, 0, 0.0]]
+    alpha_init = [[0, 0, 0.0]]
     alpha3 = et4.minimize_entropy(u=opti4, start=tf.constant(alpha_init))
     f4 = et4.compute_kinetic_density(alpha3)
     pt4 = et4.quadPts

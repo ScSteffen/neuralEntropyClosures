@@ -215,7 +215,7 @@ def writeConfigFile(options, neural_closure_model):
     runScript = runScript + "--decorrInput=" + str(int(options.decorrInput)) + " \\\n"
     runScript = runScript + "--objective=" + str(options.objective) + " \\\n"
     runScript = runScript + "--processingmode=" + str(options.processingmode) + " \\\n"
-    runScript = runScript + "--spatialDimension=" + str(options.spatialDimension) + " \\\n"
+    runScript = runScript + "--spatialDimension=" + str(options.spatial_dimension) + " \\\n"
     runScript = runScript + "--training=" + str(options.training) + " \\\n"
     runScript = runScript + "--verbosity=" + str(options.verbosity) + " \\\n"
     runScript = runScript + "--networkwidth=" + str(options.networkwidth) + " \\\n"
@@ -257,7 +257,7 @@ def writeConfigFile(options, neural_closure_model):
          'scaled outputs': [options.scaledOutput],
          'objective': [options.objective],
          'processingmode': [options.processingmode],
-         'spatial Dimension': [options.spatialDimension],
+         'spatial Dimension': [options.spatial_dimension],
          'verbosity': [options.verbosity],
          'training': [options.training],
          'network width': [options.networkwidth],

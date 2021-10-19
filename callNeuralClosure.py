@@ -167,7 +167,7 @@ def main():
     options.objective = int(options.objective)
     options.sampling = int(options.sampling)
     options.degree = int(options.degree)
-    options.spatialDimension = int(options.spatialDimension)
+    options.spatial_dimension = int(options.spatialDimension)
     options.model = int(options.model)
     options.epoch = int(options.epoch)
     options.curriculum = int(options.curriculum)
@@ -196,7 +196,7 @@ def main():
 
     # --- initialize model framework
     print("Initialize model")
-    init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatialDimension,
+    init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatial_dimension,
                folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
                width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput)
     # Save options and runscript to file
