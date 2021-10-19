@@ -28,7 +28,7 @@ plt.style.use("kitish")
 
 
 def main():
-    solver = MNSolver2D(traditional=False)
+    solver = MNSolver2D(traditional=False, model_mk=15)
     # solver.solveAnimation(maxIter=2)
     # solver.solveAnimationIterError(maxIter=60)
     # solver.solveIterError(maxIter=100)
@@ -37,7 +37,7 @@ def main():
 
 
 class MNSolver2D:
-    def __init__(self, traditional=True):
+    def __init__(self, traditional=True, model_mk=11):
 
         # Prototype for  spatialDim=2, polyDegree=1
         self.nSystem = 3
@@ -90,11 +90,12 @@ class MNSolver2D:
         self.yFlux2 = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
         # Neural closure
         self.neuralClosure = None
+        self.model_mk = model_mk
         if not self.traditional:
-            self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=2,
-                                                     folder_name="002_sim_M1_2D", loss_combination=2,
-                                                     nw_width=18, nw_depth=8, normalized=True)
-            self.neuralClosure.loadModel("../../models/002_sim_M1_2D")
+            self.neuralClosure = init_neural_closure(
+                network_mk=self.model_mk, poly_degree=1, spatial_dim=2, folder_name="002_sim_M1_2D", loss_combination=2,
+                nw_width=18, nw_depth=8, normalized=True, input_decorrelation=False, scale_active=True)
+            self.neuralClosure.load_model()  # "../../models/002_sim_M1_2D")
 
         # Analysis variables
         self.errorMap = np.zeros((self.nSystem, self.nx, self.ny))
@@ -132,10 +133,10 @@ class MNSolver2D:
         idx_time = 0
         while self.T < endTime:
             self.solveIterNewton(idx_time)
-            self.solverIterML(idx_time)
+            # self.solverIterML(idx_time)
             print("Iteration: " + str(idx_time) + ". Time " + str(self.T) + " of " +
                   str(endTime))
-            self.errorAnalysis(idx_time)
+            # self.errorAnalysis(idx_time)
             # print iteration results
             # self.showSolution(idx_time)
             idx_time += 1

@@ -14,7 +14,7 @@ class LossAndErrorPrintingCallback(tf.keras.callbacks.Callback):
     #    print("For batch {}, loss is {:7.2f}.".format(batch, logs["loss"]))
 
     def on_epoch_end(self, epoch, logs=None):
-        print("The average loss for epoch {} is {:7.2f} .".format(epoch, logs["loss"]))
+        print("The average loss for epoch {} is {:7.2f}.".format(epoch, logs["loss"]))
 
 
 class HaltWhenCallback(tf.keras.callbacks.Callback):

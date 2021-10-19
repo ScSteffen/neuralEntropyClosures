@@ -200,17 +200,19 @@ def main():
                folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
                width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput,
                scale_active=options.scaledOutput)
-    # Save options and runscript to file
-    utils.writeConfigFile(options, neuralClosureModel)
 
     # --- load model data before creating model (important for data scaling) todo: incorporate scalings in execution
     if options.training == 1:
         # create training Data
+        # Save options and runscript to file (only for training)
+        utils.writeConfigFile(options, neuralClosureModel)
         neuralClosureModel.load_training_data(shuffle_mode=True,
                                               sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized,
-                                              scaled_output=options.scaledOutput)
-    neuralClosureModel.create_model()  # always create model since it is custom and needs to be passed to weight loader
+                                              scaled_output=options.scaledOutput,
+                                              train_mode=True)
+    # create model after loading training data to get correct scaling in
+    neuralClosureModel.create_model()
     neuralClosureModel.model.summary()
 
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
@@ -233,11 +235,12 @@ def main():
         print("Analysis mode entered.")
         print("Evaluate Model on normalized data...")
         neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=True,
-                                              scaled_output=options.scaledOutput, test_mode=True)
+                                              scaled_output=options.scaledOutput, train_mode=False)
         [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model_normalized(u, alpha, h)
         print("Evaluate Model on non-normalized data...")
-        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=False)
+        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=False,
+                                              train_mode=False)
         [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model(u, alpha, h)
     elif options.training == 3:
@@ -245,7 +248,8 @@ def main():
             "Re-Save mode entered.")  # if training was not finished, models are not safed to .pb. this can be done here
         neuralClosureModel.load_training_data(shuffle_mode=False,
                                               sampling=options.sampling,
-                                              normalized_data=neuralClosureModel.normalized)
+                                              normalized_data=neuralClosureModel.normalized,
+                                              train_mode=False)
 
         # normalize data (experimental)
         # neuralClosureModel.normalizeData()
