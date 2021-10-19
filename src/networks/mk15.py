@@ -15,6 +15,7 @@ from tensorflow.keras import layers
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from os import path
+import csv
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.customlosses import MonotonicFunctionLoss, RelativeMAELoss
@@ -80,7 +81,7 @@ class MK15Network(BaseNetwork):
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
         # hidden = keras.layers.BatchNormalization()(hidden)  # BN that normalizes each feature individually (axis=-1)
-        if self.scaler_max - self.scaler_min != 1.0:
+        if self.scale_active:
             output_ = layers.Dense(self.input_dim, activation=None, kernel_initializer=initializer,
                                    use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                                    bias_regularizer=l2_regularizer, name="layer_output")(hidden)
@@ -186,21 +187,33 @@ class MK15Network(BaseNetwork):
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_prediced]
 
-    def load_model(self, filename=None):
-        usedFileName = self.folder_name
-        if filename != None:
-            usedFileName = filename
+    def load_model(self, file_name=None):
+        used_file_name = self.folder_name
+        if file_name != None:
+            used_file_name = file_name
 
-        usedFileName = usedFileName + '/best_model/'
+        # read scaling data
+        scaling_file_name = used_file_name + '/scaling_data/min_max_scaler.csv'
+        if not path.exists(scaling_file_name):
+            print("Scaling Data is missing. Expected in: " + scaling_file_name)
+            exit(1)
+        with open(scaling_file_name) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            for row in csv_reader:
+                scaling_data = row
+        self.scaler_min = float(scaling_data[0])
+        self.scaler_max = float(scaling_data[1])
 
-        if path.exists(usedFileName) == False:
-            print("Model does not exists at this path: " + usedFileName)
+        used_file_name = used_file_name + '/best_model/'
+
+        if path.exists(used_file_name) == False:
+            print("Model does not exists at this path: " + used_file_name)
             exit(1)
         # load model and weights
-        model = tf.keras.models.load_model(usedFileName, custom_objects={"CustomModel": self.model,
-                                                                         "MonotonicFunctionLoss": MonotonicFunctionLoss})
+        model = tf.keras.models.load_model(used_file_name, custom_objects={"CustomModel": self.model,
+                                                                           "MonotonicFunctionLoss": MonotonicFunctionLoss})
         # extract weights and save them to .h5
-        model.save_weights(usedFileName + "model_weights/weights")
-        self.model.load_weights(usedFileName + "model_weights/weights")
+        model.save_weights(used_file_name + "model_weights/weights")
+        self.model.load_weights(used_file_name + "model_weights/weights")
         print("Model loaded from file ")
         return 0

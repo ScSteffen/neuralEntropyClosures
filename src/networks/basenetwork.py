@@ -11,6 +11,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from os import path, makedirs, walk
+import csv
 import time
 from sklearn.preprocessing import MinMaxScaler
 
@@ -37,7 +38,7 @@ class BaseNetwork:
     training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
     scaler_max: float  # for output scaling
     scaler_min: float  # for output scaling
-    scale_active: float  # flag if output scaling is active
+    scale_active: bool  # flag if output scaling is active
     mean_u: np.ndarray  # mean value of the input moments
     cov_u: np.ndarray  # covariance of input moments
     cov_ev: np.ndarray  # eigenvalues of cov matrix of input moments
@@ -135,6 +136,12 @@ class BaseNetwork:
         Method to train network
         '''
 
+        # print scaling data to file.
+        scaling_file_name = self.folder_name + '/scaling_data/min_max_scaler.csv'
+        with open(scaling_file_name, 'w') as csv_file:
+            writer = csv.writer(csv_file, delimiter=',')
+            writer.writerow([self.scaler_min, self.scaler_max])
+       
         # Set double precision training for CPU training #TODO
         if processing_mode == 0:
             tf.keras.backend.set_floatx('float32')
@@ -282,17 +289,30 @@ class BaseNetwork:
         #    json.dump(self.model.history.history, file)
         return 0
 
-    def load_model(self, filename=None):
-        usedFileName = self.folder_name
-        if filename != None:
-            usedFileName = filename
+    def load_model(self, file_name=None):
 
-        usedFileName = usedFileName + '/best_model/'
+        used_file_name = self.folder_name
+        if file_name != None:
+            used_file_name = file_name
 
-        if path.exists(usedFileName) == False:
-            print("Model does not exists at this path: " + usedFileName)
+        # read scaling data
+        scaling_file_name = used_file_name + '/scaling_data/min_max_scaler.csv'
+        if not path.exists(scaling_file_name):
+            print("Scaling Data is missing. Expected in: " + scaling_file_name)
             exit(1)
-        model = tf.keras.models.load_model(usedFileName, custom_objects={"CustomModel": self.model})
+        with open(scaling_file_name) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            for row in csv_reader:
+                scaling_data = row
+        self.scaler_min = float(scaling_data[0])
+        self.scaler_max = float(scaling_data[1])
+
+        used_file_name = used_file_name + '/best_model/'
+
+        if not path.exists(used_file_name):
+            print("Model does not exists at this path: " + used_file_name)
+            exit(1)
+        model = tf.keras.models.load_model(used_file_name, custom_objects={"CustomModel": self.model})
         # self.model.load_weights(usedFileName)
         self.model = model
         print("Model loaded from file ")
@@ -309,7 +329,8 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False, scaled_output: bool = False, test_mode: bool = False) -> bool:
+                           normalized_data: bool = False, scaled_output: bool = False,
+                           train_mode: bool = False) -> bool:
         """
         Loads the training data
         params: normalized_moments = load normalized data  (u_0=1)
@@ -373,7 +394,7 @@ class BaseNetwork:
 
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
-        if selected_cols[0] and not test_mode:
+        if selected_cols[0] and not train_mode:
             print("Computing input data statistics")
             self.mean_u = np.mean(u_ndarray, axis=0)
             print("Training data mean (of u) is")
@@ -388,7 +409,7 @@ class BaseNetwork:
             print("Shifting the data accordingly if network architecture is MK15 or newer...")
         else:
             print("Warning: Mean of training data moments was not computed")
-        if not test_mode:
+        if train_mode:
             self.training_data_preprocessing(scaled_output=scaled_output)
 
         return True
@@ -427,9 +448,10 @@ class BaseNetwork:
                h_test, dim(nS,1)
         return: True, if run successfully. Prints several plots and pictures to file.
         """
-        u_test = u_test[:10000, :]
-        alpha_test = alpha_test[:10000, :]
-        h_test = h_test[:10000, :]
+        # i_max = 100000
+        # u_test = u_test[:i_max, :]
+        # alpha_test = alpha_test[:i_max, :]
+        # h_test = h_test[:i_max, :]
         [u_pred, alpha_pred, h_pred] = self.call_network(u_test)
 
         # alpha = self.call_network(u_test)
@@ -448,22 +470,60 @@ class BaseNetwork:
         diff_h = pointwise_diff(h_test, h_pred)
         diff_alpha = pointwise_diff(alpha_test, alpha_pred)
         diff_u = pointwise_diff(u_test, u_pred)
-        np.linspace(0, 1, 10)
-        utils.plot1D([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
-                     'test', log=False)
 
-        utils.plot1D([u_test[:, 1]], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
-        utils.plot1D([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
-                     'alpha1_over_u1',
-                     log=False)
-        utils.plot1D([u_test[:, 1]], [alpha_pred[:, 0], alpha_test[:, 0]], ['alpha0 pred', 'alpha0 true'],
-                     'alpha0_over_u1',
-                     log=False)
-        utils.plot1D([u_test[:, 1]], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1', log=False)
-        utils.plot1D([u_test[:, 1]], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1', log=False)
-        utils.plot1D([u_test[:, 1]], [diff_alpha, diff_h, diff_u], ['difference alpha', 'difference h', 'difference u'],
-                     'errors', log=True)
+        with open(self.folder_name + "/test_results.csv", 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            row_list = []
+            for i in range(self.csvInputDim):
+                row_list.append("u_" + str(i))
+            for i in range(self.csvInputDim):
+                row_list.append("alpha_" + str(i))
+            writer.writerow(row_list + ["u", "alpha", "h"])
 
+            for idx in range(len(diff_h.numpy())):
+                r = np.concatenate(
+                    (u_test[idx], alpha_test[idx], diff_u[idx].numpy().reshape((1,)),
+                     diff_alpha[idx].numpy().reshape((1,)), diff_h[idx].numpy().reshape((1,))))
+                writer.writerow(r)
+
+        # only for M_2 1D closure
+        if self.poly_degree == 2 and self.spatial_dim == 1:
+            utils.scatter_plot_2d(x_in=u_test[:, 1:], z_in=diff_u, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(1e-5, 10),
+                                  title=r"$|u-u_\theta|_2$ over ${u^r}$",
+                                  folder_name=self.folder_name, name="err_u_over_u", show_fig=False, log=True)
+            utils.scatter_plot_2d(x_in=u_test[:, 1:], z_in=diff_alpha, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(1e-5, 10),
+                                  title=r"$|\alpha_u-\alpha_\theta|_2$ over ${u^r}$",
+                                  folder_name=self.folder_name, name="err_alpha_over_u", show_fig=False, log=True)
+            utils.scatter_plot_2d(x_in=u_test[:, 1:], z_in=diff_h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(1e-5, 10),
+                                  title=r"$|h-h_\theta|_2$ over ${u^r}$",
+                                  folder_name=self.folder_name, name="err_h_over_u", show_fig=False, log=True)
+            utils.scatter_plot_2d(x_in=alpha_test[:, 1:], z_in=diff_alpha, lim_x=(-20, 20), lim_y=(-20, 20),
+                                  lim_z=(1e-5, 10),
+                                  title=r"$|\alpha_u-\alpha_\theta|_2$ over ${u^r}$",
+                                  folder_name=self.folder_name, name="err_alpha_over_u", show_fig=False, log=True)
+            utils.scatter_plot_2d(x_in=alpha_test[:, 1:], z_in=diff_h, lim_x=(-20, 20), lim_y=(-20, 20),
+                                  lim_z=(1e-5, 10),
+                                  title=r"$|h-h_\theta|_2$ over ${u^r}$",
+                                  folder_name=self.folder_name, name="err_h_over_u", show_fig=False, log=True)
+
+        if self.poly_degree == 1 and self.spatial_dim == 1:
+            np.linspace(0, 1, 10)
+            utils.plot1D([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
+                         'test', log=False)
+            utils.plot1D([u_test[:, 1]], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
+            utils.plot1D([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
+                         'alpha1_over_u1',
+                         log=False)
+            utils.plot1D([u_test[:, 1]], [alpha_pred[:, 0], alpha_test[:, 0]], ['alpha0 pred', 'alpha0 true'],
+                         'alpha0_over_u1',
+                         log=False)
+            utils.plot1D([u_test[:, 1]], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1',
+                         log=False)
+            utils.plot1D([u_test[:, 1]], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1',
+                         log=False)
+            utils.plot1D([u_test[:, 1]], [diff_alpha, diff_h, diff_u],
+                         ['difference alpha', 'difference h', 'difference u'],
+                         'errors', log=True)
         return 0
 
     def evaluate_model(self, u_test, alpha_test, h_test):
