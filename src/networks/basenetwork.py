@@ -37,6 +37,7 @@ class BaseNetwork:
     training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
     scaler_max: float  # for output scaling
     scaler_min: float  # for output scaling
+    scale_active: float  # flag if output scaling is active
     mean_u: np.ndarray  # mean value of the input moments
     cov_u: np.ndarray  # covariance of input moments
     cov_ev: np.ndarray  # eigenvalues of cov matrix of input moments
@@ -315,6 +316,7 @@ class BaseNetwork:
 
         return: True, if loading successful
         """
+        self.scale_active = scaled_output
         self.training_data = []
 
         ### Create trainingdata filename"

@@ -30,7 +30,9 @@ class EntropyModel(tf.keras.Model, ABC):
     derivative_scale_factor: Tensor
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
-                 reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0, **opts):
+                 reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
+                 scale_active: bool = True,
+                 **opts):
         super(EntropyModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.core_model = core_model  # must be a compiled tensorflow model
@@ -39,7 +41,10 @@ class EntropyModel(tf.keras.Model, ABC):
         self.poly_degree = polynomial_degree
         self.derivative_scaler_min = tf.constant(scaler_min, dtype=tf.float64)
         self.derivative_scaler_max = tf.constant(scaler_max, dtype=tf.float64)
+        self.scale_active = scale_active
         self.derivative_scale_factor = tf.constant((scaler_max - scaler_min) * 0.5, dtype=tf.float64)
+        self.derivative_scale_factor = tf.constant(1.0, dtype=tf.float64)
+
         print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
         if spatial_dimension == 1:
             [quad_pts, quad_weights] = math.qGaussLegendre1D(10 * polynomial_degree)  # dims = nq
@@ -69,17 +74,21 @@ class EntropyModel(tf.keras.Model, ABC):
 
         alpha = self.core_model(x)
         if self.enable_recons_u:
-            print("(Scaled) reconstruction of u and h enabled")
-            # scale to [scaler_min, scaler_max]
-            t1 = tf.add(tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
-            t2 = tf.math.scalar_mul(self.derivative_scale_factor, t1)  # scale
-            alpha64 = tf.add(t2, self.derivative_scaler_min)  # shift
+            if self.scale_active:
+                print("Scaled reconstruction of u and h enabled")
+                # scale to [scaler_min, scaler_max]
+                t1 = tf.add(tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
+                t2 = tf.math.scalar_mul(self.derivative_scale_factor, t1)  # scale
+                alpha64 = tf.add(t2, self.derivative_scaler_min)  # shift
+            else:
+                print("Reconstruction of u and h enabled")
+                alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             u_res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
 
             # compute entropy functional h
-            h_res = self.compute_h_fast(u=u_complete, alpha=alpha_complete)
+            h_res = self.compute_h(u=u_complete, alpha=alpha_complete)
         else:
             print("Reconstruction of u and h disabled. Output 3 and 4 are meaningless")
             u_res = alpha
@@ -191,8 +200,8 @@ class EntropyModel(tf.keras.Model, ABC):
         returns h = alpha*u - <eta_*(alpha*m)>
         """
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(alpha, self.moment_basis, axes=([1], [0])))  # exp(alpha*m)
-        tmp = tf.tensordot(f_quad, self.quad_weights, axes=([1], [1]))  # f*w
+        # f_quad = tf.math.exp(tf.tensordot(alpha, self.moment_basis, axes=([1], [0])))  # exp(alpha*m)
+        # tmp = tf.tensordot(f_quad, self.quad_weights, axes=([1], [1]))  # f*w
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         return tmp2 - u[:, 0]
 
@@ -204,10 +213,11 @@ class SobolevModel(EntropyModel):
     """
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
-                 reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0, **opts):
+                 reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
+                 scale_active: bool = True, **opts):
         super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
                                            spatial_dimension=spatial_dimension, reconstruct_u=reconstruct_u,
-                                           scaler_min=scaler_min, scaler_max=scaler_max)
+                                           scaler_min=scaler_min, scaler_max=scaler_max, scale_active=scale_active)
         self.derivative_scale_factor = tf.constant(scaler_max - scaler_min, dtype=tf.float64)
 
     def call(self, x: Tensor, training=False) -> list:
@@ -224,12 +234,12 @@ class SobolevModel(EntropyModel):
         alpha = grad_tape.gradient(h, x)
 
         if self.enable_recons_u:
-            print("(Scaled) reconstruction of U enabled")
-            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
-            # alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
-            # alpha64 = tf.cast(x, dtype=tf.float64, name=None)
-            # alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(x, dtype=tf.float64, name=None))
-            # h = alpha64
+            if self.scale_active:
+                print("(Scaled) reconstruction of U enabled")
+                alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
+            else:
+                print("Reconstruction of U enabled")
+                alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
