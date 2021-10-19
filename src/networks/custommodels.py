@@ -43,7 +43,6 @@ class EntropyModel(tf.keras.Model, ABC):
         self.derivative_scaler_max = tf.constant(scaler_max, dtype=tf.float64)
         self.scale_active = scale_active
         self.derivative_scale_factor = tf.constant((scaler_max - scaler_min) * 0.5, dtype=tf.float64)
-        self.derivative_scale_factor = tf.constant(1.0, dtype=tf.float64)
 
         print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
         if spatial_dimension == 1:
