@@ -27,7 +27,7 @@ class MK14Network(BaseNetwork):
     '''
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
-                 width: int, depth: int, loss_combination: int, save_folder: str = ""):
+                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True):
         if save_folder == "":
             custom_folder_name = "MK14_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
@@ -35,7 +35,7 @@ class MK14Network(BaseNetwork):
         super(MK14Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
-                                          input_decorrelation=input_decorrelation)
+                                          input_decorrelation=input_decorrelation, scale_active=scale_active)
 
     def create_model(self) -> bool:
         input_initializer = tf.keras.initializers.LecunNormal()

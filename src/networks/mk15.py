@@ -14,6 +14,7 @@ from tensorflow import keras as keras
 from tensorflow.keras import layers
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+from os import path
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.customlosses import MonotonicFunctionLoss, RelativeMAELoss
@@ -24,7 +25,7 @@ from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 class MK15Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
-                 width: int, depth: int, loss_combination: int, save_folder: str = ""):
+                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True):
         if save_folder == "":
             custom_folder_name = "MK15_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
@@ -32,7 +33,7 @@ class MK15Network(BaseNetwork):
         super(MK15Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
-                                          input_decorrelation=input_decorrelation)
+                                          input_decorrelation=input_decorrelation, scale_active=scale_active)
 
     def create_model(self) -> bool:
 
@@ -179,8 +180,25 @@ class MK15Network(BaseNetwork):
                  h_predicted, dim = (nS x 1)
         """
         u_reduced = u_complete[:, 1:]  # chop of u_0
-        alpha_predicted = self.model(u_reduced)
-        alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
+        [alpha_predicted, mono_loss, u_predicted, h_prediced] = self.model(u_reduced)
+        alpha_complete_predicted = self.model.reconstruct_alpha(tf.cast(alpha_predicted, dtype=tf.float64))
         u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
 
-        return [u_complete_reconstructed, alpha_complete_predicted]
+        return [u_complete_reconstructed, alpha_complete_predicted, h_prediced]
+
+    def load_model(self, filename=None):
+        usedFileName = self.folder_name
+        if filename != None:
+            usedFileName = filename
+
+        usedFileName = usedFileName + '/best_model/'
+
+        if path.exists(usedFileName) == False:
+            print("Model does not exists at this path: " + usedFileName)
+            exit(1)
+        model = tf.keras.models.load_model(usedFileName, custom_objects={"CustomModel": self.model,
+                                                                         "MonotonicFunctionLoss": MonotonicFunctionLoss})
+        # self.model.load_weights(usedFileName)
+        self.model = model
+        print("Model loaded from file ")
+        return 0

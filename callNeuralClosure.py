@@ -58,7 +58,7 @@ def initModelCpp(input):
 ### function definitions ###
 def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: str = "testFolder",
                loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
-               input_decorrelation: bool = False):
+               input_decorrelation: bool = False, scale_active: bool = True):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -69,7 +69,7 @@ def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int
                                              spatial_dim=spatial_dim,
                                              folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
                                              nw_width=width, normalized=normalized,
-                                             input_decorrelation=input_decorrelation)
+                                             input_decorrelation=input_decorrelation, scale_active=scale_active)
 
     return 0
 
@@ -198,7 +198,8 @@ def main():
     print("Initialize model")
     init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatial_dimension,
                folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
-               width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput)
+               width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput,
+               scale_active=options.scaledOutput)
     # Save options and runscript to file
     utils.writeConfigFile(options, neuralClosureModel)
 
@@ -209,7 +210,7 @@ def main():
                                               sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized,
                                               scaled_output=options.scaledOutput)
-    neuralClosureModel.create_model()
+    neuralClosureModel.create_model()  # always create model since it is custom and needs to be passed to weight loader
     neuralClosureModel.model.summary()
 
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:

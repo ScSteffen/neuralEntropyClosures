@@ -44,7 +44,9 @@ class BaseNetwork:
     input_decorrelation: bool  # flag to turn on decorrelation of input variables
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
-                 width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool):
+                 width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
+                 scale_active: bool):
+        self.scale_active = scale_active
         self.normalized = normalized
         self.input_decorrelation = input_decorrelation
         if self.input_decorrelation:
@@ -140,9 +142,8 @@ class BaseNetwork:
             tf.keras.backend.set_floatx('float32')
 
         # Create callbacks
-        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model', monitor='loss', mode='min',
-                                                     save_best_only=True,
-                                                     verbose=verbosity)  # , save_weights_only = True, save_freq = 50, verbose=0)
+        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model', monitor='val_loss', mode='min',
+                                                     save_best_only=True, verbose=verbosity)
         es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
                                               verbose=1)
 
@@ -162,10 +163,10 @@ class BaseNetwork:
                 # assemble callbacks
                 callbackList = []
                 csv_logger = self.create_csv_logger_cb()
-                if verbosity == 1:
-                    callbackList = [mc_best, csv_logger]
-                else:
+                if verbosity == 0:
                     callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
+                else:
+                    callbackList = [mc_best, csv_logger]
 
                 # start Training
                 self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
@@ -286,12 +287,14 @@ class BaseNetwork:
         if filename != None:
             usedFileName = filename
 
-        usedFileName = usedFileName + '/best_model'
+        usedFileName = usedFileName + '/best_model/'
 
         if path.exists(usedFileName) == False:
             print("Model does not exists at this path: " + usedFileName)
             exit(1)
-        self.model.load_weights(usedFileName)
+        model = tf.keras.models.load_model(usedFileName, custom_objects={"CustomModel": self.model})
+        # self.model.load_weights(usedFileName)
+        self.model = model
         print("Model loaded from file ")
         return 0
 
@@ -425,8 +428,9 @@ class BaseNetwork:
         return: True, if run successfully. Prints several plots and pictures to file.
         """
 
-        # [u_pred, alpha_pred, h_pred] = self.call_network(u_test)
-        alpha = self.call_network(u_test)
+        [u_pred, alpha_pred, h_pred] = self.call_network(u_test)
+
+        # alpha = self.call_network(u_test)
 
         # create the loss functions
         def pointwise_diff(true_samples, pred_samples):
