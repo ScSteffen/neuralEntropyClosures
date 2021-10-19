@@ -233,7 +233,7 @@ def main():
         print("Analysis mode entered.")
         print("Evaluate Model on normalized data...")
         neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=True,
-                                              scaled_output=options.scaledOutput)
+                                              scaled_output=options.scaledOutput, test_mode=True)
         [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model_normalized(u, alpha, h)
         print("Evaluate Model on non-normalized data...")

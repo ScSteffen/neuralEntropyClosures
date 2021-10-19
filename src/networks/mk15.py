@@ -196,9 +196,11 @@ class MK15Network(BaseNetwork):
         if path.exists(usedFileName) == False:
             print("Model does not exists at this path: " + usedFileName)
             exit(1)
+        # load model and weights
         model = tf.keras.models.load_model(usedFileName, custom_objects={"CustomModel": self.model,
                                                                          "MonotonicFunctionLoss": MonotonicFunctionLoss})
-        # self.model.load_weights(usedFileName)
-        self.model = model
+        # extract weights and save them to .h5
+        model.save_weights(usedFileName + "model_weights/weights")
+        self.model.load_weights(usedFileName + "model_weights/weights")
         print("Model loaded from file ")
         return 0
