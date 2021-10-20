@@ -95,6 +95,32 @@ class EntropyModel(tf.keras.Model, ABC):
 
         return [alpha, alpha, u_res, h_res]
 
+    def call_scaled(self, u_non_normal: Tensor):
+        """
+        brief: neural network call, with non-normalized input.
+        input: u_non_normal: tensor with non_normalized moments
+        """
+        u_0 = u_non_normal[:, 0]
+        u_downscaled = self.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
+        u_reduced = u_downscaled[:, 1:]
+        alpha = self.core_model(u_reduced)
+        if self.scale_active:
+            print("Scaled reconstruction of u and h enabled")
+            # scale to [scaler_min, scaler_max]
+            t1 = tf.add(tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
+            t2 = tf.math.scalar_mul(self.derivative_scale_factor, t1)  # scale
+            alpha64 = tf.add(t2, self.derivative_scaler_min)  # shift
+        else:
+            print("Reconstruction of u and h enabled")
+            alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+        alpha_complete = self.reconstruct_alpha(alpha64)
+        u_complete = self.reconstruct_u(alpha_complete)
+        u_rescaled = self.scale_u(u_complete, u_0)  # upscaling
+        alpha_rescaled = self.scale_alpha(alpha_complete, u_0)
+        # u_rescaled_recons = self.reconstruct_u(alpha_rescaled)
+        h = self.compute_h(u_rescaled, alpha_rescaled)
+        return [u_rescaled, alpha_rescaled, h]
+
     def reconstruct_alpha(self, alpha):
         """
         brief:  Reconstructs alpha_0 and then concats alpha_0 to alpha_1,... , from alpha1,...

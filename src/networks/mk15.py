@@ -187,6 +187,24 @@ class MK15Network(BaseNetwork):
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_prediced]
 
+    def call_scaled_64(self, u_non_normal: np.ndarray) -> list:
+        """
+        brief: Only works for maxwell Boltzmann entropy so far.
+        Calls the network with non normalized moments. (first the moments get normalized, then the network gets called,
+        then the upscaling mechanisms get called, then the original entropy gets computed.)
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: u_complete, dims = (nS x N)
+        returns: [u,alpha,h], where
+                 alpha_complete_predicted_scaled, dim = (nS x N)
+                 u_complete_reconstructed_scaled, dim = (nS x N)
+                 h_predicted_scaled, dim = (nS x 1)
+        """
+        u_non_normal = tf.constant(u_non_normal, dtype=tf.float64)
+        return self.model.call_scaled(u_non_normal)
+
     def load_model(self, file_name=None):
         used_file_name = self.folder_name
         if file_name != None:
