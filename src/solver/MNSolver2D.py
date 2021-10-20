@@ -143,7 +143,7 @@ class MNSolver2D:
                   str(endTime))
             self.errorAnalysis(idx_time)
             # print iteration results
-            # self.showSolution(idx_time)
+            self.showSolution(idx_time)
             idx_time += 1
             self.T += self.dt
 

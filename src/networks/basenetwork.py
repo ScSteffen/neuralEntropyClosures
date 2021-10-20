@@ -145,6 +145,8 @@ class BaseNetwork:
 
         # print scaling data to file.
         scaling_file_name = self.folder_name + '/scaling_data/min_max_scaler.csv'
+        if not path.exists(self.folder_name + '/scaling_data'):
+            makedirs(self.folder_name + '/scaling_data')
         with open(scaling_file_name, 'w') as csv_file:
             writer = csv.writer(csv_file, delimiter=',')
             writer.writerow([self.scaler_min, self.scaler_max])
