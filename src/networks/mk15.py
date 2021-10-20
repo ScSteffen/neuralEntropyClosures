@@ -203,7 +203,7 @@ class MK15Network(BaseNetwork):
                 scaling_data = row
         self.scaler_min = float(scaling_data[0])
         self.scaler_max = float(scaling_data[1])
-
+        self.create_model()
         used_file_name = used_file_name + '/best_model/'
 
         if path.exists(used_file_name) == False:
