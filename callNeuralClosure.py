@@ -211,9 +211,8 @@ def main():
                                               normalized_data=neuralClosureModel.normalized,
                                               scaled_output=options.scaledOutput,
                                               train_mode=True)
-    # create model after loading training data to get correct scaling in
-    neuralClosureModel.create_model()
-    neuralClosureModel.model.summary()
+        # create model after loading training data to get correct scaling in
+        neuralClosureModel.create_model()
 
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
         # in execution mode the model must be loaded.
@@ -221,7 +220,7 @@ def main():
         neuralClosureModel.load_model()
     else:
         print("Start training with new weights")
-
+    neuralClosureModel.model.summary()
     if options.training == 1:
         # train model
         neuralClosureModel.config_start_training(val_split=0.1, epoch_count=options.epoch,
