@@ -92,9 +92,14 @@ class MNSolver2D:
         self.neuralClosure = None
         self.model_mk = model_mk
         if not self.traditional:
+            # self.neuralClosure = init_neural_closure(
+            #    network_mk=self.model_mk, poly_degree=1, spatial_dim=2, folder_name="002_sim_M1_2D",
+            #    loss_combination=2, nw_width=18, nw_depth=8, normalized=True, input_decorrelation=False,
+            #    scale_active=True)
             self.neuralClosure = init_neural_closure(
-                network_mk=self.model_mk, poly_degree=1, spatial_dim=2, folder_name="002_sim_M1_2D", loss_combination=2,
-                nw_width=18, nw_depth=8, normalized=True, input_decorrelation=False, scale_active=True)
+                network_mk=self.model_mk, poly_degree=1, spatial_dim=2, folder_name="_simulation/mk15_M1_2D_normal",
+                loss_combination=2, nw_width=100, nw_depth=3, normalized=True, input_decorrelation=False,
+                scale_active=True)
             self.neuralClosure.load_model()  # "../../models/002_sim_M1_2D")
 
         # Analysis variables
@@ -133,10 +138,10 @@ class MNSolver2D:
         idx_time = 0
         while self.T < endTime:
             self.solveIterNewton(idx_time)
-            # self.solverIterML(idx_time)
+            self.solverIterML(idx_time)
             print("Iteration: " + str(idx_time) + ". Time " + str(self.T) + " of " +
                   str(endTime))
-            # self.errorAnalysis(idx_time)
+            self.errorAnalysis(idx_time)
             # print iteration results
             # self.showSolution(idx_time)
             idx_time += 1
@@ -149,7 +154,7 @@ class MNSolver2D:
         for idx_time in range(maxIter):  # time loop
             self.u2 = self.u  # sync solvers
             self.solveIterNewton(idx_time)
-            self.entropyClosureML()
+            self.entropy_closure_ml()
 
             # self.solverIterML(idx_time)
             print("Iteration: " + str(idx_time))
@@ -182,7 +187,7 @@ class MNSolver2D:
         def animate_func(i):
             # self.u2 = np.copy(self.u)
             self.entropyClosureNewton()
-            self.entropyClosureML()  # compare
+            self.entropy_closure_ml()  # compare
             self.realizabilityReconstruction()
             self.errorAnalysis(i)
 
@@ -262,7 +267,7 @@ class MNSolver2D:
 
     def solverIterML(self, t_idx):
         # entropy closure and
-        self.entropyClosureML()
+        self.entropy_closure_ml()
         print("System closed")
         # flux computation
         self.computeFluxML()
@@ -272,7 +277,7 @@ class MNSolver2D:
         print("Solution updated")
         return 0
 
-    def entropyClosureML(self):
+    def entropy_closure_ml(self):
         count = 0
         tmp = np.zeros((self.nx * self.ny, self.nSystem))
         for i in range(self.nx):

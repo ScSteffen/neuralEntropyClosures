@@ -130,6 +130,13 @@ class BaseNetwork:
         """
         return self.call_network(u_non_normal)
 
+    def call_scaled_64(self, u_non_normal: np.ndarray):
+        """
+        Brief: Same as call_scaled, but all variables are cast to fp64
+        By default just calls call_scaled
+        """
+        return self.call_scaled(u_non_normal)
+
     def config_start_training(self, val_split: float = 0.1, epoch_count: int = 2, curriculum: int = 1,
                               batch_size: int = 500, verbosity: int = 1, processing_mode: int = 0):
         '''
