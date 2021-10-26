@@ -43,10 +43,14 @@ def main():
     # plot_h_over_n1_n2(u[:, [0, 1, 2]], h)
 
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("data/1D/Monomial_M2_1D_normal_gaussian2.csv", 3)
-    utils.scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(-1, 4),
+    [u, alpha, h] = loadTrainingData("figures/solvers/solverData1D_M2_checker.csv", 3)
+    for i in range(len(u)):
+        u[i, :] = u[i, :] / u[i, 0]
+        h[i] = int(i / 100)
+
+    utils.scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(0, 150),
                           title=r"$h$ over ${\mathcal{R}^r}$",
-                          folder_name="delete", name="h_over_u__alpha_gauss", show_fig=False, log=False)
+                          folder_name="delete", name="used_moments_checker", show_fig=False, log=False)
     utils.scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-30, 30), lim_y=(-30, 30), lim_z=(-1, 4),
                           title=r"$h$ over ${\alpha_u^r}$",
                           folder_name="delete", name="h_over_alpha__alpha_gauss", show_fig=False, log=False)
