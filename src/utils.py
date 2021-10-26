@@ -159,13 +159,18 @@ def plot1D(xs, ys, labels=[], name='defaultName', log=True, folder_name="figures
 def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
                     lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
                     title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
-                    folder_name: str = "figures", show_fig: bool = False, ):
+                    folder_name: str = "figures", show_fig: bool = False, color_map: int = 0):
     '''
     brief: Compute a scatter plot
     input: x_in = [x1,x2] function arguments
            y_in = function values
     return: True if exit successfully
     '''
+    # choose colormap
+    if color_map == 1:
+        c_map = cm.summer
+    else:
+        c_map = cm.hot
 
     fig = plt.figure(figsize=(4.7, 4), dpi=400)
     ax = fig.add_subplot(111)  # , projection='3d')
@@ -173,9 +178,55 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     y = x_in[:, 1]
     z = z_in
     if log:
-        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, norm=colors.LogNorm(), vmin=lim_z[0], vmax=lim_z[1])
+        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, norm=colors.LogNorm(), vmin=lim_z[0], vmax=lim_z[1])
     else:
-        out = ax.scatter(x, y, s=6, c=z, cmap=cm.hot, vmin=lim_z[0], vmax=lim_z[1])
+        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, vmin=lim_z[0], vmax=lim_z[1])
+    plt.xlim(lim_x[0], lim_x[1])
+    plt.ylim(lim_y[0], lim_y[1])
+    ax.set_title(title, fontsize=14)
+    ax.set_xlabel(label_x)
+    ax.set_ylabel(label_y)
+    ax.set_aspect('auto')
+    cbar = fig.colorbar(out, ax=ax, extend='both')
+    if show_fig:
+        plt.show()
+    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    return 0
+
+
+def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
+                       lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
+                       title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
+                       folder_name: str = "figures", show_fig: bool = False, color_map: int = 0):
+    '''
+    brief: Compute a scatter plot
+    input: x_in = [x1,x2] function arguments
+           y_in = function values
+    return: True if exit successfully
+    '''
+    # choose colormap
+    if color_map == 1:
+        c_map = cm.summer
+    else:
+        c_map = cm.hot
+
+    plt.plot()
+    fig = plt.figure(figsize=(4.7, 4), dpi=400)
+    ax = fig.add_subplot(111)  # , projection='3d')
+
+    u1 = np.linspace(-1, 1, 100)
+    u2 = u1 * u1
+    u2_top = np.ones(100)
+    ax.plot(u1, u2, 'k-')
+    ax.plot(u1, u2_top, 'k-')
+
+    x = x_in[:, 0]
+    y = x_in[:, 1]
+    z = z_in
+    if log:
+        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, norm=colors.LogNorm(), vmin=lim_z[0], vmax=lim_z[1])
+    else:
+        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, vmin=lim_z[0], vmax=lim_z[1])
     plt.xlim(lim_x[0], lim_x[1])
     plt.ylim(lim_y[0], lim_y[1])
     ax.set_title(title, fontsize=14)
