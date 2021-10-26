@@ -43,20 +43,24 @@ def main():
     # plot_h_over_n1_n2(u[:, [0, 1, 2]], h)
 
     # Normalized Plots
-    [u, alpha, h] = loadTrainingData("figures/solvers/solverData1D_M2_checker.csv", 3)
+    [u, alpha, h] = loadTrainingData("figures/solvers/solverData1D_M2_linesource_scatter.csv", 3)
     for i in range(len(u)):
         u[i, :] = u[i, :] / u[i, 0]
         h[i] = int(i / 100)
 
-    utils.scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(0, 150),
-                          title=r"$h$ over ${\mathcal{R}^r}$",
-                          folder_name="delete", name="used_moments_checker", show_fig=False, log=False)
-    utils.scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-30, 30), lim_y=(-30, 30), lim_z=(-1, 4),
-                          title=r"$h$ over ${\alpha_u^r}$",
-                          folder_name="delete", name="h_over_alpha__alpha_gauss", show_fig=False, log=False)
-    plot_h_over_n1_n2(alpha, h, lim_x=(-40, 40), lim_y=(-40, 40),
-                      label_x=r"$\alpha_1^r$", label_y=r"$\alpha_2^r$",
-                      title=r"$h$ over $\alpha^r$")
+    utils.scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(0, 150),
+                             title="moment dynamics over time",
+                             folder_name="delete", name="used_moments_linesource_scatter", show_fig=False, log=False,
+                             color_map=1)
+    # utils.scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(0, 150),
+    #                      title=r"$h$ over ${\mathcal{R}^r}$",
+    #                      folder_name="delete", name="h_over_u__alpha_gauss", show_fig=False, log=False)
+    # utils.scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-30, 30), lim_y=(-30, 30), lim_z=(-1, 4),
+    #                      title=r"$h$ over ${\alpha_u^r}$",
+    #                      folder_name="delete", name="h_over_alpha__alpha_gauss", show_fig=False, log=False)
+    # plot_h_over_n1_n2(alpha, h, lim_x=(-40, 40), lim_y=(-40, 40),
+    #                  label_x=r"$\alpha_1^r$", label_y=r"$\alpha_2^r$",
+    #                  title=r"$h$ over $\alpha^r$")
     # Normalized Plots
     # [u, alpha, h] = loadTrainingData("realizable_set_pictures/N2_alpha.csv", 3)
     # plot_h_over_n1_n2(u, h)

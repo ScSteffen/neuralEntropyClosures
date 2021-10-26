@@ -206,22 +206,24 @@ def main():
         # create training Data
         # Save options and runscript to file (only for training)
         utils.writeConfigFile(options, neuralClosureModel)
-        neuralClosureModel.load_training_data(shuffle_mode=True,
-                                              sampling=options.sampling,
-                                              normalized_data=neuralClosureModel.normalized,
-                                              scaled_output=options.scaledOutput,
-                                              train_mode=True)
-        # create model after loading training data to get correct scaling in
-        neuralClosureModel.create_model()
-
+        neuralClosureModel.load_training_data(shuffle_mode=True, sampling=options.sampling,
+                                              normalized_data=neuralClosureModel.normalized, train_mode=True)
+    # create model after loading training data to get correct scaling in
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
-        # in execution mode the model must be loaded.
-        # load model weights (trainable and non trainable!)
-        neuralClosureModel.load_model()
+        neuralClosureModel.load_model()  # also creates model
+        # preprocess training data. Compute scalings
+        neuralClosureModel.training_data_preprocessing(scaled_output=options.scaledOutput,
+                                                       model_loaded=options.loadmodel)
     else:
         print("Start training with new weights")
-    neuralClosureModel.model.summary()
+        # preprocess training data. Compute scalings
+        neuralClosureModel.training_data_preprocessing(scaled_output=options.scaledOutput,
+                                                       model_loaded=options.loadmodel)
+        neuralClosureModel.create_model()
+    # neuralClosureModel.model.summary()
+
     if options.training == 1:
+
         # train model
         neuralClosureModel.config_start_training(val_split=0.1, epoch_count=options.epoch,
                                                  curriculum=options.curriculum,
