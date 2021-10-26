@@ -120,7 +120,7 @@ class MK15Network(BaseNetwork):
         '''
         x_data = self.training_data[0]
         # t1 = self.training_data
-        t2 = self.model(self.training_data[1][:1000, :])
+        # t2 = self.model(self.training_data[1][:1000, :])
         # print(t2[2] - tf.constant(self.training_data[0][:1000, :], dtype=tf.float64))  # sanity check u
         # print(t2[1] - tf.constant(self.training_data[1][:1000, :], dtype=tf.float32))  # sanity check alpha
         # print(t2[3] - tf.constant(self.training_data[2][:1000, :], dtype=tf.float64))  # sanity check h
@@ -142,30 +142,36 @@ class MK15Network(BaseNetwork):
     def select_training_data(self):
         return [True, True, True]
 
-    def training_data_preprocessing(self, scaled_output: bool = False) -> bool:
+    def training_data_preprocessing(self, scaled_output: bool = False, model_loaded: bool = False) -> bool:
         """
-        Performs a scaling on the output data alpha. Sets a scale factor for the
+        Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
         reconstruction of u during training and execution
+        params:            scaled_output: bool = Determines if entropy is scaled to range (0,1) (other outputs scaled accordingly)
+                           model_loaded: bool = Determines if models is loaded from file. Then scaling data from file is used
+        returns: True if terminated successfully
         """
-        self.scaler_max = 1.0
-        self.scaler_min = 0.0
-        # self.training_data.append(self.training_data[1])
+        self.scale_active = scaled_output
         if scaled_output:
-            new_len = self.training_data[1].shape[0] * self.training_data[1].shape[1]
-            output = np.reshape(self.training_data[1], (new_len, 1))
-            scaler = MinMaxScaler()
-            scaler.fit(output)
-            self.scaler_max = float(scaler.data_max_)
-            self.scaler_min = float(scaler.data_min_)
+            if not model_loaded:
+                # sup norm scaling
+                new_len = self.training_data[1].shape[0] * self.training_data[1].shape[1]
+                output = np.reshape(self.training_data[1], (new_len, 1))
+                scaler = MinMaxScaler()
+                scaler.fit(output)
+                self.scaler_max = float(scaler.data_max_)
+                self.scaler_min = float(scaler.data_min_)
             # scale to [-1,1]
             self.training_data[1] = -1.0 + 2 / (self.scaler_max - self.scaler_min) * (
                     self.training_data[1] - self.scaler_min)
-            # 2 * self.training_data[1] / (self.scaler_max - self.scaler_min)
-        print(
-            "Output of network has internal scaling with alpha_max= " + str(self.scaler_max) + " and alpha_min= " + str(
-                self.scaler_min))
-        print("New alpha_min= " + str(self.training_data[1].min()) + ". New alpha_max= " + str(
-            self.training_data[1].max()))
+            print(
+                "Output of network has internal scaling with alpha_max= " + str(
+                    self.scaler_max) + " and alpha_min= " + str(
+                    self.scaler_min))
+            print("New alpha_min= " + str(self.training_data[1].min()) + ". New alpha_max= " + str(
+                self.training_data[1].max()))
+        else:
+            self.scaler_max = 1.0
+            self.scaler_min = 0.0
         return True
 
     def call_network(self, u_complete):

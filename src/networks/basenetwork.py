@@ -158,7 +158,7 @@ class BaseNetwork:
             tf.keras.backend.set_floatx('float32')
 
         # Create callbacks
-        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model', monitor='val_loss', mode='min',
+        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model', monitor='loss', mode='min',
                                                      save_best_only=True, verbose=verbosity)
         es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
                                               verbose=1)
@@ -338,18 +338,15 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False, scaled_output: bool = False,
+                           normalized_data: bool = False,
                            train_mode: bool = False) -> bool:
         """
         Loads the training data
         params: normalized_moments = load normalized data  (u_0=1)
                 shuffle_mode = shuffle loaded Data  (yes,no)
                 alpha_sampling = use data uniformly sampled in the space of Lagrange multipliers.
-                scaled_output: bool = Determines if entropy is scaled to range (0,1) (other outputs scaled accordingly)
-
         return: True, if loading successful
         """
-        self.scale_active = scaled_output
         self.training_data = []
 
         ### Create trainingdata filename"
@@ -418,29 +415,36 @@ class BaseNetwork:
             print("Shifting the data accordingly if network architecture is MK15 or newer...")
         else:
             print("Warning: Mean of training data moments was not computed")
-        if train_mode:
-            self.training_data_preprocessing(scaled_output=scaled_output)
-
         return True
 
-    def training_data_preprocessing(self, scaled_output: bool = False) -> bool:
+    def training_data_preprocessing(self, scaled_output: bool = False, model_loaded: bool = False) -> bool:
         """
         Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
         reconstruction of u during training and execution
+        params:            scaled_output: bool = Determines if entropy is scaled to range (0,1) (other outputs scaled accordingly)
+                           model_loaded: bool = Determines if models is loaded from file. Then scaling data from file is used
+        returns: True if terminated successfully
         """
-        self.scaler_max = 1.0
-        self.scaler_min = 0.0
-        self.training_data.append(self.training_data[1])
+        self.scale_active = scaled_output
         if scaled_output:
-            scaler = MinMaxScaler()
-            scaler.fit(self.training_data[2])
-            self.scaler_max = float(scaler.data_max_)
-            self.scaler_min = float(scaler.data_min_)
-            self.training_data[2] = scaler.transform(self.training_data[2])
-            self.training_data[1] = (self.training_data[1] - self.scaler_min) / (self.scaler_max - self.scaler_min)
-            # * 2 - 1
-        print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
-            self.scaler_min))
+            if not model_loaded:
+                scaler = MinMaxScaler()
+                scaler.fit(self.training_data[2])
+                self.scaler_max = float(scaler.data_max_)
+                self.scaler_min = float(scaler.data_min_)
+            # scale to [0,1]
+            self.training_data[2] = (self.training_data[2] - self.scaler_min) / (self.scaler_max - self.scaler_min)
+            # scale correspondingly
+            self.training_data[1] = self.training_data[1] / (self.scaler_max - self.scaler_min)
+            print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
+                self.scaler_min))
+            print("New h_min= " + str(self.training_data[2].min()) + ". New h_max= " + str(
+                self.training_data[2].max()))
+            print("New alpha_min= " + str(self.training_data[1].min()) + ". New alpha_max= " + str(
+                self.training_data[1].max()))
+        else:
+            self.scaler_max = 1.0
+            self.scaler_min = 0.0
         return True
 
     def get_training_data(self):
@@ -572,7 +576,7 @@ class BaseNetwork:
 
     """
     def normalize_data(self):
-
+    
         # load data
         #
         [u_t, alpha_t, h_t] = self.training_data
@@ -583,17 +587,17 @@ class BaseNetwork:
         u_non_normal = tf.constant(u_t, dtype=tf.float64)
         alpha_non_normal = tf.constant(alpha_t, dtype=tf.float64)
         h_non_normal = tf.constant(h_t, dtype=tf.float64)
-
+    
         # scale u and alpha
         u_normal = self.model.scale_u(u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
         alpha_normal = self.model.scale_alpha(alpha_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))
-
+    
         # compute h
         f_quad = tf.math.exp(tf.tensordot(alpha_normal, mBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.tensordot(f_quad, qWeights, axes=([1], [1]))  # f*w
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha_normal, u_normal), axis=1, keepdims=True)
         h_normal = tmp2 - tmp
-
+    
         self.training_data = [u_normal[:, 1:], alpha_normal[:, 1:], h_normal]
         return 0
     """

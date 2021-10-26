@@ -31,8 +31,7 @@ class EntropyModel(tf.keras.Model, ABC):
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
-                 scale_active: bool = True,
-                 **opts):
+                 scale_active: bool = True, subclass=False, **opts):
         super(EntropyModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.core_model = core_model  # must be a compiled tensorflow model
@@ -44,7 +43,8 @@ class EntropyModel(tf.keras.Model, ABC):
         self.scale_active = scale_active
         self.derivative_scale_factor = tf.constant((scaler_max - scaler_min) * 0.5, dtype=tf.float64)
 
-        print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
+        if not subclass:
+            print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
         if spatial_dimension == 1:
             [quad_pts, quad_weights] = math.qGaussLegendre1D(10 * polynomial_degree)  # dims = nq
             m_basis = math.computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
@@ -242,8 +242,10 @@ class SobolevModel(EntropyModel):
                  scale_active: bool = True, **opts):
         super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
                                            spatial_dimension=spatial_dimension, reconstruct_u=reconstruct_u,
-                                           scaler_min=scaler_min, scaler_max=scaler_max, scale_active=scale_active)
+                                           scaler_min=scaler_min, scaler_max=scaler_max, scale_active=scale_active,
+                                           subclass=True)
         self.derivative_scale_factor = tf.constant(scaler_max - scaler_min, dtype=tf.float64)
+        print("Model output alpha and h will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
 
     def call(self, x: Tensor, training=False) -> list:
         """
@@ -260,16 +262,16 @@ class SobolevModel(EntropyModel):
 
         if self.enable_recons_u:
             if self.scale_active:
-                print("(Scaled) reconstruction of U enabled")
+                print("Scaled reconstruction of u enabled")
                 alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
             else:
-                print("Reconstruction of U enabled")
+                print("Reconstruction of u enabled")
                 alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             res = u_complete[:, 1:]  # cutoff the 0th order moment, since it is 1 by construction
         else:
-            print("Reconstruction of U disabled. Output 3 is meaningless")
+            print("Reconstruction of u disabled. Output 3 is meaningless")
             res = alpha
         return [h, alpha, res]
 
