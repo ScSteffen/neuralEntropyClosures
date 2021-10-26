@@ -51,33 +51,36 @@ class MNSolver1D:
         # generate geometry
         self.x0 = -1.5
         self.x1 = 1.5
-        self.nx = 500
+        self.nx = 150
         self.dx = (self.x1 - self.x0) / self.nx
 
-        # physics (homogeneous)
+        # physics (isotropic, homogenious)
         self.sigmaS = 1.0
-        self.sigmaA = 0.0
-        self.sigmaT = self.sigmaS + self.sigmaA
+        self.scatter_vector = np.zeros(self.n_system)
+        for i in range(self.n_system):
+            if i % 2 == 0:
+                self.scatter_vector[i] = 1.0 / float(i + 1)
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.3
+        self.cfl = 0.3  # 0.3
         self.dt = self.cfl * self.dx
 
         # boundary
-        self.boundary = 0  # 0 = periodic, 1 = dirichlet
+        self.boundary = 0  # 0 = periodic, 1 = dirichlet with source,
         if self.boundary == 0:
             print("Periodic boundary conditions")
         else:
             print("Dirichlet boundary conditions")
+        self.datafile = "solverData1D_M2_linesource.csv"
         # Solver variables Traditional
-        self.u = self.ic_zero()  # self.ic_periodic()# self.ic_zero()  #
+        self.u = self.ic_linesource()  # self.ic_periodic()# self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
         self.xFlux = np.zeros((self.n_system, self.nx), dtype=float)
         self.h = np.zeros(self.nx)
         self.h2 = np.zeros(self.nx)
 
-        self.u2 = self.ic_zero()  # self.ic_periodic() # self.ic_zero()  #
+        self.u2 = self.ic_linesource()  # self.ic_periodic() # self.ic_zero()  #
         self.alpha2 = np.zeros((self.n_system, self.nx))
         self.xFlux2 = np.zeros((self.n_system, self.nx), dtype=float)
         # Neural closure
@@ -86,9 +89,11 @@ class MNSolver1D:
             if self.model_mk == 11:
                 if self.polyDegree == 2:
                     self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=1,
-                                                             folder_name="002_sim_M2_1D", loss_combination=2,
+                                                             folder_name="_simulation/mk11_M2_1D_normal",
+                                                             loss_combination=2,
+                                                             # folder_name="002_sim_M2_1D"
                                                              nw_width=15, nw_depth=7, normalized=True)
-                    self.neuralClosure.loadModel("../../models/002_sim_M2_1D")
+                    self.neuralClosure.load_model()
                 elif self.polyDegree == 3:
                     self.neuralClosure = init_neural_closure(network_mk=13, poly_degree=3, spatial_dim=1,
                                                              folder_name="002_sim_M3_1D", loss_combination=2,
@@ -122,7 +127,7 @@ class MNSolver1D:
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']  # , 'realizable']
         self.dfErrPoints = pd.DataFrame(columns=columns)
 
-        with open('solverData1D_M2_checker.csv', 'w', newline='') as f:
+        with open('figures/solvers/' + self.datafile, 'w', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
             row = ["iter", "u_0", "u_1", "u_2", "alpha_0", "alpha_1", "alpha_2", "entropy"]
@@ -181,24 +186,42 @@ class MNSolver1D:
             u_ic[0, i] = normal_dist(x_koor, 0.0, 0.01)
             u_ic[1, i] = 0.0
             if self.polyDegree >= 2:
-                u_ic[2, i] = 0.5 * u_ic[0, i]
+                u_ic[2, i] = 0.3 * u_ic[0, i]
             if self.polyDegree >= 3:
-                u_ic[3, i] = 0.5 * u_ic[0, i]
+                u_ic[3, i] = 0.005 * u_ic[0, i]
 
         print("using linesource initial conditions")
 
         return u_ic
 
-    def ic_bump(self):
-        def normal_dist(x, mean, sd):
-            prob_density = (np.pi * sd) * np.exp(-0.5 * ((x - mean) / sd) ** 2)
-            return prob_density
+    def ic_soft_linesource(self):
+        """
+        brief: linesource test case
+        """
 
-        def sincos(x):
-            return 1.0 + 0.5 * np.cos(2 * np.pi * x)
+        def coscos(x):
+            if -0.49 < x < 0.49:
+                return np.cos(x) * np.cos(x)
+            else:
+                return 0.01
 
         u_ic = np.zeros((self.n_system, self.nx))
 
+        for i in range(self.nx):
+            x_koor = self.x0 + (i - 0.5) * self.dx
+            u_ic[0, i] = coscos(x_koor)
+            u_ic[1, i] = 0.0
+            if self.polyDegree >= 2:
+                u_ic[2, i] = 0.05 * u_ic[0, i]
+            if self.polyDegree >= 3:
+                u_ic[3, i] = 0.05 * u_ic[0, i]
+
+        print("using soft linesource initial conditions")
+
+        return u_ic
+
+    def ic_bump(self):
+        u_ic = np.zeros((self.n_system, self.nx))
         for i in range(self.nx):
             x_koor = self.x0 + (i - 0.5) * self.dx
             if 1 > x_koor > -1:
@@ -236,14 +259,17 @@ class MNSolver1D:
             #    uIc[3, i] = -N2 + (N1 + N2) ** 2 / (1 + N1) + 0.002  # error!
         return u_ic
 
-    def solve(self, maxIter=100):
+    def solve(self, maxIter=100, t_end=1.0):
         # self.show_solution(0)
-        for idx_time in range(maxIter):  # time loop
+        idx_time = 0
+        while idx_time < maxIter and idx_time * self.dt < t_end:
             self.solve_iter_newton(idx_time)
-            # self.solver_iter_ml(idx_time)
-            print("Iteration: " + str(idx_time))
+            self.solver_iter_ml(idx_time)
+            print("Iteration: " + str(idx_time) + '. Time: ' + str(idx_time * self.dt))
             self.error_analysis(idx_time)
             # print iteration results
+            self.show_solution(idx_time)
+            idx_time += 1
         self.show_solution(maxIter - 1)
 
         return self.u
@@ -526,31 +552,28 @@ class MNSolver1D:
                 self.u[:, i] = self.u[:, i] + ((self.xFlux[:, i] - self.xFlux[:, ip1]) / self.dx) * self.dt
             else:
                 if i == self.nx - 1:
-                    self.u[:, i] = self.get_realizable_moment(0.001)
+                    self.u[:, i] = self.get_realizable_moment(0.01)
                 elif i == 0:
                     self.u[:, 0] = self.get_realizable_moment(1.0)
                 else:
-                    self.u[:, i] = self.u[:, i] + ((self.xFlux[:, i] - self.xFlux[:, ip1]) / self.dx) * self.dt
+                    self.u[:, i] = self.u[:, i] + (
+                            (self.xFlux[:, i] - self.xFlux[:, ip1]) / self.dx) * self.dt
             # Scattering
-            # self.u[0, i, j] = self.u[0, i, j] + (
-            #        self.sigmaS * self.u[0, i, j] - self.sigmaT * self.u[0, i, j]) * self.dt
-            # self.u[1:, i, j] = self.u[0, i, j] + (self.sigmaT * self.u[1:, i, j]) * self.dt
+            self.u[:, i] += self.dt * self.sigmaS * (self.scatter_vector * self.u[0, i] - self.u[:, i])
 
         return 0
 
     def compute_closure_ml(self):
         tmp = np.copy(np.transpose(self.u2))
+        for i in range(self.nx):
+            if tmp[i, 0] < 0.0001:
+                tmp[i, 0] = 0.0001
         [u_pred, alpha_pred, h] = self.neuralClosure.call_scaled_64(np.asarray(tmp))
 
         for i in range(self.nx):
-            # self.u2[:, i] = u_pred[i, :]
-            t = alpha_pred[i, :].numpy()
-            a = t.reshape((1, self.n_system))
-            # self.u2[:, i] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
             self.alpha2[:, i] = alpha_pred[i, :]
             self.h2[i] = h[i]
-            # print("(" + str(self.u2[:, i]) + " | " + str(tmp[i, :]) + " | " + str(
-            #    np.linalg.norm(self.u2[:, i] - tmp[i, :], 2)))
+
         return 0
 
     def compute_flux_ml(self):
@@ -586,11 +609,13 @@ class MNSolver1D:
                 self.u2[:, i] = self.u2[:, i] + ((self.xFlux2[:, i] - self.xFlux2[:, ip1]) / self.dx) * self.dt
             else:
                 if i == self.nx - 1:
-                    self.u2[:, i] = self.get_realizable_moment(0.0)
+                    self.u2[:, i] = self.get_realizable_moment(0.01)
                 elif i == 0:
                     self.u2[:, 0] = self.get_realizable_moment(1.0)
                 else:
                     self.u2[:, i] = self.u2[:, i] + ((self.xFlux2[:, i] - self.xFlux2[:, ip1]) / self.dx) * self.dt
+            # Scattering
+            self.u2[:, i] += self.dt * self.sigmaS * (self.scatter_vector * self.u2[0, i] - self.u2[:, i])
         return 0
 
     def show_solution(self, idx):
@@ -600,7 +625,7 @@ class MNSolver1D:
         plt.plot(x, self.u[0, :], "k-", linewidth=1, label="Newton closure")
         plt.plot(x, self.u2[0, :], 'o', markersize=2, markerfacecolor='orange',
                  markeredgewidth=0.5, markeredgecolor='k', label="Neural closure")
-        plt.xlim([-1.5, 1.5])
+        plt.xlim([self.x0, self.x1])
         # plt.ylim([0.0, 1.5])
         plt.xlabel("x")
         plt.ylabel("u1")
@@ -611,7 +636,7 @@ class MNSolver1D:
         plt.plot(x, self.u[1, :], "k-", linewidth=1, label="Newton closure")
         plt.plot(x, self.u2[1, :], 'o', markersize=2, markerfacecolor='orange',
                  markeredgewidth=0.5, markeredgecolor='k', label="Neural closure")
-        plt.xlim([-1.5, 1.5])
+        plt.xlim([self.x0, self.x1])
         # plt.ylim([0.0, 1.5])
         plt.xlabel("x")
         plt.ylabel("u1")
@@ -623,7 +648,7 @@ class MNSolver1D:
             plt.plot(x, self.u[2, :], "k-", linewidth=1, label="Newton closure")
             plt.plot(x, self.u2[2, :], 'o', markersize=2, markerfacecolor='orange',
                      markeredgewidth=0.5, markeredgecolor='k', label="Neural closure")
-            plt.xlim([-1.5, 1.5])
+            plt.xlim([self.x0, self.x1])
             # plt.ylim([0.0, 1.5])
             plt.xlabel("x")
             plt.ylabel("u1")
@@ -633,7 +658,7 @@ class MNSolver1D:
 
         err = np.linalg.norm(self.u - self.u2, axis=0)
         plt.plot(x, err, "k-", linewidth=1, label="Newton closure")
-        plt.xlim([-1.5, 1.5])
+        plt.xlim([self.x0, self.x1])
         # plt.ylim([0.0, 1.5])
         plt.xlabel("x")
         plt.ylabel("norm(u-u-theta)")
@@ -648,7 +673,7 @@ class MNSolver1D:
         entropyML = self.h2.sum() * self.dx
 
         # mean absulote error
-        with open('figures/solvers/solverData1D_M2_checker.csv', 'a+', newline='') as f:
+        with open('figures/solvers/' + self.datafile, 'a+', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
             for i in range(self.nx):
