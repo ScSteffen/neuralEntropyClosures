@@ -74,13 +74,13 @@ class MNSolver1D:
             print("Dirichlet boundary conditions")
         self.datafile = "solverData1D_M2_linesource.csv"
         # Solver variables Traditional
-        self.u = self.ic_linesource()  # self.ic_periodic()# self.ic_zero()  #
+        self.u = self.ic_soft_linesource()  # self.ic_periodic()# self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
         self.xFlux = np.zeros((self.n_system, self.nx), dtype=float)
         self.h = np.zeros(self.nx)
         self.h2 = np.zeros(self.nx)
 
-        self.u2 = self.ic_linesource()  # self.ic_periodic() # self.ic_zero()  #
+        self.u2 = self.ic_soft_linesource()  # self.ic_periodic() # self.ic_zero()  #
         self.alpha2 = np.zeros((self.n_system, self.nx))
         self.xFlux2 = np.zeros((self.n_system, self.nx), dtype=float)
         # Neural closure
