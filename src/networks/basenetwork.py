@@ -35,6 +35,7 @@ class BaseNetwork:
     history: list  # list of training history objects
     loss_weights: list  # one hot vector to enable/disable loss functions
     model: tf.keras.Model  # the neural network model
+    model_legacy: tf.keras.Model  # the neural network model
     training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
     scaler_max: float  # for output scaling
     scaler_min: float  # for output scaling
@@ -47,6 +48,7 @@ class BaseNetwork:
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
                  scale_active: bool):
+        self.model_legacy = None
         self.scale_active = scale_active
         self.normalized = normalized
         self.input_decorrelation = input_decorrelation
@@ -105,14 +107,14 @@ class BaseNetwork:
     def create_model(self) -> bool:
         pass
 
-    def call_network(self, u) -> list:
+    def call_network(self, u_complete) -> list:
         """
         Brief: This does not reconstruct u, but returns original u. Careful here!
 
         # Input: input.shape = (nCells, nMaxMoment), nMaxMoment = 9 in case of MK3
         # Output: Gradient of the network wrt input
         """
-        x_model = tf.Variable(u)
+        x_model = tf.Variable(u_complete)
 
         with tf.GradientTape() as tape:
             # training=True is only needed if there are layers with different
@@ -130,7 +132,7 @@ class BaseNetwork:
         """
         return self.call_network(u_non_normal)
 
-    def call_scaled_64(self, u_non_normal: np.ndarray):
+    def call_scaled_64(self, u_non_normal: np.ndarray, legacy_mode=False):
         """
         Brief: Same as call_scaled, but all variables are cast to fp64
         By default just calls call_scaled
@@ -522,13 +524,13 @@ class BaseNetwork:
         if self.poly_degree == 1 and self.spatial_dim == 1:
             np.linspace(0, 1, 10)
             utils.plot_1d([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
-                         'test', log=False)
+                          'test', log=False)
             utils.plot_1d([u_test[:, 1]], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
             utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
-                         'alpha1_over_u1',
+                          'alpha1_over_u1',
                           log=False)
             utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 0], alpha_test[:, 0]], ['alpha0 pred', 'alpha0 true'],
-                         'alpha0_over_u1',
+                          'alpha0_over_u1',
                           log=False)
             utils.plot_1d([u_test[:, 1]], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1',
                           log=False)
@@ -536,7 +538,7 @@ class BaseNetwork:
                           log=False)
             utils.plot_1d([u_test[:, 1]], [diff_alpha, diff_h, diff_u],
                           ['difference alpha', 'difference h', 'difference u'],
-                         'errors', log=True)
+                          'errors', log=True)
         return 0
 
     def evaluate_model(self, u_test, alpha_test, h_test):
