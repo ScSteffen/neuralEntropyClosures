@@ -600,12 +600,12 @@ class MNSolver2D:
 
         plt.clf()
 
-        utils.plot1D([x, x, x, x, x, x],
-                     [xSNewton_u0, xSNewton_u1, xSNewton_u2, xSML_u0, xSML_u1, xSML_u1],
-                     [r'$u_0$ Newton', r'$u_1$ Newton', r'$u_2$ Newton', r'$u_0$ Neural', r'$u_1$ Neural',
+        utils.plot_1d([x, x, x, x, x, x],
+                      [xSNewton_u0, xSNewton_u1, xSNewton_u2, xSML_u0, xSML_u1, xSML_u1],
+                      [r'$u_0$ Newton', r'$u_1$ Newton', r'$u_2$ Newton', r'$u_0$ Neural', r'$u_1$ Neural',
                       r'$u_2$ Neural'],
                      '000_u', folder_name="figures/solvers/000plot", log=False, show_fig=False,
-                     xlabel=r"$x$")
+                      xlabel=r"$x$")
         plt.clf()
         plt.plot(x, xSNewton_u0, "k-", label="Newton closure")
         plt.plot(x, xSML_u0, 'o', markersize=6, markerfacecolor='orange',
