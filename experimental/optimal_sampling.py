@@ -297,31 +297,31 @@ def main():
     diff_y_uniform_dense = pointwiseDiff(pred_uniform_dense[0], y_test)
     diff_dy_uniform_dense = pointwiseDiff(pred_uniform_dense[1], y_test)
 
-    utils.plot1D(x_test, [pred_smart[0], pred_uniform[0], pred_smart_dense[0], pred_uniform_dense[0], y_test],
-                 ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense', 'y_test'], 'exp(x)_over_x', log=False,
-                 folder_name="figures")
-    utils.plot1D(x_test, [pred_smart[1], pred_uniform[1], pred_smart_dense[1], pred_uniform_dense[1], y_test],
-                 ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense', 'dy_test'], 'd_exp(x)_over_x',
-                 log=False, folder_name="figures")
-    utils.plot1D(x_test, [diff_y_smart, diff_y_uniform, diff_y_smart_dense, diff_y_uniform_dense],
-                 ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense'], 'errors_in_y', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_dy_smart, diff_dy_uniform, diff_dy_smart_dense, diff_dy_uniform_dense],
-                 ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense'], 'errors_in_dy', log=True,
-                 folder_name="figures")
+    utils.plot_1d(x_test, [pred_smart[0], pred_uniform[0], pred_smart_dense[0], pred_uniform_dense[0], y_test],
+                  ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense', 'y_test'], 'exp(x)_over_x', log=False,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [pred_smart[1], pred_uniform[1], pred_smart_dense[1], pred_uniform_dense[1], y_test],
+                  ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense', 'dy_test'], 'd_exp(x)_over_x',
+                  log=False, folder_name="figures")
+    utils.plot_1d(x_test, [diff_y_smart, diff_y_uniform, diff_y_smart_dense, diff_y_uniform_dense],
+                  ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense'], 'errors_in_y', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_dy_smart, diff_dy_uniform, diff_dy_smart_dense, diff_dy_uniform_dense],
+                  ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense'], 'errors_in_dy', log=True,
+                  folder_name="figures")
 
-    utils.plot1D(x_test, [diff_y_smart, diff_y_smart_dense],
-                 ['y_smart', 'y_smart_dense'], 'errors_in_y_smart', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_y_uniform, diff_y_uniform_dense],
-                 ['y_uniform', 'y_uniform_dense'], 'errors_in_y_uniform', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_dy_smart, diff_dy_smart_dense],
-                 ['dy_smart', 'dy_smart_dense'], 'errors_in_dy_smart', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_dy_uniform, diff_dy_uniform_dense],
-                 ['dy_uniform', 'dy_uniform_dense'], 'errors_in_dy_uniform', log=True,
-                 folder_name="figures")
+    utils.plot_1d(x_test, [diff_y_smart, diff_y_smart_dense],
+                  ['y_smart', 'y_smart_dense'], 'errors_in_y_smart', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_y_uniform, diff_y_uniform_dense],
+                  ['y_uniform', 'y_uniform_dense'], 'errors_in_y_uniform', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_dy_smart, diff_dy_smart_dense],
+                  ['dy_smart', 'dy_smart_dense'], 'errors_in_dy_smart', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_dy_uniform, diff_dy_uniform_dense],
+                  ['dy_uniform', 'dy_uniform_dense'], 'errors_in_dy_uniform', log=True,
+                  folder_name="figures")
 
     return 0
 

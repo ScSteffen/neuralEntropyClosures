@@ -42,11 +42,11 @@ def main():
     h_true = eTools.compute_h(eTools.reconstruct_u(alpha_true_extend), alpha_true_extend)
     u = eTools.reconstruct_u(alpha)
     MSE = pointwiseDiff(h, h_true)
-    utils.plot1D([alpha_1[:, 0]], [KL_div[:, 0], MSE], labels=['KL_Divergence', 'MSE'], name="kl_divergence",
-                 show_fig=True, log=False)
-    utils.plot1D([u[:, 1]], [KL_div[:, 0], MSE], labels=['KL_Divergence', 'MSE'],
-                 name="kl_divergence",
-                 show_fig=True, log=False)
+    utils.plot_1d([alpha_1[:, 0]], [KL_div[:, 0], MSE], labels=['KL_Divergence', 'MSE'], name="kl_divergence",
+                  show_fig=True, log=False)
+    utils.plot_1d([u[:, 1]], [KL_div[:, 0], MSE], labels=['KL_Divergence', 'MSE'],
+                  name="kl_divergence",
+                  show_fig=True, log=False)
     return 0
 
 

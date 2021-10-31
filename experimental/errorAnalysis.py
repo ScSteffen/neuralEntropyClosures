@@ -39,41 +39,41 @@ def main():
     [u_modelAlpha, alpha_modelAlpha, h_modelAlpha] = modelAlpha.call_scaled_64(u)
     [u_modelU, alpha_modelU, h_modelU] = modelU.call_scaled_64(u)
     # plot results
-    utils.plot1D([u[:, 1], u[:, 1], u[:, 1]], [h_modelAlpha[:, 0], h_modelU[:, 0], h],
-                 [r'$h_{\theta}$ - uniform $\alpha$', r'$h_{\theta}$  - uniform $u$', r'$h$ test'],
+    utils.plot_1d([u[:, 1], u[:, 1], u[:, 1]], [h_modelAlpha[:, 0], h_modelU[:, 0], h],
+                  [r'$h_{\theta}$ - uniform $\alpha$', r'$h_{\theta}$  - uniform $u$', r'$h$ test'],
                  '000_h', folder_name="ValidationTest", log=False, show_fig=False, xlabel=r"$u_1$")
     # plot results
-    utils.plot1D([u[:, 1], u[:, 1], u[:, 1]], [alpha_modelAlpha[:, 1], alpha_modelU[:, 1], alpha[:, 1]],
-                 [r'$\alpha_{1\theta}$ - uniform $\alpha$', r'$\alpha_{1\theta}$  - uniform $u$',
+    utils.plot_1d([u[:, 1], u[:, 1], u[:, 1]], [alpha_modelAlpha[:, 1], alpha_modelU[:, 1], alpha[:, 1]],
+                  [r'$\alpha_{1\theta}$ - uniform $\alpha$', r'$\alpha_{1\theta}$  - uniform $u$',
                   r'$\alpha_1$ test'],
                  '000_alpha', folder_name="ValidationTest", log=False, show_fig=False, xlabel=r"$u_1$")
     # plot results
-    utils.plot1D([u[:, 1], u[:, 1], u[:, 1]], [u_modelAlpha[:, 1], u_modelU[:, 1], u[:, 1]],
-                 [r'$u_{1\theta}$ - uniform $\alpha$', r'$u_{1\theta}$  - uniform $u$', r'$u_1$ test'],
+    utils.plot_1d([u[:, 1], u[:, 1], u[:, 1]], [u_modelAlpha[:, 1], u_modelU[:, 1], u[:, 1]],
+                  [r'$u_{1\theta}$ - uniform $\alpha$', r'$u_{1\theta}$  - uniform $u$', r'$u_1$ test'],
                  '000_u', folder_name="ValidationTest", log=False, show_fig=False,
-                 xlabel=r"$u_1$")
+                  xlabel=r"$u_1$")
 
     # plot errors
 
     ys = [relDifferenceScalar(alpha[:, 1], alpha_modelAlpha[:, 1], maxMode=True),
           relDifferenceScalar(alpha[:, 1], alpha_modelU[:, 1], maxMode=True)]
-    utils.plot1D([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
+    utils.plot_1d([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
                  '000_alphaErr', folder_name="ValidationTest", log=True, show_fig=False,
-                 ylabel=r"$|\alpha_1-\alpha_{1,\theta}|/|\alpha_1|$",
-                 xlabel=r"$u_1$")
+                  ylabel=r"$|\alpha_1-\alpha_{1,\theta}|/|\alpha_1|$",
+                  xlabel=r"$u_1$")
 
     ys = [relDifferenceScalar(u[:, 1], u_modelAlpha[:, 1], maxMode=True),
           relDifferenceScalar(u[:, 1], u_modelU[:, 1], maxMode=True)]
-    utils.plot1D([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
+    utils.plot_1d([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
                  '000_uErr', folder_name="ValidationTest", log=True, show_fig=False,
-                 ylabel=r"$|\alpha_1-\alpha_{1,\theta}|/|\alpha_1|$",
-                 xlabel=r"$u_1$")
+                  ylabel=r"$|\alpha_1-\alpha_{1,\theta}|/|\alpha_1|$",
+                  xlabel=r"$u_1$")
     ys = [relDifferenceScalar(h, h_modelAlpha, maxMode=True),
           relDifferenceScalar(h, h_modelU, maxMode=True)]
-    utils.plot1D([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
+    utils.plot_1d([u[:, 1], u[:, 1]], ys, [r'uniform $\alpha$', 'uniform $u$'],
                  '000_hErr', folder_name="ValidationTest", log=True, show_fig=False,
-                 ylabel=r"$|(h-h_{\theta)}|/|h|$",
-                 xlabel=r"$u_1$")
+                  ylabel=r"$|(h-h_{\theta)}|/|h|$",
+                  xlabel=r"$u_1$")
 
     """
     x = u[:, 1]

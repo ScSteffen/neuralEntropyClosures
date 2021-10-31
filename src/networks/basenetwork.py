@@ -521,21 +521,21 @@ class BaseNetwork:
 
         if self.poly_degree == 1 and self.spatial_dim == 1:
             np.linspace(0, 1, 10)
-            utils.plot1D([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
+            utils.plot_1d([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
                          'test', log=False)
-            utils.plot1D([u_test[:, 1]], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
-            utils.plot1D([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
+            utils.plot_1d([u_test[:, 1]], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
+            utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
                          'alpha1_over_u1',
-                         log=False)
-            utils.plot1D([u_test[:, 1]], [alpha_pred[:, 0], alpha_test[:, 0]], ['alpha0 pred', 'alpha0 true'],
+                          log=False)
+            utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 0], alpha_test[:, 0]], ['alpha0 pred', 'alpha0 true'],
                          'alpha0_over_u1',
-                         log=False)
-            utils.plot1D([u_test[:, 1]], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1',
-                         log=False)
-            utils.plot1D([u_test[:, 1]], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1',
-                         log=False)
-            utils.plot1D([u_test[:, 1]], [diff_alpha, diff_h, diff_u],
-                         ['difference alpha', 'difference h', 'difference u'],
+                          log=False)
+            utils.plot_1d([u_test[:, 1]], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1',
+                          log=False)
+            utils.plot_1d([u_test[:, 1]], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1',
+                          log=False)
+            utils.plot_1d([u_test[:, 1]], [diff_alpha, diff_h, diff_u],
+                          ['difference alpha', 'difference h', 'difference u'],
                          'errors', log=True)
         return 0
 
