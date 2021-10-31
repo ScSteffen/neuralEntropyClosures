@@ -174,7 +174,7 @@ class MK15Network(BaseNetwork):
             self.scaler_min = 0.0
         return True
 
-    def call_network(self, u_complete):
+    def call_network(self, u_complete, legacy_mode=False):
         """
         brief: Only works for maxwell Boltzmann entropy so far.
         nS = batchSize
@@ -193,7 +193,7 @@ class MK15Network(BaseNetwork):
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_prediced]
 
-    def call_scaled_64(self, u_non_normal: np.ndarray) -> list:
+    def call_scaled_64(self, u_non_normal: np.ndarray, legacy_mode=False) -> list:
         """
         brief: Only works for maxwell Boltzmann entropy so far.
         Calls the network with non normalized moments. (first the moments get normalized, then the network gets called,

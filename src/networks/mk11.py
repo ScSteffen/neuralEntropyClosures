@@ -241,7 +241,7 @@ class MK11Network(BaseNetwork):
 
         return [u_rescaled, alpha_rescaled, h_rescaled]
 
-    def call_scaled_64(self, u_non_normal):
+    def call_scaled_64(self, u_non_normal, legacy_mode=False):
 
         """
         brief: Only works for maxwell Boltzmann entropy so far.
@@ -263,30 +263,20 @@ class MK11Network(BaseNetwork):
         #
         #
         u_reduced = u_downscaled[:, 1:]  # chop of u_0
-        [h_predicted, alpha_predicted, u_0_predicted] = self.model(u_reduced)
-        ### cast to fp64 ###
-        alpha_predicted = tf.cast(alpha_predicted, dtype=tf.float64, name=None)
-        mBasis = tf.cast(self.model.momentBasis, dtype=tf.float64, name=None)
-        qWeights = tf.cast(self.model.quadWeights, dtype=tf.float64, name=None)
-        # reconstruct alpha (with fp64)
-        tmp = tf.math.exp(tf.tensordot(alpha_predicted, mBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
-        alpha_0 = -tf.math.log(tf.tensordot(tmp, qWeights, axes=([1], [1])))  # ln(<tmp>)
-        alpha_complete_predicted = tf.concat([alpha_0, alpha_predicted], axis=1)  # concat [alpha_0,alpha]
-        #
-        # reconstruct_u
-        f_quad = tf.math.exp(tf.tensordot(alpha_complete_predicted, mBasis, axes=([1], [0])))  # alpha*m
-        tmp = tf.math.multiply(f_quad, qWeights)  # f*w
-        u_complete_reconstructed = tf.tensordot(tmp, mBasis[:, :], axes=([1], [1]))
-        #
-        # upscale u
-        u0 = tf.cast(u_non_normal[:, 0], dtype=tf.float64, name=None)
-        u_rescaled = self.model.scale_u(u_complete_reconstructed, u0)  # upscaling
-        alpha_rescaled = self.model.scale_alpha(alpha_complete_predicted, u0)  # upscaling
-        #
-        # compute h
-        f_quad = tf.math.exp(tf.tensordot(alpha_rescaled, mBasis, axes=([1], [0])))  # alpha*m
-        tmp = tf.tensordot(f_quad, qWeights, axes=([1], [1]))  # f*w
-        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha_rescaled, u_rescaled), axis=1, keepdims=True)
-        h_rescaled = tmp2 - tmp
+        u_0 = tf.cast(u_non_normal[:, 0], dtype=tf.float64, name=None)
 
-        return [u_rescaled, alpha_rescaled, h_rescaled]
+        if legacy_mode:
+            [h_predicted, alpha_predicted, u_predicted] = self.model_legacy(u_reduced)
+        else:
+            [h_predicted, alpha_predicted, u_predicted] = self.model(u_reduced)
+
+        ### cast to fp64 ###
+        alpha64 = tf.cast(alpha_predicted, dtype=tf.float64, name=None)
+        alpha_complete = self.model.reconstruct_alpha(alpha64)
+        u_complete = self.model.reconstruct_u(alpha_complete)
+        u_rescaled = self.model.scale_u(u_complete, u_0)  # upscaling
+        alpha_rescaled = self.model.scale_alpha(alpha_complete, u_0)
+        h = self.model.compute_h(u_rescaled, alpha_rescaled)
+        # u_non_2 = self.model.reconstruct_u(alpha_rescaled)
+
+        return [u_rescaled, alpha_rescaled, h]
