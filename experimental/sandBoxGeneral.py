@@ -22,6 +22,15 @@ import scipy.stats
 # ------  Code starts here --------
 
 def main():
+    # model = tf.keras.Sequential([
+    #    tf.keras.layers.Dense(5, input_shape=(3,)),
+    #    tf.keras.layers.Softmax()])
+    # model.save('tmp/model')
+
+    loaded_model = tf.keras.models.load_model('tmp/best_model')
+    x = tf.random.uniform((10, 2))
+    print(loaded_model.predict(x))
+    print("end")
     # x = np.linspace(-10, 10, 100)
     # plt.plot(x, scipy.stats.norm(0, 10).pdf(x))
     # plt.show()
@@ -315,19 +324,19 @@ def multistepTraining(xT, yT, model, maxIter, epochs, batchSize):
 
         utils.plot_1d(np.asarray(xTList), [np.asarray(yTList), ypredArray, yDiff], ["y", "model", "difference"],
 
-                     '../models/sandbox/prediction' + str(iter),
+                      '../models/sandbox/prediction' + str(iter),
                       log=False)
 
         # sort points
 
         utils.plot_1d(xarr, [yarr], ["Interpolation points"],
-                     '../models/sandbox/datapts' + str(iter),
+                      '../models/sandbox/datapts' + str(iter),
                       log=False, linetypes=['*'])
 
         # print histories
         utils.plot_1d(history.epoch, [history.history['loss']],
                       ["model loss"],
-                     '../models/sandbox/traininghistory' + str(iter),
+                      '../models/sandbox/traininghistory' + str(iter),
                       log=True, linetypes=['-', '--'])
 
         yList.append([yTList.pop(newIdx[0])])
