@@ -199,17 +199,17 @@ def main():
     h_list = [h_ini[0, :], h_ini[1, :]]
     [u_train, alpha_train, h_train] = sample_data_entropy_M1(u_list, alpha_list, h_list, tolerance)
 
-    utils.plot1D(xs=[u_train[:, 1]], ys=[alpha_train[:, 1], h_train], labels=['alpha', 'h'], linetypes=['+', '*'],
-                 name='smart_sampled_entropy', log=False, folder_name="figures")
+    utils.plot_1d(xs=[u_train[:, 1]], ys=[alpha_train[:, 1], h_train], labels=['alpha', 'h'], linetypes=['+', '*'],
+                  name='smart_sampled_entropy', log=False, folder_name="figures")
 
-    utils.plot1D(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[alpha_train[:, 1], alpha[:, 1], alpha_[:, 1]],
-                 labels=['alpha_smart', 'alpha_alpha_sampled', 'alpha_u_sampled'],
-                 linetypes=['*', '2', '3'],
-                 name='alha_sampling_strategies', log=False, folder_name="figures")
-    utils.plot1D(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[h_train, h, h_],
-                 labels=['h_smart', 'h_alpha_sampled', 'h_u_sampled'],
-                 linetypes=['*', '2', '3'], name='h_sampling_strategies', log=False, folder_name="figures",
-                 show_fig=False)
+    utils.plot_1d(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[alpha_train[:, 1], alpha[:, 1], alpha_[:, 1]],
+                  labels=['alpha_smart', 'alpha_alpha_sampled', 'alpha_u_sampled'],
+                  linetypes=['*', '2', '3'],
+                  name='alha_sampling_strategies', log=False, folder_name="figures")
+    utils.plot_1d(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[h_train, h, h_],
+                  labels=['h_smart', 'h_alpha_sampled', 'h_u_sampled'],
+                  linetypes=['*', '2', '3'], name='h_sampling_strategies', log=False, folder_name="figures",
+                  show_fig=False)
 
     ### Compare networks with different samplings
 
