@@ -205,7 +205,7 @@ def main():
     if options.training == 1:
         # create training Data
         # Save options and runscript to file (only for training)
-        utils.writeConfigFile(options, neuralClosureModel)
+        utils.write_config_file(options, neuralClosureModel)
         neuralClosureModel.load_training_data(shuffle_mode=True, sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized, train_mode=True)
     # create model after loading training data to get correct scaling in

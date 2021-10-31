@@ -56,19 +56,19 @@ def main():
 
     # utils.plot1D(x, [y], ["y"], '../models/testPoly/prediction')
 
-    utils.plot1D(xL, [yL, ypred], ["y", "ylinear"],
+    utils.plot_1d(xL, [yL, ypred], ["y", "ylinear"],
                  '../models/testSampling/prediction',
-                 log=False)
+                  log=False)
 
-    utils.plot1D(xL, [yL, yL], ["y", "Interpolation points"],
+    utils.plot_1d(xL, [yL, yL], ["y", "Interpolation points"],
                  '../models/testSampling/dataptsLinear',
-                 log=False, linetypes=['-', '*'])
+                  log=False, linetypes=['-', '*'])
 
     # print histories
-    utils.plot1D(history1.epoch, [history1.history['loss']],
-                 ["loss linear"],
+    utils.plot_1d(history1.epoch, [history1.history['loss']],
+                  ["loss linear"],
                  '../models/testSampling/traininghistories',
-                 log=False, linetypes=['-', '--'])
+                  log=False, linetypes=['-', '--'])
     return 0
 
 
@@ -128,23 +128,23 @@ def main2():
 
     ypred2 = model2(xTest)
     # utils.plot1D(x, [y], ["y"], '../models/testPoly/prediction')
-    utils.plot1D(xTest, [yTest, ypred, ypred2], ["y", "ylinear", "yTscheb"],
+    utils.plot_1d(xTest, [yTest, ypred, ypred2], ["y", "ylinear", "yTscheb"],
                  '../models/testPoly/prediction',
-                 log=False)
+                  log=False)
 
-    utils.plot1D(xTscheb, [yTscheb, yTscheb], ["y", "Interpolation points"],
+    utils.plot_1d(xTscheb, [yTscheb, yTscheb], ["y", "Interpolation points"],
                  '../models/testPoly/datapts',
-                 log=False, linetypes=['-', '*'])
+                  log=False, linetypes=['-', '*'])
 
-    utils.plot1D(xL, [yL, yL], ["y", "Interpolation points"],
+    utils.plot_1d(xL, [yL, yL], ["y", "Interpolation points"],
                  '../models/testPoly/dataptsLinear',
-                 log=False, linetypes=['-', '*'])
+                  log=False, linetypes=['-', '*'])
 
     # print histories
-    utils.plot1D(history1.epoch, [history1.history['loss'], history2.history['loss']],
-                 ["loss linear", "loss tschebycheff"],
+    utils.plot_1d(history1.epoch, [history1.history['loss'], history2.history['loss']],
+                  ["loss linear", "loss tschebycheff"],
                  '../models/testPoly/traininghistories',
-                 log=False, linetypes=['-', '--'])
+                  log=False, linetypes=['-', '--'])
     return 0
 
 

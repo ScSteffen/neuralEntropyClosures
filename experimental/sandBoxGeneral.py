@@ -313,22 +313,22 @@ def multistepTraining(xT, yT, model, maxIter, epochs, batchSize):
         newIdxes = np.where(yDiff == newY)
         newIdx = newIdxes[0]
 
-        utils.plot1D(np.asarray(xTList), [np.asarray(yTList), ypredArray, yDiff], ["y", "model", "difference"],
+        utils.plot_1d(np.asarray(xTList), [np.asarray(yTList), ypredArray, yDiff], ["y", "model", "difference"],
 
                      '../models/sandbox/prediction' + str(iter),
-                     log=False)
+                      log=False)
 
         # sort points
 
-        utils.plot1D(xarr, [yarr], ["Interpolation points"],
+        utils.plot_1d(xarr, [yarr], ["Interpolation points"],
                      '../models/sandbox/datapts' + str(iter),
-                     log=False, linetypes=['*'])
+                      log=False, linetypes=['*'])
 
         # print histories
-        utils.plot1D(history.epoch, [history.history['loss']],
-                     ["model loss"],
+        utils.plot_1d(history.epoch, [history.history['loss']],
+                      ["model loss"],
                      '../models/sandbox/traininghistory' + str(iter),
-                     log=True, linetypes=['-', '--'])
+                      log=True, linetypes=['-', '--'])
 
         yList.append([yTList.pop(newIdx[0])])
         xList.append([xTList.pop(newIdx[0])])
