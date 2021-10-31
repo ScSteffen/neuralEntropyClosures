@@ -57,7 +57,7 @@ def main():
     # plt.plot(x, u_ref11)
     plt.plot(x, u_neural15, '*')
     plt.plot(x, u_ref15, '-')
-    plt.show()
+    plt.savefig("neural_soltions_inflow")
 
     return True
 
