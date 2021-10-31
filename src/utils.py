@@ -107,6 +107,23 @@ def load_density_function(filename: str) -> list:
     return [x, weights, f_kinetic]
 
 
+def load_solution(filename: str) -> list:
+    '''
+    Load training Data from csv file <filename>
+    u, alpha have length <inputDim>
+    returns: training_data = [u,alpha,h]
+    '''
+    print("Loading Data from location: " + filename)
+    start = time.time()
+    df = pd.read_csv(filename)
+    data = df.to_numpy()
+    u_neural = data[:, :3]
+    u_ref = data[:, 3:]
+    end = time.time()
+    print("Data loaded. Elapsed time: " + str(end - start))
+    return [u_neural, u_ref]
+
+
 def evaluateModel(model, input):
     '''Evaluates the model at input'''
     # x = input
