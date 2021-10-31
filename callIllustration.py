@@ -1,6 +1,7 @@
 '''
 Script to call different plots and illustrative methods
 '''
+import numpy as np
 
 '''
 Script to
@@ -10,12 +11,12 @@ Date 22.10.2021
 '''
 
 from optparse import OptionParser
-from src.utils import load_density_function, plot_1d
+from src.utils import load_density_function, load_solution
 import matplotlib.pyplot as plt
 
 
 def main():
-    print("---------- Start Network Training Suite ------------")
+    print("---------- Start Network Illustration Suite ------------")
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
@@ -35,7 +36,7 @@ def main():
     options.processingmode = int(options.processingmode)
 
     # --- End Option Parsing ---
-
+    """
     [x, _, kinetic_f] = load_density_function("test_a10_ev5.csv")
 
     for i in range(kinetic_f.shape[0]):
@@ -47,6 +48,16 @@ def main():
     #    kinetic_list = [kinetic_f[i + 0], kinetic_f[i + 1], kinetic_f[i + 2], kinetic_f[i + 3], kinetic_f[i + 4]]
     #    plot_1d(x, kinetic_list, show_fig=False, log=False, name='kinetics_kond3_' + str(i).zfill(3), ylim=[0, 3],
     #            xlim=[x[0, 0], x[0, -1]])
+    """
+    ###
+    [u_neural15, u_ref15] = load_solution("M2_MK15_inflow.csv")
+    [u_neural11, u_ref11] = load_solution("M2_MK11_inflow.csv")
+    x = np.linspace(0, 1, 100)
+    plt.plot(x, u_neural11, 'o')
+    # plt.plot(x, u_ref11)
+    plt.plot(x, u_neural15, '*')
+    plt.plot(x, u_ref15, '-')
+    plt.show()
 
     return True
 
