@@ -11,10 +11,10 @@ import numpy as np
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 from matplotlib import animation
-from matplotlib.colors import LogNorm
+import tensorflow as tf
 import multiprocessing
 import pandas as pd
-from joblib import Parallel, delayed
+import pkg_resources
 
 # inpackage imports
 # from networks.configModel import initNeuralClosure
@@ -63,7 +63,7 @@ class MNSolver1D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.01  # 0.3
+        self.cfl = 0.05  # 0.3
         self.dt = self.cfl * self.dx
 
         # boundary
@@ -72,8 +72,8 @@ class MNSolver1D:
             print("Periodic boundary conditions")
         else:
             print("Dirichlet boundary conditions")
-        self.datafile = "solverData1D_M2_linesource.csv"
-        self.solution_file = "solution_M2_MK15.csv"
+        self.datafile = "solverData1D_M2_inflow.csv"
+        self.solution_file = "M2_MK11_inflow_really11.csv"
         # Solver variables Traditional
         self.u = self.ic_zero()  # self.ic_periodic()# self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
@@ -86,15 +86,23 @@ class MNSolver1D:
         self.xFlux2 = np.zeros((self.n_system, self.nx + 1), dtype=float)
         # Neural closure
         self.neuralClosure = None
+        print("Using tensorflow with version:")
+        print(tf.__version__)
+        self.legacy_model = False
         if not self.traditional:
             if self.model_mk == 11:
                 if self.polyDegree == 2:
                     self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=1,
-                                                             folder_name="_simulation/mk11_M2_1D_normal",
+                                                             folder_name="tmp",
                                                              loss_combination=2,
-                                                             # folder_name="002_sim_M2_1D"
                                                              nw_width=15, nw_depth=7, normalized=True)
-                    self.neuralClosure.load_model()
+                    self.neuralClosure.create_model()
+                    ### Need to load this model as legacy code
+                    print("Load model in legacy mode. Model was created using tf 2.2.0")
+                    self.legacy_model = True
+                    imported = tf.keras.models.load_model("models/_simulation/mk11_M2_1D/best_model")
+                    self.neuralClosure.model_legacy = imported
+
                 elif self.polyDegree == 3:
                     self.neuralClosure = init_neural_closure(network_mk=13, poly_degree=3, spatial_dim=1,
                                                              folder_name="002_sim_M3_1D", loss_combination=2,
@@ -132,6 +140,11 @@ class MNSolver1D:
             # create the csv writer
             writer = csv.writer(f)
             row = ["iter", "u_0", "u_1", "u_2", "alpha_0", "alpha_1", "alpha_2", "entropy"]
+            writer.writerow(row)
+        with open('figures/solvers/' + self.solution_file, 'w', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            row = ["u_0", "u_1", "u_2", "u_0_ref", "u_1_ref", "u_2_ref"]
             writer.writerow(row)
 
     def get_realizable_moment(self, value=1.0):
@@ -386,7 +399,6 @@ class MNSolver1D:
         return 0
 
     def entropy_closure_newton(self):
-
         # if (self.traditional): # NEWTON
         for i in range(self.nx):
             self.entropy_closure_single_row(i)
@@ -424,7 +436,6 @@ class MNSolver1D:
         return rowRes
 
     def create_opti_entropy(self, u):
-
         def opti_entropy(alpha):
             """
             brief: returns the negative entropy functional with fixed u
@@ -470,7 +481,6 @@ class MNSolver1D:
         return opti_entropy_prime
 
     def create_opti_entropy_hessian(self):
-
         def opti_entropy_hessian(alpha):
             """
              brief: returns the derivative negative entropy functional with fixed u
@@ -498,7 +508,6 @@ class MNSolver1D:
         return opti_entropy_hessian
 
     def realizability_reconstruction(self):
-
         for i in range(self.nx):
             # self.u2[:, i] = np.copy(self.u[:, i])
             a = np.reshape(self.alpha[:, i], (1, self.n_system))
@@ -583,7 +592,7 @@ class MNSolver1D:
         for i in range(self.nx):
             if tmp[i, 0] < 0.0001:
                 tmp[i, 0] = 0.0001
-        [u_pred, alpha_pred, h] = self.neuralClosure.call_scaled_64(np.asarray(tmp))
+        [u_pred, alpha_pred, h] = self.neuralClosure.call_scaled_64(np.asarray(tmp), legacy_mode=self.legacy_model)
 
         for i in range(self.nx):
             self.alpha2[:, i] = alpha_pred[i, :]
@@ -626,7 +635,6 @@ class MNSolver1D:
         return 0
 
     def fvm_update_ml(self):
-
         for i in range(self.nx):
             ip1 = i + 1
             # advection
@@ -706,7 +714,7 @@ class MNSolver1D:
             writer = csv.writer(f)
             # writer.writerow("u0,u1,u2,u0_ref,u1_ref,u2_ref")
             for i in range(self.nx):
-                row = [iter, self.u2[0, i], self.u2[1, i], self.u2[2, i], self.u[0, i], self.u[1, i], self.u[2, i]]
+                row = [self.u2[0, i], self.u2[1, i], self.u2[2, i], self.u[0, i], self.u[1, i], self.u[2, i]]
                 # row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
                 #       self.alpha[2, i], self.h[i]]
                 writer.writerow(row)
