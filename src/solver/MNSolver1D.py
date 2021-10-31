@@ -41,7 +41,7 @@ class MNSolver1D:
         self.model_mk = model_mk
         self.n_system = polyDegree + 1
         self.polyDegree = polyDegree
-        self.quadOrder = 50
+        self.quadOrder = 28
         self.traditional = traditional
         [self.quadPts, self.quadWeights] = math.qGaussLegendre1D(self.quadOrder)  # dims = nq
         self.nq = self.quadWeights.size
@@ -49,9 +49,9 @@ class MNSolver1D:
         self.inputDim = self.mBasis.shape[0]  # = self.nSystem
 
         # generate geometry
-        self.x0 = -1.5
-        self.x1 = 1.5
-        self.nx = 150
+        self.x0 = 0
+        self.x1 = 1
+        self.nx = 100
         self.dx = (self.x1 - self.x0) / self.nx
 
         # physics (isotropic, homogenious)
@@ -63,26 +63,27 @@ class MNSolver1D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.3  # 0.3
+        self.cfl = 0.01  # 0.3
         self.dt = self.cfl * self.dx
 
         # boundary
-        self.boundary = 0  # 0 = periodic, 1 = dirichlet with source,
+        self.boundary = 0  # 0 = periodic, 1 = neumann with l.h.s. source,
         if self.boundary == 0:
             print("Periodic boundary conditions")
         else:
             print("Dirichlet boundary conditions")
         self.datafile = "solverData1D_M2_linesource.csv"
+        self.solution_file = "solution_M2_MK15.csv"
         # Solver variables Traditional
-        self.u = self.ic_soft_linesource()  # self.ic_periodic()# self.ic_zero()  #
+        self.u = self.ic_zero()  # self.ic_periodic()# self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
-        self.xFlux = np.zeros((self.n_system, self.nx), dtype=float)
+        self.xFlux = np.zeros((self.n_system, self.nx + 1), dtype=float)
         self.h = np.zeros(self.nx)
         self.h2 = np.zeros(self.nx)
 
-        self.u2 = self.ic_soft_linesource()  # self.ic_periodic() # self.ic_zero()  #
+        self.u2 = self.ic_zero()  # self.ic_periodic() # self.ic_zero()  #
         self.alpha2 = np.zeros((self.n_system, self.nx))
-        self.xFlux2 = np.zeros((self.n_system, self.nx), dtype=float)
+        self.xFlux2 = np.zeros((self.n_system, self.nx + 1), dtype=float)
         # Neural closure
         self.neuralClosure = None
         if not self.traditional:
@@ -142,15 +143,28 @@ class MNSolver1D:
             erg = np.concatenate([u_ic0, u_ic1, u_ic2], axis=0)
         return erg
 
+    def boundary_inflow(self):
+        """
+        Gives the Flux for an inflow condition with from the left
+        with f(t>0,0,v>0) = 0.5
+        """
+        f = 0.5 * np.ones((self.nq))
+
+        for idx_quad in range(self.nq):
+            if self.quadPts[idx_quad] <= 0:
+                f[idx_quad] *= 0.0
+        return f
+
     def ic_zero(self):
         self.boundary = 1
-        u_ic0 = 0.01 * np.ones((1, self.nx))
-        u_ic1 = np.zeros((1, self.nx))
-        erg = np.concatenate([u_ic0, u_ic1], axis=0)
-        if self.polyDegree >= 2:
-            u_ic2 = 0.005 * np.ones((self.n_system - 2, self.nx))
-            erg = np.concatenate([u_ic0, u_ic1, u_ic2], axis=0)
-        return erg
+        f0 = 0.0001 * np.ones(self.nq)
+        t = np.multiply(f0, self.mBasis)
+        t2 = np.multiply(t, self.quadWeights)
+        u_ic_pt = np.sum(t2, axis=1)
+        u_ic = np.zeros((self.n_system, self.nx))
+        for idx_cell in range(self.nx):
+            u_ic[:, idx_cell] = u_ic_pt
+        return u_ic
 
     def ic_periodic(self):
         def sincos(x):
@@ -266,11 +280,12 @@ class MNSolver1D:
             self.solve_iter_newton(idx_time)
             self.solver_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + '. Time: ' + str(idx_time * self.dt))
-            self.error_analysis(idx_time)
+            # self.error_analysis(idx_time)
             # print iteration results
-            self.show_solution(idx_time)
+            # self.show_solution(idx_time)
             idx_time += 1
         self.show_solution(maxIter - 1)
+        self.write_solution()
 
         return self.u
 
@@ -515,24 +530,36 @@ class MNSolver1D:
 
     def compute_flux_newton(self):
         """
-        for periodic boundaries, upwinding.
+        for periodic boundaries and inflow boundaries, upwinding.
         writes to xFlux and yFlux, uses alpha
         """
+        # reconstruct all densities
+        densities = np.zeros((self.nx, self.nq))
         for i in range(self.nx):
-
-            # Computation in x direction
-            im1 = i - 1
-            if i == 0:  # periodic boundaries
-                im1 = self.nx - 1
-            left = np.tensordot(self.alpha[:, im1], self.mBasis, axes=([0], [0]))
-            right = np.tensordot(self.alpha[:, i], self.mBasis, axes=([0], [0]))
-            fluxL = math.entropyDualPrime(left)
-            fluxR = math.entropyDualPrime(right)
-            flux = 0
+            densities[i, :] = math.entropyDualPrime(np.tensordot(self.alpha[:, i], self.mBasis, axes=([0], [0])))
+        # compute fluxes in interior cell faces
+        for i in range(1, self.nx):
+            flux = np.zeros(self.n_system)
             for q in range(self.nq):  # integrate upwinding result
-                upwind = self.upwinding(fluxL[q], fluxR[q], self.quadPts[q])
+                upwind = self.upwinding(densities[i - 1, q], densities[i, q], self.quadPts[q])
                 flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
             self.xFlux[:, i] = flux
+        # compute boundary layer fluxes
+        if self.boundary == 0:  # periodic boundary
+            flux = np.zeros(self.n_system)
+            for q in range(self.nq):  # integrate upwinding result
+                upwind = self.upwinding(densities[self.nx - 1, q], densities[0, q], self.quadPts[q])
+                flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
+            self.xFlux[:, 0] = flux
+            self.xFlux[:, self.nx] = flux
+        if self.boundary == 1:  # neumann with l.h.s inflow
+            flux_lhs = self.boundary_inflow()
+            flux = np.zeros(self.n_system)
+            for q in range(self.nq):  # integrate upwinding result
+                upwind = self.upwinding(flux_lhs[q], densities[0, q], self.quadPts[q])
+                flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
+            self.xFlux[:, 0] = flux  # inflow conditions
+            self.xFlux[:, self.nx] = self.xFlux[:, self.nx - 1]  # do nothing conditions
         return 0
 
     def upwinding(self, fluxL, fluxR, quadpt):
@@ -545,22 +572,10 @@ class MNSolver1D:
     def fvm_update_newton(self):
         for i in range(self.nx):
             ip1 = i + 1
-            # periodic boundaries
-            if self.boundary == 0:
-                if i == self.nx - 1:
-                    ip1 = 0
-                self.u[:, i] = self.u[:, i] + ((self.xFlux[:, i] - self.xFlux[:, ip1]) / self.dx) * self.dt
-            else:
-                if i == self.nx - 1:
-                    self.u[:, i] = self.get_realizable_moment(0.01)
-                elif i == 0:
-                    self.u[:, 0] = self.get_realizable_moment(1.0)
-                else:
-                    self.u[:, i] = self.u[:, i] + (
-                            (self.xFlux[:, i] - self.xFlux[:, ip1]) / self.dx) * self.dt
+            # advection
+            self.u[:, i] = self.u[:, i] + ((self.xFlux[:, i] - self.xFlux[:, ip1]) / self.dx) * self.dt
             # Scattering
             self.u[:, i] += self.dt * self.sigmaS * (self.scatter_vector * self.u[0, i] - self.u[:, i])
-
         return 0
 
     def compute_closure_ml(self):
@@ -578,42 +593,44 @@ class MNSolver1D:
 
     def compute_flux_ml(self):
         """
-        for periodic boundaries, upwinding.
+        for periodic boundaries and inflow boundaries, upwinding.
         writes to xFlux and yFlux, uses alpha
         """
+        # reconstruct all densities
+        densities = np.zeros((self.nx, self.nq))
         for i in range(self.nx):
-
-            # Computation in x direction
-            im1 = i - 1
-            if i == 0:  # periodic boundaries
-                im1 = self.nx - 1
-            left = np.tensordot(self.alpha2[:, im1], self.mBasis, axes=([0], [0]))
-            right = np.tensordot(self.alpha2[:, i], self.mBasis, axes=([0], [0]))
-            fluxL = math.entropyDualPrime(left)
-            fluxR = math.entropyDualPrime(right)
-            flux = 0
+            densities[i, :] = math.entropyDualPrime(np.tensordot(self.alpha2[:, i], self.mBasis, axes=([0], [0])))
+        # compute fluxes in interior cell faces
+        for i in range(1, self.nx):
+            flux = np.zeros(self.n_system)
             for q in range(self.nq):  # integrate upwinding result
-                upwind = self.upwinding(fluxL[q], fluxR[q], self.quadPts[q])
+                upwind = self.upwinding(densities[i - 1, q], densities[i, q], self.quadPts[q])
                 flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
             self.xFlux2[:, i] = flux
+        # compute boundary layer fluxes
+        if self.boundary == 0:  # periodic boundary
+            flux = np.zeros(self.n_system)
+            for q in range(self.nq):  # integrate upwinding result
+                upwind = self.upwinding(densities[self.nx - 1, q], densities[0, q], self.quadPts[q])
+                flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
+            self.xFlux2[:, 0] = flux
+            self.xFlux2[:, self.nx] = flux
+        if self.boundary == 1:  # neumann with l.h.s inflow
+            flux_lhs = self.boundary_inflow()
+            flux = np.zeros(self.n_system)
+            for q in range(self.nq):  # integrate upwinding result
+                upwind = self.upwinding(flux_lhs[q], densities[0, q], self.quadPts[q])
+                flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
+            self.xFlux2[:, 0] = flux  # inflow conditions
+            self.xFlux2[:, self.nx] = self.xFlux[:, self.nx - 1]  # do nothing conditions
         return 0
 
     def fvm_update_ml(self):
 
         for i in range(self.nx):
             ip1 = i + 1
-            # periodic boundaries
-            if self.boundary == 0:
-                if i == self.nx - 1:
-                    ip1 = 0
-                self.u2[:, i] = self.u2[:, i] + ((self.xFlux2[:, i] - self.xFlux2[:, ip1]) / self.dx) * self.dt
-            else:
-                if i == self.nx - 1:
-                    self.u2[:, i] = self.get_realizable_moment(0.01)
-                elif i == 0:
-                    self.u2[:, 0] = self.get_realizable_moment(1.0)
-                else:
-                    self.u2[:, i] = self.u2[:, i] + ((self.xFlux2[:, i] - self.xFlux2[:, ip1]) / self.dx) * self.dt
+            # advection
+            self.u2[:, i] = self.u2[:, i] + ((self.xFlux2[:, i] - self.xFlux2[:, ip1]) / self.dx) * self.dt
             # Scattering
             self.u2[:, i] += self.dt * self.sigmaS * (self.scatter_vector * self.u2[0, i] - self.u2[:, i])
         return 0
@@ -622,36 +639,36 @@ class MNSolver1D:
         plt.clf()
         x = np.linspace(self.x0, self.x1, self.nx)
 
-        plt.plot(x, self.u[0, :], "k-", linewidth=1, label="Newton closure")
+        plt.plot(x, self.u[0, :], "k-", linewidth=1, label="Newton u0")
         plt.plot(x, self.u2[0, :], 'o', markersize=2, markerfacecolor='orange',
-                 markeredgewidth=0.5, markeredgecolor='k', label="Neural closure")
+                 markeredgewidth=0.5, markeredgecolor='k', label="Neural u0")
         plt.xlim([self.x0, self.x1])
         # plt.ylim([0.0, 1.5])
         plt.xlabel("x")
-        plt.ylabel("u1")
+        plt.ylabel("u")
         plt.legend()
-        plt.savefig("figures/solvers/u_0_comparison_" + str(idx) + ".png", dpi=450)
-        plt.clf()
+        # plt.savefig("figures/solvers/u_0_comparison_" + str(idx) + ".png", dpi=450)
+        # plt.clf()
 
-        plt.plot(x, self.u[1, :], "k-", linewidth=1, label="Newton closure")
+        plt.plot(x, self.u[1, :], "k-", linewidth=1, label="Newton u1")
         plt.plot(x, self.u2[1, :], 'o', markersize=2, markerfacecolor='orange',
-                 markeredgewidth=0.5, markeredgecolor='k', label="Neural closure")
+                 markeredgewidth=0.5, markeredgecolor='k', label="Neural u1")
         plt.xlim([self.x0, self.x1])
         # plt.ylim([0.0, 1.5])
         plt.xlabel("x")
-        plt.ylabel("u1")
+        plt.ylabel("u")
         plt.legend()
-        plt.savefig("figures/solvers/u_1_comparison_" + str(idx) + ".png", dpi=450)
-        plt.clf()
+        # plt.savefig("figures/solvers/u_1_comparison_" + str(idx) + ".png", dpi=450)
+        # plt.clf()
 
         if self.polyDegree >= 2:
-            plt.plot(x, self.u[2, :], "k-", linewidth=1, label="Newton closure")
+            plt.plot(x, self.u[2, :], "k-", linewidth=1, label="Newton u2")
             plt.plot(x, self.u2[2, :], 'o', markersize=2, markerfacecolor='orange',
-                     markeredgewidth=0.5, markeredgecolor='k', label="Neural closure")
+                     markeredgewidth=0.5, markeredgecolor='k', label="Neural u2")
             plt.xlim([self.x0, self.x1])
             # plt.ylim([0.0, 1.5])
             plt.xlabel("x")
-            plt.ylabel("u1")
+            plt.ylabel("u")
             plt.legend()
             plt.savefig("figures/solvers/u_2_comparison_" + str(idx) + ".png", dpi=450)
             plt.clf()
@@ -676,9 +693,22 @@ class MNSolver1D:
         with open('figures/solvers/' + self.datafile, 'a+', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
+            # writer.writerow("u0,u1,u2,u0_ref,u1_ref,u2_ref")
             for i in range(self.nx):
                 row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
                        self.alpha[2, i], self.h[i]]
+                writer.writerow(row)
+        return 0
+
+    def write_solution(self):
+        with open('figures/solvers/' + self.solution_file, 'a+', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            # writer.writerow("u0,u1,u2,u0_ref,u1_ref,u2_ref")
+            for i in range(self.nx):
+                row = [iter, self.u2[0, i], self.u2[1, i], self.u2[2, i], self.u[0, i], self.u[1, i], self.u[2, i]]
+                # row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
+                #       self.alpha[2, i], self.h[i]]
                 writer.writerow(row)
         return 0
 
