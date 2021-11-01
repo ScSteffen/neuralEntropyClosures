@@ -6,6 +6,7 @@ Date 22.10.2021
 """
 
 import numpy as np
+import pandas as pd
 from src.utils import load_density_function, load_solution, plot_1d
 
 
@@ -82,9 +83,24 @@ def main():
             title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
 
     # --- synthetic test M1 mk11
-    [u_neural15, u_ref15] = load_solution("paper_data/1D_M1/1D_M1_MK15_inflow.csv")
-    [u_neural11, u_ref11] = load_solution("paper_data/1D_M1/1D_M1_MK11_inflow.csv")
-
+    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_synthetic.csv")
+    data = df.to_numpy()
+    t = data[:, 0]
+    plot_1d([data[:, 0]],
+            [data[:, 2].reshape((data.shape[0], 1)), data[:, 2].reshape((data.shape[0], 1))],
+            labels=["ICNN", "Mono"], name="rel_err_u_1D_M1_mk11_synthetic", folder_name="paper_data/1D_M1",
+            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
+            title=r"$||u-u_\theta||_2/||u||_2$ over $u_1$")
+    plot_1d([data[:, 0]],
+            [data[:, 4].reshape((data.shape[0], 1)), data[:, 4].reshape((data.shape[0], 1))],
+            labels=["ICNN", "Mono"], name="rel_err_alpha_1D_M1_mk11_synthetic", folder_name="paper_data/1D_M1",
+            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $u_1$")
+    plot_1d([data[:, 0]],
+            [data[:, 6].reshape((data.shape[0], 1)), data[:, 6].reshape((data.shape[0], 1))],
+            labels=["ICNN", "Mono"], name="rel_err_h_1D_M1_mk11_synthetic", folder_name="paper_data/1D_M1",
+            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||h-h_\theta||_2/||h||_2$",
+            log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u_1$")
     return True
 
 

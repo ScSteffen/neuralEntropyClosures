@@ -52,16 +52,19 @@ def main():
     # perform tests on normalized moments
     # load data
     [u_t, alpha_t, h_t] = src.utils.load_data(filename="data/test_data/Monomial_M1_1D_normal.csv", input_dim=2)
+    u_tnsr = tf.constant(u_t[:, 1], shape=(u_t.shape[0], 1))
 
     if options.legacy:
-        u_tnsr = tf.constant(u_t[:, 1], shape=(u_t.shape[0], 1))
         [h_pred, alpha_pred] = test_model(u_tnsr)
-        alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
-        alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
-        u_complete = neural_closure.model.reconstruct_u(alpha_complete)
-        u_pred_np = u_complete.numpy()
-        alpha_pred_np = alpha_complete.numpy()
-        h_pred_np = h_pred.numpy()
+    else:
+        [alpha_pred, mono_loss, u_pred, h_pred] = test_model(u_tnsr)
+
+    alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
+    alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
+    u_complete = neural_closure.model.reconstruct_u(alpha_complete)
+    u_pred_np = u_complete.numpy()
+    alpha_pred_np = alpha_complete.numpy()
+    h_pred_np = h_pred.numpy()
 
     # compute relative errors
     err_u = np.linalg.norm(u_t - u_pred_np, axis=1).reshape((u_t.shape[0], 1))
@@ -72,14 +75,16 @@ def main():
     rel_err_h = err_h / np.linalg.norm(u_t, axis=1).reshape((u_t.shape[0], 1))
 
     # print to file
-    with open('figures/synthetics/1D_M1_MK11_synthetic.csv', 'w', newline='') as f:
+    if options.legacy:
+        filename = 'figures/synthetics/1D_M1_MK11_synthetic.csv'
+    else:
+        filename = 'figures/synthetics/1D_M1_MK15_synthetic.csv'
+    with open(filename, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["u_1", "err_u", "rel_err_u", "err_alpha", "rel_err_alpha", "err_h", "rel_err_h"])
         for i in range(u_t.shape[0]):
             writer.writerow([u_t[i, 1], err_u[i, 0], rel_err_u[i, 0], err_alpha[i, 0], rel_err_alpha[i, 0], err_h[i, 0],
                              rel_err_h[i, 0]])
-    h_pred_np = h_pred.numpy()
-    alpha_pred_np = alpha_pred.numpy()
 
     return True
 
