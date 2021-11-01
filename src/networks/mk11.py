@@ -264,9 +264,11 @@ class MK11Network(BaseNetwork):
         #
         u_reduced = u_downscaled[:, 1:]  # chop of u_0
         u_0 = tf.cast(u_non_normal[:, 0], dtype=tf.float64, name=None)
-
         if legacy_mode:
-            [h_predicted, alpha_predicted, u_predicted] = self.model_legacy(u_reduced)
+            if self.poly_degree > 1:
+                [h_predicted, alpha_predicted, u_predicted] = self.model_legacy(u_reduced)
+            else:
+                [h_predicted, alpha_predicted] = self.model_legacy(u_reduced)
         else:
             [h_predicted, alpha_predicted, u_predicted] = self.model(u_reduced)
 
