@@ -72,8 +72,8 @@ class MNSolver1D:
             print("Periodic boundary conditions")
         else:
             print("Dirichlet boundary conditions")
-        self.datafile = "solverData1D_M2_inflow.csv"
-        self.solution_file = "M2_MK11_inflow_really11.csv"
+        self.datafile = "data_file_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_inflow.csv"
+        self.solution_file = "1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_inflow.csv"
         # Solver variables Traditional
         self.u = self.ic_zero()  # self.ic_periodic()# self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
@@ -91,7 +91,18 @@ class MNSolver1D:
         self.legacy_model = False
         if not self.traditional:
             if self.model_mk == 11:
-                if self.polyDegree == 2:
+                if self.polyDegree == 1:
+                    self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1,
+                                                             folder_name="tmp",
+                                                             loss_combination=2,
+                                                             nw_width=10, nw_depth=7, normalized=True)
+                    self.neuralClosure.create_model()
+                    ### Need to load this model as legacy code
+                    print("Load model in legacy mode. Model was created using tf 2.2.0")
+                    self.legacy_model = True
+                    imported = tf.keras.models.load_model("models/_simulation/mk11_M1_1D/best_model")
+                    self.neuralClosure.model_legacy = imported
+                elif self.polyDegree == 2:
                     self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=1,
                                                              folder_name="tmp",
                                                              loss_combination=2,
@@ -144,7 +155,10 @@ class MNSolver1D:
         with open('figures/solvers/' + self.solution_file, 'w', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
-            row = ["u_0", "u_1", "u_2", "u_0_ref", "u_1_ref", "u_2_ref"]
+            if self.polyDegree == 1:
+                row = ["u_0", "u_1", "u_0_ref", "u_1_ref"]
+            elif self.polyDegree == 2:
+                row = ["u_0", "u_1", "u_2", "u_0_ref", "u_1_ref", "u_2_ref"]
             writer.writerow(row)
 
     def get_realizable_moment(self, value=1.0):
@@ -293,11 +307,11 @@ class MNSolver1D:
             self.solve_iter_newton(idx_time)
             self.solver_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + '. Time: ' + str(idx_time * self.dt))
-            # self.error_analysis(idx_time)
+            self.error_analysis(idx_time)
             # print iteration results
             # self.show_solution(idx_time)
             idx_time += 1
-        self.show_solution(maxIter - 1)
+        self.show_solution(idx_time)
         self.write_solution()
 
         return self.u
@@ -678,8 +692,8 @@ class MNSolver1D:
             plt.xlabel("x")
             plt.ylabel("u")
             plt.legend()
-            plt.savefig("figures/solvers/u_2_comparison_" + str(idx) + ".png", dpi=450)
-            plt.clf()
+        plt.savefig("figures/solvers/u_comparison_" + str(idx) + ".png", dpi=450)
+        plt.clf()
 
         err = np.linalg.norm(self.u - self.u2, axis=0)
         plt.plot(x, err, "k-", linewidth=1, label="Newton closure")
@@ -703,8 +717,13 @@ class MNSolver1D:
             writer = csv.writer(f)
             # writer.writerow("u0,u1,u2,u0_ref,u1_ref,u2_ref")
             for i in range(self.nx):
-                row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
-                       self.alpha[2, i], self.h[i]]
+                if self.polyDegree == 1:
+                    row = [i, self.u[0, i], self.u[1, i], self.alpha[0, i], self.alpha[1, i],
+                           self.h[i]]
+                elif self.polyDegree == 2:
+                    row = [i, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
+                           self.alpha[2, i], self.h[i]]
+
                 writer.writerow(row)
         return 0
 
@@ -714,7 +733,10 @@ class MNSolver1D:
             writer = csv.writer(f)
             # writer.writerow("u0,u1,u2,u0_ref,u1_ref,u2_ref")
             for i in range(self.nx):
-                row = [self.u2[0, i], self.u2[1, i], self.u2[2, i], self.u[0, i], self.u[1, i], self.u[2, i]]
+                if self.polyDegree == 1:
+                    row = [self.u2[0, i], self.u2[1, i], self.u[0, i], self.u[1, i]]
+                elif self.polyDegree == 2:
+                    row = [self.u2[0, i], self.u2[1, i], self.u2[2, i], self.u[0, i], self.u[1, i], self.u[2, i]]
                 # row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
                 #       self.alpha[2, i], self.h[i]]
                 writer.writerow(row)
