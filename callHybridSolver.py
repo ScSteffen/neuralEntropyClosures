@@ -48,7 +48,7 @@ def main():
         solver.solve(maxIter=2000, t_end=0.7)
     if options.spatial_dimension == 2:
         solver = MNSolver2D.MNSolver2D(traditional=False, model_mk=options.model)
-        solver.solve(endTime=12)
+        solver.solve(maxIter=2000, t_end=1)
 
     return True
 

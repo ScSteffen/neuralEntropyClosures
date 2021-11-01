@@ -14,7 +14,6 @@ from matplotlib import animation
 import tensorflow as tf
 import multiprocessing
 import pandas as pd
-import pkg_resources
 
 # inpackage imports
 # from networks.configModel import initNeuralClosure
