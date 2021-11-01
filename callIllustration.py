@@ -81,6 +81,10 @@ def main():
             linetypes=['o', '^'], xlim=[0, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
             title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
 
+    # --- synthetic test M1 mk11
+    [u_neural15, u_ref15] = load_solution("paper_data/1D_M1/1D_M1_MK15_inflow.csv")
+    [u_neural11, u_ref11] = load_solution("paper_data/1D_M1/1D_M1_MK11_inflow.csv")
+
     return True
 
 

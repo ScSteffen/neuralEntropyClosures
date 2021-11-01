@@ -201,7 +201,7 @@ def main():
                width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput,
                scale_active=options.scaledOutput)
 
-    # --- load model data before creating model (important for data scaling) todo: incorporate scalings in execution
+    # --- load model data before creating model (important for data scaling)
     if options.training == 1:
         # create training Data
         # Save options and runscript to file (only for training)
