@@ -84,21 +84,22 @@ def main():
 
     # --- synthetic test M1 mk11
     df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_synthetic.csv")
-    data = df.to_numpy()
-    t = data[:, 0]
-    plot_1d([data[:, 0]],
-            [data[:, 2].reshape((data.shape[0], 1)), data[:, 2].reshape((data.shape[0], 1))],
-            labels=["ICNN", "Mono"], name="rel_err_u_1D_M1_mk11_synthetic", folder_name="paper_data/1D_M1",
+    data_mk11 = df.to_numpy()
+    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK15_synthetic.csv")
+    data_mk15 = df.to_numpy()
+    plot_1d([data_mk11[:, 0]],
+            [data_mk11[:, 2].reshape((data_mk11.shape[0], 1)), data_mk15[:, 2].reshape((data_mk15.shape[0], 1))],
+            labels=["ICNN", "Mono"], name="rel_err_u_1D_M1_synthetic", folder_name="paper_data/1D_M1",
             linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
             title=r"$||u-u_\theta||_2/||u||_2$ over $u_1$")
-    plot_1d([data[:, 0]],
-            [data[:, 4].reshape((data.shape[0], 1)), data[:, 4].reshape((data.shape[0], 1))],
-            labels=["ICNN", "Mono"], name="rel_err_alpha_1D_M1_mk11_synthetic", folder_name="paper_data/1D_M1",
+    plot_1d([data_mk11[:, 0]],
+            [data_mk11[:, 4].reshape((data_mk11.shape[0], 1)), data_mk15[:, 4].reshape((data_mk15.shape[0], 1))],
+            labels=["ICNN", "Mono"], name="rel_err_alpha_1D_M1_synthetic", folder_name="paper_data/1D_M1",
             linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
             log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $u_1$")
-    plot_1d([data[:, 0]],
-            [data[:, 6].reshape((data.shape[0], 1)), data[:, 6].reshape((data.shape[0], 1))],
-            labels=["ICNN", "Mono"], name="rel_err_h_1D_M1_mk11_synthetic", folder_name="paper_data/1D_M1",
+    plot_1d([data_mk11[:, 0]],
+            [data_mk11[:, 6].reshape((data_mk11.shape[0], 1)), data_mk15[:, 6].reshape((data_mk15.shape[0], 1))],
+            labels=["ICNN", "Mono"], name="rel_err_h_1D_M1_synthetic", folder_name="paper_data/1D_M1",
             linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||h-h_\theta||_2/||h||_2$",
             log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u_1$")
     return True

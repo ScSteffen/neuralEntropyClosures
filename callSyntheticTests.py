@@ -24,7 +24,7 @@ def main():
                       help="legacy mode for tf2.2 models", metavar="LEGACY")
 
     (options, args) = parser.parse_args()
-    options.legacy = bool(options.legacy)
+    options.legacy = bool(int(options.legacy))
 
     # --- M1 1D synthetic tests  ----
     if options.legacy:
@@ -56,15 +56,18 @@ def main():
 
     if options.legacy:
         [h_pred, alpha_pred] = test_model(u_tnsr)
+        alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
+        alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
+        u_complete = neural_closure.model.reconstruct_u(alpha_complete)
+        u_pred_np = u_complete.numpy()
+        alpha_pred_np = alpha_complete.numpy()
+        h_pred_np = h_pred.numpy()
     else:
-        [alpha_pred, mono_loss, u_pred, h_pred] = test_model(u_tnsr)
-
-    alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
-    alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
-    u_complete = neural_closure.model.reconstruct_u(alpha_complete)
-    u_pred_np = u_complete.numpy()
-    alpha_pred_np = alpha_complete.numpy()
-    h_pred_np = h_pred.numpy()
+        [alpha_pred, mono_loss, u_pred, h_pred] = neural_closure.model(u_tnsr)
+        [u_rescaled, alpha_rescaled, h] = neural_closure.call_scaled_64(u_t)
+        u_pred_np = u_rescaled.numpy()
+        alpha_pred_np = alpha_rescaled.numpy()
+        h_pred_np = h.numpy()
 
     # compute relative errors
     err_u = np.linalg.norm(u_t - u_pred_np, axis=1).reshape((u_t.shape[0], 1))
@@ -85,7 +88,6 @@ def main():
         for i in range(u_t.shape[0]):
             writer.writerow([u_t[i, 1], err_u[i, 0], rel_err_u[i, 0], err_alpha[i, 0], rel_err_alpha[i, 0], err_h[i, 0],
                              rel_err_h[i, 0]])
-
     return True
 
 
