@@ -11,7 +11,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib import cm
-import random
+import seaborn as sns
 import os
 from pathlib import Path
 import git
@@ -117,8 +117,9 @@ def load_solution(filename: str) -> list:
     start = time.time()
     df = pd.read_csv(filename)
     data = df.to_numpy()
-    u_neural = data[:, :3]
-    u_ref = data[:, 3:]
+    t = data.shape[1] / 2
+    u_neural = data[:, :int(data.shape[1] / 2)]
+    u_ref = data[:, int(data.shape[1] / 2):]
     end = time.time()
     print("Data loaded. Elapsed time: " + str(end - start))
     return [u_neural, u_ref]
@@ -153,20 +154,28 @@ def loadTFModel(filename):
 
 
 def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figures", linetypes=None, show_fig=False,
-            xlim=None, ylim=None, xlabel=None, ylabel=None):
+            xlim=None, ylim=None, xlabel=None, ylabel=None, title: str = r"$h^n$ over ${\mathcal{R}^r}$"):
     plt.clf()
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
                      'h',
                      'H',
                      '+', 'x', 'D', 'd', '|']
-        if labels != None:
+        if labels is not None:
             linetypes = linetypes[0:len(labels)]
 
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['k', 'r', 'g', 'b']
+    symbol_size = 0.7
     if len(xs) == 1:
         x = xs[0]
         for y, lineType in zip(ys, linetypes):
-            plt.plot(x, y, lineType, linewidth=1, markersize=1000)
+            for i in range(y.shape[1]):
+                if colors[i] == 'k' and lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
+                    colors[i] = 'w'
+                plt.plot(x, y[:, i], colors[i] + lineType, linewidth=symbol_size, markersize=2.5,
+                         markeredgewidth=0.5, markeredgecolor='k')
         if labels != None:
             plt.legend(labels)
     elif len(xs) is not len(ys):
@@ -174,7 +183,7 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
         exit(1)
     else:
         for x, y, lineType in zip(xs, ys, linetypes):
-            plt.plot(x, y, lineType, linewidth=1)
+            plt.plot(x, y, lineType, linewidth=symbol_size)
         plt.legend(labels)  # , prop={'size': 6})
     if log:
         plt.yscale('log')
@@ -186,11 +195,12 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
     if xlim is not None:
         plt.xlim(xlim[0], xlim[1])
     if xlabel is not None:
-        plt.xlabel(xlabel)  # , fontsize=8)
+        plt.xlabel(xlabel, fontsize=12)
         # plt.xticks(fontsize=6)
         # plt.yticks(fontsize=6)
     if ylabel is not None:
-        plt.ylabel(ylabel, fontsize=6)
+        plt.ylabel(ylabel, fontsize=12)
+    plt.title(title, fontsize=14)
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     return 0
