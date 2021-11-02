@@ -1,0 +1,19 @@
+git_version;9ce88c35411f8f3f399d575904766275ab88ac64
+sampling;2
+batch;5000
+curriculum;1
+degree;1
+epoch;1000
+folder;0_mk15_m1_2D_paper_sm
+loadModel;1
+model;15
+normalized moments;True
+decorrelate inputs;False
+scaled outputs;True
+objective;2
+processingmode;1
+spatial Dimension;2
+verbosity;2
+training;1
+network width;100
+network depth;3
