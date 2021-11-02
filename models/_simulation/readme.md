@@ -1,0 +1,2 @@
+MK11 models have been trained on commit a0194dd3c9c0ec4a7dbe4b144d241cd1b55f544e
+MK15 models have been trained on commit 9ce88c35411f8f3f399d575904766275ab88ac64
