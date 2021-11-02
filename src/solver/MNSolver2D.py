@@ -136,7 +136,7 @@ class MNSolver2D:
         with open('figures/solvers/' + self.datafile, 'w', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
-            row = ["time, h_neural_mk15"]
+            row = ["time, h_neural_mk15, h_baseline"]
             writer.writerow(row)
         with open('figures/solvers/' + self.solution_file, 'w', newline='') as f:
             # create the csv writer
@@ -189,7 +189,7 @@ class MNSolver2D:
         # self.show_solution(0)
         idx_time = 0
         while idx_time < maxIter and idx_time * self.dt < t_end:
-            # self.solve_iter_newton(idx_time)
+            self.solve_iter_newton(idx_time)
             self.solve_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + ". Time " + str(self.T) + " of " + str(t_end))
             self.write_solution(idx_time * self.dt)
@@ -719,7 +719,7 @@ class MNSolver2D:
     def write_solution(self, time):
         with open('figures/solvers/' + self.datafile, 'a+', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([time, self.h2.sum() * (self.dx * self.dy)])
+            writer.writerow([time, self.h2.sum() * (self.dx * self.dy), self.h.sum() * (self.dx * self.dy)])
 
         with open('figures/solvers/' + self.solution_file, 'a+', newline='') as f:
             # create the csv writer
