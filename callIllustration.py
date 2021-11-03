@@ -102,6 +102,35 @@ def main():
             labels=["ICNN", "Mono"], name="rel_err_h_1D_M1_synthetic", folder_name="paper_data/1D_M1",
             linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||h-h_\theta||_2/||h||_2$",
             log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u_1$")
+
+    # --- perodic M1 "2D" test case. 
+    df = pd.read_csv("paper_data/2D_M1/err_1D_M1_MK11_periodic.csv")
+    data_mk11 = df.to_numpy()
+    df = pd.read_csv("paper_data/2D_M1/err_1D_M1_MK15_periodic.csv")
+    data_mk15 = df.to_numpy()
+    time = data_mk11[:, 0]
+    err_u_mk11 = data_mk11[:, 1]
+    err_alpha_mk11 = data_mk11[:, 2]
+    h_mk11 = data_mk11[:, 3]
+    h_ref = data_mk11[:, 4]
+    time2 = data_mk15[:, 0]
+    err_u_mk15 = data_mk15[:, 1]
+    err_alpha_mk15 = data_mk15[:, 2]
+    h_mk15 = data_mk15[:, 3]
+    h_ref2 = data_mk15[:, 4]
+    plot_1d([time], [err_u_mk11, err_u_mk15],
+            labels=["ICNN", "Mono"], name="rel_err_u_2D_M1_over_time", folder_name="paper_data/2D_M1",
+            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$t$', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
+            title=r"$||u-u_\theta||_2/||u||_2$ over $t$")
+    plot_1d([time], [err_alpha_mk11, err_alpha_mk15],
+            labels=["ICNN", "Mono"], name="rel_err_alpha_2D_M1_over_time", folder_name="paper_data/2D_M1",
+            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$t$', ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
+    plot_1d([time], [h_ref, h_mk11, h_mk15],
+            labels=["Newton", "ICNN", "Mono"], name="rel_err_alpha_2D_M1_over_time", folder_name="paper_data/2D_M1",
+            linetypes=['-', 'o', '^'], xlim=[-1, 1], xlabel=r'$t$', ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
+
     return True
 
 
