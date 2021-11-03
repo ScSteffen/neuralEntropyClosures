@@ -42,7 +42,7 @@ def main():
         test_model = neural_closure.model_legacy
     else:
         neural_closure = init_neural_closure(network_mk=15, poly_degree=1, spatial_dim=1,
-                                             folder_name="_simulation/mk15_M1_1D_normal",
+                                             folder_name="_simulation/mk15_M1_1D",
                                              loss_combination=2, nw_width=30, nw_depth=2,
                                              normalized=True, input_decorrelation=True,
                                              scale_active=True)
@@ -88,6 +88,67 @@ def main():
         for i in range(u_t.shape[0]):
             writer.writerow([u_t[i, 1], err_u[i, 0], rel_err_u[i, 0], err_alpha[i, 0], rel_err_alpha[i, 0], err_h[i, 0],
                              rel_err_h[i, 0]])
+
+    # --- Synthetic test for  alpha vs u sampling ---
+
+    [u_t, alpha_t, h_t] = src.utils.load_data(filename="data/test_data/Monomial_M1_1D_normal.csv", input_dim=2)
+    u_tnsr = tf.constant(u_t[:, 1], shape=(u_t.shape[0], 1))
+
+    # load network
+    neural_closure = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1,
+                                         folder_name="tmp",
+                                         loss_combination=2,
+                                         nw_width=10, nw_depth=7, normalized=True)
+    neural_closure.create_model()
+    ### Need to load this model as legacy code
+    print("Load model in legacy mode. Model was created using tf 2.2.0")
+    imported = tf.keras.models.load_model("models/_simulation/mk11_M1_1D_normal/best_model")
+    neural_closure.model_legacy = imported
+    test_model_normal = neural_closure.model_legacy
+
+    [h, alpha_pred, u] = test_model_normal(u_tnsr)
+    alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
+    alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
+    u_complete = neural_closure.model.reconstruct_u(alpha_complete)
+    u_pred_np_normal = u_complete.numpy()
+    alpha_pred_np_normal = alpha_complete.numpy()
+    h_pred_np_normal = h_pred.numpy()
+
+    err_u = np.linalg.norm(u_t - u_pred_np_normal, axis=1).reshape((u_t.shape[0], 1))
+    rel_err_u_normal = err_u / np.linalg.norm(u_t, axis=1).reshape((u_t.shape[0], 1))
+    err_alpha = np.linalg.norm(alpha_t - alpha_pred_np_normal, axis=1).reshape((u_t.shape[0], 1))
+    rel_err_alpha_normal = err_alpha / np.linalg.norm(u_t, axis=1).reshape((u_t.shape[0], 1))
+    err_h = np.linalg.norm(h_t - h_pred_np_normal, axis=1).reshape((u_t.shape[0], 1))
+    rel_err_h_normal = err_h / np.linalg.norm(u_t, axis=1).reshape((u_t.shape[0], 1))
+
+    ### Need to load this model as legacy code
+    imported = tf.keras.models.load_model("models/_simulation/mk11_M1_1D_alpha/best_model")
+    neural_closure.model_legacy = imported
+    test_model_alpha = neural_closure.model_legacy
+
+    [h, alpha_pred, u] = test_model_alpha(u_tnsr)
+    alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
+    alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
+    u_complete = neural_closure.model.reconstruct_u(alpha_complete)
+    u_pred_np_alpha = u_complete.numpy()
+    alpha_pred_np_alpha = alpha_complete.numpy()
+    h_pred_np_alpha = h_pred.numpy()
+
+    err_u = np.linalg.norm(u_t - u_pred_np_alpha, axis=1).reshape((u_t.shape[0], 1))
+    rel_err_u_alpha = err_u / np.linalg.norm(u_t, axis=1).reshape((u_t.shape[0], 1))
+    err_alpha = np.linalg.norm(alpha_t - alpha_pred_np_alpha, axis=1).reshape((u_t.shape[0], 1))
+    rel_err_alpha_alpha = err_alpha / np.linalg.norm(u_t, axis=1).reshape((u_t.shape[0], 1))
+    err_h = np.linalg.norm(h_t - h_pred_np_alpha, axis=1).reshape((u_t.shape[0], 1))
+    rel_err_h_alpha = err_h / np.linalg.norm(u_t, axis=1).reshape((u_t.shape[0], 1))
+
+    filename = 'figures/synthetics/1D_M1_normal_vs_alpha_synthetic.csv'
+    with open(filename, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["u_1", "rel_err_u_normal", "rel_err_alpha_normal", "rel_err_h_normal", "rel_err_u_alpha",
+                         "rel_err_alpha_alpha", "rel_err_h_alpha"])
+        for i in range(u_t.shape[0]):
+            writer.writerow([u_t[i, 1], rel_err_u_normal[i, 0], rel_err_alpha_normal[i, 0], rel_err_h_normal[i, 0],
+                             rel_err_u_alpha[i, 0], rel_err_alpha_alpha[i, 0], rel_err_h_alpha[i, 0]])
     return True
 
 
