@@ -160,7 +160,7 @@ class BaseNetwork:
             tf.keras.backend.set_floatx('float32')
 
         # Create callbacks
-        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model', monitor='loss', mode='min',
+        mc_best = tf.keras.callbacks.ModelCheckpoint(self.folder_name + '/best_model', monitor='val_loss', mode='min',
                                                      save_best_only=True, verbose=verbosity)
         es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', min_delta=0.0001, patience=10,
                                               verbose=1)
