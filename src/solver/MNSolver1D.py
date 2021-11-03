@@ -211,7 +211,7 @@ class MNSolver1D:
         for i in range(self.nx):
             x_koor = self.x0 + (i - 0.5) * self.dx
             u_ic[0, i] = sincos(x_koor)
-            u_ic[1, i] = 0.0
+            u_ic[1, i] = 0.3 * u_ic[0, i]
             if self.polyDegree > 1:
                 u_ic[2, i] = 0.5 * u_ic[0, i]
             if self.polyDegree > 2:
@@ -315,7 +315,7 @@ class MNSolver1D:
         while idx_time < maxIter and idx_time * self.dt < t_end:
             self.solve_iter_newton(idx_time)
             self.solver_iter_ml(idx_time)
-            print("Iteration: " + str(idx_time) + '. Time: ' + str(idx_time * self.dt))
+            print("Iteration: " + str(idx_time) + ". Time " + str(idx_time * self.dt) + " of " + str(t_end))
             self.error_analysis(idx_time * self.dt)
             # print iteration results
             # self.show_solution(idx_time)
@@ -744,6 +744,7 @@ class MNSolver1D:
         with open('figures/solvers/' + self.errorfile, 'a+', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([time, avg_rel_err_u, avg_rel_err_alpha, entropy_ml, entropy_orig])
+        print("Error data written")
         return 0
 
     def write_solution(self):
