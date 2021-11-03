@@ -125,21 +125,21 @@ class MNSolver1D:
             elif self.model_mk == 15:
                 if self.polyDegree == 1:
                     self.neuralClosure = init_neural_closure(network_mk=self.model_mk, poly_degree=1, spatial_dim=1,
-                                                             folder_name="_simulation/mk15_M1_1D_normal",
+                                                             folder_name="_simulation/mk15_M1_1D",
                                                              loss_combination=2, nw_width=30, nw_depth=2,
                                                              normalized=True, input_decorrelation=True,
                                                              scale_active=True)
                     self.neuralClosure.load_model()
                 if self.polyDegree == 2:
                     self.neuralClosure = init_neural_closure(network_mk=self.model_mk, poly_degree=2, spatial_dim=1,
-                                                             folder_name="_simulation/mk15_M2_1D_normal",
+                                                             folder_name="_simulation/mk15_M2_1D",
                                                              loss_combination=2, nw_width=50, nw_depth=2,
                                                              normalized=True, input_decorrelation=True,
                                                              scale_active=True)
                     self.neuralClosure.load_model()
                 elif self.polyDegree == 3:
                     self.neuralClosure = init_neural_closure(network_mk=13, poly_degree=3, spatial_dim=1,
-                                                             folder_name="002_sim_M3_1D", loss_combination=2,
+                                                             folder_name="_simulation/mk15_M3_1D", loss_combination=2,
                                                              nw_width=20, nw_depth=7, normalized=True)
                     self.neuralClosure.loadModel("../../models/002_sim_M3_1D")
 
