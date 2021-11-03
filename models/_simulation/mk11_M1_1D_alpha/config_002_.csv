@@ -1,0 +1,2 @@
+alphasampling,batch,curriculum,degree,epoch,folder,loadmodel,model,normalized moments,objective,processingmode,spatial Dimension,verbosity,training,network width,network depth
+1,128,1,1,1000,002_sim_M1_1D_alpha,0,11,True,2,0,1,1,1,10,7

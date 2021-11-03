@@ -1,0 +1,17 @@
+python callNeuralClosure.py \
+--alphasampling=1 \
+--batch=128 \
+--curriculum=1 \
+--degree=1 \
+--epoch=20000 \
+--folder=002_sim_M1_1D_alpha \
+--loadModel=1 \
+--model=11 \
+--normalized=1 \
+--objective=2 \
+--processingmode=0 \
+--spatialDimension=1 \
+--training=1 \
+--verbosity=1 \
+--networkwidth=10 \
+--networkdepth=7
