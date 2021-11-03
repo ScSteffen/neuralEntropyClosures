@@ -112,7 +112,7 @@ class MNSolver2D:
                 if self.polyDegree == 1:
                     self.neuralClosure = init_neural_closure(
                         network_mk=self.model_mk, poly_degree=1, spatial_dim=2,
-                        folder_name="_simulation/mk15_M1_2D_normal_gaussian",
+                        folder_name="_simulation/mk15_M1_2D",
                         loss_combination=2, nw_width=100, nw_depth=3, normalized=True, input_decorrelation=False,
                         scale_active=True)
                     self.neuralClosure.load_model()
