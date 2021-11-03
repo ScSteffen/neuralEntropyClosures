@@ -209,6 +209,49 @@ def main():
                     folder_name="paper_data/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_alpha", show_fig=False,
                     log=False,
                     color_map=0)
+
+    # --- illustrate training history for alpha sampling vs u sampling --- 
+
+    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_history_normal.csv")
+    data_normal = df.to_numpy()
+    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_history_normal_alpha.csv")
+    data_alpha = df.to_numpy()
+
+    epoch = data_normal[:, 0]
+    normal_loss_h = data_normal[:, 2].reshape(epoch.shape[0], 1)
+    normal_loss_alpha = data_normal[:, 5].reshape(epoch.shape[0], 1)
+    normal_loss_u = data_normal[:, 8].reshape(epoch.shape[0], 1)
+    alpha_loss_h = data_alpha[:, 2].reshape(epoch.shape[0], 1)
+    alpha_loss_alpha = data_alpha[:, 5].reshape(epoch.shape[0], 1)
+    alpha_loss_u = data_alpha[:, 8].reshape(epoch.shape[0], 1)
+
+    plot_1d([epoch.reshape(epoch.shape[0], 1)],
+            [np.concatenate([normal_loss_h, alpha_loss_h], axis=1)],
+            labels=[r"$||h_\theta-h||_2^2$, uniform sampling u",
+                    r"$||h_\theta-h||_2^2$, uniform sampling $\alpha^r_u$"],
+            name="training_loss_h_over_epochs ", folder_name="paper_data/1D_M1",
+            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e4], xlabel='epoch',
+            ylabel=r"loss",
+            log=True, title=r"loss $h$ over epochs")
+
+    plot_1d([epoch.reshape(epoch.shape[0], 1)],
+            [np.concatenate([normal_loss_alpha, alpha_loss_alpha], axis=1)],
+            labels=[r"$||\alpha^r_\theta-\alpha^r_u||_2^2$, uniform sampling u",
+                    r"$||\alpha^r_\theta-\alpha^r_u||_2^2$, uniform sampling $\alpha^r_u$"],
+            name="training_loss_alpha_over_epochs ", folder_name="paper_data/1D_M1",
+            linetypes=['-', ], xlim=[0, epoch[-1]], ylim=[1e-4, 1e4], xlabel='epoch',
+            ylabel=r"loss",
+            log=True, title=r"loss $\alpha_u^r$ over epochs")
+
+    plot_1d([epoch.reshape(epoch.shape[0], 1)],
+            [np.concatenate([normal_loss_u, alpha_loss_u], axis=1)],
+            labels=[r"$||u^n_\theta-u^n||_2^2$, uniform sampling u",
+                    r"$||u^n_\theta-u^n||_2^2$, uniform sampling $\alpha^r_u$"],
+            name="training_loss_u_over_epochs ", folder_name="paper_data/1D_M1",
+            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e4], xlabel='epoch',
+            ylabel=r"loss",
+            log=True, title=r"loss $u$ over epochs")
+
     return True
 
 
