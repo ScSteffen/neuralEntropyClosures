@@ -106,7 +106,7 @@ def main():
     neural_closure.model_legacy = imported
     test_model_normal = neural_closure.model_legacy
 
-    [h, alpha_pred, u] = test_model_normal(u_tnsr)
+    [h_pred, alpha_pred, u] = test_model_normal(u_tnsr)
     alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
     alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
     u_complete = neural_closure.model.reconstruct_u(alpha_complete)
@@ -126,7 +126,7 @@ def main():
     neural_closure.model_legacy = imported
     test_model_alpha = neural_closure.model_legacy
 
-    [h, alpha_pred, u] = test_model_alpha(u_tnsr)
+    [h_pred, alpha_pred, u] = test_model_alpha(u_tnsr)
     alpha64 = tf.cast(alpha_pred, dtype=tf.float64, name=None)
     alpha_complete = neural_closure.model.reconstruct_alpha(alpha64)
     u_complete = neural_closure.model.reconstruct_u(alpha_complete)

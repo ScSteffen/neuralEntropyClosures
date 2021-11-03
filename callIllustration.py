@@ -7,7 +7,7 @@ Date 22.10.2021
 
 import numpy as np
 import pandas as pd
-from src.utils import load_density_function, load_solution, plot_1d
+from src.utils import load_density_function, load_solution, plot_1d, load_data, scatter_plot_2d_N2, scatter_plot_2d
 
 
 def main():
@@ -90,20 +90,47 @@ def main():
     plot_1d([data_mk11[:, 0]],
             [data_mk11[:, 2].reshape((data_mk11.shape[0], 1)), data_mk15[:, 2].reshape((data_mk15.shape[0], 1))],
             labels=["ICNN", "Mono"], name="rel_err_u_1D_M1_synthetic", folder_name="paper_data/1D_M1",
-            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
-            title=r"$||u-u_\theta||_2/||u||_2$ over $u_1$")
+            linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u^n_1$',
+            ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
+            title=r"$||u-u_\theta||_2/||u||_2$ over $u^n_1$")
     plot_1d([data_mk11[:, 0]],
             [data_mk11[:, 4].reshape((data_mk11.shape[0], 1)), data_mk15[:, 4].reshape((data_mk15.shape[0], 1))],
             labels=["ICNN", "Mono"], name="rel_err_alpha_1D_M1_synthetic", folder_name="paper_data/1D_M1",
-            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
-            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $u_1$")
+            linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$u^n_1$',
+            ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $u^n_1$")
     plot_1d([data_mk11[:, 0]],
             [data_mk11[:, 6].reshape((data_mk11.shape[0], 1)), data_mk15[:, 6].reshape((data_mk15.shape[0], 1))],
             labels=["ICNN", "Mono"], name="rel_err_h_1D_M1_synthetic", folder_name="paper_data/1D_M1",
-            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$u_1$', ylabel=r"$||h-h_\theta||_2/||h||_2$",
-            log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u_1$")
+            linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u_1$',
+            ylabel=r"$||h-h_\theta||_2/||h||_2$",
+            log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u^n_1$")
 
-    # --- perodic M1 "2D" test case. 
+    df = pd.read_csv("paper_data/1D_M1/1D_M1_normal_vs_alpha_synthetic.csv")
+    data_sampling_compare = df.to_numpy()
+    plot_1d([data_sampling_compare[:, 0]],
+            [data_sampling_compare[:, 1].reshape((data_sampling_compare.shape[0], 1)),
+             data_sampling_compare[:, 4].reshape((data_sampling_compare.shape[0], 1))],
+            labels=[r"uniform $u^n$", r"uniform $\alpha_u^n$"], name="rel_err_u_compare_sampling_synthetic",
+            folder_name="paper_data/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u^n_1$',
+            ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
+            title=r"$||u-u_\theta||_2/||u||_2$ over $u^n_1$")
+    plot_1d([data_sampling_compare[:, 0]],
+            [data_sampling_compare[:, 2].reshape((data_sampling_compare.shape[0], 1)),
+             data_sampling_compare[:, 5].reshape((data_sampling_compare.shape[0], 1))],
+            labels=[r"uniform $u^n$", r"uniform $\alpha_u^n$"], name="rel_err_alpha_compare_sampling_synthetic",
+            folder_name="paper_data/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$u^n_1$',
+            ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $u^n_1$")
+    plot_1d([data_sampling_compare[:, 0]],
+            [data_sampling_compare[:, 3].reshape((data_sampling_compare.shape[0], 1)),
+             data_sampling_compare[:, 6].reshape((data_sampling_compare.shape[0], 1))],
+            labels=[r"uniform $u^n$", r"uniform $\alpha_u^n$"], name="rel_err_h_compare_sampling_synthetic",
+            folder_name="paper_data/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u^n_1$',
+            ylabel=r"$||h-h_\theta||_2/||h||_2$",
+            log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u^n_1$")
+
+    # --- perodic M1 2D test case.
     df = pd.read_csv("paper_data/2D_M1/err_1D_M1_MK11_periodic.csv")
     data_mk11 = df.to_numpy()
     df = pd.read_csv("paper_data/2D_M1/err_1D_M1_MK15_periodic.csv")
@@ -118,19 +145,70 @@ def main():
     err_alpha_mk15 = data_mk15[:, 2]
     h_mk15 = data_mk15[:, 3]
     h_ref2 = data_mk15[:, 4]
-    plot_1d([time], [err_u_mk11, err_u_mk15],
+    plot_1d([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)), err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
             labels=["ICNN", "Mono"], name="rel_err_u_2D_M1_over_time", folder_name="paper_data/2D_M1",
-            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$t$', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
+            linetypes=['o', '^'], xlim=[0, time[-1]], xlabel=r'$t$', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
             title=r"$||u-u_\theta||_2/||u||_2$ over $t$")
-    plot_1d([time], [err_alpha_mk11, err_alpha_mk15],
+    plot_1d([time],
+            [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)), err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
             labels=["ICNN", "Mono"], name="rel_err_alpha_2D_M1_over_time", folder_name="paper_data/2D_M1",
-            linetypes=['o', '^'], xlim=[-1, 1], xlabel=r'$t$', ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            linetypes=['o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
+            ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
             log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
-    plot_1d([time], [h_ref, h_mk11, h_mk15],
-            labels=["Newton", "ICNN", "Mono"], name="rel_err_alpha_2D_M1_over_time", folder_name="paper_data/2D_M1",
-            linetypes=['-', 'o', '^'], xlim=[-1, 1], xlabel=r'$t$', ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
-            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
+    plot_1d([time], [h_ref.reshape((err_u_mk11.shape[0], 1)), h_mk11.reshape((err_u_mk11.shape[0], 1)),
+                     h_mk15.reshape((err_u_mk11.shape[0], 1))], labels=["Newton", "ICNN", "Mono"],
+            name="entropy_2D_M1_over_time", folder_name="paper_data/2D_M1",
+            linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
+            ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            log=False, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
 
+    # --- Realizable set illustrations ---
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
+                              selected_cols=[True, True, True])
+    max_h = 3
+    min_h = np.min(h)
+    alpha_bound = 40
+    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
+                       title=r"$h$ over $\mathcal{R}^r$",
+                       folder_name="paper_data/1D_M2", name="normal_u_Monomial_M2_1D_u", show_fig=False, log=False,
+                       color_map=0)
+    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                    lim_z=(min_h, max_h),
+                    title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_1^r$", label_y=r"$\alpha_2^r$",
+                    folder_name="paper_data/1D_M2", name="normal_u_Monomial_M2_1D_alpha", show_fig=False, log=False,
+                    color_map=0)
+
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", input_dim=3,
+                              selected_cols=[True, True, True])
+    # max_h = np.max(h)
+    # min_h = np.min(h)
+    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
+                       title=r"$h$ over $\mathcal{R}^r$",
+                       folder_name="paper_data/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_u", show_fig=False,
+                       log=False,
+                       color_map=0)
+    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                    lim_z=(min_h, max_h),
+                    title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_1^r$", label_y=r"$\alpha_2^r$",
+                    folder_name="paper_data/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_alpha", show_fig=False,
+                    log=False,
+                    color_map=0)
+
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_gaussian.csv", input_dim=3,
+                              selected_cols=[True, True, True])
+    # max_h = np.max(h)
+    # min_h = np.min(h)
+    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
+                       title=r"$h$ over $\mathcal{R}^r$",
+                       folder_name="paper_data/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_u", show_fig=False,
+                       log=False,
+                       color_map=0)
+    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                    lim_z=(min_h, max_h),
+                    title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_1^r$", label_y=r"$\alpha_2^r$",
+                    folder_name="paper_data/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_alpha", show_fig=False,
+                    log=False,
+                    color_map=0)
     return True
 
 
