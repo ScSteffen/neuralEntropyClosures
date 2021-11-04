@@ -135,24 +135,26 @@ def main():
     data_mk11 = df.to_numpy()
     df = pd.read_csv("paper_data/2D_M1/err_1D_M1_MK15_periodic.csv")
     data_mk15 = df.to_numpy()
-    time = data_mk11[:, 0]
-    err_u_mk11 = data_mk11[:, 1]
-    err_alpha_mk11 = data_mk11[:, 2]
-    h_mk11 = data_mk11[:, 3]
-    h_ref = data_mk11[:, 4]
-    time2 = data_mk15[:, 0]
-    err_u_mk15 = data_mk15[:, 1]
-    err_alpha_mk15 = data_mk15[:, 2]
-    h_mk15 = data_mk15[:, 3]
-    h_ref2 = data_mk15[:, 4]
+    n = 20
+    time = data_mk11[::n, 0]
+    err_u_mk11 = data_mk11[::n, 1]
+    err_alpha_mk11 = data_mk11[::n, 2]
+    h_mk11 = data_mk11[::n, 3]
+    h_ref = data_mk11[::n, 4]
+    time2 = data_mk15[::n, 0]
+    err_u_mk15 = data_mk15[::n, 1]
+    err_alpha_mk15 = data_mk15[::n, 2]
+    h_mk15 = data_mk15[::n, 3]
+    h_ref2 = data_mk15[::n, 4]
     plot_1d([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)), err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
             labels=["ICNN", "Mono"], name="rel_err_u_2D_M1_over_time", folder_name="paper_data/2D_M1",
-            linetypes=['o', '^'], xlim=[0, time[-1]], xlabel=r'$t$', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
+            linetypes=['-', '--'], xlim=[0, time[-1]], ylim=[1e-6, 1e-1], xlabel=r'$t$',
+            ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
             title=r"$||u-u_\theta||_2/||u||_2$ over $t$")
     plot_1d([time],
             [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)), err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
             labels=["ICNN", "Mono"], name="rel_err_alpha_2D_M1_over_time", folder_name="paper_data/2D_M1",
-            linetypes=['o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
+            linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
             ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
             log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
     plot_1d([time], [h_ref.reshape((err_u_mk11.shape[0], 1)), h_mk11.reshape((err_u_mk11.shape[0], 1)),
