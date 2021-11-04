@@ -159,7 +159,7 @@ class MNSolver1D:
         with open('figures/solvers/' + self.datafile, 'w', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
-            row = ["iter", "u_0", "u_1", "u_2", "alpha_0", "alpha_1", "alpha_2", "entropy"]
+            row = ["t", "u_0", "u_1", "u_2", "alpha_0", "alpha_1", "alpha_2", "entropy"]
             writer.writerow(row)
         with open('figures/solvers/' + self.solution_file, 'w', newline='') as f:
             # create the csv writer
