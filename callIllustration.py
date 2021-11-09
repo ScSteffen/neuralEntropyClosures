@@ -252,8 +252,8 @@ def main():
             [np.concatenate([normal_loss_h, alpha_loss_h], axis=1)],
             labels=[r"$||h_\theta-h||_2^2$, uniform sampling u",
                     r"$||h_\theta-h||_2^2$, uniform sampling $\alpha^r_u$"],
-            name="training_loss_h_over_epochs ", folder_name="paper_data/1D_M1",
-            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e4], xlabel='epoch',
+            name="training_loss_h_over_epochs", folder_name="paper_data/1D_M1",
+            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e0], xlabel='epoch',
             ylabel=r"loss",
             log=True, title=r"loss $h$ over epochs")
 
@@ -261,8 +261,8 @@ def main():
             [np.concatenate([normal_loss_alpha, alpha_loss_alpha], axis=1)],
             labels=[r"$||\alpha^r_\theta-\alpha^r_u||_2^2$, uniform sampling u",
                     r"$||\alpha^r_\theta-\alpha^r_u||_2^2$, uniform sampling $\alpha^r_u$"],
-            name="training_loss_alpha_over_epochs ", folder_name="paper_data/1D_M1",
-            linetypes=['-', ], xlim=[0, epoch[-1]], ylim=[1e-4, 1e4], xlabel='epoch',
+            name="training_loss_alpha_over_epochs", folder_name="paper_data/1D_M1",
+            linetypes=['-', ], xlim=[0, epoch[-1]], ylim=[1e-3, 1e1], xlabel='epoch',
             ylabel=r"loss",
             log=True, title=r"loss $\alpha_u^r$ over epochs")
 
@@ -270,8 +270,8 @@ def main():
             [np.concatenate([normal_loss_u, alpha_loss_u], axis=1)],
             labels=[r"$||u^n_\theta-u^n||_2^2$, uniform sampling u",
                     r"$||u^n_\theta-u^n||_2^2$, uniform sampling $\alpha^r_u$"],
-            name="training_loss_u_over_epochs ", folder_name="paper_data/1D_M1",
-            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e4], xlabel='epoch',
+            name="training_loss_u_over_epochs", folder_name="paper_data/1D_M1",
+            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e-1], xlabel='epoch',
             ylabel=r"loss",
             log=True, title=r"loss $u$ over epochs")
 
