@@ -10,14 +10,140 @@ import src.utils as utils
 # import tensorflow.keras.backend as K
 import matplotlib.pyplot as plt
 
-from src.utils import finiteDiff, integrate, loadData, evaluateModel
+from src.utils import finiteDiff, integrate, load_data, evaluateModel
 
-plt.style.use("kitish")
+# plt.style.use("kitish")
+
+from src.math import EntropyTools
+import numpy as np
+import scipy.stats
 
 
 # ------  Code starts here --------
 
 def main():
+    # model = tf.keras.Sequential([
+    #    tf.keras.layers.Dense(5, input_shape=(3,)),
+    #    tf.keras.layers.Softmax()])
+    # model.save('tmp/model')
+
+    loaded_model = tf.keras.models.load_model('tmp/best_model')
+    x = tf.random.uniform((10, 2))
+    print(loaded_model.predict(x))
+    print("end")
+    # x = np.linspace(-10, 10, 100)
+    # plt.plot(x, scipy.stats.norm(0, 10).pdf(x))
+    # plt.show()
+
+    """
+    et2 = EntropyTools(polynomial_degree=4)
+    alpha_1 = tf.constant([-1.42096, 1.40992, 0.1, 0.1, 2.0], shape=(1, 5), dtype=tf.float32)
+    alpha_2 = tf.constant([-1.42096, 1.40992, 0.0], shape=(1, 3), dtype=tf.float32)
+    # div = et2.KL_divergence(alpha_1, alpha_2)
+    # print(div)
+
+    et1 = EntropyTools(polynomial_degree=1)
+    alpha = tf.constant([-1.42096, 1.40992], shape=(1, 2), dtype=tf.float32)
+    pts = et2.quadPts
+
+    f1 = et1.compute_kinetic_density(alpha)
+    f2 = et2.compute_kinetic_density(alpha_1)
+    plt.plot(pts[0, :], f1[0, :], '--')
+    plt.plot(pts[0, :], f2[0, :], '-.')
+    u1 = et1.compute_u(f1)
+    u2 = et2.compute_u(f2)
+    print("u1:")
+    print(u1)
+    print("u2:")
+    print(u2)
+
+    # plt.show()
+
+    et3 = EntropyTools(polynomial_degree=3)
+    alpha_full = np.asarray([-3.20452, -10.109, 1.60217, 14.1154])
+
+    # alpha = tf.constant(alpha, shape=(1, 3), dtype=tf.float32)
+    # alpha_full = et3.reconstruct_alpha(tf.constant(alpha))
+    u = et3.reconstruct_u(tf.constant(alpha_full, shape=(1, 4), dtype=tf.float32))
+    u_np = u.numpy()
+    print(u_np)
+    print(u_np / u_np[0, 0])
+    """
+
+    et4 = EntropyTools(polynomial_degree=1, spatial_dimension=2)
+    alpha_generator = [[-0.20, 20]]
+    alpha_full = et4.reconstruct_alpha(tf.constant(alpha_generator))
+    opti4 = et4.reconstruct_u(alpha_full)
+    alpha_init = [[0, 0, 0.0]]
+    alpha3 = et4.minimize_entropy(u=opti4, start=tf.constant(alpha_init))
+    f4 = et4.compute_kinetic_density(alpha3)
+    pt4 = et4.quadPts
+
+    et3 = EntropyTools(polynomial_degree=3)
+    opti3 = tf.constant(opti4[:, :-1])
+    alpha_init = [[0, 0, 0, 0]]
+    alpha = et3.minimize_entropy(u=opti3, start=tf.constant(alpha_init))
+    f3 = et3.compute_kinetic_density(alpha)
+    pts3 = et3.quadPts
+
+    et2 = EntropyTools(polynomial_degree=2)
+    opti2 = tf.constant(opti3[:, :-1])
+    alpha_init = [[0, 0, 0]]
+    alpha = et2.minimize_entropy(u=opti2, start=tf.constant(alpha_init))
+    f2 = et2.compute_kinetic_density(alpha)
+    pts2 = et2.quadPts
+
+    et1 = EntropyTools(polynomial_degree=1)
+    opti1 = tf.constant(opti2[:, :-1])
+    alpha_init = [[0, 0]]
+    alpha = et1.minimize_entropy(u=opti1, start=tf.constant(alpha_init))
+    f1 = et1.compute_kinetic_density(alpha)
+    pts1 = et1.quadPts
+
+    plt.plot(pt4[0, :], f4[0, :], '--')
+    plt.plot(pts3[0, :], f3[0, :], '.')
+    plt.plot(pts2[0, :], f2[0, :], '-.')
+    plt.plot(pts1[0, :], f1[0, :], '-')
+    plt.legend(['M4', 'M3', 'M2', 'M1'])
+    plt.show()
+    print("Here")
+    """
+    et2 = EntropyTools(polynomial_degree=2)
+    alpha_full = np.asarray([1, 1, 1])
+    # alpha = tf.constant(alpha, shape=(1, 2), dtype=tf.float32)
+    # alpha_full = et2.reconstruct_alpha(tf.constant(alpha))
+    u = et2.reconstruct_u(tf.constant(alpha_full, shape=(1, 3), dtype=tf.float32))
+    u_np = u.numpy()
+    print(u_np)
+    print(u_np / u_np[0, 0])
+    et1 = EntropyTools(polynomial_degree=1)
+    alpha_full = np.asarray([1, 1])
+    # alpha = tf.constant(alpha, shape=(1, 1), dtype=tf.float32)
+    # alpha_full = et1.reconstruct_alpha(tf.constant(alpha))
+    u = et1.reconstruct_u(tf.constant(alpha_full, shape=(1, 2), dtype=tf.float32))
+    u_np = u.numpy()
+    print(u_np)
+    print(u_np / u_np[0, 0])
+    """
+    """
+    ns = 1000
+    x = np.linspace(-0.1, 0.1, ns)
+    alpha = np.zeros((ns, 3))
+    for i in range(len(x)):
+        alpha[i] = np.asarray([4.0, 1.7, 2.3]) + np.asarray([0.1, 0.1, 0.1]) * x[i]
+    alpha = tf.constant(alpha, dtype=tf.float32)
+    alpha_full = et.reconstruct_alpha(tf.constant(alpha))
+    u = et.reconstruct_u(alpha_full)
+    u_np = u.numpy()
+    fig, axis = plt.subplots(nrows=2, ncols=2)
+    axis[0, 0].plot(x, u[:, 0])
+    axis[0, 1].plot(x, u[:, 1])
+    axis[1, 0].plot(x, u[:, 2])
+    axis[1, 1].plot(x, u[:, 3])
+    plt.show()
+    print(u_np)
+    """
+    """
     y = [6.51778e-55,
          9.20148e-53,
          1.1754e-50,
@@ -148,7 +274,7 @@ def main():
     # model1.load_weights(filenameInit)
 
     multistepTraining(xL, yL, model1, maxIter, epochCount, batchSize)
-
+    """
     return 0
 
 
@@ -196,22 +322,22 @@ def multistepTraining(xT, yT, model, maxIter, epochs, batchSize):
         newIdxes = np.where(yDiff == newY)
         newIdx = newIdxes[0]
 
-        utils.plot1D(np.asarray(xTList), [np.asarray(yTList), ypredArray, yDiff], ["y", "model", "difference"],
+        utils.plot_1d(np.asarray(xTList), [np.asarray(yTList), ypredArray, yDiff], ["y", "model", "difference"],
 
-                     '../models/sandbox/prediction' + str(iter),
-                     log=False)
+                      '../models/sandbox/prediction' + str(iter),
+                      log=False)
 
         # sort points
 
-        utils.plot1D(xarr, [yarr], ["Interpolation points"],
-                     '../models/sandbox/datapts' + str(iter),
-                     log=False, linetypes=['*'])
+        utils.plot_1d(xarr, [yarr], ["Interpolation points"],
+                      '../models/sandbox/datapts' + str(iter),
+                      log=False, linetypes=['*'])
 
         # print histories
-        utils.plot1D(history.epoch, [history.history['loss']],
-                     ["model loss"],
-                     '../models/sandbox/traininghistory' + str(iter),
-                     log=True, linetypes=['-', '--'])
+        utils.plot_1d(history.epoch, [history.history['loss']],
+                      ["model loss"],
+                      '../models/sandbox/traininghistory' + str(iter),
+                      log=True, linetypes=['-', '--'])
 
         yList.append([yTList.pop(newIdx[0])])
         xList.append([xTList.pop(newIdx[0])])

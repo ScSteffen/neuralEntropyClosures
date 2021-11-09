@@ -7,7 +7,7 @@ Date: 16.03.21
 from numpy.polynomial.legendre import leggauss
 import numpy as np
 import tensorflow as tf
-import scipy
+import scipy.optimize as opt
 
 
 class EntropyTools:
@@ -15,33 +15,42 @@ class EntropyTools:
     Same functions implemented in the sobolev Network.
     Also uses Tensorflow
     """
-
-    polyDegree: int
+    spatial_dimension: int
+    poly_degree: int
     nq: int
     inputDim: int
-    quadPts: tf.Tensor  # dims = (batchSIze x N x nq)
-    quadWeights: tf.Tensor  # dims = (batchSIze x N x nq)
+    quadPts: tf.Tensor  # dims = (1 x nq)
+    quadWeights: tf.Tensor  # dims = (1 x nq)
     momentBasis: tf.Tensor  # dims = (batchSIze x N x nq)
     opti_u: np.ndarray
     opti_m: np.ndarray
     opti_w: np.ndarray
 
-    def __init__(self, N=1) -> object:
+    def __init__(self, polynomial_degree=1, spatial_dimension=1) -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
         """
 
         # Create quadrature and momentBasis. Currently only for 1D problems
-        self.polyDegree = N
-        self.nq = 100
-        [quadPts, quadWeights] = qGaussLegendre1D(self.nq)  # dims = nq
-        self.quadPts = tf.constant(quadPts, shape=(1, self.nq), dtype=tf.float32)
-        self.quadWeights = tf.constant(quadWeights, shape=(1, self.nq),
+        self.poly_degree = polynomial_degree
+        self.spatial_dimension = spatial_dimension
+        quad_order = 10
+        if spatial_dimension == 1:
+            self.nq = quad_order
+            [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
+            m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
+        if spatial_dimension == 2:
+            [quad_pts, quad_weights] = qGaussLegendre2D(quad_order)  # dims = nq
+            self.nq = quad_weights.size  # is not 10 * polyDegree
+            m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
+
+        self.quadPts = tf.constant(quad_pts, shape=(self.spatial_dimension, self.nq), dtype=tf.float32)
+        self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq),
                                        dtype=tf.float32)
-        mBasis = computeMonomialBasis1D(quadPts, self.polyDegree)  # dims = (N x nq)
-        self.inputDim = mBasis.shape[0]
-        self.momentBasis = tf.constant(mBasis, shape=(self.inputDim, self.nq),
+
+        self.inputDim = m_basis.shape[0]
+        self.momentBasis = tf.constant(m_basis, shape=(self.inputDim, self.nq),
                                        dtype=tf.float32)
 
     def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
@@ -79,6 +88,21 @@ class EntropyTools:
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
 
+    def compute_u(self, f: tf.Tensor) -> tf.Tensor:
+        """
+                brief: reconstructs u from kinetic density f
+                nS = batchSize
+                N = basisSize
+                nq = number of quadPts
+
+                input: f, dims = (nS x nq)
+                used members: m    , dims = (N x nq)
+                              w    , dims = nq
+                returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+                """
+        tmp = tf.math.multiply(f, self.quadWeights)  # f*w
+        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))  # f * w * momentBasis
+
     def compute_h(self, u: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
         brief: computes the entropy functional h on u and alpha
@@ -101,7 +125,7 @@ class EntropyTools:
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         return tmp2 - tmp
 
-    def convert_to_tensorf(self, vector: np.ndarray) -> tf.Tensor:
+    def convert_to_tensor_float(self, vector: np.ndarray) -> tf.Tensor:
         """
         brief: converts to tensor, keeps dimensions
         """
@@ -120,8 +144,17 @@ class EntropyTools:
 
         opti_start = np.reshape(start.numpy(), (dim,))
 
-        opt_result = scipy.optimize.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
-                                             tol=1e-4)
+        # test objective functions
+        # t = self.opti_entropy(opti_start)
+        # tp = self.opti_entropy_prime(opti_start)
+        # tpp = self.opti_entropy_prime2(opti_start)#
+
+        # print(t)
+        # print(tp)
+        # print(tpp)
+
+        opt_result = opt.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
+                                  hess=self.opti_entropy_prime2, tol=1e-6)
 
         if not opt_result.success:
             exit("Optimization unsuccessfull!")
@@ -162,7 +195,7 @@ class EntropyTools:
          used members: m    , dims = (N x nq)
                      w    , dims = nq
 
-         returns h = - alpha*u + <eta_*(alpha*m)>
+         returns h = -u + <m*eta_*(alpha*m)>
         """
         # Currently only for maxwell Boltzmann entropy
 
@@ -171,6 +204,31 @@ class EntropyTools:
         t2 = np.tensordot(tmp, self.opti_m[:, :], axes=([1], [1]))  # f * w * momentBasis
         dim = t2.shape[1]
         return np.reshape(t2 - self.opti_u, (dim,))
+
+    def opti_entropy_prime2(self, alpha: np.ndarray) -> np.ndarray:
+        """
+         brief: returns the 2nd derivative negative entropy functional with fixed u
+         nS = batchSize
+         N = basisSize
+         nq = number of quadPts
+
+         input: alpha, dims = (1 x N)
+                u, dims = (1 x N)
+         used members: m    , dims = (N x nq)
+                     w    , dims = nq
+
+         returns h =  <mxm*eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = np.exp(np.tensordot(alpha, self.opti_m, axes=([0], [0])))  # exp(alpha*m)
+        tmp = np.multiply(f_quad, self.opti_w)  # f*w
+
+        # mm = np.zeros(shape=(self.nq, self.inputDim, self.inputDim))
+        t2 = 0
+        for i in range(self.nq):
+            t = np.tensordot(self.opti_m[:, i], self.opti_m[:, i], axes=0)
+            t2 += t * tmp[0, i]
+        return t2
 
     def KL_divergence(self, alpha_true: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -190,7 +248,23 @@ class EntropyTools:
         res = tf.tensordot(integrand, self.quadWeights, axes=([1], [1]))
         return res
 
-    ### Standalone features
+    def compute_kinetic_density(self, alpha: tf.Tensor) -> tf.Tensor:
+        """
+                brief: computes the kinetic density w.r.t alpha
+                input: alpha , dim = (ns, N+1)
+                output: kinetic density, dim  = ns x nq
+        """
+        return tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))
+
+    def compute_maxwellian(self):
+        """
+        returns the maxwellian distribution at quadpts
+        return: maxwellian, dims = (1,nq)
+        """
+        return 0
+
+
+### Standalone features
 
 
 ### Integration
@@ -214,9 +288,9 @@ def qGaussLegendre2D(Qorder):
         """Quadrature points for GaussLegendre quadrature. Read from file."""
         mu, _ = leggauss(order)
         phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
-        xy = np.zeros((2 * order * order, 2))
+        xy = np.zeros((order * order, 2))
         count = 0
-        for i in range(order):
+        for i in range(int(order / 2)):
             for j in range(2 * order):
                 mui = mu[i]
                 phij = phi[j]
@@ -230,15 +304,12 @@ def qGaussLegendre2D(Qorder):
     def computequadweights(order):
         """Quadrature weights for GaussLegendre quadrature. Read from file."""
         _, leggaussweights = leggauss(order)
-        w = np.zeros(2 * order * order)
+        w = np.zeros(order * order)
         count = 0
-        for i in range(order):
+        for i in range(int(order / 2)):
             for j in range(2 * order):
-                w[count] = 2 * np.pi / order * leggaussweights[i]
+                w[count] = 0.5 * np.pi / order * leggaussweights[i]
                 count += 1
-
-        w /= sum(w)
-        w *= 4 * np.pi
         return w
 
     pts = computequadpoints(Qorder)
