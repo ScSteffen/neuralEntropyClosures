@@ -222,7 +222,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     else:
         c_map = cm.hot
 
-    fig = plt.figure(figsize=(4.7, 4), dpi=400)
+    fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
     ax = fig.add_subplot(111)  # , projection='3d')
     x = x_in[:, 0]
     y = x_in[:, 1]
@@ -261,14 +261,14 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
         c_map = cm.hot
 
     plt.plot()
-    fig = plt.figure(figsize=(4.7, 4), dpi=400)
+    fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
     ax = fig.add_subplot(111)  # , projection='3d')
 
     u1 = np.linspace(-1, 1, 100)
     u2 = u1 * u1
     u2_top = np.ones(100)
-    ax.plot(u1, u2, 'k-')
-    ax.plot(u1, u2_top, 'k-')
+    ax.plot(u1, u2, 'k--')
+    ax.plot(u1, u2_top, 'k--')
 
     x = x_in[:, 0]
     y = x_in[:, 1]

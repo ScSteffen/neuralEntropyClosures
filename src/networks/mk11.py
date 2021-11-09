@@ -56,7 +56,7 @@ class MK11Network(BaseNetwork):
         # initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
 
         # Weight regularizer
-        l2_regularizer_nn = tf.keras.regularizers.L1L2(l2=0.001)  # L1 + L2 penalties
+        l2_regularizer_nn = tf.keras.regularizers.L1L2(l2=0.0001)  # L1 + L2 penalties
         l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
@@ -69,8 +69,7 @@ class MK11Network(BaseNetwork):
             weighted_non_neg_sum_z = layers.Dense(units=layer_dim, kernel_constraint=NonNeg(), activation=None,
                                                   kernel_initializer=initializer,
                                                   kernel_regularizer=l2_regularizer_nn,
-                                                  use_bias=True, bias_initializer=initializer,
-                                                  bias_regularizer=l1l2_regularizer,
+                                                  use_bias=True, bias_initializer='zeros',
                                                   name='layer_' + str(layer_idx) + 'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
@@ -86,21 +85,25 @@ class MK11Network(BaseNetwork):
             out = tf.keras.activations.softplus(intermediate_sum)
             # out = tf.keras.activations.selu(intermediate_sum)
             # batch normalization
-            out = layers.BatchNormalization(name='bn_' + str(layer_idx))(out)
+            # out = layers.BatchNormalization(name='bn_' + str(layer_idx))(out)
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
             # Weighted sum of previous layers output plus bias
+            stddev = np.sqrt(
+                (1 / 1.1) * (1 / 1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+
             weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                                     kernel_initializer=tf.keras.initializers.HeNormal(),
+                                                     kernel_initializer=initializer,
                                                      kernel_regularizer=l2_regularizer_nn,
-                                                     use_bias=True, bias_regularizer=l1l2_regularizer,
-                                                     bias_initializer=tf.keras.initializers.HeNormal(),
+                                                     use_bias=True,
+                                                     bias_initializer='zeros',
                                                      name='layer_' + str(layer_idx) + 'nn_component'
                                                      )(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None,
-                                                  kernel_initializer=tf.keras.initializers.HeNormal(),
+                                                  kernel_initializer=initializer,
                                                   kernel_regularizer=l1l2_regularizer,
                                                   use_bias=False,
                                                   name='layer_' + str(layer_idx) + 'dense_component'
@@ -171,7 +174,7 @@ class MK11Network(BaseNetwork):
 
         # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
         # show_layer_names = True, rankdir = 'TB', expand_nested = True)
-        print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
+        # print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
         self.model = model
         return True
 

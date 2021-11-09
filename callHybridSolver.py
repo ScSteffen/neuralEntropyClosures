@@ -45,10 +45,10 @@ def main():
 
     if options.spatial_dimension == 1:
         solver = MNSolver1D.MNSolver1D(traditional=False, polyDegree=options.degree, model_mk=options.model)
-        solver.solve(maxIter=2000, t_end=0.7)
+        solver.solve(maxIter=20000, t_end=10)
     if options.spatial_dimension == 2:
         solver = MNSolver2D.MNSolver2D(traditional=False, model_mk=options.model)
-        solver.solve(endTime=12)
+        solver.solve(maxIter=2000, t_end=1)
 
     return True
 

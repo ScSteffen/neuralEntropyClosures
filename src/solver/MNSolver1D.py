@@ -14,7 +14,6 @@ from matplotlib import animation
 import tensorflow as tf
 import multiprocessing
 import pandas as pd
-import pkg_resources
 
 # inpackage imports
 # from networks.configModel import initNeuralClosure
@@ -72,8 +71,12 @@ class MNSolver1D:
             print("Periodic boundary conditions")
         else:
             print("Dirichlet boundary conditions")
-        self.datafile = "data_file_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_inflow.csv"
-        self.solution_file = "1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_inflow.csv"
+        # self.datafile = "data_file_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_inflow.csv"
+        # self.solution_file = "1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_inflow.csv"
+        # self.errorfile = "err_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_inflow.csv"
+        self.datafile = "data_file_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_periodic.csv"
+        self.solution_file = "1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_periodic.csv"
+        self.errorfile = "err_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_periodic.csv"
         # Solver variables Traditional
         self.u = self.ic_zero()  # self.ic_periodic()# self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
@@ -122,21 +125,21 @@ class MNSolver1D:
             elif self.model_mk == 15:
                 if self.polyDegree == 1:
                     self.neuralClosure = init_neural_closure(network_mk=self.model_mk, poly_degree=1, spatial_dim=1,
-                                                             folder_name="_simulation/mk15_M1_1D_normal",
+                                                             folder_name="_simulation/mk15_M1_1D",
                                                              loss_combination=2, nw_width=30, nw_depth=2,
                                                              normalized=True, input_decorrelation=True,
                                                              scale_active=True)
                     self.neuralClosure.load_model()
                 if self.polyDegree == 2:
                     self.neuralClosure = init_neural_closure(network_mk=self.model_mk, poly_degree=2, spatial_dim=1,
-                                                             folder_name="_simulation/mk15_M2_1D_normal",
+                                                             folder_name="_simulation/mk15_M2_1D",
                                                              loss_combination=2, nw_width=50, nw_depth=2,
                                                              normalized=True, input_decorrelation=True,
                                                              scale_active=True)
                     self.neuralClosure.load_model()
                 elif self.polyDegree == 3:
                     self.neuralClosure = init_neural_closure(network_mk=13, poly_degree=3, spatial_dim=1,
-                                                             folder_name="002_sim_M3_1D", loss_combination=2,
+                                                             folder_name="_simulation/mk15_M3_1D", loss_combination=2,
                                                              nw_width=20, nw_depth=7, normalized=True)
                     self.neuralClosure.loadModel("../../models/002_sim_M3_1D")
 
@@ -147,10 +150,16 @@ class MNSolver1D:
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']  # , 'realizable']
         self.dfErrPoints = pd.DataFrame(columns=columns)
 
+        with open('figures/solvers/' + self.errorfile, 'w', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            row = ["t", "err_u", "err_alpha", "int_h", "int_h_ref"]
+            writer.writerow(row)
+
         with open('figures/solvers/' + self.datafile, 'w', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
-            row = ["iter", "u_0", "u_1", "u_2", "alpha_0", "alpha_1", "alpha_2", "entropy"]
+            row = ["t", "u_0", "u_1", "u_2", "alpha_0", "alpha_1", "alpha_2", "entropy"]
             writer.writerow(row)
         with open('figures/solvers/' + self.solution_file, 'w', newline='') as f:
             # create the csv writer
@@ -202,7 +211,7 @@ class MNSolver1D:
         for i in range(self.nx):
             x_koor = self.x0 + (i - 0.5) * self.dx
             u_ic[0, i] = sincos(x_koor)
-            u_ic[1, i] = 0.0
+            u_ic[1, i] = 0.3 * u_ic[0, i]
             if self.polyDegree > 1:
                 u_ic[2, i] = 0.5 * u_ic[0, i]
             if self.polyDegree > 2:
@@ -306,8 +315,8 @@ class MNSolver1D:
         while idx_time < maxIter and idx_time * self.dt < t_end:
             self.solve_iter_newton(idx_time)
             self.solver_iter_ml(idx_time)
-            print("Iteration: " + str(idx_time) + '. Time: ' + str(idx_time * self.dt))
-            self.error_analysis(idx_time)
+            print("Iteration: " + str(idx_time) + ". Time " + str(idx_time * self.dt) + " of " + str(t_end))
+            self.error_analysis(idx_time * self.dt)
             # print iteration results
             # self.show_solution(idx_time)
             idx_time += 1
@@ -707,9 +716,7 @@ class MNSolver1D:
         # plt.show()
         return 0
 
-    def error_analysis(self, iter):
-        entropyOrig = - self.h.sum() * self.dx
-        entropyML = self.h2.sum() * self.dx
+    def error_analysis(self, time):
 
         # mean absulote error
         with open('figures/solvers/' + self.datafile, 'a+', newline='') as f:
@@ -723,8 +730,21 @@ class MNSolver1D:
                 elif self.polyDegree == 2:
                     row = [i, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
                            self.alpha[2, i], self.h[i]]
-
                 writer.writerow(row)
+
+        err_u = np.linalg.norm(self.u - self.u2, axis=0)
+        rel_err_u = err_u / np.linalg.norm(self.u, axis=0)
+        avg_rel_err_u = np.sum(rel_err_u) / self.nx
+        err_alpha = np.linalg.norm(self.alpha - self.alpha2, axis=0)
+        rel_err_alpha = err_alpha / np.linalg.norm(self.alpha, axis=0)
+        avg_rel_err_alpha = np.sum(rel_err_alpha) / self.nx
+        entropy_orig = - self.h.sum() * self.dx
+        entropy_ml = self.h2.sum() * self.dx
+
+        with open('figures/solvers/' + self.errorfile, 'a+', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([time, avg_rel_err_u, avg_rel_err_alpha, entropy_ml, entropy_orig])
+        print("Error data written")
         return 0
 
     def write_solution(self):

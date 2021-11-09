@@ -16,7 +16,7 @@ from matplotlib import animation
 from matplotlib.colors import LogNorm
 import multiprocessing
 import csv
-
+import tensorflow as tf
 from joblib import Parallel, delayed
 
 # inpackage imports
@@ -24,7 +24,9 @@ from src.networks.configmodel import init_neural_closure
 from src import utils
 
 num_cores = multiprocessing.cpu_count()
-plt.style.use("kitish")
+
+
+# plt.style.use("kitish")
 
 
 def main():
@@ -40,14 +42,17 @@ class MNSolver2D:
     def __init__(self, traditional=True, model_mk=11):
 
         # Prototype for  spatialDim=2, polyDegree=1
-        self.nSystem = 3
+        self.n_system = 3
         self.polyDegree = 1
-        self.quadOrder = 10
+        self.quadOrder = 20
         self.traditional = traditional
         [self.quadPts, self.quadWeights] = math.qGaussLegendre2D(self.quadOrder)  # dims = nq
         self.nq = self.quadWeights.size
         self.mBasis = math.computeMonomialBasis2D(self.quadPts, self.polyDegree)  # dims = (N x nq)
         self.inputDim = self.mBasis.shape[0]  # = self.nSystem
+
+        self.datafile = "data_file_2D_M" + str(self.polyDegree) + "_MK" + str(model_mk) + "_periodic.csv"
+        self.solution_file = "2D_M" + str(self.polyDegree) + "_MK" + str(model_mk) + "_periodic.csv"
 
         # generate geometry
         self.x0 = -1.5
@@ -61,9 +66,10 @@ class MNSolver2D:
 
         # physics (homogeneous)
         self.sigmaS = 1.0
-        self.sigmaA = 0.0
-        self.sigmaT = self.sigmaS + self.sigmaA
-
+        self.scatter_vector = np.zeros(self.n_system)
+        for i in range(self.n_system):
+            if i % 2 == 0:
+                self.scatter_vector[i] = 1.0 / float(i + 1)
         # time
         self.tEnd = 1.0
         self.cfl = 0.1
@@ -74,37 +80,45 @@ class MNSolver2D:
         self.T = 0
         print("dt:" + str(self.dt))
         # Solver variables Traditional
-        self.u = self.ic_linesource()  ##self.ic_periodic() periodic IC
-        self.uR = self.ic_linesource()  # self.ic_periodic()  #
+        self.u = self.ic_periodic()  ##self.ic_periodic() periodic IC
         self.h = np.zeros((self.nx, self.ny))
 
-        self.alpha = np.zeros((self.nSystem, self.nx, self.ny))
-        self.xFlux = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
-        self.yFlux = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
+        self.alpha = np.zeros((self.n_system, self.nx, self.ny))
+        self.xFlux = np.zeros((self.n_system, self.nx, self.ny), dtype=float)
+        self.yFlux = np.zeros((self.n_system, self.nx, self.ny), dtype=float)
 
-        self.u2 = self.ic_linesource()
+        self.u2 = self.ic_periodic()
         self.h2 = np.zeros((self.nx, self.ny))
-        self.u2R = self.ic_linesource()
-        self.alpha2 = np.zeros((self.nSystem, self.nx, self.ny))
-        self.xFlux2 = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
-        self.yFlux2 = np.zeros((self.nSystem, self.nx, self.ny), dtype=float)
+        self.alpha2 = np.zeros((self.n_system, self.nx, self.ny))
+        self.xFlux2 = np.zeros((self.n_system, self.nx, self.ny), dtype=float)
+        self.yFlux2 = np.zeros((self.n_system, self.nx, self.ny), dtype=float)
         # Neural closure
         self.neuralClosure = None
         self.model_mk = model_mk
         if not self.traditional:
-            # self.neuralClosure = init_neural_closure(
-            #    network_mk=self.model_mk, poly_degree=1, spatial_dim=2, folder_name="002_sim_M1_2D",
-            #    loss_combination=2, nw_width=18, nw_depth=8, normalized=True, input_decorrelation=False,
-            #    scale_active=True)
-            self.neuralClosure = init_neural_closure(
-                network_mk=self.model_mk, poly_degree=1, spatial_dim=2,
-                folder_name="_simulation/mk15_M1_2D_normal_gaussian",
-                loss_combination=2, nw_width=100, nw_depth=3, normalized=True, input_decorrelation=False,
-                scale_active=True)
-            self.neuralClosure.load_model()  # "../../models/002_sim_M1_2D")
+            if self.model_mk == 11:
+                if self.polyDegree == 1:
+                    self.neuralClosure = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=2,
+                                                             folder_name="tmp",
+                                                             loss_combination=2,
+                                                             nw_width=18, nw_depth=8, normalized=True)
+                    self.neuralClosure.create_model()
+                    ### Need to load this model as legacy code
+                    print("Load model in legacy mode. Model was created using tf 2.2.0")
+                    self.legacy_model = True
+                    imported = tf.keras.models.load_model("models/_simulation/mk11_M1_2D/best_model")
+                    self.neuralClosure.model_legacy = imported
+            elif self.model_mk == 15:
+                if self.polyDegree == 1:
+                    self.neuralClosure = init_neural_closure(
+                        network_mk=self.model_mk, poly_degree=1, spatial_dim=2,
+                        folder_name="_simulation/mk15_M1_2D",
+                        loss_combination=2, nw_width=100, nw_depth=3, normalized=True, input_decorrelation=False,
+                        scale_active=True)
+                    self.neuralClosure.load_model()
 
         # Analysis variables
-        self.errorMap = np.zeros((self.nSystem, self.nx, self.ny))
+        self.errorMap = np.zeros((self.n_system, self.nx, self.ny))
         self.normErrorMap = np.zeros((self.nx, self.ny))
         self.normErrorMapAbsolute = np.zeros((self.nx, self.ny))
         self.mass = []
@@ -119,6 +133,20 @@ class MNSolver2D:
             row = ["iter", "meanRe", "meanAe", "meanAu0", "meanAu1", "meanAu2", "mass"]
             writer.writerow(row)
 
+        with open('figures/solvers/' + self.datafile, 'w', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            row = ["time, h_neural_mk15, h_baseline"]
+            writer.writerow(row)
+        with open('figures/solvers/' + self.solution_file, 'w', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            if self.polyDegree == 1:
+                row = ["u_0", "u_1", "u_0_ref", "u_1_ref"]
+            elif self.polyDegree == 2:
+                row = ["u_0", "u_1", "u_2", "u_0_ref", "u_1_ref", "u_2_ref"]
+            writer.writerow(row)
+
     def ic_linesource(self):
         """
         brief: linesource test case
@@ -129,7 +157,7 @@ class MNSolver2D:
 
             return max(prob_density, 0.001)
 
-        u_ic = np.zeros((self.nSystem, self.nx, self.ny))
+        u_ic = np.zeros((self.n_system, self.nx, self.ny))
 
         for i in range(self.nx):
             for j in range(self.ny):
@@ -138,7 +166,6 @@ class MNSolver2D:
                 u_ic[0, i, j] = normal_dist(x_koor, y_koor, 0.0, 0.01)
                 u_ic[1, i, j] = 0.0
                 u_ic[2, i, j] = 0.0
-
         print("using linesource initial conditions")
 
         return u_ic
@@ -147,7 +174,7 @@ class MNSolver2D:
         def sincos(x, y):
             return 1.5 + np.cos(2 * np.pi * x) * np.cos(2 * np.pi * y)
 
-        uIc = np.zeros((self.nSystem, self.nx, self.ny))
+        uIc = np.zeros((self.n_system, self.nx, self.ny))
 
         for i in range(self.nx):
             for j in range(self.ny):
@@ -158,17 +185,17 @@ class MNSolver2D:
                 uIc[2, i, j] = 0.9 / 3.0 * uIc[0, i, j]
         return uIc
 
-    def solve(self, endTime=0.5, maxIter=100):
+    def solve(self, t_end=0.5, maxIter=100):
         # self.show_solution(0)
         idx_time = 0
-        while self.T < endTime:
-            # self.solve_iter_newton(idx_time)
+        while idx_time < maxIter and idx_time * self.dt < t_end:
+            self.solve_iter_newton(idx_time)
             self.solve_iter_ml(idx_time)
-            print("Iteration: " + str(idx_time) + ". Time " + str(self.T) + " of " +
-                  str(endTime))
+            print("Iteration: " + str(idx_time) + ". Time " + str(self.T) + " of " + str(t_end))
+            self.write_solution(idx_time * self.dt)
             # self.errorAnalysis(idx_time)
             # print iteration results
-            self.show_solution(idx_time)
+            # self.show_solution(idx_time)
             idx_time += 1
             self.T += self.dt
 
@@ -180,7 +207,6 @@ class MNSolver2D:
             self.u2 = self.u  # sync solvers
             self.solve_iter_newton(idx_time)
             self.entropy_closure_ml()
-
             # self.solve_iter_ml(idx_time)
             print("Iteration: " + str(idx_time))
             self.errorAnalysis()
@@ -282,18 +308,22 @@ class MNSolver2D:
     def solve_iter_newton(self, t_idx):
         # entropy closure and
         self.entropy_closure_newton()
+        print("Newton System closed")
         # reconstruction
         # self.realizability_reconstruction()
         # flux computation
         self.compute_flux_newton()
+        print("Flux computed")
         # FVM update
         self.FVMUpdateNewton()
+        print("Solution updated")
+
         return 0
 
     def solve_iter_ml(self, t_idx):
         # entropy closure and
         self.entropy_closure_ml()
-        print("System closed")
+        print("neural System closed")
         # flux computation
         self.compute_flux_ml()
         print("Flux computed")
@@ -304,7 +334,7 @@ class MNSolver2D:
 
     def entropy_closure_ml(self):
         count = 0
-        tmp = np.zeros((self.nx * self.ny, self.nSystem))
+        tmp = np.zeros((self.nx * self.ny, self.n_system))
         for i in range(self.nx):
             for j in range(self.ny):
                 tmp[count, :] = self.u2[:, i, j]
@@ -419,7 +449,7 @@ class MNSolver2D:
         for i in range(self.nx):
             for j in range(self.ny):
                 # self.u2[:, i, j] = self.u[:, i, j]
-                a = np.reshape(self.alpha[:, i, j], (1, self.nSystem))
+                a = np.reshape(self.alpha[:, i, j], (1, self.n_system))
                 self.u[:, i, j] = math.reconstructU(alpha=a, m=self.mBasis, w=self.quadWeights)
                 # print("(" + str(self.u2[:, i, j]) + " | " + str(self.u[:, i, j]))
         return 0
@@ -429,20 +459,21 @@ class MNSolver2D:
         for periodic boundaries, upwinding.
         writes to xFlux and yFlux, uses alpha
         """
+        # reconstruct all densities
+        densities = np.zeros((self.nx, self.ny, self.nq))
         for j in range(self.ny):
             for i in range(self.nx):
-
+                densities[i, j, :] = math.entropyDualPrime(
+                    np.tensordot(self.alpha[:, i, j], self.mBasis, axes=([0], [0])))
+        for j in range(self.ny):
+            for i in range(self.nx):
                 # Computation in x direction
                 im1 = i - 1
                 if i == 0:  # periodic boundaries
                     im1 = self.nx - 1
-                left = np.tensordot(self.alpha[:, im1, j], self.mBasis, axes=([0], [0]))
-                right = np.tensordot(self.alpha[:, i, j], self.mBasis, axes=([0], [0]))
-                fluxL = math.entropyDualPrime(left)
-                fluxR = math.entropyDualPrime(right)
                 flux = 0
                 for q in range(self.nq):  # integrate upwinding result
-                    upwind = self.upwinding(fluxL[q], fluxR[q], self.quadPts[q], [1, 0])
+                    upwind = self.upwinding(densities[im1, j, q], densities[i, j, q], self.quadPts[q], [1, 0])
                     flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
                 self.xFlux[:, i, j] = flux
 
@@ -450,13 +481,9 @@ class MNSolver2D:
                 jm1 = j - 1
                 if j == 0:  # periodic boundaries
                     jm1 = self.ny - 1
-                lower = np.tensordot(self.alpha[:, i, jm1], self.mBasis, axes=([0], [0]))
-                upper = np.tensordot(self.alpha[:, i, j], self.mBasis, axes=([0], [0]))
-                fluxLow = math.entropyDualPrime(lower)
-                fluxUp = math.entropyDualPrime(upper)
                 flux = 0
                 for q in range(self.nq):  # integrate upwinding result
-                    upwind = self.upwinding(fluxLow[q], fluxUp[q], self.quadPts[q], [0, 1])
+                    upwind = self.upwinding(densities[i, jm1, q], densities[i, j, q], self.quadPts[q], [0, 1])
                     flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
                 self.yFlux[:, i, j] = flux
         return 0
@@ -466,21 +493,21 @@ class MNSolver2D:
         for periodic boundaries, upwinding.
         writes to xFlux and yFlux, uses alpha
         """
-
+        # reconstruct all densities
+        densities = np.zeros((self.nx, self.ny, self.nq))
         for j in range(self.ny):
             for i in range(self.nx):
-
+                densities[i, j, :] = math.entropyDualPrime(
+                    np.tensordot(self.alpha2[:, i, j], self.mBasis, axes=([0], [0])))
+        for j in range(self.ny):
+            for i in range(self.nx):
                 # Computation in x direction
                 im1 = i - 1
                 if i == 0:  # periodic boundaries
                     im1 = self.nx - 1
-                left = np.tensordot(self.alpha2[:, im1, j], self.mBasis, axes=([0], [0]))
-                right = np.tensordot(self.alpha2[:, i, j], self.mBasis, axes=([0], [0]))
-                fluxL = math.entropyDualPrime(left)
-                fluxR = math.entropyDualPrime(right)
                 flux = 0
                 for q in range(self.nq):  # integrate upwinding result
-                    upwind = self.upwinding(fluxL[q], fluxR[q], self.quadPts[q], [1, 0])
+                    upwind = self.upwinding(densities[im1, j, q], densities[i, j, q], self.quadPts[q], [1, 0])
                     flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
                 self.xFlux2[:, i, j] = flux
 
@@ -488,13 +515,9 @@ class MNSolver2D:
                 jm1 = j - 1
                 if j == 0:  # periodic boundaries
                     jm1 = self.ny - 1
-                lower = np.tensordot(self.alpha2[:, i, jm1], self.mBasis, axes=([0], [0]))
-                upper = np.tensordot(self.alpha2[:, i, j], self.mBasis, axes=([0], [0]))
-                fluxLow = math.entropyDualPrime(lower)
-                fluxUp = math.entropyDualPrime(upper)
                 flux = 0
                 for q in range(self.nq):  # integrate upwinding result
-                    upwind = self.upwinding(fluxLow[q], fluxUp[q], self.quadPts[q], [0, 1])
+                    upwind = self.upwinding(densities[i, jm1, q], densities[i, j, q], self.quadPts[q], [0, 1])
                     flux = flux + upwind * self.quadWeights[q] * self.mBasis[:, q]
                 self.yFlux2[:, i, j] = flux
         return 0
@@ -528,9 +551,8 @@ class MNSolver2D:
                 self.u[:, i, j] = self.u[:, i, j] + ((self.xFlux[:, i, j] - self.xFlux[:, ip1, j]) / self.dx + (
                         self.yFlux[:, i, j] - self.yFlux[:, i, jp1]) / self.dy) * self.dt
                 # Scattering
-                # self.u[0, i, j] = self.u[0, i, j] + (
-                #        self.sigmaS * self.u[0, i, j] - self.sigmaT * self.u[0, i, j]) * self.dt
-                # self.u[1:, i, j] = self.u[0, i, j] + (self.sigmaT * self.u[1:, i, j]) * self.dt
+                # Scattering
+                self.u[:, i, j] += self.dt * self.sigmaS * (self.scatter_vector * self.u[0, i, j] - self.u[:, i, j])
         return 0
 
     def FVMUpdateML(self):
@@ -548,9 +570,7 @@ class MNSolver2D:
                 self.u2[:, i, j] = self.u2[:, i, j] + ((self.xFlux2[:, i, j] - self.xFlux2[:, ip1, j]) / self.dx + (
                         self.yFlux2[:, i, j] - self.yFlux2[:, i, jp1]) / self.dy) * self.dt
                 # Scattering
-                # self.u[0, i, j] = self.u[0, i, j] + (
-                #        self.sigmaS * self.u[0, i, j] - self.sigmaT * self.u[0, i, j]) * self.dt
-                # self.u[1:, i, j] = self.u[0, i, j] + (self.sigmaT * self.u[1:, i, j]) * self.dt
+                self.u2[:, i, j] += self.dt * self.sigmaS * (self.scatter_vector * self.u2[0, i, j] - self.u2[:, i, j])
         return 0
 
     def show_solution(self, idx):
@@ -603,8 +623,8 @@ class MNSolver2D:
         utils.plot_1d([x, x, x, x, x, x],
                       [xSNewton_u0, xSNewton_u1, xSNewton_u2, xSML_u0, xSML_u1, xSML_u1],
                       [r'$u_0$ Newton', r'$u_1$ Newton', r'$u_2$ Newton', r'$u_0$ Neural', r'$u_1$ Neural',
-                      r'$u_2$ Neural'],
-                     '000_u', folder_name="figures/solvers/000plot", log=False, show_fig=False,
+                       r'$u_2$ Neural'],
+                      '000_u', folder_name="figures/solvers/000plot", log=False, show_fig=False,
                       xlabel=r"$x$")
         plt.clf()
         plt.plot(x, xSNewton_u0, "k-", label="Newton closure")
@@ -648,10 +668,11 @@ class MNSolver2D:
         count = 0
         count2 = 0
         count3 = 0
+
         # newEntries = []
         for i in range(self.nx):
             for j in range(self.ny):
-                for n in range(self.nSystem):
+                for n in range(self.n_system):
                     self.errorMap[n, i, j] = np.abs(self.u[n, i, j] - self.u2[n, i, j])  # / np.max([
                     # np.abs(self.u[n, i, j]), 0.0001])
 
@@ -695,7 +716,21 @@ class MNSolver2D:
             row = [iter, meanRe, meanAe, meanAu0, meanAu1, meanAu2, mass, entropyOrig, entropyML]
             writer.writerow(row)
 
-        # def printSolutionsToCSV(self):
+    def write_solution(self, time):
+        with open('figures/solvers/' + self.datafile, 'a+', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([time, self.h2.sum() * (self.dx * self.dy), self.h.sum() * (self.dx * self.dy)])
+
+        with open('figures/solvers/' + self.solution_file, 'a+', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+            # writer.writerow("u0,u1,u2,u0_ref,u1_ref,u2_ref")
+            for i in range(self.nx):
+                row = [self.u2[0, i], self.u2[1, i], self.u2[2, i], self.u[0, i], self.u[1, i], self.u[2, i]]
+                # row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
+                #       self.alpha[2, i], self.h[i]]
+            writer.writerow(row)
+        return 0
 
 
 if __name__ == '__main__':
