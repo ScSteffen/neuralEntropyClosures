@@ -4,38 +4,20 @@ A Project to construct some neural networks to solve the minimal entropy problem
 
 ## Packages needed
 
-* Tensorflow v2.2.0
+* Tensorflow v2.6.0
 * Pandas
 * Numpy
 
-## Available network models ##
+## Available, tested network models ##
 
-* MK1: [Deprecated] Sequential model to train the mapping u to alpha (RMSE loss). Uses unscaled data.
-* MK2: [Deprecated] Sequential model to train the mapping u to alpha (loss is entropy functional). Uses unscaled data.
-* MK3: [Deprecated] ResNet model to train the mapping u to alpha (RMSE loss). Uses unscaled data.
-* MK4: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses unscaled data.
-* MK5: [Deprecated]
-* MK6: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled input data.
-* MK7: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled input data. Variable network size
-* MK8: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled data.
-* MK9: [Deprecated] ICNN model to train the mapping u to h (RMSE loss). Uses scaled data. Quadratic activation
-* MK10: [Deprecated] ICNN model to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable network
-  size. Can reconstruct u
 * MK11: ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
   network size. Can reconstruct u. Different network call possibilities
-* MK12: Dense model (for comparison) with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized
-  data. Variable network size. Can reconstruct u. Different network call possibilities
-* MK13: [Test bench for MK11] ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses
-  normalized data. Variable network size. Can reconstruct u. Different network call possibilities
-* MK14: [Not yet used] ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized
-  data. Variable network size. Can reconstruct u. Different network call possibilities
+* MK15: ResNet model that directly approximates alpha and reconstructs u and h. Equipped with Monotonicity loss
 
 ## How to use ## 
 
-Preliminary: Make sure to install tensorflow (with or without GPU acceleration) on your machine.
+Preliminary: Execute package_installer.sh to install all neccessary python packages.
 
-This small network suite is build to solve the minimal entropy closure for the Boltzmann equation. The problem is the
-following:
 
 ### Training ### 
 
@@ -49,7 +31,7 @@ Options:
 * -d (--degree): Determines degree of the basis functions (monomials)
 * -e (--epoch): Determines number of epochs
 * -f (--folder): Determines subfolder of "models"
-* -l (--loadModel): Determines if programm loads existing model weights
+* -l (--load_model): Determines if programm loads existing model weights
 * -m (--model): Choice of model version. It is recommended to use version 11
 * -n (--normalized): Determine if training happens on normalized data (recommended)
 * -o (--objective): Determines choice of training objective

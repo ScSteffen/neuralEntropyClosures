@@ -22,6 +22,9 @@ python/legacyCode/models/*
 *.png
 # Models
 models/
+runscripts/
+dump/
+delete/
 
 # Distribution / packaging
 .Python

@@ -9,7 +9,7 @@ import numpy as np
 import scipy.optimize
 import tensorflow as tf
 
-from src.neuralClosures.configModel import initNeuralClosure
+from src.networks.configmodel import init_neural_closure
 from src import utils
 from src import math
 
@@ -157,7 +157,7 @@ def main():
 
     alpha_1 = np.linspace(-50, 50, batchSize)
     alpha_1 = alpha_1.reshape((batchSize, N))
-    alpha_1 = entropy_tools.convert_to_tensorf(alpha_1)
+    alpha_1 = entropy_tools.convert_to_tensor_float(alpha_1)
     alpha = entropy_tools.reconstruct_alpha(alpha_1)
     u = entropy_tools.reconstruct_u(alpha)
     h = entropy_tools.compute_h(u, alpha)
@@ -190,7 +190,7 @@ def main():
 
     tolerance = 0.1
 
-    alpha_1 = entropy_tools.convert_to_tensorf(np.asarray([-50, 50]).reshape((2, N)))
+    alpha_1 = entropy_tools.convert_to_tensor_float(np.asarray([-50, 50]).reshape((2, N)))
     alpha_ini = entropy_tools.reconstruct_alpha(alpha_1)
     u_ini = entropy_tools.reconstruct_u(alpha_ini)
     h_ini = entropy_tools.compute_h(u_ini, alpha_ini)
@@ -199,26 +199,26 @@ def main():
     h_list = [h_ini[0, :], h_ini[1, :]]
     [u_train, alpha_train, h_train] = sample_data_entropy_M1(u_list, alpha_list, h_list, tolerance)
 
-    utils.plot1D(xs=[u_train[:, 1]], ys=[alpha_train[:, 1], h_train], labels=['alpha', 'h'], linetypes=['+', '*'],
-                 name='smart_sampled_entropy', log=False, folder_name="figures")
+    utils.plot_1d(xs=[u_train[:, 1]], ys=[alpha_train[:, 1], h_train], labels=['alpha', 'h'], linetypes=['+', '*'],
+                  name='smart_sampled_entropy', log=False, folder_name="figures")
 
-    utils.plot1D(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[alpha_train[:, 1], alpha[:, 1], alpha_[:, 1]],
-                 labels=['alpha_smart', 'alpha_alpha_sampled', 'alpha_u_sampled'],
-                 linetypes=['*', '2', '3'],
-                 name='alha_sampling_strategies', log=False, folder_name="figures")
-    utils.plot1D(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[h_train, h, h_],
-                 labels=['h_smart', 'h_alpha_sampled', 'h_u_sampled'],
-                 linetypes=['*', '2', '3'], name='h_sampling_strategies', log=False, folder_name="figures",
-                 show_fig=False)
+    utils.plot_1d(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[alpha_train[:, 1], alpha[:, 1], alpha_[:, 1]],
+                  labels=['alpha_smart', 'alpha_alpha_sampled', 'alpha_u_sampled'],
+                  linetypes=['*', '2', '3'],
+                  name='alha_sampling_strategies', log=False, folder_name="figures")
+    utils.plot_1d(xs=[u_train[:, 1], u[:, 1], u_[:, 1]], ys=[h_train, h, h_],
+                  labels=['h_smart', 'h_alpha_sampled', 'h_u_sampled'],
+                  linetypes=['*', '2', '3'], name='h_sampling_strategies', log=False, folder_name="figures",
+                  show_fig=False)
 
     ### Compare networks with different samplings
 
-    model_smart = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                    width=15, depth=5, normalized=True, lossCombi=1)
-    model_u = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                width=15, depth=5, normalized=True, lossCombi=1)
-    model_alpha = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                    width=15, depth=5, normalized=True, lossCombi=1)
+    model_smart = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                      nw_width=15, nw_depth=5, normalized=True, loss_combination=1)
+    model_u = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                  nw_width=15, nw_depth=5, normalized=True, loss_combination=1)
+    model_alpha = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                      nw_width=15, nw_depth=5, normalized=True, loss_combination=1)
 
     mc_best_smart = tf.keras.callbacks.ModelCheckpoint('model_smart/best_model.h5', monitor='loss', mode='min',
                                                        save_best_only=True, verbose=0)

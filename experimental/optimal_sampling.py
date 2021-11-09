@@ -9,7 +9,7 @@ import numpy as np
 import scipy.optimize
 import tensorflow as tf
 
-from src.neuralClosures.configModel import initNeuralClosure
+from src.networks.configmodel import init_neural_closure
 from src import utils
 
 
@@ -265,14 +265,14 @@ def main():
     '''
 
     ### Compare all models
-    model_smart = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                    optimizer='adam', width=10, depth=5, normalized=True)
-    model_uniform = initNeuralClosure(modelNumber=11, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                      optimizer='adam', width=10, depth=5, normalized=True)
-    model_smart_dense = initNeuralClosure(modelNumber=12, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                          optimizer='adam', width=10, depth=5, normalized=True)
-    model_uniform_dense = initNeuralClosure(modelNumber=12, polyDegree=1, spatialDim=1, folderName="testFolder",
-                                            optimizer='adam', width=10, depth=5, normalized=True)
+    model_smart = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                      optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
+    model_uniform = init_neural_closure(network_mk=11, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                        optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
+    model_smart_dense = init_neural_closure(network_mk=12, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                            optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
+    model_uniform_dense = init_neural_closure(network_mk=12, poly_degree=1, spatial_dim=1, folder_name="testFolder",
+                                              optimizer='adam', nw_width=10, nw_depth=5, normalized=True)
 
     model_smart.model.load_weights('model_smart_1e-1/best_model.h5')
     model_uniform.model.load_weights('model_uniform_1e-1/best_model.h5')
@@ -297,31 +297,31 @@ def main():
     diff_y_uniform_dense = pointwiseDiff(pred_uniform_dense[0], y_test)
     diff_dy_uniform_dense = pointwiseDiff(pred_uniform_dense[1], y_test)
 
-    utils.plot1D(x_test, [pred_smart[0], pred_uniform[0], pred_smart_dense[0], pred_uniform_dense[0], y_test],
-                 ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense', 'y_test'], 'exp(x)_over_x', log=False,
-                 folder_name="figures")
-    utils.plot1D(x_test, [pred_smart[1], pred_uniform[1], pred_smart_dense[1], pred_uniform_dense[1], y_test],
-                 ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense', 'dy_test'], 'd_exp(x)_over_x',
-                 log=False, folder_name="figures")
-    utils.plot1D(x_test, [diff_y_smart, diff_y_uniform, diff_y_smart_dense, diff_y_uniform_dense],
-                 ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense'], 'errors_in_y', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_dy_smart, diff_dy_uniform, diff_dy_smart_dense, diff_dy_uniform_dense],
-                 ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense'], 'errors_in_dy', log=True,
-                 folder_name="figures")
+    utils.plot_1d(x_test, [pred_smart[0], pred_uniform[0], pred_smart_dense[0], pred_uniform_dense[0], y_test],
+                  ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense', 'y_test'], 'exp(x)_over_x', log=False,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [pred_smart[1], pred_uniform[1], pred_smart_dense[1], pred_uniform_dense[1], y_test],
+                  ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense', 'dy_test'], 'd_exp(x)_over_x',
+                  log=False, folder_name="figures")
+    utils.plot_1d(x_test, [diff_y_smart, diff_y_uniform, diff_y_smart_dense, diff_y_uniform_dense],
+                  ['y_smart', 'y_uniform', 'y_smart_dense', 'y_uniform_dense'], 'errors_in_y', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_dy_smart, diff_dy_uniform, diff_dy_smart_dense, diff_dy_uniform_dense],
+                  ['dy_smart', 'dy_uniform', 'dy_smart_dense', 'dy_uniform_dense'], 'errors_in_dy', log=True,
+                  folder_name="figures")
 
-    utils.plot1D(x_test, [diff_y_smart, diff_y_smart_dense],
-                 ['y_smart', 'y_smart_dense'], 'errors_in_y_smart', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_y_uniform, diff_y_uniform_dense],
-                 ['y_uniform', 'y_uniform_dense'], 'errors_in_y_uniform', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_dy_smart, diff_dy_smart_dense],
-                 ['dy_smart', 'dy_smart_dense'], 'errors_in_dy_smart', log=True,
-                 folder_name="figures")
-    utils.plot1D(x_test, [diff_dy_uniform, diff_dy_uniform_dense],
-                 ['dy_uniform', 'dy_uniform_dense'], 'errors_in_dy_uniform', log=True,
-                 folder_name="figures")
+    utils.plot_1d(x_test, [diff_y_smart, diff_y_smart_dense],
+                  ['y_smart', 'y_smart_dense'], 'errors_in_y_smart', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_y_uniform, diff_y_uniform_dense],
+                  ['y_uniform', 'y_uniform_dense'], 'errors_in_y_uniform', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_dy_smart, diff_dy_smart_dense],
+                  ['dy_smart', 'dy_smart_dense'], 'errors_in_dy_smart', log=True,
+                  folder_name="figures")
+    utils.plot_1d(x_test, [diff_dy_uniform, diff_dy_uniform_dense],
+                  ['dy_uniform', 'dy_uniform_dense'], 'errors_in_dy_uniform', log=True,
+                  folder_name="figures")
 
     return 0
 

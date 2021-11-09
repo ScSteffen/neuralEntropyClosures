@@ -66,7 +66,7 @@ class AdaptiveSampler(object):
             # compute the geometric mean
             mean = np.mean(curr_vertices, axis=0).reshape((1, 2))  # .reshape((1, 2))
             # compute the new point u corresponding to the mean
-            alpha_recons = et.reconstruct_alpha(et.convert_to_tensorf(mean))
+            alpha_recons = et.reconstruct_alpha(et.convert_to_tensor_float(mean))
             u = et.reconstruct_u(alpha_recons).numpy()[:, 1:]
             # append new point to the training points (since we have already computed it)
             self.all_pts = np.append(self.all_pts, u, axis=0)
@@ -275,7 +275,7 @@ class AdaptiveSampler(object):
         t2 = np.linalg.norm(self.all_pts - query_pt, axis=1)
         # return np.argsort(t2)[0:self.knn_param]  # very costly!
         # get the first knn_param neighbors
-        partitioned_idx = np.argpartition(t2, self.knn_param)
+        partitioned_idx = np.argpartition(t2, self.knn_param - 1)
         knn_distances = t2[partitioned_idx[0:self.knn_param]]
         knn_idx = np.argsort(knn_distances)
         return partitioned_idx[knn_idx]
@@ -288,9 +288,9 @@ class AdaptiveSampler(object):
         dim = self.all_pts.shape[1]
         tri = Delaunay(self.all_pts)
 
-        # plt.triplot(self.all_pts[:, 0], self.all_pts[:, 1], tri.simplices)
-        # plt.plot(self.all_pts[:, 0], self.all_pts[:, 1], 'o')
-        # plt.show()
+        plt.triplot(self.all_pts[:, 0], self.all_pts[:, 1], tri.simplices)
+        plt.plot(self.all_pts[:, 0], self.all_pts[:, 1], 'o')
+        plt.show()
 
         poi_list: list = []
         for simplex in tri.simplices:  # each side is the connection of all points exept one

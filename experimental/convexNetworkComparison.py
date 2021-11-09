@@ -49,27 +49,25 @@ def main():
     ### Dense Network
     filename = "legacyCode/models/ConvComparison_fcnn"
 
-    #model = create_modelMK4()
-    #model = tf.keras.models.load_model(filename + '/model')
-    #model = trainModel(model, filename, batchSize, epochCount)
+    # model = create_modelMK4()
+    # model = tf.keras.models.load_model(filename + '/model')
+    # model = trainModel(model, filename, batchSize, epochCount)
     # model.load_weights(filename + '/best_model.h5')
     model = tf.keras.models.load_model(filename + '/model')
-
 
     ### Convex Network (nonnegative weights)
     filename = "legacyCode/models/ConvComparison_nonNeg"
 
-    #model_nonneg = create_modelMK4_nonneg()
-    #model_nonneg = tf.keras.models.load_model(filename + '/model')
-    #model_nonneg = trainModel(model_nonneg, filename, batchSize, epochCount)
+    # model_nonneg = create_modelMK4_nonneg()
+    # model_nonneg = tf.keras.models.load_model(filename + '/model')
+    # model_nonneg = trainModel(model_nonneg, filename, batchSize, epochCount)
     # model_nonneg.load_weights(filename + '/best_model.h5')
     model_nonneg = tf.keras.models.load_model(filename + '/model')
-
 
     ### Convex Network ICNN architecture
     filename = "legacyCode/models/ConvComparison_ICNN"
 
-    #model_ICNN = create_modelMK4_ICNN()
+    # model_ICNN = create_modelMK4_ICNN()
     # model_ICNN = trainModel(model_ICNN, filename, batchSize, epochCount)
     # model_nonneg.load_weights(filename + '/best_model.h5')
     model_ICNN = tf.keras.models.load_model(filename + '/model')
@@ -78,18 +76,17 @@ def main():
     # printDerivative(model_ICNN)
     evaluateModel(model, model_nonneg, model_ICNN)
 
-    # printWeights(model)
+    # print_weights(model)
     # print("----")
-    # printWeights(model_nonneg)
+    # print_weights(model_nonneg)
     plt.show()
     return 0
 
 
 def printDerivative(model):
     x = np.arange(-100.0, 100.0, 0.001)
-    y = np.reshape(x,(x.shape[0],1))
+    y = np.reshape(x, (x.shape[0], 1))
     x_model = tf.Variable(y)
-
 
     with tf.GradientTape() as tape:
         # training=True is only needed if there are layers with different
@@ -253,6 +250,7 @@ def create_modelMK4():
     model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
     return model
 
+
 def create_modelMK4_nonneg():
     # Define the input
     weightIniMean = 0.0
@@ -295,6 +293,7 @@ def create_modelMK4_nonneg():
     # model.compile(loss=cLoss_FONC_varD(quadOrder,BasisDegree), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
     model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
     return model
+
 
 def create_modelMK4_ICNN():
     # Define the input
@@ -378,8 +377,10 @@ def create_modelMK4_ICNN():
     model.compile(loss="mean_squared_error", optimizer='adam', metrics=['mean_absolute_error'])
     return model
 
+
 def createTrainingData(x):
     return -0.5 * x * x
+
 
 def loadTrainingData():
     filenameU = "trainingData_M0_u.csv"
@@ -413,6 +414,7 @@ def loadTrainingData():
             uList.append(numRow)
 
     return (np.asarray(uList), np.asarray(hList))
+
 
 if __name__ == '__main__':
     main()
