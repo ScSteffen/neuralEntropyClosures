@@ -4,23 +4,20 @@ A Project to construct some neural networks to solve the minimal entropy problem
 
 ## Packages needed
 
-* Tensorflow v2.2.0
+* Tensorflow v2.6.0
 * Pandas
 * Numpy
 
-## Available network models ##
+## Available, tested network models ##
 
 * MK11: ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
   network size. Can reconstruct u. Different network call possibilities
-* MK12: Dense model (for comparison) with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized
-  data. Variable network size. Can reconstruct u. Different network call possibilities
+* MK15: ResNet model that directly approximates alpha and reconstructs u and h. Equipped with Monotonicity loss
 
 ## How to use ## 
 
-Preliminary: Make sure to install tensorflow (with or without GPU acceleration) on your machine.
+Preliminary: Execute package_installer.sh to install all neccessary python packages.
 
-This small network suite is build to solve the minimal entropy closure for the Boltzmann equation. The problem is the
-following:
 
 ### Training ### 
 
