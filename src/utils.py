@@ -201,7 +201,7 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=12)
     plt.title(title, fontsize=14)
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     return 0
 
@@ -240,7 +240,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     cbar = fig.colorbar(out, ax=ax, extend='both')
     if show_fig:
         plt.show()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
     return 0
 
 
@@ -286,7 +286,7 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
     cbar = fig.colorbar(out, ax=ax, extend='both')
     if show_fig:
         plt.show()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
     return 0
 
 
