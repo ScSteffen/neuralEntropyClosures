@@ -17,7 +17,7 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 import csv
 import tensorflow as tf
-from joblib import Parallel, delayed
+# from joblib import Parallel, delayed
 
 # inpackage imports
 from src.networks.configmodel import init_neural_closure
@@ -59,8 +59,8 @@ class MNSolver2D:
         self.x1 = 1.5
         self.y0 = -1.5
         self.y1 = 1.5
-        self.nx = 50
-        self.ny = 50
+        self.nx = 100
+        self.ny = 100
         self.dx = (self.x1 - self.x0) / self.nx
         self.dy = (self.y1 - self.y0) / self.ny
 
