@@ -340,13 +340,16 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False,
-                           train_mode: bool = False) -> bool:
+                           normalized_data: bool = False, train_mode: bool = False, gamma_level: int = 0) -> bool:
         """
         Loads the training data
-        params: normalized_moments = load normalized data  (u_0=1)
-                shuffle_mode = shuffle loaded Data  (yes,no)
-                alpha_sampling = use data uniformly sampled in the space of Lagrange multipliers.
+        params: shuffle_mode = shuffle loaded Data  (yes,no)
+                sampling : 0 = momnents uniform, 1 = alpha uniform, 2 = alpha uniform
+                load_all : If true, loads moments of order zero
+                normalized_data : load normalized data  (u_0=1)
+                train_mode : If true, computes data statistics to build the preprocessing head for model
+                gamma_level: specifies the level of regularization of the data
+
         return: True, if loading successful
         """
         self.training_data = []
@@ -357,10 +360,15 @@ class BaseNetwork:
         if normalized_data:
             filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
                 self.spatial_dim) + "D_normal"
+        # add sampling information
         if sampling == 1:
             filename = filename + "_alpha"
         elif sampling == 2:
             filename = filename + "_gaussian"
+        # add regularization information
+        if gamma_level > 0:
+            filename = filename + "_gamma" + str(gamma_level)
+
         filename = filename + ".csv"
 
         print("Loading Data from location: " + filename)

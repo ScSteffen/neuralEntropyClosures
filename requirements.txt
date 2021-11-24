@@ -6,5 +6,5 @@ scikit-learn
 gitpython
 
 ###### Requirements with Version Specifiers ######
-tensorflow-gpu==2.6
+tensorflow-gpu==2.6.2
 
