@@ -107,6 +107,27 @@ def load_density_function(filename: str) -> list:
     return [x, weights, f_kinetic]
 
 
+def load_density_function2D(filename: str) -> list:
+    '''
+    Load training Data from csv file <filename>
+    u, alpha have length <inputDim>
+    returns: training_data = [u,alpha,h]
+    '''
+    print("Loading Data from location: " + filename)
+    start = time.time()
+    df = pd.read_csv(filename, header=None)
+    df = df.drop(df.columns[0], axis=1)
+    data = df.to_numpy()
+    x = data[0, :].reshape((1, len(data[0, :])))
+    y = data[1, :].reshape((1, len(data[0, :])))
+
+    weights = data[3, :].reshape((1, len(data[0, :])))
+    f_kinetic = data[4, :]
+    end = time.time()
+    print("Data loaded. Elapsed time: " + str(end - start))
+    return [x, y, weights, f_kinetic]
+
+
 def load_solution(filename: str) -> list:
     '''
     Load training Data from csv file <filename>
