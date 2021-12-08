@@ -37,6 +37,7 @@ class BaseNetwork:
     model: tf.keras.Model  # the neural network model
     model_legacy: tf.keras.Model  # the neural network model
     training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
+    validation_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
     scaler_max: float  # for output scaling
     scaler_min: float  # for output scaling
     scale_active: bool  # flag if output scaling is active
@@ -233,8 +234,10 @@ class BaseNetwork:
         '''
         xData = self.training_data[0]
         yData = self.training_data[1]
-        self.model.fit(x=xData, y=yData, validation_split=val_split, epochs=epoch_size, batch_size=batch_size,
-                       verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
+        x_validation = self.validation_data[0]
+        y_validation = self.validation_data[1]
+        self.model.fit(x=xData, y=yData, validation_data=(x_validation, y_validation), epochs=epoch_size,
+                       batch_size=batch_size, verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
         return self.history
 
     def concat_history_files(self):
@@ -340,8 +343,7 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False,
-                           train_mode: bool = False) -> bool:
+                           normalized_data: bool = False, train_mode: bool = False) -> bool:
         """
         Loads the training data
         params: normalized_moments = load normalized data  (u_0=1)
@@ -417,6 +419,58 @@ class BaseNetwork:
             print("Shifting the data accordingly if network architecture is MK15 or newer...")
         else:
             print("Warning: Mean of training data moments was not computed")
+        return True
+
+    def load_validation_data(self, normalized_data: bool = False, load_all: bool = False) -> bool:
+        """
+        Loads the validation data (experimental feature)
+        params: normalized_moments = load normalized data  (u_0=1)
+                shuffle_mode = shuffle loaded Data  (yes,no)
+                alpha_sampling = use data uniformly sampled in the space of Lagrange multipliers.
+        return: True, if loading successful
+        """
+        self.validation_data = []
+
+        ### Create trainingdata filename"
+        filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
+            self.spatial_dim) + "D"
+        if normalized_data:
+            filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
+                self.spatial_dim) + "D_normal"
+        filename = filename + "_validation.csv"
+
+        print("Loading  validation data from location: " + filename)
+        # determine which cols correspond to u, alpha and h
+        u_cols = list(range(1, self.csvInputDim + 1))
+        alpha_cols = list(range(self.csvInputDim + 1, 2 * self.csvInputDim + 1))
+        h_col = [2 * self.csvInputDim + 1]
+
+        selected_cols = self.select_training_data()  # outputs a boolean triple.
+
+        # selected_cols = [True, False, True]
+
+        start = time.perf_counter()
+        if selected_cols[0]:
+            df = pd.read_csv(filename, usecols=[i for i in u_cols])
+            u_ndarray = df.to_numpy()
+            if normalized_data and not load_all:
+                # ignore first col of u
+                u_ndarray = u_ndarray[:, 1:]
+            self.validation_data.append(u_ndarray)
+        if selected_cols[1]:
+            df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
+            alpha_ndarray = df.to_numpy()
+            if normalized_data and not load_all:
+                # ignore first col of alpha
+                alpha_ndarray = alpha_ndarray[:, 1:]
+            self.validation_data.append(alpha_ndarray)
+        if selected_cols[2]:
+            df = pd.read_csv(filename, usecols=[i for i in h_col])
+            h_ndarray = df.to_numpy()
+            self.validation_data.append(h_ndarray)
+
+        end = time.perf_counter()
+        print("Data loaded. Elapsed time: " + str(end - start))
         return True
 
     def training_data_preprocessing(self, scaled_output: bool = False, model_loaded: bool = False) -> bool:

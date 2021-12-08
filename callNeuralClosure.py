@@ -223,7 +223,8 @@ def main():
     # neuralClosureModel.model.summary()
 
     if options.training == 1:
-
+        # load validation data
+        neuralClosureModel.load_validation_data(normalized_data=True, load_all=False)
         # train model
         neuralClosureModel.config_start_training(val_split=0.1, epoch_count=options.epoch,
                                                  curriculum=options.curriculum,

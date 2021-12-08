@@ -184,13 +184,11 @@ class MK11Network(BaseNetwork):
         Calls training depending on the MK model
         '''
         x_data = self.training_data[0]
-        [h, alpha, u] = self.model(x_data[:1000])
-
-        # y_data = [h,alpha,u, alpha (for KLDivergence)]
-        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
-        self.history = self.model.fit(x=x_data, y=y_data,
-                                      validation_split=val_split, epochs=epoch_size,
-                                      batch_size=batch_size, verbose=verbosity_mode,
+        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]
+        x_validation = self.validation_data[0]
+        y_validation = [self.validation_data[2], self.validation_data[1], self.validation_data[0]]
+        self.history = self.model.fit(x=x_data, y=y_data, validation_data=(x_validation, y_validation),
+                                      epochs=epoch_size, batch_size=batch_size, verbose=verbosity_mode,
                                       callbacks=callback_list, shuffle=True)
 
         [h, alpha, u] = self.model(x_data)
