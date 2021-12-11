@@ -154,21 +154,25 @@ class MK11Network(BaseNetwork):
         model.build(input_shape=(batch_size, self.input_dim))
 
         # test
-        # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
+        # a1 = tf.constant([[0], [2.5], [3]], shape=(3, 1), dtype=tf.float32)
         # a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
         # a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
         # a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
 
+        # print(tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.NONE)(a1, a0))
+        # print(tf.keras.losses.MeanSquaredError()(a1, a0))
         # print(tf.keras.losses.MeanSquaredError()(a3, a2))
         # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
         # print(self.custom_mse(a2, a3))
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
+            loss={'output_1': tf.keras.losses.MeanSquaredError(),
+                  'output_2': tf.keras.losses.MeanSquaredError(),
                   'output_3': tf.keras.losses.MeanSquaredError()},
             # 'output_4': self.KL_divergence_loss(model.momentBasis, model.quadWeights)},  # self.custom_mse},
             loss_weights={'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1],
                           'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
-            optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
+            optimizer=self.optimizer,
+            metrics=['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error'])
 
         # model.summary()
 
@@ -191,7 +195,7 @@ class MK11Network(BaseNetwork):
                                       epochs=epoch_size, batch_size=batch_size, verbose=verbosity_mode,
                                       callbacks=callback_list, shuffle=True)
 
-        [h, alpha, u] = self.model(x_data)
+        # [h, alpha, u] = self.model(x_data)
 
         return self.history
 
