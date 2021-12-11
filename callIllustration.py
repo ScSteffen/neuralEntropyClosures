@@ -134,9 +134,9 @@ def main():
             log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u^n_1$")
 
     # --- perodic M1 2D test case.
-    df = pd.read_csv("paper_data/2D_M1/err_1D_M1_MK11_periodic.csv")
+    df = pd.read_csv("paper_data/2D_M1/err_2D_M1_MK11_periodic.csv")
     data_mk11 = df.to_numpy()
-    df = pd.read_csv("paper_data/2D_M1/err_1D_M1_MK15_periodic.csv")
+    df = pd.read_csv("paper_data/2D_M1/err_2D_M1_MK15_periodic.csv")
     data_mk15 = df.to_numpy()
     n = 20
     time = data_mk11[::n, 0]
@@ -239,41 +239,72 @@ def main():
     data_normal = df.to_numpy()
     df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_history_normal_alpha.csv")
     data_alpha = df.to_numpy()
+    df = pd.read_csv("paper_data/1D_M1/Monomial_M1_1D_normal.csv")
+    df = df.iloc[:, 1:]  # drop timestamp
+    data_train_u = df.to_numpy()
+    df = pd.read_csv("paper_data/1D_M1/Monomial_M1_1D_normal_alpha.csv")
+    df = df.iloc[:, 1:]  # drop timestamp
+    data_train_alpha = df.to_numpy()
+
+    # compute average value of training data for each sampling method
+    u_sample_u = data_train_u[:, 1]  # u_1S
+    alpha_sample_u = data_train_u[:, 3]  # u_1S
+    h_sample_u = data_train_u[:, 4]
+    # shift according to data scaling
+    h_min_alpha = min(h_sample_u)
+    h_max_alpha = max(h_sample_u)
+    h_sample_alpha = (h_sample_u - h_min_alpha)  # / (h_max_alpha - h_min_alpha)
+    alpha_sample_u = alpha_sample_u  # / (h_max_alpha - h_min_alpha)
+    u_sample_alpha = data_train_alpha[:, 1]  # u_1S
+    alpha_sample_alpha = data_train_alpha[:, 3]  # u_1S
+    h_sample_alpha = data_train_alpha[:, 4]
+    h_min_alpha = min(h_sample_alpha)
+    h_max_alpha = max(h_sample_alpha)
+    h_sample_alpha = (h_sample_alpha - h_min_alpha)  # / (h_max_alpha - h_min_alpha)
+    alpha_sample_alpha = alpha_sample_alpha  # / (h_max_alpha - h_min_alpha)
+
+    u_sample_u_denominator = np.mean(np.square(u_sample_u))
+    u_sample_alpha_denominator = np.mean(np.square(u_sample_alpha))
+    alpha_sample_u_denominator = np.mean(np.square(alpha_sample_u))
+    alpha_sample_alpha_denominator = np.mean(np.square(alpha_sample_alpha))
+    h_sample_u_denominator = np.mean(np.square(h_sample_u))
+    h_sample_alpha_denominator = np.mean(np.square(h_sample_alpha))
 
     epoch = data_normal[:, 0]
-    normal_loss_h = data_normal[:, 2].reshape(epoch.shape[0], 1)
-    normal_loss_alpha = data_normal[:, 5].reshape(epoch.shape[0], 1)
-    normal_loss_u = data_normal[:, 8].reshape(epoch.shape[0], 1)
-    alpha_loss_h = data_alpha[:, 2].reshape(epoch.shape[0], 1)
-    alpha_loss_alpha = data_alpha[:, 5].reshape(epoch.shape[0], 1)
-    alpha_loss_u = data_alpha[:, 8].reshape(epoch.shape[0], 1)
+    normal_loss_h = data_normal[:, 2].reshape(epoch.shape[0], 1) / h_sample_u_denominator
+    normal_loss_alpha = data_normal[:, 5].reshape(epoch.shape[0], 1) / alpha_sample_u_denominator
+    normal_loss_alpha2 = data_normal[:, 5].reshape(epoch.shape[0], 1)
+    normal_loss_u = data_normal[:, 8].reshape(epoch.shape[0], 1) / u_sample_u_denominator
+    alpha_loss_h = data_alpha[:, 2].reshape(epoch.shape[0], 1) / h_sample_alpha_denominator
+    alpha_loss_alpha = data_alpha[:, 5].reshape(epoch.shape[0], 1) / alpha_sample_alpha_denominator
+    alpha_loss_u = data_alpha[:, 8].reshape(epoch.shape[0], 1) / u_sample_alpha_denominator
 
     plot_1d([epoch.reshape(epoch.shape[0], 1)],
             [np.concatenate([normal_loss_h, alpha_loss_h], axis=1)],
-            labels=[r"$||h_\theta-h||_2^2$, uniform sampling u",
-                    r"$||h_\theta-h||_2^2$, uniform sampling $\alpha^r_u$"],
+            labels=[r"$\frac{||h_\theta-h||_2^2}{||h||_2^2}$, uniform sampling u",
+                    r"$\frac{||h_\theta-h||_2^2}{||h||_2^2}$, uniform sampling $\alpha^r_u$"],
             name="training_loss_h_over_epochs", folder_name="paper_data/1D_M1",
-            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e0], xlabel='epoch',
+            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-7, 1e-1], xlabel='epoch',
             ylabel=r"loss",
-            log=True, title=r"loss $h$ over epochs")
+            log=True, title=r"relative training loss $h$ over epochs")
 
     plot_1d([epoch.reshape(epoch.shape[0], 1)],
             [np.concatenate([normal_loss_alpha, alpha_loss_alpha], axis=1)],
-            labels=[r"$||\alpha^r_\theta-\alpha^r_u||_2^2$, uniform sampling u",
-                    r"$||\alpha^r_\theta-\alpha^r_u||_2^2$, uniform sampling $\alpha^r_u$"],
+            labels=[r"$\frac{||\alpha^r_\theta-\alpha^r_u||_2^2}{||\alpha^r_u||_2^2}$, uniform sampling u",
+                    r"$\frac{||\alpha^r_\theta-\alpha^r_u||_2^2}{||\alpha^r_u||_2^2}$, uniform sampling $\alpha^r_u$"],
             name="training_loss_alpha_over_epochs", folder_name="paper_data/1D_M1",
-            linetypes=['-', ], xlim=[0, epoch[-1]], ylim=[1e-3, 1e1], xlabel='epoch',
+            linetypes=['-', ], xlim=[0, epoch[-1]], ylim=[1e-5, 1e0], xlabel='epoch',
             ylabel=r"loss",
-            log=True, title=r"loss $\alpha_u^r$ over epochs")
+            log=True, title=r"relative training loss $\alpha_u^r$ over epochs")
 
     plot_1d([epoch.reshape(epoch.shape[0], 1)],
             [np.concatenate([normal_loss_u, alpha_loss_u], axis=1)],
-            labels=[r"$||u^n_\theta-u^n||_2^2$, uniform sampling u",
-                    r"$||u^n_\theta-u^n||_2^2$, uniform sampling $\alpha^r_u$"],
+            labels=[r"$\frac{||u^n_\theta-u^n||_2^2}{||u^n||_2^2}$, uniform sampling u",
+                    r"$\frac{||u^n_\theta-u^n||_2^2}{||u^n||_2^2}$, uniform sampling $\alpha^r_u$"],
             name="training_loss_u_over_epochs", folder_name="paper_data/1D_M1",
-            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-6, 1e-1], xlabel='epoch',
+            linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-5, 1e-1], xlabel='epoch',
             ylabel=r"loss",
-            log=True, title=r"loss $u$ over epochs")
+            log=True, title=r"relative training loss $u$ over epochs")
 
     return True
 
