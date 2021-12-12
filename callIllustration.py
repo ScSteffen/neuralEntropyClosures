@@ -306,6 +306,71 @@ def main():
             ylabel=r"loss",
             log=True, title=r"relative training loss $u$ over epochs")
 
+    # Plot banach fixed point for 1D
+    df = pd.read_csv("paper_data/banach/solution_10.csv")
+    data_10 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_20.csv")
+    data_20 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_40.csv")
+    data_40 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_80.csv")
+    data_80 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_160.csv")
+    data_160 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_320.csv")
+    data_320 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_640.csv")
+    data_640 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_1280.csv")
+    data_1280 = df.to_numpy()
+
+    # ---- compute errors ----
+    # 1. iter
+    t1 = data_20[0::2]
+    t2 = data_40[0::4]
+    theta_1 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_10[:, 1:], axis=1)
+    theta_mean_1 = np.mean(theta_1)
+    # 2. iter
+    t1 = data_40[0::2]
+    t2 = data_80[0::4]
+    theta_2 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_20[:, 1:], axis=1)
+    theta_mean_2 = np.mean(theta_2)
+    # 3. iter
+    t1 = data_80[0::2]
+    t2 = data_160[0::4]
+    theta_3 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_40[:, 1:], axis=1)
+    theta_mean_3 = np.mean(theta_3)
+    # 4. iter
+    t1 = data_160[0::2]
+    t2 = data_320[0::4]
+    theta_4 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_80[:, 1:], axis=1)
+    theta_mean_4 = np.mean(theta_4)
+    # 5. iter
+    t1 = data_320[0::2]
+    t2 = data_640[0::4]
+    theta_5 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_160[:, 1:], axis=1)
+    theta_mean_5 = np.mean(theta_5)
+
+    # 6. iter
+    t1 = data_640[0::2]
+    t2 = data_1280[0::4]
+    theta_6 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_320[:, 1:], axis=1)
+    theta_mean_6 = np.mean(theta_6)
+
+    # Compute the mean over theta_mean to approximate the real theta
+    theta_approx = np.mean(
+        np.asarray([theta_mean_1, theta_mean_2, theta_mean_3, theta_mean_4, theta_mean_5, theta_mean_6]))
+    # Compute the spatial discretization error approximation:
+    lvl_1_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_20[::2, 1:] - data_10[:, 1:], axis=1)
+    lvl_2_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_40[::2, 1:] - data_20[:, 1:], axis=1)
+    lvl_3_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_80[::2, 1:] - data_40[:, 1:], axis=1)
+    lvl_4_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_160[::2, 1:] - data_80[:, 1:], axis=1)
+    lvl_5_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_320[::2, 1:] - data_160[:, 1:], axis=1)
+    lvl_6_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_640[::2, 1:] - data_320[:, 1:], axis=1)
+    lvl_7_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_1280[::2, 1:] - data_640[:, 1:], axis=1)
+
+    print("end")
+
     return True
 
 
