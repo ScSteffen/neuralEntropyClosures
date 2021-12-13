@@ -323,6 +323,10 @@ def main():
     data_640 = df.to_numpy()
     df = pd.read_csv("paper_data/banach/solution_1280.csv")
     data_1280 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_2560.csv")
+    data_2560 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_5120.csv")
+    data_5120 = df.to_numpy()
 
     # ---- compute errors ----
     # 1. iter
@@ -350,16 +354,26 @@ def main():
     t2 = data_640[0::4]
     theta_5 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_160[:, 1:], axis=1)
     theta_mean_5 = np.mean(theta_5)
-
     # 6. iter
     t1 = data_640[0::2]
     t2 = data_1280[0::4]
     theta_6 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_320[:, 1:], axis=1)
     theta_mean_6 = np.mean(theta_6)
+    # 7. iter
+    t1 = data_1280[0::2]
+    t2 = data_2560[0::4]
+    theta_7 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_640[:, 1:], axis=1)
+    theta_mean_7 = np.mean(theta_7)
+    # 7. iter
+    t1 = data_2560[0::2]
+    t2 = data_5120[0::4]
+    theta_8 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_1280[:, 1:], axis=1)
+    theta_mean_8 = np.mean(theta_7)
 
     # Compute the mean over theta_mean to approximate the real theta
     theta_approx = np.mean(
-        np.asarray([theta_mean_1, theta_mean_2, theta_mean_3, theta_mean_4, theta_mean_5, theta_mean_6]))
+        np.asarray([theta_mean_1, theta_mean_2, theta_mean_3, theta_mean_4, theta_mean_5, theta_mean_6, theta_mean_7,
+                    theta_mean_8]))
     # Compute the spatial discretization error approximation:
     lvl_1_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_20[::2, 1:] - data_10[:, 1:], axis=1)
     lvl_2_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_40[::2, 1:] - data_20[:, 1:], axis=1)
@@ -368,8 +382,33 @@ def main():
     lvl_5_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_320[::2, 1:] - data_160[:, 1:], axis=1)
     lvl_6_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_640[::2, 1:] - data_320[:, 1:], axis=1)
     lvl_7_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_1280[::2, 1:] - data_640[:, 1:], axis=1)
-
-    print("end")
+    lvl_8_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_2560[::2, 1:] - data_1280[:, 1:], axis=1)
+    lvl_9_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_5120[::2, 1:] - data_2560[:, 1:], axis=1)
+    errors = np.asarray([np.mean(lvl_1_error), np.mean(lvl_2_error), np.mean(lvl_3_error), np.mean(lvl_4_error),
+                         np.mean(lvl_5_error), np.mean(lvl_6_error), np.mean(lvl_7_error), np.mean(lvl_8_error),
+                         np.mean(lvl_9_error)]).reshape((9, 1))
+    lvl_1_error_direct = np.linalg.norm(data_5120[::512, 1:] - data_10[:, 1:], axis=1)
+    lvl_2_error_direct = np.linalg.norm(data_5120[::256, 1:] - data_20[:, 1:], axis=1)
+    lvl_3_error_direct = np.linalg.norm(data_5120[::128, 1:] - data_40[:, 1:], axis=1)
+    lvl_4_error_direct = np.linalg.norm(data_5120[::64, 1:] - data_80[:, 1:], axis=1)
+    lvl_5_error_direct = np.linalg.norm(data_5120[::32, 1:] - data_160[:, 1:], axis=1)
+    lvl_6_error_direct = np.linalg.norm(data_5120[::16, 1:] - data_320[:, 1:], axis=1)
+    lvl_7_error_direct = np.linalg.norm(data_5120[::8, 1:] - data_640[:, 1:], axis=1)
+    lvl_8_error_direct = np.linalg.norm(data_5120[::4, 1:] - data_1280[:, 1:], axis=1)
+    lvl_9_error_direct = np.linalg.norm(data_5120[::2, 1:] - data_2560[:, 1:], axis=1)
+    errors_direct = np.asarray([np.mean(lvl_1_error_direct), np.mean(lvl_2_error_direct), np.mean(lvl_3_error_direct),
+                                np.mean(lvl_4_error_direct), np.mean(lvl_5_error_direct), np.mean(lvl_6_error_direct),
+                                np.mean(lvl_7_error_direct), np.mean(lvl_8_error_direct),
+                                np.mean(lvl_9_error_direct)]).reshape((9, 1))
+    slope_1x = np.asarray(
+        [1. / 10., 1. / 20., 1. / 40., 1. / 80., 1. / 160., 1. / 320., 1. / 640., 1. / 1280., 1. / 2560.]).reshape(
+        (9, 1))
+    plot_1d(xs=[np.asarray([10, 20, 40, 80, 160, 320, 640, 1280, 2560])], ys=[errors, errors_direct, slope_1x],
+            labels=['banach error estimate', 'direct estimate', 'slope'], name="discretization_error",
+            folder_name="paper_data/banach",
+            linetypes=['o', '^', '-'], xlim=[10, 2560], ylim=[1e-4, 1], xlabel='$n_x$',
+            ylabel=r"$||u-u^*||_2^2$",
+            loglog=True, title=r"discretization error")
 
     return True
 
