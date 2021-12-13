@@ -153,7 +153,8 @@ def loadTFModel(filename):
     return nn
 
 
-def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figures", linetypes=None, show_fig=False,
+def plot_1d(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
+            show_fig=False,
             xlim=None, ylim=None, xlabel=None, ylabel=None, title: str = r"$h^n$ over ${\mathcal{R}^r}$"):
     plt.clf()
     if not linetypes:
@@ -172,10 +173,15 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
         x = xs[0]
         for y, lineType in zip(ys, linetypes):
             for i in range(y.shape[1]):
-                if colors[i] == 'k' and lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
-                    colors[i] = 'w'
-                plt.plot(x, y[:, i], colors[i] + lineType, linewidth=symbol_size, markersize=2.5,
-                         markeredgewidth=0.5, markeredgecolor='k')
+                if lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
+                    if colors[i] == 'k':
+                        plt.plot(x, y[:, i], 'w' + lineType, linewidth=symbol_size, markersize=2.5,
+                                 markeredgewidth=0.5, markeredgecolor='k')
+                    else:
+                        plt.plot(x, y[:, i], colors[i] + lineType, linewidth=symbol_size, markersize=2.5,
+                                 markeredgewidth=0.5, markeredgecolor='k')
+                else:
+                    plt.plot(x, y[:, i], colors[i] + lineType, linewidth=symbol_size)
         if labels != None:
             plt.legend(labels)
     elif len(xs) is not len(ys):
@@ -187,7 +193,9 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
         plt.legend(labels)  # , prop={'size': 6})
     if log:
         plt.yscale('log')
-
+    if loglog:
+        plt.yscale('log')
+        plt.xscale('log')
     if show_fig:
         plt.show()
     if ylim is not None:
