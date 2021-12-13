@@ -347,6 +347,25 @@ def main():
     df = pd.read_csv("paper_data/banach/solution_ml_mk11_2560.csv")
     data_ml_mk11_2560 = df.to_numpy()
 
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_10.csv")
+    data_ml_mk15_10 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_20.csv")
+    data_ml_mk15_20 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_40.csv")
+    data_ml_mk15_40 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_80.csv")
+    data_ml_mk15_80 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_160.csv")
+    data_ml_mk15_160 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_320.csv")
+    data_ml_mk15_320 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_640.csv")
+    data_ml_mk15_640 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_1280.csv")
+    data_ml_mk15_1280 = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/solution_ml_mk15_2560.csv")
+    data_ml_mk15_2560 = df.to_numpy()
+
     # ---- compute errors ----
     # newton
     # 1. iter
@@ -389,7 +408,38 @@ def main():
     t2 = data_5120[0::4]
     theta_8 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_1280[:, 1:], axis=1)
     theta_mean_8 = np.mean(theta_8)
-
+    # Compute the mean over theta_mean to approximate the real theta
+    theta_approx = np.mean(
+        np.asarray([theta_mean_1, theta_mean_2, theta_mean_3, theta_mean_4, theta_mean_5, theta_mean_6, theta_mean_7,
+                    theta_mean_8]))
+    # Compute the spatial discretization error approximation:
+    # newton
+    lvl_1_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_20[::2, 1:] - data_10[:, 1:], axis=1)
+    lvl_2_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_40[::2, 1:] - data_20[:, 1:], axis=1)
+    lvl_3_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_80[::2, 1:] - data_40[:, 1:], axis=1)
+    lvl_4_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_160[::2, 1:] - data_80[:, 1:], axis=1)
+    lvl_5_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_320[::2, 1:] - data_160[:, 1:], axis=1)
+    lvl_6_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_640[::2, 1:] - data_320[:, 1:], axis=1)
+    lvl_7_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_1280[::2, 1:] - data_640[:, 1:], axis=1)
+    lvl_8_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_2560[::2, 1:] - data_1280[:, 1:], axis=1)
+    lvl_9_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_5120[::2, 1:] - data_2560[:, 1:], axis=1)
+    errors = np.asarray([np.mean(lvl_1_error), np.mean(lvl_2_error), np.mean(lvl_3_error), np.mean(lvl_4_error),
+                         np.mean(lvl_5_error), np.mean(lvl_6_error), np.mean(lvl_7_error), np.mean(lvl_8_error),
+                         np.mean(lvl_9_error)]).reshape((9, 1))
+    lvl_1_error_direct = np.linalg.norm(data_5120[::512, 1:] - data_10[:, 1:], axis=1)
+    lvl_2_error_direct = np.linalg.norm(data_5120[::256, 1:] - data_20[:, 1:], axis=1)
+    lvl_3_error_direct = np.linalg.norm(data_5120[::128, 1:] - data_40[:, 1:], axis=1)
+    lvl_4_error_direct = np.linalg.norm(data_5120[::64, 1:] - data_80[:, 1:], axis=1)
+    lvl_5_error_direct = np.linalg.norm(data_5120[::32, 1:] - data_160[:, 1:], axis=1)
+    lvl_6_error_direct = np.linalg.norm(data_5120[::16, 1:] - data_320[:, 1:], axis=1)
+    lvl_7_error_direct = np.linalg.norm(data_5120[::8, 1:] - data_640[:, 1:], axis=1)
+    lvl_8_error_direct = np.linalg.norm(data_5120[::4, 1:] - data_1280[:, 1:], axis=1)
+    lvl_9_error_direct = np.linalg.norm(data_5120[::2, 1:] - data_2560[:, 1:], axis=1)
+    errors_direct = np.asarray([np.mean(lvl_1_error_direct), np.mean(lvl_2_error_direct), np.mean(lvl_3_error_direct),
+                                np.mean(lvl_4_error_direct), np.mean(lvl_5_error_direct), np.mean(lvl_6_error_direct),
+                                np.mean(lvl_7_error_direct), np.mean(lvl_8_error_direct),
+                                np.mean(lvl_9_error_direct)]).reshape((9, 1))
+    # ml mk 11 (input convex)
     # input convex mk11
     # 1. iter
     t1 = data_ml_mk11_20[0::2]
@@ -435,40 +485,9 @@ def main():
     theta_8 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk11_1280[:, 1:],
                                                                              axis=1)
     theta_mean_8 = np.mean(theta_8)
-
-    # Compute the mean over theta_mean to approximate the real theta
     theta_approx = np.mean(
         np.asarray([theta_mean_1, theta_mean_2, theta_mean_3, theta_mean_4, theta_mean_5, theta_mean_6, theta_mean_7,
                     theta_mean_8]))
-    # Compute the spatial discretization error approximation:
-    # newton
-    lvl_1_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_20[::2, 1:] - data_10[:, 1:], axis=1)
-    lvl_2_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_40[::2, 1:] - data_20[:, 1:], axis=1)
-    lvl_3_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_80[::2, 1:] - data_40[:, 1:], axis=1)
-    lvl_4_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_160[::2, 1:] - data_80[:, 1:], axis=1)
-    lvl_5_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_320[::2, 1:] - data_160[:, 1:], axis=1)
-    lvl_6_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_640[::2, 1:] - data_320[:, 1:], axis=1)
-    lvl_7_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_1280[::2, 1:] - data_640[:, 1:], axis=1)
-    lvl_8_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_2560[::2, 1:] - data_1280[:, 1:], axis=1)
-    lvl_9_error = theta_approx / (1 - theta_approx) * np.linalg.norm(data_5120[::2, 1:] - data_2560[:, 1:], axis=1)
-    errors = np.asarray([np.mean(lvl_1_error), np.mean(lvl_2_error), np.mean(lvl_3_error), np.mean(lvl_4_error),
-                         np.mean(lvl_5_error), np.mean(lvl_6_error), np.mean(lvl_7_error), np.mean(lvl_8_error),
-                         np.mean(lvl_9_error)]).reshape((9, 1))
-    lvl_1_error_direct = np.linalg.norm(data_5120[::512, 1:] - data_10[:, 1:], axis=1)
-    lvl_2_error_direct = np.linalg.norm(data_5120[::256, 1:] - data_20[:, 1:], axis=1)
-    lvl_3_error_direct = np.linalg.norm(data_5120[::128, 1:] - data_40[:, 1:], axis=1)
-    lvl_4_error_direct = np.linalg.norm(data_5120[::64, 1:] - data_80[:, 1:], axis=1)
-    lvl_5_error_direct = np.linalg.norm(data_5120[::32, 1:] - data_160[:, 1:], axis=1)
-    lvl_6_error_direct = np.linalg.norm(data_5120[::16, 1:] - data_320[:, 1:], axis=1)
-    lvl_7_error_direct = np.linalg.norm(data_5120[::8, 1:] - data_640[:, 1:], axis=1)
-    lvl_8_error_direct = np.linalg.norm(data_5120[::4, 1:] - data_1280[:, 1:], axis=1)
-    lvl_9_error_direct = np.linalg.norm(data_5120[::2, 1:] - data_2560[:, 1:], axis=1)
-    errors_direct = np.asarray([np.mean(lvl_1_error_direct), np.mean(lvl_2_error_direct), np.mean(lvl_3_error_direct),
-                                np.mean(lvl_4_error_direct), np.mean(lvl_5_error_direct), np.mean(lvl_6_error_direct),
-                                np.mean(lvl_7_error_direct), np.mean(lvl_8_error_direct),
-                                np.mean(lvl_9_error_direct)]).reshape((9, 1))
-    # ml mk 11 (input convex)
-    # newton
     lvl_1_error_mk11 = theta_approx / (1 - theta_approx) * np.linalg.norm(
         data_ml_mk11_20[::2, 1:] - data_ml_mk11_10[:, 1:], axis=1)
     lvl_2_error_mk11 = theta_approx / (1 - theta_approx) * np.linalg.norm(
@@ -505,19 +524,104 @@ def main():
          np.mean(lvl_4_error_direct_mk11), np.mean(lvl_5_error_direct_mk11), np.mean(lvl_6_error_direct_mk11),
          np.mean(lvl_7_error_direct_mk11), np.mean(lvl_8_error_direct_mk11),
          np.mean(lvl_9_error_direct_mk11)]).reshape((9, 1))
+
+    # input convex mk11
+    # 1. iter
+    t1 = data_ml_mk15_20[0::2]
+    t2 = data_ml_mk15_40[0::4]
+    theta_1 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_10[:, 1:], axis=1)
+    theta_mean_1 = np.mean(theta_1)
+    # 2. iter
+    t1 = data_ml_mk15_40[0::2]
+    t2 = data_ml_mk15_80[0::4]
+    theta_2 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_20[:, 1:], axis=1)
+    theta_mean_2 = np.mean(theta_2)
+    # 3. iter
+    t1 = data_ml_mk15_80[0::2]
+    t2 = data_ml_mk15_160[0::4]
+    theta_3 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_40[:, 1:], axis=1)
+    theta_mean_3 = np.mean(theta_3)
+    # 4. iter
+    t1 = data_ml_mk15_160[0::2]
+    t2 = data_ml_mk15_320[0::4]
+    theta_4 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_80[:, 1:], axis=1)
+    theta_mean_4 = np.mean(theta_4)
+    # 5. iter
+    t1 = data_ml_mk15_320[0::2]
+    t2 = data_ml_mk15_640[0::4]
+    theta_5 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_160[:, 1:],
+                                                                             axis=1)
+    theta_mean_5 = np.mean(theta_5)
+    # 6. iter
+    t1 = data_ml_mk15_640[0::2]
+    t2 = data_ml_mk15_1280[0::4]
+    theta_6 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_320[:, 1:],
+                                                                             axis=1)
+    theta_mean_6 = np.mean(theta_6)
+    # 7. iter
+    t1 = data_ml_mk15_1280[0::2]
+    t2 = data_ml_mk15_2560[0::4]
+    theta_7 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_640[:, 1:],
+                                                                             axis=1)
+    theta_mean_7 = np.mean(theta_7)
+    # 8. iter
+    t1 = data_ml_mk15_2560[0::2]
+    t2 = data_5120[0::4]  # use original data, since ml data is not yet finished
+    theta_8 = np.linalg.norm(t2[:, 1:] - t1[:, 1:], axis=1) / np.linalg.norm(t1[:, 1:] - data_ml_mk15_1280[:, 1:],
+                                                                             axis=1)
+    theta_mean_8 = np.mean(theta_8)
+    theta_approx = np.mean(
+        np.asarray([theta_mean_1, theta_mean_2, theta_mean_3, theta_mean_4, theta_mean_5, theta_mean_6, theta_mean_7,
+                    theta_mean_8]))
+    lvl_1_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_20[::2, 1:] - data_ml_mk15_10[:, 1:], axis=1)
+    lvl_2_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_40[::2, 1:] - data_ml_mk15_20[:, 1:], axis=1)
+    lvl_3_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_80[::2, 1:] - data_ml_mk15_40[:, 1:], axis=1)
+    lvl_4_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_160[::2, 1:] - data_ml_mk15_80[:, 1:], axis=1)
+    lvl_5_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_320[::2, 1:] - data_ml_mk15_160[:, 1:], axis=1)
+    lvl_6_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_640[::2, 1:] - data_ml_mk15_320[:, 1:], axis=1)
+    lvl_7_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_1280[::2, 1:] - data_ml_mk15_640[:, 1:], axis=1)
+    lvl_8_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(
+        data_ml_mk15_2560[::2, 1:] - data_ml_mk15_1280[:, 1:], axis=1)
+    lvl_9_error_mk15 = theta_approx / (1 - theta_approx) * np.linalg.norm(data_5120[::2, 1:] - data_ml_mk15_2560[:, 1:],
+                                                                          axis=1)
+    errors_mk15 = np.asarray(
+        [np.mean(lvl_1_error_mk15), np.mean(lvl_2_error_mk15), np.mean(lvl_3_error_mk15), np.mean(lvl_4_error_mk15),
+         np.mean(lvl_5_error_mk15), np.mean(lvl_6_error_mk15), np.mean(lvl_7_error_mk15), np.mean(lvl_8_error_mk15),
+         np.mean(lvl_9_error_mk15)]).reshape((9, 1))
+    lvl_1_error_direct_mk15 = np.linalg.norm(data_5120[::512, 1:] - data_ml_mk15_10[:, 1:], axis=1)
+    lvl_2_error_direct_mk15 = np.linalg.norm(data_5120[::256, 1:] - data_ml_mk15_20[:, 1:], axis=1)
+    lvl_3_error_direct_mk15 = np.linalg.norm(data_5120[::128, 1:] - data_ml_mk15_40[:, 1:], axis=1)
+    lvl_4_error_direct_mk15 = np.linalg.norm(data_5120[::64, 1:] - data_ml_mk15_80[:, 1:], axis=1)
+    lvl_5_error_direct_mk15 = np.linalg.norm(data_5120[::32, 1:] - data_ml_mk15_160[:, 1:], axis=1)
+    lvl_6_error_direct_mk15 = np.linalg.norm(data_5120[::16, 1:] - data_ml_mk15_320[:, 1:], axis=1)
+    lvl_7_error_direct_mk15 = np.linalg.norm(data_5120[::8, 1:] - data_ml_mk15_640[:, 1:], axis=1)
+    lvl_8_error_direct_mk15 = np.linalg.norm(data_5120[::4, 1:] - data_ml_mk15_1280[:, 1:], axis=1)
+    lvl_9_error_direct_mk15 = np.linalg.norm(data_5120[::2, 1:] - data_ml_mk15_2560[:, 1:], axis=1)
+    errors_direct_mk15 = np.asarray(
+        [np.mean(lvl_1_error_direct_mk15), np.mean(lvl_2_error_direct_mk15), np.mean(lvl_3_error_direct_mk15),
+         np.mean(lvl_4_error_direct_mk15), np.mean(lvl_5_error_direct_mk15), np.mean(lvl_6_error_direct_mk15),
+         np.mean(lvl_7_error_direct_mk15), np.mean(lvl_8_error_direct_mk15),
+         np.mean(lvl_9_error_direct_mk15)]).reshape((9, 1))
     slope_1x = np.asarray(
         [1. / 10., 1. / 20., 1. / 40., 1. / 80., 1. / 160., 1. / 320., 1. / 640., 1. / 1280., 1. / 2560.]).reshape(
         (9, 1))
     plot_1d(xs=[np.asarray([10, 20, 40, 80, 160, 320, 640, 1280, 2560])],
-            ys=[errors, errors_direct, errors_mk11, errors_direct_mk11, slope_1x],
+            ys=[errors, errors_direct, errors_mk11, errors_direct_mk11, errors_mk15, errors_direct_mk15, slope_1x],
             labels=['banach error estimate', 'direct estimate', 'mk11 error banach estimate',
-                    'mk11 error direct estimate', 'slope'],
+                    'mk11 error direct estimate', 'mk15 error banach estimate',
+                    'mk15 error direct estimate', 'slope'],
             name="discretization_error",
             folder_name="paper_data/banach",
-            linetypes=['o', 'o', 'v', 'v', '-'], xlim=[10, 2560], ylim=[1e-4, 1], xlabel='$n_x$',
+            linetypes=['o', 'o', 'v', 'v', '^', '^', '-'], xlim=[10, 3000], ylim=[1e-4, 1], xlabel='$n_x$',
             ylabel=r"$||u-u^*||_2^2$",
             loglog=True, title=r"discretization error")
-
     return True
 
 
