@@ -14,7 +14,7 @@ from matplotlib import animation
 import tensorflow as tf
 import multiprocessing
 import pandas as pd
-
+import os
 # inpackage imports
 # from networks.configModel import initNeuralClosure
 from src import math
@@ -28,7 +28,7 @@ def main():
     # solver.solve_animation(maxIter=100)
     # solver.solve_animation_iter_error(maxIter=100)
     # solver.solve_iter_error(maxIter=100)
-    solver.solve(maxIter=2000)
+    solver.solve(max_iter=2000)
     return 0
 
 
@@ -40,7 +40,7 @@ class MNSolver1D:
         self.model_mk = model_mk
         self.n_system = polyDegree + 1
         self.polyDegree = polyDegree
-        self.quadOrder = 28
+        self.quadOrder = 200
         self.traditional = traditional
         [self.quadPts, self.quadWeights] = math.qGaussLegendre1D(self.quadOrder)  # dims = nq
         self.nq = self.quadWeights.size
@@ -50,7 +50,7 @@ class MNSolver1D:
         # generate geometry
         self.x0 = 0
         self.x1 = 1
-        self.nx = 100
+        self.nx = 5120  # 1280
         self.dx = (self.x1 - self.x0) / self.nx
 
         # physics (isotropic, homogenious)
@@ -62,8 +62,8 @@ class MNSolver1D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.05  # 0.3
-        self.dt = self.cfl * self.dx
+        self.cfl = 0.1  # 0.3
+        self.dt = round(self.cfl * self.dx, 7)
 
         # boundary
         self.boundary = 0  # 0 = periodic, 1 = neumann with l.h.s. source,
@@ -78,13 +78,13 @@ class MNSolver1D:
         self.solution_file = "1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_periodic.csv"
         self.errorfile = "err_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_periodic.csv"
         # Solver variables Traditional
-        self.u = self.ic_zero()  # self.ic_periodic()# self.ic_zero()  #
+        self.u = self.ic_periodic()  # self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
         self.xFlux = np.zeros((self.n_system, self.nx + 1), dtype=float)
         self.h = np.zeros(self.nx)
         self.h2 = np.zeros(self.nx)
 
-        self.u2 = self.ic_zero()  # self.ic_periodic() # self.ic_zero()  #
+        self.u2 = self.ic_periodic()  # self.ic_zero()  #
         self.alpha2 = np.zeros((self.n_system, self.nx))
         self.xFlux2 = np.zeros((self.n_system, self.nx + 1), dtype=float)
         # Neural closure
@@ -149,19 +149,18 @@ class MNSolver1D:
         self.realizabilityMap = np.zeros(self.nx)
         columns = ['u0', 'u1', 'u2', 'alpha0', 'alpha1', 'alpha2', 'h']  # , 'realizable']
         self.dfErrPoints = pd.DataFrame(columns=columns)
-
-        with open('figures/solvers/' + self.errorfile, 'w', newline='') as f:
+        with open('figures/solvers/' + self.errorfile, 'w+', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
             row = ["t", "err_u", "err_alpha", "int_h", "int_h_ref"]
             writer.writerow(row)
 
-        with open('figures/solvers/' + self.datafile, 'w', newline='') as f:
+        with open('figures/solvers/' + self.datafile, 'w+', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
             row = ["t", "u_0", "u_1", "u_2", "alpha_0", "alpha_1", "alpha_2", "entropy"]
             writer.writerow(row)
-        with open('figures/solvers/' + self.solution_file, 'w', newline='') as f:
+        with open('figures/solvers/' + self.solution_file, 'w+', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
             if self.polyDegree == 1:
@@ -309,10 +308,10 @@ class MNSolver1D:
             #    uIc[3, i] = -N2 + (N1 + N2) ** 2 / (1 + N1) + 0.002  # error!
         return u_ic
 
-    def solve(self, maxIter=100, t_end=1.0):
+    def solve(self, max_iter=100, t_end=1.0):
         # self.show_solution(0)
         idx_time = 0
-        while idx_time < maxIter and idx_time * self.dt < t_end:
+        while idx_time <= max_iter and idx_time * self.dt <= t_end:
             self.solve_iter_newton(idx_time)
             self.solver_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + ". Time " + str(idx_time * self.dt) + " of " + str(t_end))
@@ -322,7 +321,8 @@ class MNSolver1D:
             idx_time += 1
         self.show_solution(idx_time)
         self.write_solution()
-
+        # self.write_solution_banach()
+        # self.write_solution_banach_ml()
         return self.u
 
     def solve_animation_iter_error(self, maxIter=100):
@@ -759,6 +759,38 @@ class MNSolver1D:
                     row = [self.u2[0, i], self.u2[1, i], self.u2[2, i], self.u[0, i], self.u[1, i], self.u[2, i]]
                 # row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
                 #       self.alpha[2, i], self.h[i]]
+                writer.writerow(row)
+        return 0
+
+    def write_solution_banach(self):
+        with open('paper_data/banach/solution' + str(self.nx) + '.csv', 'w+', newline='') as f:
+            writer = csv.writer(f)
+            if self.polyDegree == 1:
+                row = ["x", "u0", "u1"]
+            elif self.polyDegree == 2:
+                row = ["x", "u0", "u1", "u2"]
+            writer.writerow(row)
+            for i in range(self.nx):
+                if self.polyDegree == 1:
+                    row = [i * self.dx, self.u[0, i], self.u[1, i]]
+                elif self.polyDegree == 2:
+                    row = [i * self.dx, self.u[0, i], self.u[1, i], self.u[2, i]]
+                writer.writerow(row)
+        return 0
+
+    def write_solution_banach_ml(self):
+        with open('paper_data/banach/solution_ml' + str(self.nx) + '.csv', 'w+', newline='') as f:
+            writer = csv.writer(f)
+            if self.polyDegree == 1:
+                row = ["x", "u0", "u1"]
+            elif self.polyDegree == 2:
+                row = ["x", "u0", "u1", "u2"]
+            writer.writerow(row)
+            for i in range(self.nx):
+                if self.polyDegree == 1:
+                    row = [i * self.dx, self.u2[0, i], self.u2[1, i]]
+                elif self.polyDegree == 2:
+                    row = [i * self.dx, self.u2[0, i], self.u2[1, i], self.u2[2, i]]
                 writer.writerow(row)
         return 0
 
