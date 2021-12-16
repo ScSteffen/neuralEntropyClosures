@@ -44,10 +44,15 @@ class BaseNetwork:
     cov_u: np.ndarray  # covariance of input moments
     cov_ev: np.ndarray  # eigenvalues of cov matrix of input moments
     input_decorrelation: bool  # flag to turn on decorrelation of input variables
+    regularization_gamma: float  # regularization parameter for regularized entropy closures
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
-                 scale_active: bool):
+                 scale_active: bool, gamma_lvl: int):
+        if gamma_lvl == 0:
+            self.regularization_gamma = 0.0
+        else:
+            self.regularization_gamma = 10 ** (-1.0 * gamma_lvl)
         self.model_legacy = None
         self.scale_active = scale_active
         self.normalized = normalized
