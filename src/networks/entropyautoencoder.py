@@ -55,16 +55,23 @@ class EntropyAutoEncoder(Model):
                                         dtype=tf.float64)  # dims=(batchSIze x N x nq)
 
         # build the  architecture
-        self.encoder = self.build_encoder()
-        self.decoder = self.build_decoder()
+        self.density_decoder = self.build_density_decoder()
+        self.entropy_encoder = self.build_entropy_encoder()
 
-    def call(self, alpha):
-        
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded
+    def call(self, alpha: Tensor) -> Tensor:
+        pre_density = self.compute_pre_density(alpha)
+        density_list = []
+        for q in range(self.nq):
+            density_list.append(self.density_decoder(pre_density[:, q]))
+        kinetic_density = tf.concat(density_list, axis=1)
+        u_moment = self.reconstruct_u(kinetic_density)  # can be normalized!
+        with tf.GradientTape() as grad_tape:
+            grad_tape.watch(u_moment)
+            h_entropy = self.entropy_encoder(u_moment)  # can be normalized!
+        alpha_recons = grad_tape.gradient(h_entropy, u_moment)
+        return alpha_recons
 
-    def density_decoder(self) -> Model:
+    def build_density_decoder(self) -> Model:
         """
         convex model that maps pointswise alpha*m(v_i) to f(v_i)
         """
@@ -84,7 +91,7 @@ class EntropyAutoEncoder(Model):
         decoder = keras.Model(inputs=[input_], outputs=[output_], name="Density Decoder")
         return decoder
 
-    def entropy_encoder(self) -> Model:
+    def build_entropy_encoder(self) -> Model:
         """
         convex model that maps u to h(u)
         """
@@ -108,6 +115,35 @@ class EntropyAutoEncoder(Model):
         encoder = keras.Model(inputs=[input_], outputs=[output_], name="Entropy Encoder")
 
         return encoder
+
+    def compute_pre_density(self, alpha: Tensor) -> Tensor:
+        """
+        brief: reconstructs u from alpha with regularization in mind
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+               m    , dims = (N x nq)
+               w    , dims = nq
+        returns  (alpha*m), dim = (nS x nq)
+        """
+        return tf.tensordot(alpha, self.moment_basis, axes=([1], [0]))
+
+    def reconstruct_u(self, kinetic_density: Tensor) -> Tensor:
+        """
+        brief: reconstructs u from alpha with regularization in mind
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: kinetic_density, dims = (nS x nq)
+               m    , dims = (N x nq)
+               w    , dims = nq
+        returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+        """
+        tmp = tf.math.multiply(kinetic_density, self.quad_weights)  # f * w
+        return tf.tensordot(tmp, self.moment_basis[:, :], axes=([1], [1]))  # f * w * momentBasis
 
     @staticmethod
     def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
