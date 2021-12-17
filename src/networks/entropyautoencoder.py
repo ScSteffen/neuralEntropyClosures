@@ -48,17 +48,17 @@ class EntropyAutoEncoder(Model):
         else:
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
-        self.quad_pts = tf.constant(quad_pts, shape=(self.nq, spatial_dimension), dtype=tf.float64)  # dims = (ds x nq)
-        self.quad_weights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)  # dims=(batchSIze x N x nq)
+        self.quad_pts = tf.constant(quad_pts, shape=(self.nq, spatial_dimension), dtype=tf.float32)  # dims = (ds x nq)
+        self.quad_weights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float32)  # dims=(batchSIze x N x nq)
         self.input_dim = m_basis.shape[0]
         self.moment_basis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
-                                        dtype=tf.float64)  # dims=(batchSIze x N x nq)
+                                        dtype=tf.float32)  # dims=(batchSIze x N x nq)
 
         # build the  architecture
         self.density_decoder = self.build_density_decoder()
         self.entropy_encoder = self.build_entropy_encoder()
 
-    def call(self, alpha: Tensor) -> Tensor:
+    def call(self, alpha, training=False) -> Tensor:
         pre_density = self.compute_pre_density(alpha)
         density_list = []
         for q in range(self.nq):
@@ -88,7 +88,7 @@ class EntropyAutoEncoder(Model):
             hidden = self.convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
         # output layer
         output_ = self.convex_layer(hidden, input_, layer_idx=self.model_depth, layer_dim=1)
-        decoder = keras.Model(inputs=[input_], outputs=[output_], name="Density Decoder")
+        decoder = keras.Model(inputs=[input_], outputs=[output_], name="Density_Decoder")
         return decoder
 
     def build_entropy_encoder(self) -> Model:
@@ -112,7 +112,7 @@ class EntropyAutoEncoder(Model):
             # hidden = layers.BatchNormalization()(hidden)
         output_ = self.convex_output_layer(hidden, input_, layer_idx=self.model_depth)  # outputlayer
         # Create the core model
-        encoder = keras.Model(inputs=[input_], outputs=[output_], name="Entropy Encoder")
+        encoder = keras.Model(inputs=[input_], outputs=[output_], name="Entropy_Encoder")
 
         return encoder
 
