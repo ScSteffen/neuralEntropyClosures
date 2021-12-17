@@ -11,7 +11,7 @@ from tensorflow.keras import layers
 import numpy as np
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.custommodels import SobolevModel
+from src.networks.entropymodels import SobolevModel
 from tensorflow.keras.constraints import NonNeg
 
 
