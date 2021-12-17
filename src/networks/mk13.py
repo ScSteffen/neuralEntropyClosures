@@ -15,7 +15,7 @@ from tensorflow.keras.constraints import NonNeg
 from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.custommodels import SobolevModel
+from src.networks.entropymodels import SobolevModel
 
 
 class MK13Network(BaseNetwork):

@@ -33,7 +33,7 @@ class EntropyModel(tf.keras.Model, ABC):
     regularization_gamma_vector: Tensor  # @brief: tensor of the form [0,gamma,gamma,...]
     input_dim: int  # @brief size of moment basis
 
-    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
+    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
                  scale_active: bool = True, subclass=False, gamma: float = 0.0, **opts):
         super(EntropyModel, self).__init__()

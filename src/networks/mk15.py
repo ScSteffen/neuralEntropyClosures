@@ -19,7 +19,7 @@ import csv
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.customlosses import MonotonicFunctionLoss, RelativeMAELoss
-from src.networks.custommodels import EntropyModel
+from src.networks.entropymodels import EntropyModel
 from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 
 
