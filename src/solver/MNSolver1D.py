@@ -34,7 +34,7 @@ def main():
 
 class MNSolver1D:
 
-    def __init__(self, traditional=False, polyDegree=3, model_mk=11):
+    def __init__(self, traditional=False, polyDegree=3, model_mk=11, gridsize=80):
 
         # Prototype for  spatialDim=1, polyDegree=2
         self.model_mk = model_mk
@@ -49,8 +49,8 @@ class MNSolver1D:
 
         # generate geometry
         self.x0 = 0
-        self.x1 = 1
-        self.nx = 5120  # 1280
+        self.x1 = 0.4
+        self.nx = gridsize  # 1280
         self.dx = (self.x1 - self.x0) / self.nx
 
         # physics (isotropic, homogenious)
@@ -62,11 +62,11 @@ class MNSolver1D:
 
         # time
         self.tEnd = 1.0
-        self.cfl = 0.1  # 0.3
+        self.cfl = 0.5  # 0.3
         self.dt = round(self.cfl * self.dx, 7)
 
         # boundary
-        self.boundary = 0  # 0 = periodic, 1 = neumann with l.h.s. source,
+        self.boundary = 1  # 0 = periodic, 1 = neumann with l.h.s. source,
         if self.boundary == 0:
             print("Periodic boundary conditions")
         else:
@@ -78,13 +78,13 @@ class MNSolver1D:
         self.solution_file = "1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_periodic.csv"
         self.errorfile = "err_1D_M" + str(self.polyDegree) + "_MK" + str(self.model_mk) + "_periodic.csv"
         # Solver variables Traditional
-        self.u = self.ic_periodic()  # self.ic_zero()  #
+        self.u = self.ic_zero()  # self.ic_periodic()  # self.ic_zero()  #
         self.alpha = np.zeros((self.n_system, self.nx))
         self.xFlux = np.zeros((self.n_system, self.nx + 1), dtype=float)
         self.h = np.zeros(self.nx)
         self.h2 = np.zeros(self.nx)
 
-        self.u2 = self.ic_periodic()  # self.ic_zero()  #
+        self.u2 = self.ic_zero()  # self.ic_periodic()  # self.ic_zero()  #
         self.alpha2 = np.zeros((self.n_system, self.nx))
         self.xFlux2 = np.zeros((self.n_system, self.nx + 1), dtype=float)
         # Neural closure
@@ -309,19 +309,22 @@ class MNSolver1D:
         return u_ic
 
     def solve(self, max_iter=100, t_end=1.0):
-        # self.show_solution(0)
+        max_iter = int(t_end / self.dt)
+        print("The simulation will run for " + str(max_iter) + " iterations.")
+        print("The grid consists of " + str(self.nx) + " cells.")
         idx_time = 0
         while idx_time <= max_iter and idx_time * self.dt <= t_end:
-            # self.solve_iter_newton(idx_time)
+            self.solve_iter_newton(idx_time)
             self.solver_iter_ml(idx_time)
-            print("Iteration: " + str(idx_time) + ". Time " + str(idx_time * self.dt) + " of " + str(t_end))
-            self.error_analysis(idx_time * self.dt)
+            print("Iteration: " + str(idx_time) + " of " + str(max_iter) + ". Time " + str(
+                idx_time * self.dt) + " of " + str(t_end))
+            # self.error_analysis(idx_time * self.dt)
             # print iteration results
             # self.show_solution(idx_time)
             idx_time += 1
-        # self.show_solution(idx_time)
+        self.show_solution(idx_time)
         # self.write_solution()
-        # self.write_solution_banach()
+        self.write_solution_banach()
         self.write_solution_banach_ml()
         return self.u
 
@@ -701,7 +704,8 @@ class MNSolver1D:
             plt.xlabel("x")
             plt.ylabel("u")
             plt.legend()
-        plt.savefig("figures/solvers/u_comparison_" + str(idx) + ".png", dpi=450)
+        plt.savefig("figures/solvers/u_comparison_" + str(idx) + "_" + str(self.nx) + "_" + str(self.model_mk) + ".png",
+                    dpi=450)
         plt.clf()
 
         err = np.linalg.norm(self.u - self.u2, axis=0)
@@ -763,7 +767,10 @@ class MNSolver1D:
         return 0
 
     def write_solution_banach(self):
-        with open('paper_data/banach/solution' + str(self.nx) + '.csv', 'w+', newline='') as f:
+        boundary_str = "periodic"
+        if self.boundary == 1:
+            boundary_str = "inflow"
+        with open('paper_data/banach/' + boundary_str + '/solution' + str(self.nx) + '.csv', 'w+', newline='') as f:
             writer = csv.writer(f)
             if self.polyDegree == 1:
                 row = ["x", "u0", "u1"]
@@ -779,8 +786,11 @@ class MNSolver1D:
         return 0
 
     def write_solution_banach_ml(self):
-        with open('paper_data/banach/solution_ml_mk' + str(self.model_mk) + '_' + str(self.nx) + '.csv', 'w+',
-                  newline='') as f:
+        boundary_str = "periodic"
+        if self.boundary == 1:
+            boundary_str = "inflow"
+        with open('paper_data/banach/' + boundary_str + '/solution_ml_mk' + str(self.model_mk) + '_' + str(
+                self.nx) + '.csv', 'w+', newline='') as f:
             writer = csv.writer(f)
             if self.polyDegree == 1:
                 row = ["x", "u0", "u1"]
