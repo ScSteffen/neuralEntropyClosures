@@ -150,7 +150,8 @@ class MK11Network(BaseNetwork):
         # build sobolev wrapper
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
-                             scaler_min=self.scaler_min, scale_active=self.scale_active, name="sobolev_icnn_wrapper")
+                             scaler_min=self.scaler_min, scale_active=self.scale_active,
+                             gamma=self.regularization_gamma, name="sobolev_icnn_wrapper")
         # build graph
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
@@ -185,18 +186,16 @@ class MK11Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
+        # u_in = self.training_data[0][:100]
+        # alpha_in = self.training_data[1][:100]
+        # h_in = self.training_data[2][:100]
+        # [h, alpha, u] = self.model(self.training_data[1][:100])
+
         x_data = self.training_data[0]
-        [h, alpha, u] = self.model(x_data[:1000])
-
-        # y_data = [h,alpha,u, alpha (for KLDivergence)]
         y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
-        self.history = self.model.fit(x=x_data, y=y_data,
-                                      validation_split=val_split, epochs=epoch_size,
-                                      batch_size=batch_size, verbose=verbosity_mode,
-                                      callbacks=callback_list, shuffle=True)
-
-        [h, alpha, u] = self.model(x_data)
-
+        self.history = self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size,
+                                      batch_size=batch_size, verbose=verbosity_mode, callbacks=callback_list,
+                                      shuffle=True)
         return self.history
 
     def select_training_data(self):

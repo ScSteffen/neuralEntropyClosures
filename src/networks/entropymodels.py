@@ -252,11 +252,11 @@ class SobolevModel(EntropyModel):
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
-                 scale_active: bool = True, **opts):
+                 scale_active: bool = True, gamma: float = 0.0, **opts):
         super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
                                            spatial_dimension=spatial_dimension, reconstruct_u=reconstruct_u,
                                            scaler_min=scaler_min, scaler_max=scaler_max, scale_active=scale_active,
-                                           subclass=True)
+                                           subclass=True, gamma=gamma)
         self.derivative_scale_factor = tf.constant(scaler_max - scaler_min, dtype=tf.float64)
         print("Model output alpha and h will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
 
