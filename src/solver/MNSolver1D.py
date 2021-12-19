@@ -63,7 +63,7 @@ class MNSolver1D:
         # time
         self.tEnd = 1.0
         self.cfl = 0.5  # 0.3
-        self.dt = round(self.cfl * self.dx, 7)
+        self.dt = round(self.cfl * self.dx, 12)
 
         # boundary
         self.boundary = 1  # 0 = periodic, 1 = neumann with l.h.s. source,
@@ -312,6 +312,8 @@ class MNSolver1D:
         max_iter = int(t_end / self.dt)
         print("The simulation will run for " + str(max_iter) + " iterations.")
         print("The grid consists of " + str(self.nx) + " cells.")
+        print("The time step size is " + str(self.dt))
+        print("After " + str(max_iter) + " steps. The simulation has reached time " + str(max_iter * self.dt))
         idx_time = 0
         while idx_time <= max_iter and idx_time * self.dt <= t_end:
             self.solve_iter_newton(idx_time)
