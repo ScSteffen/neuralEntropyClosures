@@ -317,7 +317,7 @@ class MNSolver1D:
         idx_time = 0
         while idx_time <= max_iter and idx_time * self.dt <= t_end:
             self.solve_iter_newton(idx_time)
-            self.solver_iter_ml(idx_time)
+            # self.solver_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + " of " + str(max_iter) + ". Time " + str(
                 idx_time * self.dt) + " of " + str(t_end))
             # self.error_analysis(idx_time * self.dt)
@@ -326,7 +326,7 @@ class MNSolver1D:
             idx_time += 1
         self.show_solution(idx_time)
         # self.write_solution()
-        self.write_solution_banach()
+        # self.write_solution_banach()
         self.write_solution_banach_ml()
         return self.u
 
@@ -769,10 +769,12 @@ class MNSolver1D:
         return 0
 
     def write_solution_banach(self):
-        boundary_str = "periodic"
+        boundary_str = "periodic_M" + str(self.polyDegree)
         if self.boundary == 1:
-            boundary_str = "inflow"
-        with open('paper_data/banach/' + boundary_str + '/solution' + str(self.nx) + '.csv', 'w+', newline='') as f:
+            boundary_str = "inflow_M" + str(self.polyDegree)
+        with open(
+                'paper_data/banach/' + boundary_str + '/solution' + str(self.nx) + '.csv',
+                'w+', newline='') as f:
             writer = csv.writer(f)
             if self.polyDegree == 1:
                 row = ["x", "u0", "u1"]
@@ -788,9 +790,9 @@ class MNSolver1D:
         return 0
 
     def write_solution_banach_ml(self):
-        boundary_str = "periodic"
+        boundary_str = "periodic_M" + str(self.polyDegree)
         if self.boundary == 1:
-            boundary_str = "inflow"
+            boundary_str = "inflow_M" + str(self.polyDegree)
         with open('paper_data/banach/' + boundary_str + '/solution_ml_mk' + str(self.model_mk) + '_' + str(
                 self.nx) + '.csv', 'w+', newline='') as f:
             writer = csv.writer(f)
