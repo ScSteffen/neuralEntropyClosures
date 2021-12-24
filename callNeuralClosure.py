@@ -196,6 +196,9 @@ def main():
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
         if tf.test.gpu_device_name():
             print('GPU found. Using GPU')
+            physical_devices = tf.config.list_physical_devices('GPU')
+            for device in physical_devices:
+                tf.config.experimental.set_memory_growth(device, True)
         else:
             print("Disabled GPU. Using CPU")
 
@@ -235,8 +238,6 @@ def main():
                                                  curriculum=options.curriculum,
                                                  batch_size=options.batch, verbosity=options.verbosity,
                                                  processing_mode=options.processingmode)
-        # save model
-        neuralClosureModel.save_model()
 
     elif options.training == 2:
         print("Analysis mode entered.")
