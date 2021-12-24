@@ -250,7 +250,7 @@ class SobolevModel(EntropyModel):
     Allows to train on derivatives of the core model
     """
 
-    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: float = 1.0,
+    def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
                  scale_active: bool = True, gamma: float = 0.0, **opts):
         super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
