@@ -201,7 +201,8 @@ def main():
                 tf.config.experimental.set_memory_growth(device, True)
         else:
             print("Disabled GPU. Using CPU")
-
+    # Allow TF to use only part of GPU memory and grow this part at will
+    os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true
     # --- initialize model framework
     print("Initialize model")
     init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatial_dimension,
