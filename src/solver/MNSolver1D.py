@@ -316,18 +316,18 @@ class MNSolver1D:
         print("After " + str(max_iter) + " steps. The simulation has reached time " + str(max_iter * self.dt))
         idx_time = 0
         while idx_time <= max_iter and idx_time * self.dt <= t_end:
-            # self.solve_iter_newton(idx_time)
-            self.solver_iter_ml(idx_time)
+            self.solve_iter_newton(idx_time)
+            # self.solver_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + " of " + str(max_iter) + ". Time " + str(
                 idx_time * self.dt) + " of " + str(t_end))
             # self.error_analysis(idx_time * self.dt)
             # print iteration results
-            self.show_solution(idx_time)
+            # self.show_solution(idx_time)
             idx_time += 1
         # self.show_solution(idx_time)
         # self.write_solution()
-        # self.write_solution_banach()
-        self.write_solution_banach_ml()
+        self.write_solution_banach()
+        #  self.write_solution_banach_ml()
         return self.u
 
     def solve_animation_iter_error(self, maxIter=100):
@@ -773,7 +773,7 @@ class MNSolver1D:
         if self.boundary == 1:
             boundary_str = "inflow_M" + str(self.polyDegree)
         with open(
-                'paper_data/banach/' + boundary_str + '/solution' + str(self.nx) + '.csv',
+                'paper_data/banach/' + boundary_str + '/solution_' + str(self.nx) + '.csv',
                 'w+', newline='') as f:
             writer = csv.writer(f)
             if self.polyDegree == 1:
