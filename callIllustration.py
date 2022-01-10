@@ -311,16 +311,30 @@ def main():
     # Plot banach fixed point for 1D
     print_convergence_rates("periodic")
     print_convergence_rates("inflow M1")
-    print_convergence_rates("inflow M2")
+    # print_convergence_rates("inflow M2")
 
-    # ---- inflow M1 with fine grid -----
+    # ---- periodic M1 with fine grid -----
 
-    df = pd.read_csv("paper_data/banach/inflow_M1/solution_20480.csv")
+    print_error_test_case("periodic")
+    print_error_test_case("inflow M1")
+
+    return True
+
+
+def print_error_test_case(case_str: str = "periodic"):
+    # Plot banach fixed point for 1D
+    case_str_title = case_str
+    if case_str == "inflow M1":
+        case_str = "inflow_M1"
+    if case_str == "inflow M2":
+        case_str = "inflow_M2"
+
+    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_20480.csv")
     u_ref = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/inflow_M1/solution_ml_mk11_20480.csv")
+    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk11_20480.csv")
     u_neural11 = df.to_numpy()
     u_neural11 = u_neural11[:, 1:]
-    df = pd.read_csv("paper_data/banach/inflow_M1/solution_ml_mk15_20480.csv")
+    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk15_20480.csv")
     u_neural15 = df.to_numpy()
     u_neural15 = u_neural15[:, 1:]
     x = u_ref[:, 0]
@@ -330,7 +344,7 @@ def main():
     plot_1d([x], res_list,
             labels=[r"$u_0$", r"$u_1$", r"Convex - $u_{0,\theta}$", r"Convex - $u_{1,\theta}$",
                     r"Mono - $u_{0,\theta}$",
-                    r"Mono - $u_{1,\theta}$"], name="inflow_1D_M1", folder_name="paper_data/banach",
+                    r"Mono - $u_{1,\theta}$"], name=case_str, folder_name="paper_data/banach",
             linetypes=['-', 'o', '^'], xlim=[0, 1], xlabel='x', ylabel='u', log=False,
             title=r"$u$ and $u_\theta$  over $x$")
 
@@ -340,14 +354,15 @@ def main():
     rel_errmk15 = err_mk15 / np.linalg.norm(u_ref, axis=1).reshape((u_ref.shape[0], 1))
 
     err_res_list = [err_mk11, err_mk15]
-    plot_1d([x], err_res_list, labels=["Convex", "Mono"], name="err_inflow_1D_M1", folder_name="paper_data/banach",
+    plot_1d([x], err_res_list, labels=["Convex", "Mono"], name="err_" + case_str,
+            folder_name="paper_data/banach",
             linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2$", log=True,
             title=r"$||u-u_\theta||_2$ over $x$")
     rel_err_res_list = [rel_errmk11, rel_errmk15]
-    plot_1d([x], rel_err_res_list, labels=["Convex", "Mono"], name="rel_err_inflow_1D_M1",
+    plot_1d([x], rel_err_res_list, labels=["Convex", "Mono"], name="rel_err_" + case_str,
             folder_name="paper_data/banach", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1], xlabel='x',
             ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True, title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
-    return True
+    return 0
 
 
 def print_convergence_rates(case_str: str = "periodic"):

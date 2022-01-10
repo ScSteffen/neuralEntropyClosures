@@ -49,7 +49,7 @@ class MNSolver1D:
 
         # generate geometry
         self.x0 = 0
-        self.x1 = 0.4
+        self.x1 = 0.5
         self.nx = gridsize  # 1280
         self.dx = (self.x1 - self.x0) / self.nx
 
@@ -327,7 +327,7 @@ class MNSolver1D:
         # self.show_solution(idx_time)
         # self.write_solution()
         self.write_solution_banach()
-        #  self.write_solution_banach_ml()
+        # self.write_solution_banach_ml()
         return self.u
 
     def solve_animation_iter_error(self, maxIter=100):
@@ -447,8 +447,8 @@ class MNSolver1D:
         u0 = self.u[0, i]
         if u0 == 0:
             print("u0 = 0")
-        elif normU / u0 > 0.95:
-            print("Warning")
+        # elif normU / u0 > 0.95:
+        #    print("Warning")
         opt_result = opt.minimize(fun=self.create_opti_entropy(opti_u), x0=alpha_init,
                                   jac=self.create_opti_entropy_prime(opti_u),
                                   tol=1e-6)
@@ -772,6 +772,8 @@ class MNSolver1D:
         boundary_str = "periodic_M" + str(self.polyDegree)
         if self.boundary == 1:
             boundary_str = "inflow_M" + str(self.polyDegree)
+        print("Writing solution to")
+        print('paper_data/banach/' + boundary_str + '/solution_' + str(self.nx) + '.csv')
         with open(
                 'paper_data/banach/' + boundary_str + '/solution_' + str(self.nx) + '.csv',
                 'w+', newline='') as f:
@@ -793,6 +795,9 @@ class MNSolver1D:
         boundary_str = "periodic_M" + str(self.polyDegree)
         if self.boundary == 1:
             boundary_str = "inflow_M" + str(self.polyDegree)
+        print("Writing solution to")
+        print('paper_data/banach/' + boundary_str + '/solution_ml_mk' + str(self.model_mk) + '_' + str(
+            self.nx) + '.csv')
         with open('paper_data/banach/' + boundary_str + '/solution_ml_mk' + str(self.model_mk) + '_' + str(
                 self.nx) + '.csv', 'w+', newline='') as f:
             writer = csv.writer(f)
