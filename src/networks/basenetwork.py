@@ -299,7 +299,7 @@ class BaseNetwork:
         Saves best model to .pb file
         """
         # self.model.load_weights(self.folder_name + '/best_model.h5')
-        self.model.save(self.folder_name + '/best_model')
+        self.model.save(self.folder_name + '/best_model', save_format='tf')
         print("Model successfully saved to file and .h5")
         # with open(self.filename + '/trainingHistory.json', 'w') as file:
         #    json.dump(self.model.history.history, file)

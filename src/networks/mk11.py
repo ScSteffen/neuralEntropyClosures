@@ -46,38 +46,37 @@ class MK11Network(BaseNetwork):
         # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
         # input_stddev: float = np.sqrt(
         #    (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        input_stddev: float = np.sqrt(
-            (1 / 1.1) * (1 / self.input_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
-        # input_initializer = tf.keras.initializers.LecunNormal()
-        initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
+        # input_stddev: float = np.sqrt(
+        # (1 / 1.1) * (1 / self.input_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+        # input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
+        input_initializer = tf.keras.initializers.LecunNormal()
+        # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
 
         # keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
         # Weight initializer (uniform bounded)
-        # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
-        # initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
 
         # Weight regularizer
         l2_regularizer_nn = tf.keras.regularizers.L1L2(l2=0.0001)  # L1 + L2 penalties
         l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
-            stddev = np.sqrt(
-                (1 / 1.1) * (1 / layer_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+            # stddev = np.sqrt(
+            #    (1 / 1.1) * (1 / layer_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            # initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
             # initializer = tf.keras.initializers.LecunNormal()
-
+            initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
+            initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
             # Weighted sum of previous layers output plus bias
-            weighted_non_neg_sum_z = layers.Dense(units=layer_dim, kernel_constraint=NonNeg(), activation=None,
-                                                  kernel_initializer=initializer,
-                                                  kernel_regularizer=l2_regularizer_nn,
+            weighted_non_neg_sum_z = layers.Dense(units=layer_dim, activation=None, kernel_constraint=NonNeg(),
+                                                  kernel_initializer=initializerNonNeg,
+                                                  kernel_regularizer=None,
                                                   use_bias=True, bias_initializer='zeros',
                                                   name='layer_' + str(layer_idx) + 'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x = layers.Dense(units=layer_dim, activation=None,
                                           kernel_initializer=initializer,
-                                          kernel_regularizer=l1l2_regularizer,
+                                          kernel_regularizer=None,
                                           use_bias=False, name='layer_' + str(layer_idx) + 'dense_component'
                                           )(nw_input_x)
             # Wz+Wx+b
@@ -92,13 +91,16 @@ class MK11Network(BaseNetwork):
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
             # Weighted sum of previous layers output plus bias
-            stddev = np.sqrt(
-                (1 / 1.1) * (1 / 1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+            # stddev = np.sqrt(
+            #    (1 / 1.1) * (1 / 1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
+            # initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
+            # initializer = tf.keras.initializers.LecunNormal()
+            initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
+            initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
 
-            weighted_nn_sum_z: Tensor = layers.Dense(1, kernel_constraint=NonNeg(), activation=None,
-                                                     kernel_initializer=initializer,
-                                                     kernel_regularizer=l2_regularizer_nn,
+            weighted_nn_sum_z: Tensor = layers.Dense(1, activation=None, kernel_constraint=NonNeg(),
+                                                     kernel_initializer=initializerNonNeg,
+                                                     kernel_regularizer=None,
                                                      use_bias=True,
                                                      bias_initializer='zeros',
                                                      name='layer_' + str(layer_idx) + 'nn_component'
@@ -106,7 +108,7 @@ class MK11Network(BaseNetwork):
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None,
                                                   kernel_initializer=initializer,
-                                                  kernel_regularizer=l1l2_regularizer,
+                                                  kernel_regularizer=None,
                                                   use_bias=False,
                                                   name='layer_' + str(layer_idx) + 'dense_component'
                                                   )(net_input_x)
@@ -116,22 +118,23 @@ class MK11Network(BaseNetwork):
                 out = tf.keras.activations.relu(out)
             return out
 
-        ### build the core network with icnn closure architecture ###
+            ### build the core network with icnn closure architecture ###
+
         input_ = keras.Input(shape=(self.input_dim,))
         if self.input_decorrelation:  # input data decorellation and shift
             hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
             hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
-                                  kernel_regularizer=l1l2_regularizer, use_bias=True,
+                                  kernel_regularizer=None, use_bias=True,
                                   bias_initializer=input_initializer,
-                                  bias_regularizer=l1l2_regularizer, name="layer_-1_input")(hidden)
+                                  bias_regularizer=None, name="layer_-1_input")(hidden)
         else:
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
-                                  kernel_regularizer=l1l2_regularizer, use_bias=True,
+                                  kernel_regularizer=None, use_bias=True,
                                   bias_initializer=input_initializer,
-                                  bias_regularizer=l1l2_regularizer, name="layer_-1_input")(input_)
+                                  bias_regularizer=None, name="layer_-1_input")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
@@ -221,7 +224,6 @@ class MK11Network(BaseNetwork):
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
 
     def call_scaled(self, u_non_normal):
-
         """
         brief: Only works for maxwell Boltzmann entropy so far.
         Calls the network with non normalized moments. (first the moments get normalized, then the network gets called,
@@ -246,7 +248,6 @@ class MK11Network(BaseNetwork):
         return [u_rescaled, alpha_rescaled, h_rescaled]
 
     def call_scaled_64(self, u_non_normal, legacy_mode=False):
-
         """
         brief: Only works for maxwell Boltzmann entropy so far.
         Calls the network with non normalized moments. (first the moments get normalized, then the network gets called,
