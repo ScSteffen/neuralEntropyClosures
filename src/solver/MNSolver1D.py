@@ -315,9 +315,13 @@ class MNSolver1D:
         print("The time step size is " + str(self.dt))
         print("After " + str(max_iter) + " steps. The simulation has reached time " + str(max_iter * self.dt))
         idx_time = 0
-        while idx_time <= max_iter and idx_time * self.dt <= t_end:
-            self.solve_iter_newton(idx_time)
-            # self.solver_iter_ml(idx_time)
+        while idx_time <= max_iter and idx_time * self.dt <= t_end:  # max_iter
+            if idx_time <= max_iter - 50:
+                self.solve_iter_newton(idx_time)
+                if idx_time == max_iter - 50:
+                    self.u2 = self.u
+            else:
+                self.solver_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + " of " + str(max_iter) + ". Time " + str(
                 idx_time * self.dt) + " of " + str(t_end))
             # self.error_analysis(idx_time * self.dt)
@@ -326,8 +330,8 @@ class MNSolver1D:
             idx_time += 1
         # self.show_solution(idx_time)
         # self.write_solution()
-        self.write_solution_banach()
-        # self.write_solution_banach_ml()
+        # self.write_solution_banach()
+        self.write_solution_banach_ml()
         return self.u
 
     def solve_animation_iter_error(self, maxIter=100):
