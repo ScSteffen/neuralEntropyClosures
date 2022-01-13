@@ -9,7 +9,7 @@ import time
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from matplotlib import colors
+from matplotlib import colors, ticker
 from matplotlib import cm
 import seaborn as sns
 import os
@@ -156,7 +156,12 @@ def loadTFModel(filename):
 def plot_1d(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
             show_fig=False,
             xlim=None, ylim=None, xlabel=None, ylabel=None, title: str = r"$h^n$ over ${\mathcal{R}^r}$"):
+    """
+    Expected shape for x in xs : (nx,)
+                       y in ys : (1,nx)
+    """
     plt.clf()
+    plt.figure(figsize=(5.8, 4.7), dpi=400)
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
                      'h',
@@ -208,9 +213,11 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, loglog=False, fol
         # plt.yticks(fontsize=6)
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=12)
-    plt.title(title, fontsize=14)
+    # plt.title(title, fontsize=14)
+    plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.close()
     return 0
 
 
@@ -231,24 +238,25 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
         c_map = cm.hot
 
     fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
-    ax = fig.add_subplot(111)  # , projection='3d')
+    # ax = fig.add_subplot(111)  # , projection='3d')
     x = x_in[:, 0]
     y = x_in[:, 1]
     z = z_in
     if log:
-        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, norm=colors.LogNorm(), vmin=lim_z[0], vmax=lim_z[1])
+        out = plt.scatter(x, y, s=6, c=z, cmap=c_map, norm=colors.LogNorm(vmin=lim_z[0], vmax=lim_z[1]))
     else:
-        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, vmin=lim_z[0], vmax=lim_z[1])
+        out = plt.scatter(x, y, s=6, c=z, cmap=c_map, vmin=lim_z[0], vmax=lim_z[1])
     plt.xlim(lim_x[0], lim_x[1])
     plt.ylim(lim_y[0], lim_y[1])
-    ax.set_title(title, fontsize=14)
-    ax.set_xlabel(label_x)
-    ax.set_ylabel(label_y)
-    ax.set_aspect('auto')
-    cbar = fig.colorbar(out, ax=ax, extend='both')
+    # ax.set_title(title, fontsize=14)
+    plt.xlabel(label_x)
+    plt.ylabel(label_y)
+    # fig.set_aspect('auto')
+    cbar = fig.colorbar(out, pad=0.02)
     if show_fig:
         plt.show()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    plt.close(fig)
     return 0
 
 
@@ -282,19 +290,42 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
     y = x_in[:, 1]
     z = z_in
     if log:
-        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, norm=colors.LogNorm(), vmin=lim_z[0], vmax=lim_z[1])
+        out = ax.scatter(x, y, s=6, c=z, cmap=c_map, norm=colors.LogNorm(vmin=lim_z[0], vmax=lim_z[1]))
     else:
         out = ax.scatter(x, y, s=6, c=z, cmap=c_map, vmin=lim_z[0], vmax=lim_z[1])
     plt.xlim(lim_x[0], lim_x[1])
     plt.ylim(lim_y[0], lim_y[1])
-    ax.set_title(title, fontsize=14)
+    # ax.set_title(title, fontsize=14)
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     ax.set_aspect('auto')
-    cbar = fig.colorbar(out, ax=ax, extend='both')
+    cbar = fig.colorbar(out, pad=0.02)
     if show_fig:
         plt.show()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    plt.close(fig)
+    return 0
+
+
+def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contour=True, logscale=False):
+    # --- plot ---
+    c_map = cm.hot
+    cLevel = 1000
+    # 1) rel error
+    fig, ax = plt.subplots(figsize=(5.8, 4.7), dpi=400)
+    # filled contours
+    if logscale:
+        im = plt.imshow(z, extent=[x[0], x[-1], y[0], y[-1]], cmap=c_map, vmin=z_min, vmax=z_max, norm=colors.LogNorm())
+    else:
+        im = ax.contourf(x, y, z, levels=cLevel, cmap=c_map, vmin=z_min, vmax=z_max)
+    # contour lines
+    if contour:
+        im2 = ax.contour(x, y, z, colors='k', vmin=z_min, vmax=z_max)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    fig.colorbar(im, ax=ax, pad=0.02)
+    plt.savefig("paper_data/2D_M1/" + name + ".png", dpi=500)
+    plt.close(fig)
     return 0
 
 

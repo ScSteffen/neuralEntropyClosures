@@ -17,7 +17,7 @@ from matplotlib.colors import LogNorm
 import multiprocessing
 import csv
 import tensorflow as tf
-from joblib import Parallel, delayed
+from matplotlib import cm
 
 # inpackage imports
 from src.networks.configmodel import init_neural_closure
@@ -30,11 +30,11 @@ num_cores = multiprocessing.cpu_count()
 
 
 def main():
-    solver = MNSolver2D(traditional=False, model_mk=15)
+    solver = MNSolver2D(traditional=False, model_mk=11)
     # solver.solve_animation(maxIter=2)
     # solver.solve_animation_iter_error(maxIter=60)
     # solver.solve_iter_error(maxIter=100)
-    solver.solve(endTime=12)
+    solver.solve(t_end=12, maxIter=2)
     return 0
 
 
@@ -59,8 +59,9 @@ class MNSolver2D:
         self.x1 = 1.5
         self.y0 = -1.5
         self.y1 = 1.5
-        self.nx = 50
-        self.ny = 50
+        self.nx = 200
+        self.ny = 200
+        print("Number of grid cells: " + str(self.nx * self.ny))
         self.dx = (self.x1 - self.x0) / self.nx
         self.dy = (self.y1 - self.y0) / self.ny
 
@@ -73,7 +74,7 @@ class MNSolver2D:
         # time
         self.tEnd = 1.0
         self.cfl = 0.1
-        self.dt = self.cfl / 2 * (self.dx * self.dy) / (self.dx + self.dy)
+        self.dt = self.cfl * (self.dx * self.dy) / (self.dx + self.dy)
         self.dtMod = self.dt
         self.realizabilityModifier = 1
 
@@ -183,22 +184,29 @@ class MNSolver2D:
                 uIc[0, i, j] = sincos(xKoor, yKoor)  # all other moments are 0 (isotropic)
                 uIc[1, i, j] = 0.9 / 3.0 * uIc[0, i, j]
                 uIc[2, i, j] = 0.9 / 3.0 * uIc[0, i, j]
+        print("using periodic initial conditions")
         return uIc
 
-    def solve(self, t_end=0.5, maxIter=100):
+    def solve(self, t_end=0.5, maxIter=1):
         # self.show_solution(0)
         idx_time = 0
         while idx_time < maxIter and idx_time * self.dt < t_end:
-            self.solve_iter_newton(idx_time)
+            # self.solve_iter_newton(idx_time)
+            print("test")
             self.solve_iter_ml(idx_time)
             print("Iteration: " + str(idx_time) + ". Time " + str(self.T) + " of " + str(t_end))
-            self.write_solution(idx_time * self.dt)
+            # self.write_solution(idx_time * self.dt)
             # self.errorAnalysis(idx_time)
             # print iteration results
             # self.show_solution(idx_time)
             idx_time += 1
             self.T += self.dt
 
+        # np.savetxt("u_ref.csv", self.u[0, :, :], delimiter=",")
+        np.savetxt("u_neural_mk11.csv", self.u2[0, :, :], delimiter=",")
+
+        # self.plot_flowfield(np.linspace(self.x0, self.x1, self.nx), np.linspace(self.y0, self.y1, self.ny), self.u,
+        #                    self.u2)
         return self.u
 
     def solve_iter_error(self, maxIter=100):
@@ -340,7 +348,9 @@ class MNSolver2D:
                 tmp[count, :] = self.u2[:, i, j]
                 count = count + 1
         # call neuralEntropy
+        print("tick")
         [u_pred, alpha, h] = self.neuralClosure.call_scaled_64(np.asarray(tmp))
+        print("tock")
         count = 0
         for i in range(self.nx):
             for j in range(self.ny):
@@ -730,6 +740,61 @@ class MNSolver2D:
                 # row = [iter, self.u[0, i], self.u[1, i], self.u[2, i], self.alpha[0, i], self.alpha[1, i],
                 #       self.alpha[2, i], self.h[i]]
             writer.writerow(row)
+        return 0
+
+    def plot_flowfield(self, x, y, u_ref, u_neural):
+        # --- plot ---
+        z1 = np.abs((u_ref[0, :, :] - u_neural[0, :, :]) / u_ref[0, :, :])
+        fig, ax = plt.subplots(figsize=(5.8, 4.7), dpi=400)
+
+        c_map = cm.hot
+
+        # filled contours
+        im = ax.contourf(x, y, z1, levels=10, cmap=c_map)
+
+        # contour lines
+        im2 = ax.contour(x, y, z1, colors='k')
+
+        plt.xlabel("x")
+        plt.ylabel("y")
+        fig.colorbar(im, ax=ax, pad=0.02)
+        plt.savefig("periodic_err.png", dpi=150)
+
+        ######
+        z1 = u_ref[0, :, :]
+        fig, ax = plt.subplots(figsize=(5.8, 4.7), dpi=400)
+
+        c_map = cm.hot
+
+        # filled contours
+        im = ax.contourf(x, y, z1, levels=10, cmap=c_map)
+
+        # contour lines
+        im2 = ax.contour(x, y, z1, colors='k')
+
+        plt.xlabel("x")
+        plt.ylabel("y")
+        fig.colorbar(im, ax=ax, pad=0.02)
+        plt.savefig("periodic_ref.png", dpi=150)
+
+        #####
+
+        z1 = u_neural[0, :, :]
+        fig, ax = plt.subplots(figsize=(5.8, 4.7), dpi=400)
+
+        c_map = cm.hot
+
+        # filled contours
+        im = ax.contourf(x, y, z1, levels=10, cmap=c_map)
+
+        # contour lines
+        im2 = ax.contour(x, y, z1, colors='k')
+
+        plt.xlabel("x")
+        plt.ylabel("y")
+        fig.colorbar(im, ax=ax, pad=0.02)
+        plt.savefig("periodic_ref.png", dpi=150)
+
         return 0
 
 
