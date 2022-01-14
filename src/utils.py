@@ -315,7 +315,7 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
     fig, ax = plt.subplots(figsize=(5.8, 4.7), dpi=400)
     # filled contours
     if logscale:
-        im = plt.imshow(z, extent=[x[0], x[-1], y[0], y[-1]], cmap=c_map, vmin=z_min, vmax=z_max, norm=colors.LogNorm())
+        im = plt.imshow(z, extent=[x[0], x[-1], y[0], y[-1]], cmap=c_map, norm=colors.LogNorm(vmin=z_min, vmax=z_max))
     else:
         im = ax.contourf(x, y, z, levels=cLevel, cmap=c_map, vmin=z_min, vmax=z_max)
     # contour lines

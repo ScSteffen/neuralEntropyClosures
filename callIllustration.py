@@ -166,7 +166,7 @@ def main():
     data_mk11 = df.to_numpy()
     df = pd.read_csv("paper_data/2D_M1/err_2D_M1_MK15_periodic.csv")
     data_mk15 = df.to_numpy()
-    n = 20
+    n = 30
     time = data_mk11[::n, 0]
     err_u_mk11 = data_mk11[::n, 1]
     err_alpha_mk11 = data_mk11[::n, 2]
@@ -192,7 +192,7 @@ def main():
                      h_mk15.reshape((err_u_mk11.shape[0], 1))], labels=["Newton", "Convex", "Mono"],
             name="entropy_2D_M1_over_time", folder_name="paper_data/2D_M1",
             linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
-            ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
+            ylabel=r"$\frac{1}{\Delta_x\Delta_y}\sum_{(x,y)\in X} h(t,x,y)$",
             log=False, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
 
     # 2D snapshot
@@ -802,7 +802,7 @@ def print_convergence_rates(case_str: str = "periodic"):
                 'Montonic', r'$1^{st}$ order slope'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/banach",
-        linetypes=['o', '>', 'v', '-'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$n_x$',
+        linetypes=['o', '>', 'v', '-'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||u-u^*||_2^2$",
         loglog=True, title="discretization error " + case_str_title + "test")
 
@@ -1218,7 +1218,7 @@ def print_convergence_rates2(case_str: str = "periodic"):
                 'Montonic', r'$1^{st}$ order slope'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/banach",
-        linetypes=['o', '>', 'v', '-'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$n_x$',
+        linetypes=['o', '>', 'v', '-'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||u-u^*||_2^2$",
         loglog=True, title="discretization error " + case_str_title + "test")
 
