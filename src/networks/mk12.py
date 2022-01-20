@@ -17,7 +17,8 @@ from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 class MK12Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
-                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True):
+                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
+                 gamma_lvl: int = 0):
         if save_folder == "":
             custom_folder_name = "MK12_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
@@ -25,11 +26,10 @@ class MK12Network(BaseNetwork):
         super(MK12Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
-                                          input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                          input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                          gamma_lvl=gamma_lvl)
 
     def create_model(self) -> bool:
-
-        layerDim = self.model_width
 
         # Weight initializer
         initializer = keras.initializers.LecunNormal()
@@ -40,7 +40,6 @@ class MK12Network(BaseNetwork):
         ### build the core network ###
 
         # Define Residual block
-
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
             # ResNet architecture by https://arxiv.org/abs/1603.05027
             y = keras.layers.BatchNormalization()(x)  # 1) BN that normalizes each feature individually (axis=-1)
@@ -75,16 +74,18 @@ class MK12Network(BaseNetwork):
         # build resnet blocks
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
-
-        output_ = layers.Dense(1, activation="relu",
-                               kernel_initializer=initializer,
-                               kernel_regularizer=l2_regularizer,
-                               bias_initializer='zeros',
-                               name="dense_output"
-                               )(hidden)  # outputlayer
-
+        if self.scale_active:
+            output_ = layers.Dense(1, activation="relu", kernel_initializer=initializer, name="dense_output",
+                                   kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)
+        else:
+            output_ = layers.Dense(1, activation=None, kernel_initializer=initializer, name="dense_output",
+                                   kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[output_], name="ResNet_entropy_closure")
+
+        print("The core model overview")
+        core_model.summary()
+        print("The sobolev wrapped model overview")
 
         # build model
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
@@ -110,10 +111,12 @@ class MK12Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        # u_in = self.training_data[0][:100]
-        # alpha_in = self.training_data[1][:100]
-        # h_in = self.training_data[2][:100]
-        # [h, alpha, u] = self.model(self.training_data[1][:100])
+        # u_in = self.training_data[0][:10]
+        # alpha_in = self.training_data[1][:10]
+        # h_in = self.training_data[2][:10]
+        # alpha_test = [[-0.391], [-0.2248], [1.9629]]
+        # u_test = [[-0.39], [-0.2248], [1.962]]
+        # [h, alpha, u] = self.model(alpha_test)
 
         x_data = self.training_data[0]
         y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]

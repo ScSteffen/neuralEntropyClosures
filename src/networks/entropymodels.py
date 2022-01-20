@@ -47,6 +47,7 @@ class EntropyModel(tf.keras.Model, ABC):
         self.scale_active = scale_active
         self.derivative_scale_factor = tf.constant((scaler_max - scaler_min) * 0.5, dtype=tf.float64)
         self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
+        print("Model uses regularization with parameter gamma = " + str(gamma))
 
         if not subclass:
             print("Model output alpha will be scaled by factor " + str(self.derivative_scale_factor.numpy()))
