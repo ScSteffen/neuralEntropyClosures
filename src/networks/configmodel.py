@@ -64,7 +64,8 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
         neural_closure_model = MK12Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized,
-                                           input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                           gamma_lvl=gamma_lvl)
     elif network_mk == 13:
         neural_closure_model = MK13Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
