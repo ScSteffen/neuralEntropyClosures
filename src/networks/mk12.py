@@ -35,7 +35,7 @@ class MK12Network(BaseNetwork):
         initializer = keras.initializers.LecunNormal()
 
         # Weight regularizer
-        l2_regularizer = tf.keras.regularizers.L2(l2=0.001)  # L1 + L2 penalties
+        l2_regularizer = tf.keras.regularizers.L2(l2=0.0001)  # L1 + L2 penalties
 
         ### build the core network ###
 
@@ -43,13 +43,13 @@ class MK12Network(BaseNetwork):
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
             # ResNet architecture by https://arxiv.org/abs/1603.05027
             y = keras.layers.BatchNormalization()(x)  # 1) BN that normalizes each feature individually (axis=-1)
-            y = keras.activations.selu(y)  # 2) activation
+            y = keras.activations.relu(y)  # 2) activation
             # 3) layer without activation
             y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                              bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(y)
             y = keras.layers.BatchNormalization()(y)  # 4) BN that normalizes each feature individually (axis=-1)
-            y = keras.activations.selu(y)  # 5) activation
+            y = keras.activations.relu(y)  # 5) activation
             # 6) layer
             y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
@@ -74,12 +74,12 @@ class MK12Network(BaseNetwork):
         # build resnet blocks
         for idx in range(0, self.model_depth):
             hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
-        if self.scale_active:
-            output_ = layers.Dense(1, activation="relu", kernel_initializer=initializer, name="dense_output",
-                                   kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)
-        else:
-            output_ = layers.Dense(1, activation=None, kernel_initializer=initializer, name="dense_output",
-                                   kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
+        # if self.scale_active:
+        #    output_ = layers.Dense(1, activation="relu", kernel_initializer=initializer, name="dense_output",
+        #                           kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)
+        # else:
+        output_ = layers.Dense(1, activation=None, kernel_initializer=initializer, name="dense_output",
+                               kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[output_], name="ResNet_entropy_closure")
 

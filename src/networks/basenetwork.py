@@ -45,6 +45,9 @@ class BaseNetwork:
     cov_ev: np.ndarray  # eigenvalues of cov matrix of input moments
     input_decorrelation: bool  # flag to turn on decorrelation of input variables
     regularization_gamma: float  # regularization parameter for regularized entropy closures
+    loss_comp_dict: dict = {0: [1, 0, 0, 0], 1: [1, 1, 0, 0], 2: [1, 1, 1, 0],
+                            3: [0, 0, 0, 1]}  # hash table for loss combination
+    input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10}  # hash table for input dimension depending on polyDegree
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
@@ -69,36 +72,21 @@ class BaseNetwork:
         self.scaler_max = 1.0  # default is no scaling
         self.scaler_min = 0.0  # default is no scaling
         # --- Determine loss combination ---
-        if loss_combination == 0:
-            self.loss_weights = [1, 0, 0, 0]
-        elif loss_combination == 1:
-            self.loss_weights = [1, 1, 0, 0]
-        elif loss_combination == 2:
-            self.loss_weights = [1, 1, 1, 0]
-        elif loss_combination == 3:
-            self.loss_weights = [0, 0, 0, 1]
+        if loss_combination < 4:
+            self.loss_weights = self.loss_comp_dict[loss_combination]
         else:
-            self.loss_weights = [1, 0, 0, 0]
+            print("Error. Loss combination not supported.")
+            exit(1)
 
         # --- Determine inputDim by MaxDegree ---
         if spatial_dimension == 1:
             self.input_dim = polynomial_degree + 1
-        elif spatial_dimension == 3:
-            if self.poly_degree == 0:
-                self.input_dim = 1
-            elif self.poly_degree == 1:
-                self.input_dim = 4
-            else:
-                raise ValueError("Polynomial degeree higher than 1 not supported atm")
         elif spatial_dimension == 2:
-            if self.poly_degree == 0:
-                self.input_dim = 1
-            elif self.poly_degree == 1:
-                self.input_dim = 3
-            else:
-                raise ValueError("Polynomial degeree higher than 1 not supported atm")
+            if self.poly_degree > 3:
+                ValueError("Polynomial degeree higher than 3 not supported atm")
+            self.input_dim = self.input_dim_dict_2D[self.poly_degree]
         else:
-            raise ValueError("Saptial dimension other than 1,2 or 3 not supported atm")
+            raise ValueError("Saptial dimension other than 1 or 2 not supported atm")
 
         self.csvInputDim = self.input_dim  # only for reading csv data
 
@@ -415,7 +403,7 @@ class BaseNetwork:
 
         end = time.perf_counter()
         print("Data loaded. Elapsed time: " + str(end - start))
-        if selected_cols[0] and not train_mode:
+        if selected_cols[0] and self.input_decorrelation:
             print("Computing input data statistics")
             self.mean_u = np.mean(u_ndarray, axis=0)
             print("Training data mean (of u) is")
@@ -427,7 +415,7 @@ class BaseNetwork:
                 [_, self.cov_ev] = np.linalg.eigh(self.cov_u)
             else:
                 self.cov_ev = self.cov_u  # 1D case
-            print("Shifting the data accordingly if network architecture is MK15 or newer...")
+            print("Shifting the data accordingly if network architecture is MK11,MK12 or MK15...")
         else:
             print("Warning: Mean of training data moments was not computed")
         return True
