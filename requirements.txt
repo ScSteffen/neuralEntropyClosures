@@ -4,7 +4,7 @@ numpy
 matplotlib
 scikit-learn
 gitpython
-
+seaborn
 ###### Requirements with Version Specifiers ######
 tensorflow-gpu==2.6.2
 
