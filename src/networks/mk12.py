@@ -3,7 +3,7 @@ Network class "MK12" for the neural entropy closure.
 As MK11, but resnet network instead of ICNN
 Author: Steffen Schotthöfer
 Version: 0.0
-Date 09.04.2020
+Date 09.01.2022
 '''
 import tensorflow as tf
 from tensorflow import keras as keras

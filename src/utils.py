@@ -15,7 +15,7 @@ import seaborn as sns
 import os
 from pathlib import Path
 import git
-
+from datetime import date
 
 # plt.style.use("kitish")
 
@@ -354,8 +354,10 @@ def write_config_file(options, neural_closure_model):
     repo = git.Repo(search_parent_directories=True)
     sha = repo.head.object.hexsha
     print("Current git checkout: " + str(sha))
+    curr_date = date.today()
     # Print chosen options to csv
-    d = {'git_version': [sha],
+    d = {'date' : [curr_date],
+         'git_version': [sha],
          'sampling': [options.sampling],
          'batch': [options.batch],
          'curriculum': [options.curriculum],
