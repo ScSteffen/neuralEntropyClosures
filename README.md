@@ -5,7 +5,7 @@ A Project to construct some neural networks to solve the minimal entropy problem
 ## Packages needed
 
 * If you use conda, please consult the installer script '''package_installer.sh'''. If you use pip, consult '''requirements.txt'''. 
-* A ready to use docker container is provided [here](https://hub.docker.com/repository/docker/scsteffen/neural_entropy). One needs the nvidia-docker installed (tutorial [here](https://www.tensorflow.org/install/docker) and [here](https://github.com/NVIDIA/nvidia-docker).
+* A ready to use docker container is provided [here](https://hub.docker.com/repository/docker/scsteffen/neural_entropy). One needs the nvidia-docker installed (tutorial available [here](https://www.tensorflow.org/install/docker) and [here](https://github.com/NVIDIA/nvidia-docker)).
 
 ## Available, tested network models ##
 
