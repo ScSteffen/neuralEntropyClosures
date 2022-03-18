@@ -2,5 +2,5 @@
 
 # first all conda packages
 
-conda install numpy pandas matplotlib seaborn gitpython
+conda install numpy pandas matplotlib seaborn gitpython cudnn
 pip install tensorflow-gpu==2.6.2 scikit-learn 
