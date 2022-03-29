@@ -35,7 +35,7 @@ class EntropyTools:
         # Create quadrature and momentBasis. Currently only for 1D problems
         self.poly_degree = polynomial_degree
         self.spatial_dimension = spatial_dimension
-        quad_order = 10
+        quad_order = 100
         if spatial_dimension == 1:
             self.nq = quad_order
             [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
@@ -45,13 +45,13 @@ class EntropyTools:
             self.nq = quad_weights.size  # is not 10 * polyDegree
             m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
 
-        self.quadPts = tf.constant(quad_pts, shape=(self.spatial_dimension, self.nq), dtype=tf.float32)
+        self.quadPts = tf.constant(quad_pts, shape=(self.spatial_dimension, self.nq), dtype=tf.float64)
         self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq),
-                                       dtype=tf.float32)
+                                       dtype=tf.float64)
 
         self.inputDim = m_basis.shape[0]
         self.momentBasis = tf.constant(m_basis, shape=(self.inputDim, self.nq),
-                                       dtype=tf.float32)
+                                       dtype=tf.float64)
 
     def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -124,6 +124,43 @@ class EntropyTools:
         # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         return tmp2 - tmp
+
+    def compute_h_primal(self, f: tf.Tensor) -> tf.Tensor:
+        """
+        brief: computes the entropy functional h on u and alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: f, dims = (ns x nq)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = <f*ln(f)-f>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        eta = f * tf.math.log(f) - f
+        res = tf.tensordot(eta, self.quadWeights, axes=([1], [1]))  # f*w
+        return res
+
+    def integrate_f(self, f: tf.Tensor):
+        """
+                brief: computes the entropy functional h on u and alpha
+
+                nS = batchSize
+                N = basisSize
+                nq = number of quadPts
+
+                input: f, dims = (ns x nq)
+                used members: m    , dims = (N x nq)
+                            w    , dims = nq
+
+                returns h = <f>
+                """
+        # Currently only for maxwell Boltzmann entropy
+        res = tf.tensordot(f, self.quadWeights, axes=([1], [1]))  # f*w
+        return res
 
     def convert_to_tensor_float(self, vector: np.ndarray) -> tf.Tensor:
         """
