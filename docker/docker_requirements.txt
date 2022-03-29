@@ -1,0 +1,6 @@
+# requirements for docker environment
+pandas
+sklearn
+matplotlib
+seaborn
+gitpython
