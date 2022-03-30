@@ -20,7 +20,8 @@ class MK12Network(BaseNetwork):
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
                  gamma_lvl: int = 0):
         if save_folder == "":
-            custom_folder_name = "MK12_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
+            custom_folder_name = "MK12_N" + \
+                str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
         super(MK12Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
@@ -35,25 +36,28 @@ class MK12Network(BaseNetwork):
         initializer = keras.initializers.LecunNormal()
 
         # Weight regularizer
-        l2_regularizer = tf.keras.regularizers.L2(l2=0.0001)  # L1 + L2 penalties
+        l2_regularizer = tf.keras.regularizers.L2(
+            l2=0.0001)  # L1 + L2 penalties
 
         ### build the core network ###
 
         # Define Residual block
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
             # ResNet architecture by https://arxiv.org/abs/1603.05027
-            y = keras.layers.BatchNormalization()(x)  # 1) BN that normalizes each feature individually (axis=-1)
-            y = keras.activations.relu(y)  # 2) activation
+            # 1) BN that normalizes each feature individually (axis=-1)
+            #y = keras.layers.BatchNormalization()(x)
+            y = keras.activations.softplus(x)  # 2) activation
             # 3) layer without activation
             y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                              bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(y)
-            y = keras.layers.BatchNormalization()(y)  # 4) BN that normalizes each feature individually (axis=-1)
-            y = keras.activations.relu(y)  # 5) activation
+            # 4) BN that normalizes each feature individually (axis=-1)
+            #y = keras.layers.BatchNormalization()(y)
+            # y = keras.activations.softplus(y)  # 5) activation
             # 6) layer
-            y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
-                             bias_initializer=initializer, kernel_regularizer=l2_regularizer,
-                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(y)
+            # y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
+            #                 bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+            #                 bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(y)
             # 7) add skip connection
             out = keras.layers.Add()([x, y])
             return out
@@ -61,8 +65,10 @@ class MK12Network(BaseNetwork):
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.input_dim,))
         if self.input_decorrelation and self.input_dim > 1:
-            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
-            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            hidden = MeanShiftLayer(
+                input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = DecorrelationLayer(
+                input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
                                   use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                                   bias_regularizer=l2_regularizer, name="layer_input")(hidden)
@@ -73,7 +79,8 @@ class MK12Network(BaseNetwork):
 
         # build resnet blocks
         for idx in range(0, self.model_depth):
-            hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
+            hidden = residual_block(
+                hidden, layer_dim=self.model_width, layer_idx=idx)
         # if self.scale_active:
         #    output_ = layers.Dense(1, activation="relu", kernel_initializer=initializer, name="dense_output",
         #                           kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)
@@ -81,7 +88,8 @@ class MK12Network(BaseNetwork):
         output_ = layers.Dense(1, activation=None, kernel_initializer=initializer, name="dense_output",
                                kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
         # Create the core model
-        core_model = keras.Model(inputs=[input_], outputs=[output_], name="ResNet_entropy_closure")
+        core_model = keras.Model(inputs=[input_], outputs=[
+                                 output_], name="ResNet_entropy_closure")
 
         print("The core model overview")
         core_model.summary()
@@ -96,7 +104,8 @@ class MK12Network(BaseNetwork):
         # build graph
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
-
+        print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
+            self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
                   'output_3': tf.keras.losses.MeanSquaredError()},
@@ -111,15 +120,21 @@ class MK12Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        # u_in = self.training_data[0][:10]
-        # alpha_in = self.training_data[1][:10]
-        # h_in = self.training_data[2][:10]
-        # alpha_test = [[-0.391], [-0.2248], [1.9629]]
-        # u_test = [[-0.39], [-0.2248], [1.962]]
-        # [h, alpha, u] = self.model(alpha_test)
-
+        #u_in = self.training_data[0][:10]
+        #alpha_in = self.training_data[1][:10]
+        ##h_in = self.training_data[2][:10]
+        ## alpha_test = [[-0.391], [-0.2248], [1.9629]]
+        ##u_test = [[-0.39], [-0.2248], [1.962]]
+        #[h, alpha, u] = self.model(alpha_in)
+        # print(u_in)
+        # print(u)
+        # print(alpha_in)
+        #print(alpha[:, 1:])
+        # print(self.model.moment_basis.shape)
+        # exit(0)
         x_data = self.training_data[0]
-        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
+        y_data = [self.training_data[2], self.training_data[1],
+                  self.training_data[0]]  # , self.trainingData[1]]
         self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size, batch_size=batch_size,
                        verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
         return self.history
@@ -141,7 +156,9 @@ class MK12Network(BaseNetwork):
         """
         u_reduced = u_complete[:, 1:]  # chop of u_0
         [h_predicted, alpha_predicted] = self.model(u_reduced)
-        alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
-        u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
+        alpha_complete_predicted = self.model.reconstruct_alpha(
+            alpha_predicted)
+        u_complete_reconstructed = self.model.reconstruct_u(
+            alpha_complete_predicted)
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
