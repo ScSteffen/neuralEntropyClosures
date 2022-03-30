@@ -36,7 +36,8 @@ class BaseNetwork:
     loss_weights: list  # one hot vector to enable/disable loss functions
     model: tf.keras.Model  # the neural network model
     model_legacy: tf.keras.Model  # the neural network model
-    training_data: list  # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
+    # list of ndarrays containing the training data: [u,alpha,h,h_max,h_min]
+    training_data: list
     scaler_max: float  # for output scaling
     scaler_min: float  # for output scaling
     scale_active: bool  # flag if output scaling is active
@@ -44,10 +45,12 @@ class BaseNetwork:
     cov_u: np.ndarray  # covariance of input moments
     cov_ev: np.ndarray  # eigenvalues of cov matrix of input moments
     input_decorrelation: bool  # flag to turn on decorrelation of input variables
-    regularization_gamma: float  # regularization parameter for regularized entropy closures
+    # regularization parameter for regularized entropy closures
+    regularization_gamma: float
     loss_comp_dict: dict = {0: [1, 0, 0, 0], 1: [1, 1, 0, 0], 2: [1, 1, 1, 0],
                             3: [0, 0, 0, 1]}  # hash table for loss combination
-    input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10}  # hash table for input dimension depending on polyDegree
+    # hash table for input dimension depending on polyDegree
+    input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15}
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
@@ -82,11 +85,14 @@ class BaseNetwork:
         if spatial_dimension == 1:
             self.input_dim = polynomial_degree + 1
         elif spatial_dimension == 2:
-            if self.poly_degree > 3:
-                ValueError("Polynomial degeree higher than 3 not supported atm")
+            if self.poly_degree > 4:
+                print(
+                    "Polynomial degeree higher than 3 not supported atm")
+                exit(1)
             self.input_dim = self.input_dim_dict_2D[self.poly_degree]
         else:
-            raise ValueError("Saptial dimension other than 1 or 2 not supported atm")
+            raise ValueError(
+                "Saptial dimension other than 1 or 2 not supported atm")
 
         self.csvInputDim = self.input_dim  # only for reading csv data
 
@@ -94,8 +100,10 @@ class BaseNetwork:
             self.input_dim = self.input_dim - 1
 
         self.mean_u = np.zeros(shape=(self.input_dim,), dtype=float)
-        self.cov_u = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
-        self.cov_ev = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
+        self.cov_u = np.zeros(
+            shape=(self.input_dim, self.input_dim), dtype=float)
+        self.cov_ev = np.zeros(
+            shape=(self.input_dim, self.input_dim), dtype=float)
 
     def create_model(self) -> bool:
         pass
@@ -112,7 +120,8 @@ class BaseNetwork:
         with tf.GradientTape() as tape:
             # training=True is only needed if there are layers with different
             # behavior during training versus inference (e.g. Dropout).
-            predictions = self.model(x_model, training=False)  # same as neuralClosureModel.model.predict(x)
+            # same as neuralClosureModel.model.predict(x)
+            predictions = self.model(x_model, training=False)
 
         gradients = tape.gradient(predictions, x_model)
 
@@ -175,7 +184,8 @@ class BaseNetwork:
                 callbackList = []
                 csv_logger = self.create_csv_logger_cb()
                 if verbosity == 0:
-                    callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger]
+                    callbackList = [
+                        mc_best, LossAndErrorPrintingCallback(), csv_logger]
                 else:
                     callbackList = [mc_best, csv_logger]
 
@@ -207,7 +217,8 @@ class BaseNetwork:
             csv_logger, tensorboard_logger = self.create_csv_logger_cb()
 
             if verbosity == 1:
-                callbackList = [mc_best, csv_logger, tensorboard_logger, HW]  # , ES]  # LR,
+                callbackList = [mc_best, csv_logger,
+                                tensorboard_logger, HW]  # , ES]  # LR,
             else:
                 callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, tensorboard_logger,
                                 HW]  # , ES]  # LR,
@@ -250,7 +261,8 @@ class BaseNetwork:
 
         historyLogsDF = []
         for log in historyLogs:
-            historyLogsDF.append(pd.read_csv(self.folder_name + '/historyLogs/' + log))
+            historyLogsDF.append(pd.read_csv(
+                self.folder_name + '/historyLogs/' + log))
 
         totalDF = pd.concat(historyLogsDF, ignore_index=True)
 
@@ -258,7 +270,8 @@ class BaseNetwork:
         numEpochs = len(totalDF.index)
         totalDF['epoch'] = np.arange(numEpochs)
         # write
-        totalDF.to_csv(self.folder_name + '/historyLogs/CompleteHistory.csv', index=False)
+        totalDF.to_csv(self.folder_name +
+                       '/historyLogs/CompleteHistory.csv', index=False)
         return 0
 
     def create_csv_logger_cb(self):
@@ -274,12 +287,14 @@ class BaseNetwork:
         count = 1
         while path.isfile(logName + '.csv'):
             count += 1
-            logName = self.folder_name + '/historyLogs/history_' + str(count).zfill(3) + '_'
+            logName = self.folder_name + \
+                '/historyLogs/history_' + str(count).zfill(3) + '_'
 
         logFile = logName + '.csv'
         # create logger callback
         csv_logger = tf.keras.callbacks.CSVLogger(logFile)
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logName, histogram_freq=1)
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(
+            log_dir=logName, histogram_freq=1)
         return csv_logger, tensorboard_callback
 
     def save_model(self):
@@ -316,7 +331,8 @@ class BaseNetwork:
         if not path.exists(used_file_name):
             print("Model does not exists at this path: " + used_file_name)
             exit(1)
-        model = tf.keras.models.load_model(used_file_name, custom_objects={"CustomModel": self.model})
+        model = tf.keras.models.load_model(used_file_name, custom_objects={
+                                           "CustomModel": self.model})
         # self.model.load_weights(usedFileName)
         self.model = model
         print("Model loaded from file ")
@@ -347,7 +363,7 @@ class BaseNetwork:
         """
         self.training_data = []
 
-        ### Create trainingdata filename"
+        # Create trainingdata filename"
         filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
             self.spatial_dim) + "D"
         if normalized_data:
@@ -367,10 +383,12 @@ class BaseNetwork:
         print("Loading Data from location: " + filename)
         # determine which cols correspond to u, alpha and h
         u_cols = list(range(1, self.csvInputDim + 1))
-        alpha_cols = list(range(self.csvInputDim + 1, 2 * self.csvInputDim + 1))
+        alpha_cols = list(
+            range(self.csvInputDim + 1, 2 * self.csvInputDim + 1))
         h_col = [2 * self.csvInputDim + 1]
 
-        selected_cols = self.select_training_data()  # outputs a boolean triple.
+        # outputs a boolean triple.
+        selected_cols = self.select_training_data()
 
         # selected_cols = [True, False, True]
 
@@ -415,7 +433,8 @@ class BaseNetwork:
                 [_, self.cov_ev] = np.linalg.eigh(self.cov_u)
             else:
                 self.cov_ev = self.cov_u  # 1D case
-            print("Shifting the data accordingly if network architecture is MK11,MK12 or MK15...")
+            print(
+                "Shifting the data accordingly if network architecture is MK11,MK12 or MK15...")
         else:
             print("Warning: Mean of training data moments was not computed")
         return True
@@ -436,9 +455,11 @@ class BaseNetwork:
                 self.scaler_max = float(scaler.data_max_)
                 self.scaler_min = float(scaler.data_min_)
             # scale to [0,1]
-            self.training_data[2] = (self.training_data[2] - self.scaler_min) / (self.scaler_max - self.scaler_min)
+            self.training_data[2] = (
+                self.training_data[2] - self.scaler_min) / (self.scaler_max - self.scaler_min)
             # scale correspondingly
-            self.training_data[1] = self.training_data[1] / (self.scaler_max - self.scaler_min)
+            self.training_data[1] = self.training_data[1] / \
+                (self.scaler_max - self.scaler_min)
             print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
                 self.scaler_min))
             print("New h_min= " + str(self.training_data[2].min()) + ". New h_max= " + str(
@@ -480,7 +501,8 @@ class BaseNetwork:
                    predSamples, dim = (ns,N)
             returns: mse(trueSamples-predSamples) dim = (ns,)
             """
-            loss_val = tf.keras.losses.mean_squared_error(true_samples, pred_samples)
+            loss_val = tf.keras.losses.mean_squared_error(
+                true_samples, pred_samples)
             return loss_val
 
         diff_h = pointwise_diff(h_test, h_pred)
@@ -526,7 +548,8 @@ class BaseNetwork:
             np.linspace(0, 1, 10)
             utils.plot_1d([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
                           'test', log=False)
-            utils.plot_1d([u_test[:, 1]], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
+            utils.plot_1d([u_test[:, 1]], [h_pred, h_test], [
+                          'h pred', 'h'], 'h_over_u', log=False)
             utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
                           'alpha1_over_u1',
                           log=False)
@@ -552,7 +575,8 @@ class BaseNetwork:
         """
 
         # normalize data
-        [u_pred_scaled, alpha_pred_scaled, h_pred_scaled] = self.call_scaled(u_test)
+        [u_pred_scaled, alpha_pred_scaled,
+            h_pred_scaled] = self.call_scaled(u_test)
 
         # create the loss functions
         def pointwise_diff(true_samples, pred_samples):
@@ -562,7 +586,8 @@ class BaseNetwork:
                    predSamples, dim = (ns,N)
             returns: mse(trueSamples-predSamples) dim = (ns,)
             """
-            loss_val = tf.keras.losses.mean_squared_error(true_samples, pred_samples)
+            loss_val = tf.keras.losses.mean_squared_error(
+                true_samples, pred_samples)
             return loss_val
 
         # compute errors
@@ -571,7 +596,8 @@ class BaseNetwork:
         diff_u = pointwise_diff(u_test, u_pred_scaled)
 
         # print losses
-        utils.scatter_plot_2d(u_test, diff_u, name="err in u over u", log=False, show_fig=False)
+        utils.scatter_plot_2d(
+            u_test, diff_u, name="err in u over u", log=False, show_fig=False)
         # utils.plot1D(u_test[:, 1], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1', log=False)
         # utils.plot1D(u_test[:, 1], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1', log=False)
 
