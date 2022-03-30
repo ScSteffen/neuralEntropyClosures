@@ -307,24 +307,22 @@ class SobolevModel(EntropyModel):
             h = self.core_model(x)
         alpha = grad_tape.gradient(h, x)
 
-        # if self.enable_recons_u:
-        if self.scale_active:
-            print("Scaled reconstruction of u enabled")
-            alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(
-                alpha, dtype=tf.float64, name=None))
-        else:
-            print("Reconstruction of u enabled")
-            alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
-        alpha_complete = self.reconstruct_alpha(alpha64)
-        u_complete = self.reconstruct_u(alpha_complete)
-        # cutoff the 0th order moment, since it is 1 by construction
-        # res = u_complete[:, 1:]
-        # else:
-        #    print("Reconstruction of u disabled. Output 3 is meaningless")
-        #    res = alpha
+        if self.enable_recons_u:
+            if self.scale_active:
+                print("Scaled reconstruction of u enabled")
+                alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(
+                    alpha, dtype=tf.float64, name=None))
+            else:
+                print("Reconstruction of u enabled")
+                alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
+            alpha_complete = self.reconstruct_alpha(alpha64)
+            u_complete = self.reconstruct_u(alpha_complete)
+            #cutoff the 0th order moment, since it is 1 by construction
+            return [h, alpha, u_complete[:, 1:]]# u_complete[:, 1:]]
+        print("Reconstruction of u disabled. Output 3 is meaningless")
+        return [h, alpha, alpha]
 
-        return [h, alpha, u_complete[:, 1:]]
-
+        
     def call_derivative(self, x, training=False):
         with tf.GradientTape() as grad_tape:
             grad_tape.watch(x)

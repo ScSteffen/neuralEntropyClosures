@@ -86,11 +86,14 @@ class MK11Network(BaseNetwork):
                                           kernel_regularizer=None,
                                           use_bias=False, name='layer_' + str(layer_idx) + 'dense_component'
                                           )(nw_input_x)
-            # Wz+Wx+b
+            # Wz+Wx+b + x
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
+
             # activation
             out = tf.keras.activations.softplus(intermediate_sum)
+            out : Tensor = layers.Add()([out, layer_input_z])
+
             # out = tf.keras.activations.selu(intermediate_sum)
             # batch normalization
             # out = layers.BatchNormalization(name='bn_' + str(layer_idx))(out)
@@ -155,8 +158,8 @@ class MK11Network(BaseNetwork):
             hidden = convex_layer(
                 hidden, input_, layer_idx=idx, layer_dim=self.model_width)
             # hidden = layers.BatchNormalization()(hidden)
-        hidden = convex_layer(
-            hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
+        #hidden = convex_layer(
+        #    hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
         pre_output = convex_output_layer(
             hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
         # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
@@ -189,12 +192,10 @@ class MK11Network(BaseNetwork):
         # print(self.custom_mse(a2, a3))
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(
-            ), 'output_2': tf.keras.losses.MeanSquaredError()},
-            # 'output_3': tf.keras.losses.MeanSquaredError()},
-            # 'output_4': self.KL_divergence_loss(model.momentBasis, model.quadWeights)},  # self.custom_mse},
+            ), 'output_2': tf.keras.losses.MeanSquaredError(),
+            'output_3': tf.keras.losses.MeanSquaredError()},
             loss_weights={
-                'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1]},
-            # 'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
+                'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
         # model.summary()
@@ -216,8 +217,7 @@ class MK11Network(BaseNetwork):
         # [h, alpha, u] = self.model(self.training_data[1][:100])
 
         x_data = self.training_data[0]
-        y_data = [self.training_data[2], self.training_data[1]]  # ,
-        #  self.training_data[0]]  # , self.trainingData[1]]
+        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
         self.history = self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size,
                                       batch_size=batch_size, verbose=verbosity_mode, callbacks=callback_list,
                                       shuffle=True)
