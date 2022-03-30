@@ -333,8 +333,8 @@ class BaseNetwork:
             exit(1)
         model = tf.keras.models.load_model(used_file_name, custom_objects={
                                            "CustomModel": self.model})
-        # self.model.load_weights(usedFileName)
-        self.model = model
+        self.model.load_weights(used_file_name)
+        #self.model = model
         print("Model loaded from file ")
         return 0
 
