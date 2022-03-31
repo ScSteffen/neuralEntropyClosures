@@ -86,13 +86,13 @@ class MK11Network(BaseNetwork):
                                           kernel_regularizer=None,
                                           use_bias=False, name='layer_' + str(layer_idx) + 'dense_component'
                                           )(nw_input_x)
-            # Wz+Wx+b + x
+            # Wz+Wx+b
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
 
             # activation
             out = tf.keras.activations.softplus(intermediate_sum)
-            out : Tensor = layers.Add()([out, layer_input_z])
+            #out : Tensor = layers.Add()([out, layer_input_z])
 
             # out = tf.keras.activations.selu(intermediate_sum)
             # batch normalization
@@ -190,6 +190,8 @@ class MK11Network(BaseNetwork):
         # print(tf.keras.losses.MeanSquaredError()(a3, a2))
         # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
         # print(self.custom_mse(a2, a3))
+        print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
+            self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(
             ), 'output_2': tf.keras.losses.MeanSquaredError(),
