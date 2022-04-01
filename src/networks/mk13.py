@@ -145,14 +145,8 @@ class MK13Network(BaseNetwork):
         for idx in range(0, self.model_depth):
             hidden = convex_layer(
                 hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-            # hidden = layers.BatchNormalization()(hidden)
-        #hidden = convex_layer(
-        #    hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
         pre_output = convex_output_layer(
             hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
-        # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
-        # output_ = tf.add(tf.math.scalar_mul((h_max_tensor - h_min_tensor), pre_output), h_max_tensor)
-
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[
                                  pre_output], name="ResNetIcnn_closure")
@@ -169,30 +163,16 @@ class MK13Network(BaseNetwork):
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
 
-        # test
-        # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
-        # a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
-        # a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
-        # a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
-
-        # print(tf.keras.losses.MeanSquaredError()(a3, a2))
-        # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
-        # print(self.custom_mse(a2, a3))
         print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
             self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(
-            ), 'output_2': tf.keras.losses.MeanSquaredError(),
+            loss={'output_1': tf.keras.losses.MeanSquaredError(),
+            'output_2': tf.keras.losses.MeanSquaredError(),
             'output_3': tf.keras.losses.MeanSquaredError()},
-            loss_weights={
-                'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
+            loss_weights={'output_1': self.loss_weights[0], 
+            'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]}, 
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
-        # model.summary()
-
-        # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
-        # show_layer_names = True, rankdir = 'TB', expand_nested = True)
-        # print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
         self.model = model
         return True
 
