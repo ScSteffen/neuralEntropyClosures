@@ -63,10 +63,6 @@ class MK11Network(BaseNetwork):
             l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
-            # stddev = np.sqrt(
-            #    (1 / 1.1) * (1 / layer_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            # initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
-            # initializer = tf.keras.initializers.LecunNormal()
             initializer = tf.keras.initializers.RandomUniform(
                 minval=-0.5, maxval=0.5, seed=None)
             initializerNonNeg = tf.keras.initializers.RandomUniform(
@@ -89,22 +85,11 @@ class MK11Network(BaseNetwork):
             # Wz+Wx+b
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
-
             # activation
             out = tf.keras.activations.softplus(intermediate_sum)
-            #out : Tensor = layers.Add()([out, layer_input_z])
-
-            # out = tf.keras.activations.selu(intermediate_sum)
-            # batch normalization
-            # out = layers.BatchNormalization(name='bn_' + str(layer_idx))(out)
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
-            # Weighted sum of previous layers output plus bias
-            # stddev = np.sqrt(
-            #    (1 / 1.1) * (1 / 1) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-            # initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
-            # initializer = tf.keras.initializers.LecunNormal()
             initializer = tf.keras.initializers.RandomUniform(
                 minval=-0.5, maxval=0.5, seed=None)
             initializerNonNeg = tf.keras.initializers.RandomUniform(
@@ -134,7 +119,7 @@ class MK11Network(BaseNetwork):
                 out = tf.keras.activations.relu(out)
             return out
 
-            ### build the core network with icnn closure architecture ###
+        ### build the core network with icnn closure architecture ###
 
         input_ = keras.Input(shape=(self.input_dim,))
         if self.input_decorrelation:  # input data decorellation and shift
