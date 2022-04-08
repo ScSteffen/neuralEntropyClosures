@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from src.utils import plot_1d
+from src.utils import plot_1d, plot_1dv2
 
 
 def main():
@@ -22,23 +22,53 @@ def main():
     mk11_m3_2d_g3 = load_history_file("paper_data/paper2/2D_M3/mk11_M3_2D_g3/historyLogs/history_002_.csv")
 
     n_epochs = mk11_m3_2d_g0.shape[0]
-    plot_1d([mk11_m3_2d_g0["epoch"].to_numpy()],
-            [mk11_m3_2d_g0["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
-             mk11_m3_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
-             mk11_m3_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
-             mk11_m3_2d_g3["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)],
-            labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-            name="loss_mk11_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
-            xlabel="epochs", ylabel="loss", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
+    plot_1dv2([mk11_m3_2d_g0["epoch"].to_numpy()],
+              [get_infinum_subsequence(mk11_m3_2d_g0["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g3["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk11_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
-    plot_1d([mk11_m3_2d_g0["epoch"].to_numpy()],
-            [mk11_m3_2d_g0["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
-             mk11_m3_2d_g0["val_output_2_loss"].to_numpy().reshape(n_epochs, 1),
-             mk11_m3_2d_g0["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)],
-            labels=[r"$h_\theta^n$", r"$\alpha_{u,\theta}^n$", r"$u_\theta^n$"],
-            name="loss_mk11_m3_2d", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
-            xlabel="epochs", ylabel="loss", title="", xlim=[0, 2000], ylim=[1e-5, 1e0])
+    plot_1dv2([mk11_m3_2d_g0["epoch"].to_numpy()],
+              [get_infinum_subsequence(mk11_m3_2d_g0["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g3["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk11_m3_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
+
+    plot_1dv2([mk11_m3_2d_g0["epoch"].to_numpy()],
+              [get_infinum_subsequence(mk11_m3_2d_g0["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g3["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
+               get_infinum_subsequence(mk11_m3_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk11_m3_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
+
+    plot_1dv2([mk11_m3_2d_g0["epoch"].to_numpy()],
+              [mk11_m3_2d_g0["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
+               mk11_m3_2d_g0["val_output_2_loss"].to_numpy().reshape(n_epochs, 1),
+               mk11_m3_2d_g0["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)],
+              labels=[r"$h_\theta^n$", r"$\alpha_{u,\theta}^n$", r"$u_\theta^n$"],
+              name="loss_mk11_m3_2d", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              xlabel="epochs", ylabel="loss", title="", xlim=[0, 2000], ylim=[1e-5, 1e0])
     return True
+
+
+def get_infinum_subsequence(time_series: np.ndarray):
+    """
+    returns g(x_i) = min_k=1...,i g(x_k)
+    """
+    curr_min = time_series[0]
+    out = time_series
+    for i in range(len(time_series)):
+        curr_min = np.min([curr_min, time_series[i]])
+        out[i] = curr_min
+    return out
 
 
 def load_history_file(filename: str):

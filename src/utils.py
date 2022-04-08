@@ -17,6 +17,7 @@ from pathlib import Path
 import git
 from datetime import date
 
+
 # plt.style.use("kitish")
 
 
@@ -227,6 +228,75 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
     return 0
 
 
+def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
+              show_fig=False,
+              xlim=None, ylim=None, xlabel=None, ylabel=None, title: str = r"$h^n$ over ${\mathcal{R}^r}$"):
+    """
+    Expected shape for x in xs : (nx,)
+                       y in ys : (1,nx)
+    """
+    plt.clf()
+    plt.figure(figsize=(5.8, 4.7), dpi=400)
+    if not linetypes:
+        linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
+                     'h',
+                     'H',
+                     '+', 'x', 'D', 'd', '|']
+        if labels is not None:
+            linetypes = linetypes[0:len(labels)]
+
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['k', 'r', 'g', 'b']
+    symbol_size = 0.7
+    if len(xs) == 1:
+        x = xs[0]
+        i = 0
+        for y, lineType in zip(ys, linetypes):
+            if lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
+                if colors[i] == 'k':
+                    plt.plot(x, y, 'w' + lineType, linewidth=symbol_size, markersize=2.5,
+                             markeredgewidth=0.5, markeredgecolor='k')
+                else:
+                    plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size, markersize=2.5,
+                             markeredgewidth=0.5, markeredgecolor='k')
+            else:
+                plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
+            i += 1
+        if labels != None:
+            plt.legend(labels)
+    elif len(xs) is not len(ys):
+        print("Error: List of x entries must be of same length as y entries")
+        exit(1)
+    else:
+        for x, y, lineType, color in zip(xs, ys, linetypes, colors):
+            plt.plot(x, y, color + lineType, linewidth=symbol_size)
+        plt.legend(labels)  # , prop={'size': 6})
+    if log:
+        plt.yscale('log')
+    if loglog:
+        plt.yscale('log')
+        plt.xscale('log')
+    if show_fig:
+        plt.show()
+    if ylim is not None:
+        plt.ylim(ylim[0], ylim[1])
+    if xlim is not None:
+        plt.xlim(xlim[0], xlim[1])
+    if xlabel is not None:
+        plt.xlabel(xlabel, fontsize=12)
+        # plt.xticks(fontsize=6)
+        # plt.yticks(fontsize=6)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=12)
+    # plt.title(title, fontsize=14)
+    plt.tight_layout()
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.close()
+    return 0
+
+
 def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
                     lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
                     title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
@@ -356,7 +426,7 @@ def write_config_file(options, neural_closure_model):
     print("Current git checkout: " + str(sha))
     curr_date = date.today()
     # Print chosen options to csv
-    d = {'date' : [curr_date],
+    d = {'date': [curr_date],
          'git_version': [sha],
          'sampling': [options.sampling],
          'batch': [options.batch],
