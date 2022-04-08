@@ -24,6 +24,15 @@ def main():
     n_epochs = mk11_m3_2d_g0.shape[0]
     plot_1d([mk11_m3_2d_g0["epoch"].to_numpy()],
             [mk11_m3_2d_g0["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
+             mk11_m3_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
+             mk11_m3_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
+             mk11_m3_2d_g3["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)],
+            labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+            name="loss_mk11_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+            xlabel="epochs", ylabel="loss", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
+
+    plot_1d([mk11_m3_2d_g0["epoch"].to_numpy()],
+            [mk11_m3_2d_g0["val_output_1_loss"].to_numpy().reshape(n_epochs, 1),
              mk11_m3_2d_g0["val_output_2_loss"].to_numpy().reshape(n_epochs, 1),
              mk11_m3_2d_g0["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)],
             labels=[r"$h_\theta^n$", r"$\alpha_{u,\theta}^n$", r"$u_\theta^n$"],
