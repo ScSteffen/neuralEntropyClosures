@@ -247,7 +247,7 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
 
     sns.set_theme()
     sns.set_style("white")
-    colors = ['k', 'r', 'g', 'b']
+    colors = ['k', 'r', 'g', 'b', 'c', 'm', 'y']
     symbol_size = 0.7
     if len(xs) == 1:
         x = xs[0]
