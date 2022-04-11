@@ -115,7 +115,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m2_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m2_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m2_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m2_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk11_m2_2d_g0["epoch"].to_numpy()],
@@ -124,7 +125,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m2_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m2_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m2_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m2_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk11_m2_2d_g0["epoch"].to_numpy()],
@@ -133,7 +135,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m2_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m2_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m2_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m2_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk13_m2_2d_g0 = load_history_file("paper_data/paper2/2D_M2/mk13_m2_2d_g0/historyLogs/history_002_.csv")
@@ -148,7 +151,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m2_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m2_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m2_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m2_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk13_m2_2d_g0["epoch"].to_numpy()],
@@ -157,7 +161,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m2_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m2_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m2_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m2_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk13_m2_2d_g0["epoch"].to_numpy()],
@@ -166,7 +171,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m2_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m2_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m2_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m2_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk12_m2_2d_g0 = load_history_file("paper_data/paper2/2D_M2/mk12_m2_2d_g0/historyLogs/history_001_.csv")
@@ -181,7 +187,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m2_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m2_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m2_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m2_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk12_m2_2d_g0["epoch"].to_numpy()],
@@ -190,7 +197,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m2_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m2_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m2_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m2_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk12_m2_2d_g0["epoch"].to_numpy()],
@@ -199,7 +207,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m2_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m2_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m2_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m2_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     # --------------- M3 2D -----------------------
@@ -215,7 +224,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m3_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m3_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk11_m3_2d_g0["epoch"].to_numpy()],
@@ -224,7 +234,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m3_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m3_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m3_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m3_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk11_m3_2d_g0["epoch"].to_numpy()],
@@ -233,7 +244,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m3_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m3_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m3_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m3_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk13_m3_2d_g0 = load_history_file("paper_data/paper2/2D_M3/mk13_M3_2D_g0/historyLogs/history_002_.csv")
@@ -248,7 +260,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m3_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m3_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk13_m3_2d_g0["epoch"].to_numpy()],
@@ -257,7 +270,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m3_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m3_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m3_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m3_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk13_m3_2d_g0["epoch"].to_numpy()],
@@ -266,7 +280,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m3_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m3_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m3_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m3_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk12_m3_2d_g0 = load_history_file("paper_data/paper2/2D_M3/mk12_M3_2D_g0/historyLogs/history_001_.csv")
@@ -281,7 +296,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m3_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m3_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m3_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk12_m3_2d_g0["epoch"].to_numpy()],
@@ -290,7 +306,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m3_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m3_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m3_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m3_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk12_m3_2d_g0["epoch"].to_numpy()],
@@ -299,7 +316,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m3_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m3_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m3_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m3_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     # --------------- M4 2D -----------------------
@@ -315,7 +333,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m4_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m4_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m4_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m4_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk11_m4_2d_g0["epoch"].to_numpy()],
@@ -324,7 +343,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m4_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m4_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m4_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m4_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk11_m4_2d_g0["epoch"].to_numpy()],
@@ -333,7 +353,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m4_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m4_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m4_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m4_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk13_m4_2d_g0 = load_history_file("paper_data/paper2/2D_M4/mk13_m4_2d_g0/historyLogs/history_002_.csv")
@@ -348,7 +369,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m4_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m4_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m4_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m4_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk13_m4_2d_g0["epoch"].to_numpy()],
@@ -357,7 +379,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m4_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m4_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m4_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m4_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk13_m4_2d_g0["epoch"].to_numpy()],
@@ -366,7 +389,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m4_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m4_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m4_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m4_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk12_m4_2d_g0 = load_history_file("paper_data/paper2/2D_M4/mk12_m4_2d_g0/historyLogs/history_001_.csv")
@@ -380,7 +404,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m4_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m4_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m4_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m4_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk12_m4_2d_g0["epoch"].to_numpy()],
@@ -389,7 +414,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m4_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m4_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m4_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m4_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk12_m4_2d_g0["epoch"].to_numpy()],
@@ -398,7 +424,8 @@ def print_training_performance():
                get_infinum_subsequence(mk12_m4_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk12_m4_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk12_m4_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk12_m4_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     # ------------------ M5 2D -----------------------------
@@ -415,7 +442,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m5_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m5_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m5_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m5_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk11_m5_2d_g0["epoch"].to_numpy()],
@@ -424,7 +452,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m5_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m5_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m5_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m5_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk11_m5_2d_g0["epoch"].to_numpy()],
@@ -433,7 +462,8 @@ def print_training_performance():
                get_infinum_subsequence(mk11_m5_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk11_m5_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m5_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk11_m5_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk13_m5_2d_g0 = load_history_file("paper_data/paper2/2D_M5/mk13_M5_2D_g0/historyLogs/history_002_.csv")
@@ -448,7 +478,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m5_2d_g2["val_output_1_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m5_2d_g1["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m5_h_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m5_h_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss h", title="", xlim=[0, 2000], ylim=[1e-6, 1e-2])
 
     plot_1dv2([mk13_m5_2d_g0["epoch"].to_numpy()],
@@ -457,7 +488,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m5_2d_g2["val_output_2_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m5_2d_g1["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m5_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m5_alpha_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", title="", xlim=[0, 2000], ylim=[1e-5, 1e-0])
 
     plot_1dv2([mk13_m5_2d_g0["epoch"].to_numpy()],
@@ -466,7 +498,8 @@ def print_training_performance():
                get_infinum_subsequence(mk13_m5_2d_g2["val_output_3_loss"].to_numpy().reshape(n_epochs, 1)),
                get_infinum_subsequence(mk13_m5_2d_g1["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk13_m5_u_gammas", log=True, folder_name="paper_data/paper2/illustrations", show_fig=False,
+              name="loss_mk13_m5_u_gammas", log=True, folder_name="paper_data/paper2/illustrations/training",
+              show_fig=False,
               xlabel="epochs", ylabel="loss u", title="", xlim=[0, 2000], ylim=[1e-7, 1e-2])
 
     mk12_m5_2d_g0 = load_history_file("paper_data/paper2/2D_M5/mk12_M5_2D_g0/historyLogs/history_001_.csv")
