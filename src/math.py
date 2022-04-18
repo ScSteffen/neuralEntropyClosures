@@ -18,7 +18,7 @@ class EntropyTools:
     spatial_dimension: int
     poly_degree: int
     nq: int
-    inputDim: int
+    input_dim: int
     quadPts: tf.Tensor  # dims = (1 x nq)
     quadWeights: tf.Tensor  # dims = (1 x nq)
     momentBasis: tf.Tensor  # dims = (batchSIze x N x nq)
@@ -26,7 +26,12 @@ class EntropyTools:
     opti_m: np.ndarray
     opti_w: np.ndarray
 
-    def __init__(self, polynomial_degree=1, spatial_dimension=1) -> object:
+    # @brief: Regularization Parameter for regularized entropy. =0 means non regularized
+    regularization_gamma: tf.Tensor
+    # @brief: tensor of the form [0,gamma,gamma,...]
+    regularization_gamma_vector: tf.Tensor
+
+    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0) -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
@@ -54,9 +59,13 @@ class EntropyTools:
         self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq),
                                        dtype=tf.float64)
 
-        self.inputDim = m_basis.shape[0]
-        self.momentBasis = tf.constant(m_basis, shape=(self.inputDim, self.nq),
+        self.input_dim = m_basis.shape[0]
+        self.momentBasis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
                                        dtype=tf.float64)
+        self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
+        gamma_vec = gamma * np.ones(shape=(1, self.input_dim))
+        self.regularization_gamma_vector = tf.constant(
+            gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
 
     def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -96,7 +105,8 @@ class EntropyTools:
             alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         # f * w * momentBasis
-        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))
+        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1])) + tf.math.multiply(
+            self.regularization_gamma_vector, alpha)
 
     def compute_u(self, f: tf.Tensor) -> tf.Tensor:
         """
@@ -136,7 +146,37 @@ class EntropyTools:
         # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
         tmp2 = tf.math.reduce_sum(tf.math.multiply(
             alpha, u), axis=1, keepdims=True)
-        return tmp2 - tmp
+        # 0.5*gamma*alpha_r*alpha_r
+        entropy_pt3 = 0.5 * self.regularization_gamma * tf.math.reduce_sum(tf.math.multiply(alpha[:, 1:], alpha[:, 1:]),
+                                                                           axis=1, keepdims=True)
+        return tmp2 - tmp - entropy_pt3
+
+    def compute_h_rot(self, u: tf.Tensor, alpha: tf.Tensor, alpha_orig: tf.Tensor) -> tf.Tensor:
+        """
+        brief: computes the entropy functional h on u and alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+               u, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = alpha*u - <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = tf.math.exp(tf.tensordot(
+            alpha_orig, self.momentBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
+        # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(
+            alpha, u), axis=1, keepdims=True)
+        # 0.5*gamma*alpha_r*alpha_r
+        entropy_pt3 = 0.5 * self.regularization_gamma * tf.math.reduce_sum(tf.math.multiply(alpha[:, 1:], alpha[:, 1:]),
+                                                                           axis=1, keepdims=True)
+        return tmp2 - tmp - entropy_pt3
 
     def compute_h_primal(self, f: tf.Tensor) -> tf.Tensor:
         """
@@ -193,15 +233,6 @@ class EntropyTools:
         self.opti_w = self.quadWeights.numpy()
 
         opti_start = np.reshape(start.numpy(), (dim,))
-
-        # test objective functions
-        # t = self.opti_entropy(opti_start)
-        # tp = self.opti_entropy_prime(opti_start)
-        # tpp = self.opti_entropy_prime2(opti_start)#
-
-        # print(t)
-        # print(tp)
-        # print(tpp)
 
         opt_result = opt.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
                                   hess=self.opti_entropy_prime2, tol=1e-6)
@@ -274,7 +305,7 @@ class EntropyTools:
         """
         # Currently only for maxwell Boltzmann entropy
         f_quad = np.exp(np.tensordot(alpha, self.opti_m,
-                        axes=([0], [0])))  # exp(alpha*m)
+                                     axes=([0], [0])))  # exp(alpha*m)
         tmp = np.multiply(f_quad, self.opti_w)  # f*w
 
         # mm = np.zeros(shape=(self.nq, self.inputDim, self.inputDim))
@@ -485,16 +516,16 @@ def computeMonomialBasis2D(quadPts, polyDegree):
 
     for idx_quad in range(0, nq):
         # Hardcoded for degree 1
-        #monomialBasis[0, idx_quad] = 1.0
-        #monomialBasis[1, idx_quad] = quadPts[idx_quad, 0]
-        #monomialBasis[2, idx_quad] = quadPts[idx_quad, 1]
+        # monomialBasis[0, idx_quad] = 1.0
+        # monomialBasis[1, idx_quad] = quadPts[idx_quad, 0]
+        # monomialBasis[2, idx_quad] = quadPts[idx_quad, 1]
 
         omega_x = quadPts[idx_quad, 0]
         omega_y = quadPts[idx_quad, 1]
 
         idx_vector = 0
         for idx_degree in range(0, polyDegree + 1):
-            for a in range(0, idx_degree+1):
+            for a in range(0, idx_degree + 1):
                 b = idx_degree - a
                 monomialBasis[idx_vector, idx_quad] = np.power(
                     omega_x, a) * np.power(omega_y, b)
@@ -524,4 +555,4 @@ def getCurrDegreeSize(currDegree, spatialDim):
     Computes the number of polynomials of the current spatial dimension
     """
     return np.math.factorial(currDegree + spatialDim - 1) / (
-        np.math.factorial(currDegree) * np.math.factorial(spatialDim - 1))
+            np.math.factorial(currDegree) * np.math.factorial(spatialDim - 1))
