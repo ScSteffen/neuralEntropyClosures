@@ -7,20 +7,19 @@ A Project to construct some neural networks to solve the minimal entropy problem
 * Tensorflow v2.6.0
 * Pandas
 * Numpy
-* Matplotlib
-* Seaborn
 
 ## Available, tested network models ##
 
 * MK11: ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
   network size. Can reconstruct u. Different network call possibilities
 * MK12: ResNet model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
-  network size. Can reconstruct u. Different network call possibilities
+  network size. Can reconstruct u. Different network call possibilities (Not Convex!)
 * MK15: ResNet model that directly approximates alpha and reconstructs u and h. Equipped with Monotonicity loss
 
 ## How to use ## 
 
 Preliminary: Execute package_installer.sh to install all neccessary python packages.
+
 
 ### Training ### 
 
@@ -47,7 +46,7 @@ Options:
 
 Type  "callNeuralClosure.py --help" for information on the options
 
-### Employing a network with KiT-RT C++ framework.
+### Employing a network with KiT-RT C++ framework ###.
 
 Use the [KiT-RT](https://github.com/CSMMLab/KiT-RT) kinetic simulation suite. 
 
