@@ -151,6 +151,33 @@ class EntropyTools:
                                                                            axis=1, keepdims=True)
         return tmp2 - tmp - entropy_pt3
 
+    def compute_h_rot(self, u: tf.Tensor, alpha: tf.Tensor, alpha_orig: tf.Tensor) -> tf.Tensor:
+        """
+        brief: computes the entropy functional h on u and alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+               u, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = alpha*u - <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = tf.math.exp(tf.tensordot(
+            alpha_orig, self.momentBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
+        # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(
+            alpha, u), axis=1, keepdims=True)
+        # 0.5*gamma*alpha_r*alpha_r
+        entropy_pt3 = 0.5 * self.regularization_gamma * tf.math.reduce_sum(tf.math.multiply(alpha[:, 1:], alpha[:, 1:]),
+                                                                           axis=1, keepdims=True)
+        return tmp2 - tmp - entropy_pt3
+
     def compute_h_primal(self, f: tf.Tensor) -> tf.Tensor:
         """
         brief: computes the entropy functional h on u and alpha

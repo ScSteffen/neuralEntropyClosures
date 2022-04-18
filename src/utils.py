@@ -53,7 +53,7 @@ def integrate(x, y):
     return integral
 
 
-def load_data(filename: str, input_dim: int, selected_cols: list = [True, True, True]) -> list:
+def load_data(filename: str, data_dim: int, selected_cols: list = [True, True, True]) -> list:
     '''
     Load training Data from csv file <filename>
     u, alpha have length <inputDim>
@@ -64,9 +64,9 @@ def load_data(filename: str, input_dim: int, selected_cols: list = [True, True, 
 
     print("Loading Data from location: " + filename)
     # determine which cols correspond to u, alpha and h
-    u_cols = list(range(1, input_dim + 1))
-    alpha_cols = list(range(input_dim + 1, 2 * input_dim + 1))
-    h_col = [2 * input_dim + 1]
+    u_cols = list(range(1, data_dim + 1))
+    alpha_cols = list(range(data_dim + 1, 2 * data_dim + 1))
+    h_col = [2 * data_dim + 1]
 
     # selectedCols = self.selectTrainingData() #outputs a boolean triple.
     start = time.time()
@@ -349,7 +349,7 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
     if color_map == 1:
         c_map = cm.summer
     else:
-        c_map = cm.hot
+        c_map = cm.inferno
 
     plt.plot()
     fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
