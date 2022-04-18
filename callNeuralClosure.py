@@ -58,7 +58,7 @@ def initModelCpp(input):
 ### function definitions ###
 def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: str = "testFolder",
                loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
-               input_decorrelation: bool = False, scale_active: bool = True):
+               input_decorrelation: bool = False, scale_active: bool = True, gamma_lvl: int = 0):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -69,7 +69,8 @@ def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int
                                              spatial_dim=spatial_dim,
                                              folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
                                              nw_width=width, normalized=normalized,
-                                             input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                             input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                             gamma_lvl=gamma_lvl)
 
     return 0
 
@@ -162,6 +163,9 @@ def main():
                       help="width of each network layer", metavar="WIDTH")
     parser.add_option("-x", "--networkdepth", dest="networkdepth", default=5,
                       help="height of the network", metavar="HEIGHT")
+    parser.add_option("-y", "--gammalevel", dest="gamma_level", default=0,
+                      help="gamma for regularized entropy closure:\n 0= non regularized:\n 1 = 1e-1\n 2 = 1e-2\n 3 = "
+                           "1e-3", metavar="GAMMA")
 
     (options, args) = parser.parse_args()
     options.objective = int(options.objective)
@@ -181,6 +185,7 @@ def main():
     options.normalized = bool(int(options.normalized))
     options.networkwidth = int(options.networkwidth)
     options.networkdepth = int(options.networkdepth)
+    options.gamma_level = int(options.gamma_level)
 
     # --- End Option Parsing ---
 
@@ -191,15 +196,19 @@ def main():
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
         if tf.test.gpu_device_name():
             print('GPU found. Using GPU')
+            physical_devices = tf.config.list_physical_devices('GPU')
+            for device in physical_devices:
+                tf.config.experimental.set_memory_growth(device, True)
         else:
             print("Disabled GPU. Using CPU")
-
+    # Allow TF to use only part of GPU memory and grow this part at will
+    os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
     # --- initialize model framework
     print("Initialize model")
     init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatial_dimension,
                folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
                width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput,
-               scale_active=options.scaledOutput)
+               scale_active=options.scaledOutput, gamma_lvl=options.gamma_level)
 
     # --- load model data before creating model (important for data scaling)
     if options.training == 1:
@@ -207,7 +216,8 @@ def main():
         # Save options and runscript to file (only for training)
         utils.write_config_file(options, neuralClosureModel)
         neuralClosureModel.load_training_data(shuffle_mode=True, sampling=options.sampling,
-                                              normalized_data=neuralClosureModel.normalized, train_mode=True)
+                                              normalized_data=neuralClosureModel.normalized, train_mode=True,
+                                              gamma_level=options.gamma_level)
     # create model after loading training data to get correct scaling in
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
         neuralClosureModel.load_model()  # also creates model
@@ -229,19 +239,18 @@ def main():
                                                  curriculum=options.curriculum,
                                                  batch_size=options.batch, verbosity=options.verbosity,
                                                  processing_mode=options.processingmode)
-        # save model
-        neuralClosureModel.save_model()
 
     elif options.training == 2:
         print("Analysis mode entered.")
         print("Evaluate Model on normalized data...")
         neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=True,
-                                              scaled_output=options.scaledOutput, train_mode=False)
+                                              scaled_output=options.scaledOutput, train_mode=False,
+                                              gamma_level=options.gamma_level)
         [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model_normalized(u, alpha, h)
         print("Evaluate Model on non-normalized data...")
         neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=False,
-                                              train_mode=False)
+                                              train_mode=False, gamma_level=options.gamma_level)
         [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model(u, alpha, h)
     elif options.training == 3:
@@ -250,7 +259,7 @@ def main():
         neuralClosureModel.load_training_data(shuffle_mode=False,
                                               sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized,
-                                              train_mode=False)
+                                              train_mode=False, gamma_level=options.gamma_level)
 
         # normalize data (experimental)
         # neuralClosureModel.normalizeData()

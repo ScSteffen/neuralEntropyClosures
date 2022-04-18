@@ -11,6 +11,7 @@ from src.networks.mk12 import MK12Network
 from src.networks.mk13 import MK13Network
 from src.networks.mk14 import MK14Network
 from src.networks.mk15 import MK15Network
+from src.networks.mk16 import MK16Network
 
 from src.networks.basenetwork import BaseNetwork
 
@@ -18,7 +19,7 @@ from src.networks.basenetwork import BaseNetwork
 def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: int = 3,
                         folder_name: str = "testFolder", loss_combination: int = 0, nw_width: int = 10,
                         nw_depth: int = 5, normalized: bool = True, input_decorrelation: bool = False,
-                        scale_active: bool = True):
+                        scale_active: bool = True, gamma_lvl: int = 0):
     '''
     params: network_mk = Defines the used network model, i.e. MK1, MK2...
             poly_degree = Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -57,12 +58,14 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
         neural_closure_model = MK11Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized,
-                                           input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                           gamma_lvl=gamma_lvl)
     elif network_mk == 12:
         neural_closure_model = MK12Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized,
-                                           input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                           gamma_lvl=gamma_lvl)
     elif network_mk == 13:
         neural_closure_model = MK13Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
@@ -77,7 +80,14 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
         neural_closure_model = MK15Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
                                            save_folder=folder_name, loss_combination=loss_combination,
                                            width=nw_width, depth=nw_depth, normalized=normalized,
-                                           input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                           gamma_lvl=gamma_lvl)
+    elif network_mk == 16:
+        neural_closure_model = MK16Network(polynomial_degree=poly_degree, spatial_dimension=spatial_dim,
+                                           save_folder=folder_name, loss_combination=loss_combination,
+                                           width=nw_width, depth=nw_depth, normalized=normalized,
+                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                           gamma_lvl=gamma_lvl)
     else:
         print("No available network fits your preferences!")
         exit()

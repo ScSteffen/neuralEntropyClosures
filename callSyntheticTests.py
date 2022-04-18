@@ -51,7 +51,7 @@ def main():
 
     # perform tests on normalized moments
     # load data
-    [u_t, alpha_t, h_t] = src.utils.load_data(filename="data/test_data/Monomial_M1_1D_normal.csv", input_dim=2)
+    [u_t, alpha_t, h_t] = src.utils.load_data(filename="data/test_data/Monomial_M1_1D_normal.csv", data_dim=2)
     u_tnsr = tf.constant(u_t[:, 1], shape=(u_t.shape[0], 1))
 
     if options.legacy:
@@ -91,7 +91,7 @@ def main():
 
     # --- Synthetic test for  alpha vs u sampling ---
 
-    [u_t, alpha_t, h_t] = src.utils.load_data(filename="data/test_data/Monomial_M1_1D_normal.csv", input_dim=2)
+    [u_t, alpha_t, h_t] = src.utils.load_data(filename="data/test_data/Monomial_M1_1D_normal.csv", data_dim=2)
     u_tnsr = tf.constant(u_t[:, 1], shape=(u_t.shape[0], 1))
 
     # load network

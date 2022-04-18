@@ -4,8 +4,9 @@ A Project to construct some neural networks to solve the minimal entropy problem
 
 ## Packages needed
 
-* If you use conda, please consult the installer script '''package_installer.sh'''. If you use pip, consult '''requirements.txt'''. 
-* A ready to use docker container is provided [here](https://hub.docker.com/repository/docker/scsteffen/neural_entropy). One needs the nvidia-docker installed (tutorial available [here](https://www.tensorflow.org/install/docker) and [here](https://github.com/NVIDIA/nvidia-docker)).
+* Tensorflow v2.6.0
+* Pandas
+* Numpy
 
 ## Available, tested network models ##
 
@@ -44,7 +45,6 @@ Options:
 * -x (--networkDepth): Determine depth of the convex block (number of convex hidden layers)
 
 Type  "callNeuralClosure.py --help" for information on the options
-The runScript.sh provides a template for quick bash execution.
 
 ### Employing a network with KiT-RT C++ framework ###.
 
