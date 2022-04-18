@@ -5,6 +5,7 @@ date: 12.04.22
 
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 from src.math import EntropyTools
 from src.networks.configmodel import init_neural_closure
@@ -30,11 +31,35 @@ def main():
         u_batch[i, :] = l * u_orig1 + (1 - l) * u_orig2
 
     # Rotate+evaluate
-    h = rotate_evaluate_M2(tf.constant(u_batch))
+    h_res, h_r, h_l, alpha_res, alpha_r, alpha_l = rotate_evaluate_M2_network(u_batch)
+
+    # reconstruct u.... to check prediction
+    alpha = tf.constant(alpha_res, dtype=tf.float64)
+    alpha = et2.reconstruct_alpha(alpha)
+    u_res = et2.reconstruct_u(alpha).numpy()
+    alpha = tf.constant(alpha_r, dtype=tf.float64)
+    alpha = et2.reconstruct_alpha(alpha)
+    u_res_r = et2.reconstruct_u(alpha).numpy()
+    alpha = tf.constant(alpha_l, dtype=tf.float64)
+    alpha = et2.reconstruct_alpha(alpha)
+    u_res_l = et2.reconstruct_u(alpha).numpy()
+
+    # check against normal evaluation
+    mk11_m2_2d_g0 = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=2, folder_name="tmp",
+                                        loss_combination=2, nw_width=100, nw_depth=3, normalized=True,
+                                        input_decorrelation=True, scale_active=False, gamma_lvl=0)
+    mk11_m2_2d_g0.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g0/")
+    [h_pred, alpha_pred, u_pred] = mk11_m2_2d_g0.model(tf.constant(u_batch[:, 1:]))
+    t = u_pred.numpy()
+    plt.plot(lambdas, h_res)
+    plt.plot(lambdas, h_r)
+    plt.plot(lambdas, h_l)
+    plt.legend(["average", "right", "left"])
+    plt.show()
     return 0
 
 
-def rotate_evaluate_M2(u_batch: tf.Tensor) -> tf.Tensor:
+def rotate_evaluate_M2_network(u_batch: np.ndarray):
     """
     brief: Rotates to x-line, evaluates, rotates back
     """
@@ -44,7 +69,64 @@ def rotate_evaluate_M2(u_batch: tf.Tensor) -> tf.Tensor:
                                         input_decorrelation=True, scale_active=False, gamma_lvl=0)
     mk11_m2_2d_g0.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g0/")
 
-    u_rot_batch = tf.identity(u_batch)
+    u_rot_batch = np.zeros(shape=(u_batch.shape[0], u_batch.shape[1] - 1))
+    u_mirr_batch = np.zeros(shape=(u_batch.shape[0], u_batch.shape[1] - 1))
+
+    G_list = []
+    G_mirror = -np.eye(N=2)
+
+    # 2) Rotate all tensors to v_x line in u_1
+    for i in range(u_batch.shape[0]):
+        u_orig_1 = u_batch[i, 1:3]
+        u_orig_2 = np.asarray([[u_batch[i, 3], u_batch[i, 4]], [u_batch[i, 4], u_batch[i, 5]]])
+        # Rotate to x-axis
+        G = create_rotator(u_orig_1)
+        G_list.append(G)
+        u_rot_1 = rotate_m1(u_orig_1, G)
+        u_rot_2 = rotate_m2(u_orig_2, G)
+        u_rot_batch[i, :] = np.asarray([u_rot_1[0], u_rot_1[1], u_rot_2[0, 0], u_rot_2[1, 0], u_rot_2[1, 1]])
+        # Rotate by 180 degrees to mirror on origin
+        u_mirr_1 = rotate_m1(u_rot_1, G_mirror)
+        u_mirr_2 = rotate_m2(u_rot_2, G_mirror)
+        u_mirr_batch[i, :] = np.asarray([u_mirr_1[0], u_mirr_1[1], u_mirr_2[0, 0], u_mirr_2[1, 0], u_mirr_2[1, 1]])
+    # 3) Evaluatate model
+    [h_pred, alpha_pred, _] = mk11_m2_2d_g0.model(tf.constant(u_rot_batch))
+    [h_pred_mir, alpha_pred_mir, _] = mk11_m2_2d_g0.model(tf.constant(u_mirr_batch))
+    alpha_pred_mir = alpha_pred_mir.numpy()
+    alpha_pred = alpha_pred.numpy()
+    # 4) rotate alpha of odd moments (back) by 180 degrees (even moments ignore the -eye rotation matrix)
+    alpha_pred_mir[:, :2] = - alpha_pred_mir[:, :2]
+    # 5)  Average
+    h_res = (h_pred_mir + h_pred) / 2
+    h_res = h_res.numpy()
+    alpha_res = (alpha_pred + alpha_pred_mir) / 2
+
+    # 4) Rotate alpha_res back to original position
+    for i in range(u_batch.shape[0]):
+        alpha_res_1 = alpha_res[i, :2]
+        alpha_res_2 = np.asarray([[alpha_res[i, 2], alpha_res[i, 3]], [alpha_res[i, 3], alpha_res[i, 4]]])
+        alpha_res_rot_1 = back_rotate_m1(alpha_res_1, G_list[i])
+        alpha_res_rot_2 = back_rotate_m1(alpha_res_2, G_list[i])
+        alpha_res[i, :] = np.asarray(
+            [alpha_res_rot_1[0], alpha_res_rot_1[1], alpha_res_rot_2[0, 0], alpha_res_rot_2[1, 0],
+             alpha_res_rot_2[1, 1]])
+
+    return h_res, h_pred, h_pred_mir, alpha_res, alpha_pred, alpha_pred_mir
+
+
+def rotate_evaluate_M2_entropy(u_batch: np.ndarray) -> tf.Tensor:
+    """
+    brief: Rotates to x-line, evaluates, rotates back
+    """
+    # 1)  load model
+    mk11_m2_2d_g0 = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=2, folder_name="tmp",
+                                        loss_combination=2, nw_width=100, nw_depth=3, normalized=True,
+                                        input_decorrelation=True, scale_active=False, gamma_lvl=0)
+    mk11_m2_2d_g0.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g0/")
+
+    u_rot_batch = np.zeros(shape=(u_batch.shape[0], u_batch.shape[1] - 1))
+    u_mirr_batch = np.zeros(shape=(u_batch.shape[0], u_batch.shape[1] - 1))
+
     G_list = []
     # 2) Rotate all tensors to v_x line in u_1
     for i in range(u_batch.shape[0]):
@@ -55,24 +137,20 @@ def rotate_evaluate_M2(u_batch: tf.Tensor) -> tf.Tensor:
         G_list.append(G)
         u_rot_1 = rotate_m1(u_orig_1, G)
         u_rot_2 = rotate_m2(u_orig_2, G)
-        u_rot_batch[i, :] = tf.constant(
-            np.asarray([u_batch[i, 0], u_rot_1[0], u_rot_1[1], u_rot_2[0, 0], u_rot_2[1, 0], u_rot_2[1, 1]]))
+        u_rot_batch[i, :] = np.asarray([u_rot_1[0], u_rot_1[1], u_rot_2[0, 0], u_rot_2[1, 0], u_rot_2[1, 1]])
         # Rotate by 180 degrees to mirror on origin
-        G_mirror = create_rotator(np.asarray([-u_orig_1[0], u_orig_1[1]]))
+        G_mirror = -G
+        u_mirr_1 = rotate_m1(u_orig_1, G_mirror)
+        u_mirr_2 = rotate_m2(u_orig_2, G_mirror)
+        u_mirr_batch[i, :] = np.asarray([u_mirr_1[0], u_mirr_1[1], u_mirr_2[0, 0], u_mirr_2[1, 0], u_mirr_2[1, 1]])
+    # 3) Evaluatate model
+    [h_pred, alpha_pred, _] = mk11_m2_2d_g0.model(tf.constant(u_rot_batch))
+    [h_pred_mir, alpha_pred_mir, _] = mk11_m2_2d_g0.model(tf.constant(u_mirr_batch))
+    # 3)  Average
+    h_res = (h_pred_mir + h_pred) / 2
+    alpha_res = (alpha_pred + alpha_pred_mir) / 2
 
-        # 3) Evaluatate model
-    [h_pred, alpha_pred, u_pred] = mk11_m2_2d_g0(u_rot_batch)
-    # 4) Rotate back
-    for i in range(u_batch.shape[0]):
-        u_orig_1 = u_rot_batch[i, 1:3]
-        u_orig_2 = np.asarray([[u_rot_batch[i, 3], u_rot_batch[i, 4]], [u_rot_batch[i, 4], u_rot_batch[i, 5]]])
-        # Rotate
-        u_rot_1 = back_rotate_m1(u_orig_1, G)
-        u_rot_2 = back_rotate_m2(u_orig_2, G)
-        u_rot_batch[i, :] = tf.constant(
-            np.asarray([u_batch[i, 0], u_rot_1[0], u_rot_1[1], u_rot_2[0, 0], u_rot_2[1, 0], u_rot_2[1, 1]]))
-
-    return h_pred
+    return h_res, alpha_res
 
 
 def create_rotator(u_1_in) -> np.ndarray:
