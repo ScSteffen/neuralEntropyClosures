@@ -19,14 +19,15 @@ import csv
 
 from src.networks.basenetwork import BaseNetwork
 from src.networks.customlosses import MonotonicFunctionLoss, RelativeMAELoss
-from src.networks.custommodels import EntropyModel
+from src.networks.entropymodels import EntropyModel
 from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 
 
 class MK15Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
-                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True):
+                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
+                 gamma_lvl: int = 0):
         if save_folder == "":
             custom_folder_name = "MK15_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
@@ -34,7 +35,8 @@ class MK15Network(BaseNetwork):
         super(MK15Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
-                                          input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                          input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                          gamma_lvl=gamma_lvl)
 
     def create_model(self) -> bool:
 
@@ -94,9 +96,9 @@ class MK15Network(BaseNetwork):
         core_model.summary()
         # build model
         model = EntropyModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
-                             reconstruct_u=bool(self.loss_weights[2]),
-                             scaler_max=self.scaler_max, scaler_min=self.scaler_min, scale_active=self.scale_active,
-                             name="entropy_wrapper")
+                             reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
+                             scaler_min=self.scaler_min, scale_active=self.scale_active, name="entropy_wrapper",
+                             gamma=self.regularization_gamma)
 
         batch_size = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
@@ -118,17 +120,13 @@ class MK15Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        x_data = self.training_data[0]
-        # t1 = self.training_data
-        # t2 = self.model(self.training_data[1][:1000, :])
-        # print(t2[2] - tf.constant(self.training_data[0][:1000, :], dtype=tf.float64))  # sanity check u
-        # print(t2[1] - tf.constant(self.training_data[1][:1000, :], dtype=tf.float32))  # sanity check alpha
-        # print(t2[3] - tf.constant(self.training_data[2][:1000, :], dtype=tf.float64))  # sanity check h
 
-        # u_tf = tf.constant(self.training_data[0])
-        # alpha_tf = tf.constant(self.training_data[1])
-        # t = self.model.compute_h(u_tf, alpha_tf)
-        # print(t - tf.constant(self.training_data[2]))
+        # u_tf = tf.constant(self.training_data[0][:50, :])
+        # alpha_tf = tf.constant(self.training_data[1][:50, :])
+        # h_tf = tf.constant(self.training_data[2][:50, :])
+        # [a_res, a_res, u_res, h_res] = self.model(alpha_tf)
+
+        x_data = self.training_data[0]
         y_data = [tf.constant(self.training_data[1], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float32),
                   tf.constant(self.training_data[0], dtype=tf.float64),

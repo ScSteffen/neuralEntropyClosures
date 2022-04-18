@@ -1,5 +1,5 @@
 """
-Script to call different plots and illustrative methods
+Script to call different plots and illustrative methods - specifically tailored for the paper
 Author: Steffen Schotthoefer
 Version: 0.1
 Date 22.10.2021
@@ -41,21 +41,6 @@ def main():
             folder_name="paper_data/1D_M2",
             linetypes=['o', '^'], xlim=[0, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
             title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
-
-    # --- inflow M2 1D Data Dynamics
-    """
-    [x, _, kinetic_f] = load_density_function("test_a10_ev5.csv")
-
-    for i in range(kinetic_f.shape[0]):
-        plt.plot(x[0], kinetic_f[i, :])
-
-    plt.ylim(0, 3)
-    plt.savefig("test_a10_ev5")
-    # for i in range(int(kinetic_f.shape[0] / 5)):
-    #    kinetic_list = [kinetic_f[i + 0], kinetic_f[i + 1], kinetic_f[i + 2], kinetic_f[i + 3], kinetic_f[i + 4]]
-    #    plot_1d(x, kinetic_list, show_fig=False, log=False, name='kinetics_kond3_' + str(i).zfill(3), ylim=[0, 3],
-    #            xlim=[x[0, 0], x[0, -1]])
-    """
 
     # --- inflow M1 1D --- illustration
     [u_neural15, u_ref15] = load_solution("paper_data/1D_M1/1D_M1_MK15_inflow.csv")
@@ -168,7 +153,7 @@ def main():
             log=False, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
 
     # --- Realizable set illustrations ---
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", data_dim=3,
                               selected_cols=[True, True, True])
     max_h = 3
     min_h = np.min(h)
@@ -183,7 +168,7 @@ def main():
                     folder_name="paper_data/1D_M2", name="normal_u_Monomial_M2_1D_alpha", show_fig=False, log=False,
                     color_map=0)
 
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", data_dim=3,
                               selected_cols=[True, True, True])
     # max_h = np.max(h)
     # min_h = np.min(h)
@@ -199,7 +184,7 @@ def main():
                     log=False,
                     color_map=0)
 
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_gaussian.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_gaussian.csv", data_dim=3,
                               selected_cols=[True, True, True])
     # max_h = np.max(h)
     # min_h = np.min(h)

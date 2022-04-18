@@ -1,90 +1,111 @@
 '''
 Network class "MK12" for the neural entropy closure.
-As MK11, but dense network instead of ICNN
+As MK11, but resnet network instead of ICNN
 Author: Steffen Schotthöfer
 Version: 0.0
-Date 09.04.2020
+Date 09.01.2022
 '''
 import tensorflow as tf
 from tensorflow import keras as keras
 from tensorflow.keras import layers
-import numpy as np
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.custommodels import SobolevModel
-from tensorflow.keras.constraints import NonNeg
+from src.networks.entropymodels import SobolevModel
+from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
 
 
 class MK12Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
-                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True):
+                 width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
+                 gamma_lvl: int = 0):
         if save_folder == "":
-            custom_folder_name = "MK12_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
+            custom_folder_name = "MK12_N" + \
+                str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
         super(MK12Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
-                                          input_decorrelation=input_decorrelation, scale_active=scale_active)
+                                          input_decorrelation=input_decorrelation, scale_active=scale_active,
+                                          gamma_lvl=gamma_lvl)
 
     def create_model(self) -> bool:
 
-        layerDim = self.model_width
-
         # Weight initializer
-        initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
-        input_stddev: float = np.sqrt(
-            (1 / 1.1) * (1 / self.input_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        initializer_input = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
-        stddev = np.sqrt(
-            (1 / 1.1) * (1 / self.model_width) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        initializer = keras.initializers.RandomNormal(mean=0., stddev=stddev)
-        # initializer = tf.keras.initializers.LecunNormal()
+        initializer = keras.initializers.LecunNormal()
+
         # Weight regularizer
-        l1l2Regularizer = tf.keras.regularizers.L1L2(l1=0.001, l2=0.0001)  # L1 + L2 penalties
+        l2_regularizer = tf.keras.regularizers.L2(
+            l2=0.0001)  # L1 + L2 penalties
+
+        ### build the core network ###
+
+        # Define Residual block
+        def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
+            # ResNet architecture by https://arxiv.org/abs/1603.05027
+            # 1) BN that normalizes each feature individually (axis=-1)
+            #y = keras.layers.BatchNormalization()(x)
+            y = keras.activations.softplus(x)  # 2) activation
+            # 3) layer without activation
+            y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
+                             bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                             bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(y)
+            # 4) BN that normalizes each feature individually (axis=-1)
+            #y = keras.layers.BatchNormalization()(y)
+            # y = keras.activations.softplus(y)  # 5) activation
+            # 6) layer
+            # y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
+            #                 bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+            #                 bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(y)
+            # 7) add skip connection
+            out = keras.layers.Add()([x, y])
+            return out
 
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.input_dim,))
-        # First Layer is a std dense layer
-        hidden = layers.Dense(layerDim, activation="selu",
-                              kernel_initializer=initializer_input,
-                              kernel_regularizer=l1l2Regularizer,
-                              bias_initializer='zeros',
-                              name="first_dense"
-                              )(input_)
-        # other layers are convexLayers
-        for idx in range(0, self.model_depth):
-            hidden = layers.Dense(self.model_width, activation="selu",
-                                  # kernel_constraint=NonNeg(),
-                                  kernel_initializer=initializer,
-                                  kernel_regularizer=l1l2Regularizer,
-                                  bias_initializer='zeros',
-                                  name="dense_" + str(idx)
-                                  )(hidden)
-        output_ = layers.Dense(1, activation="relu",
-                               kernel_initializer=initializer,
-                               # kernel_regularizer=l1l2Regularizer,
-                               bias_initializer='zeros',
-                               name="dense_output"
-                               )(hidden)  # outputlayer
+        if self.input_decorrelation and self.input_dim > 1:
+            hidden = MeanShiftLayer(
+                input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = DecorrelationLayer(
+                input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
+                                  use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                                  bias_regularizer=l2_regularizer, name="layer_input")(hidden)
+        else:
+            hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
+                                  use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
+                                  bias_regularizer=l2_regularizer, name="layer_input")(input_)
 
+        # build resnet blocks
+        for idx in range(0, self.model_depth):
+            hidden = residual_block(
+                hidden, layer_dim=self.model_width, layer_idx=idx)
+        # if self.scale_active:
+        #    output_ = layers.Dense(1, activation="relu", kernel_initializer=initializer, name="dense_output",
+        #                           kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)
+        # else:
+        output_ = layers.Dense(1, activation=None, kernel_initializer=initializer, name="dense_output",
+                               kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
         # Create the core model
-        coreModel = keras.Model(inputs=[input_], outputs=[output_], name="Icnn_closure")
+        core_model = keras.Model(inputs=[input_], outputs=[
+                                 output_], name="ResNet_entropy_closure")
+
+        print("The core model overview")
+        core_model.summary()
+        print("The sobolev wrapped model overview")
 
         # build model
-        model = SobolevModel(coreModel, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
-                             reconstruct_u=bool(self.loss_weights[2]), scale_factor=self.scaler_max - self.scaler_min,
-                             name="sobolev_icnn_wrapper")
+        model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
+                             reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
+                             scaler_min=self.scaler_min, scale_active=self.scale_active,
+                             gamma=self.regularization_gamma, name="sobolev_resnet_wrapper")
 
-        batchSize = 2  # dummy entry
-        model.build(input_shape=(batchSize, self.input_dim))
-
-        # model.compile(loss=tf.keras.losses.MeanSquaredError(),
-        #              # loss={'output_1': tf.keras.losses.MeanSquaredError()},
-        #              # loss_weights={'output_1': 1, 'output_2': 0},
-        #              optimizer='adam',
-        #              metrics=['mean_absolute_error', 'mean_squared_error'])
+        # build graph
+        batch_size: int = 3  # dummy entry
+        model.build(input_shape=(batch_size, self.input_dim))
+        print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
+            self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
                   'output_3': tf.keras.losses.MeanSquaredError()},
@@ -92,9 +113,6 @@ class MK12Network(BaseNetwork):
                           'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
-        # model.summary()
-        # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
-        # show_layer_names = True, rankdir = 'TB', expand_nested = True)
         self.model = model
         return True
 
@@ -102,12 +120,23 @@ class MK12Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
+        #u_in = self.training_data[0][:10]
+        #alpha_in = self.training_data[1][:10]
+        ##h_in = self.training_data[2][:10]
+        ## alpha_test = [[-0.391], [-0.2248], [1.9629]]
+        ##u_test = [[-0.39], [-0.2248], [1.962]]
+        #[h, alpha, u] = self.model(alpha_in)
+        # print(u_in)
+        # print(u)
+        # print(alpha_in)
+        #print(alpha[:, 1:])
+        # print(self.model.moment_basis.shape)
+        # exit(0)
         x_data = self.training_data[0]
-        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
-        self.model.fit(x=x_data, y=y_data,
-                       validation_split=val_split, epochs=epoch_size,
-                       batch_size=batch_size, verbose=verbosity_mode,
-                       callbacks=callback_list, shuffle=True)
+        y_data = [self.training_data[2], self.training_data[1],
+                  self.training_data[0]]  # , self.trainingData[1]]
+        self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size, batch_size=batch_size,
+                       verbose=verbosity_mode, callbacks=callback_list, shuffle=True)
         return self.history
 
     def select_training_data(self):
@@ -127,7 +156,9 @@ class MK12Network(BaseNetwork):
         """
         u_reduced = u_complete[:, 1:]  # chop of u_0
         [h_predicted, alpha_predicted] = self.model(u_reduced)
-        alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
-        u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
+        alpha_complete_predicted = self.model.reconstruct_alpha(
+            alpha_predicted)
+        u_complete_reconstructed = self.model.reconstruct_u(
+            alpha_complete_predicted)
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]

@@ -15,6 +15,7 @@ import seaborn as sns
 import os
 from pathlib import Path
 import git
+from datetime import date
 
 
 # plt.style.use("kitish")
@@ -52,7 +53,7 @@ def integrate(x, y):
     return integral
 
 
-def load_data(filename: str, input_dim: int, selected_cols: list = [True, True, True]) -> list:
+def load_data(filename: str, data_dim: int, selected_cols: list = [True, True, True]) -> list:
     '''
     Load training Data from csv file <filename>
     u, alpha have length <inputDim>
@@ -63,9 +64,9 @@ def load_data(filename: str, input_dim: int, selected_cols: list = [True, True, 
 
     print("Loading Data from location: " + filename)
     # determine which cols correspond to u, alpha and h
-    u_cols = list(range(1, input_dim + 1))
-    alpha_cols = list(range(input_dim + 1, 2 * input_dim + 1))
-    h_col = [2 * input_dim + 1]
+    u_cols = list(range(1, data_dim + 1))
+    alpha_cols = list(range(data_dim + 1, 2 * data_dim + 1))
+    h_col = [2 * data_dim + 1]
 
     # selectedCols = self.selectTrainingData() #outputs a boolean triple.
     start = time.time()
@@ -105,6 +106,27 @@ def load_density_function(filename: str) -> list:
     end = time.time()
     print("Data loaded. Elapsed time: " + str(end - start))
     return [x, weights, f_kinetic]
+
+
+def load_density_function2D(filename: str) -> list:
+    '''
+    Load training Data from csv file <filename>
+    u, alpha have length <inputDim>
+    returns: training_data = [u,alpha,h]
+    '''
+    print("Loading Data from location: " + filename)
+    start = time.time()
+    df = pd.read_csv(filename, header=None)
+    df = df.drop(df.columns[0], axis=1)
+    data = df.to_numpy()
+    x = data[0, :].reshape((1, len(data[0, :])))
+    y = data[1, :].reshape((1, len(data[0, :])))
+
+    weights = data[3, :].reshape((1, len(data[0, :])))
+    f_kinetic = data[4, :]
+    end = time.time()
+    print("Data loaded. Elapsed time: " + str(end - start))
+    return [x, y, weights, f_kinetic]
 
 
 def load_solution(filename: str) -> list:
@@ -201,8 +223,77 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=12)
     plt.title(title, fontsize=14)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    return 0
+
+
+def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
+              show_fig=False,
+              xlim=None, ylim=None, xlabel=None, ylabel=None, title: str = r"$h^n$ over ${\mathcal{R}^r}$"):
+    """
+    Expected shape for x in xs : (nx,)
+                       y in ys : (1,nx)
+    """
+    plt.clf()
+    plt.figure(figsize=(5.8, 4.7), dpi=400)
+    if not linetypes:
+        linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
+                     'h',
+                     'H',
+                     '+', 'x', 'D', 'd', '|']
+        if labels is not None:
+            linetypes = linetypes[0:len(labels)]
+
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['k', 'r', 'g', 'b', 'c', 'm', 'y']
+    symbol_size = 0.7
+    if len(xs) == 1:
+        x = xs[0]
+        i = 0
+        for y, lineType in zip(ys, linetypes):
+            if lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
+                if colors[i] == 'k':
+                    plt.plot(x, y, 'w' + lineType, linewidth=symbol_size, markersize=2.5,
+                             markeredgewidth=0.5, markeredgecolor='k')
+                else:
+                    plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size, markersize=2.5,
+                             markeredgewidth=0.5, markeredgecolor='k')
+            else:
+                plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
+            i += 1
+        if labels != None:
+            plt.legend(labels)
+    elif len(xs) is not len(ys):
+        print("Error: List of x entries must be of same length as y entries")
+        exit(1)
+    else:
+        for x, y, lineType, color in zip(xs, ys, linetypes, colors):
+            plt.plot(x, y, color + lineType, linewidth=symbol_size)
+        plt.legend(labels)  # , prop={'size': 6})
+    if log:
+        plt.yscale('log')
+    if loglog:
+        plt.yscale('log')
+        plt.xscale('log')
+    if show_fig:
+        plt.show()
+    if ylim is not None:
+        plt.ylim(ylim[0], ylim[1])
+    if xlim is not None:
+        plt.xlim(xlim[0], xlim[1])
+    if xlabel is not None:
+        plt.xlabel(xlabel, fontsize=12)
+        # plt.xticks(fontsize=6)
+        # plt.yticks(fontsize=6)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=12)
+    # plt.title(title, fontsize=14)
+    plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.close()
     return 0
 
 
@@ -240,7 +331,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     cbar = fig.colorbar(out, ax=ax, extend='both')
     if show_fig:
         plt.show()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
     return 0
 
 
@@ -258,7 +349,7 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
     if color_map == 1:
         c_map = cm.summer
     else:
-        c_map = cm.hot
+        c_map = cm.inferno
 
     plt.plot()
     fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
@@ -286,7 +377,7 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
     cbar = fig.colorbar(out, ax=ax, extend='both')
     if show_fig:
         plt.show()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=150)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
     return 0
 
 
@@ -333,8 +424,10 @@ def write_config_file(options, neural_closure_model):
     repo = git.Repo(search_parent_directories=True)
     sha = repo.head.object.hexsha
     print("Current git checkout: " + str(sha))
+    curr_date = date.today()
     # Print chosen options to csv
-    d = {'git_version': [sha],
+    d = {'date': [curr_date],
+         'git_version': [sha],
          'sampling': [options.sampling],
          'batch': [options.batch],
          'curriculum': [options.curriculum],
