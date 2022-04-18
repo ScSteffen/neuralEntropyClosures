@@ -153,7 +153,7 @@ def main():
             log=False, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
 
     # --- Realizable set illustrations ---
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", data_dim=3,
                               selected_cols=[True, True, True])
     max_h = 3
     min_h = np.min(h)
@@ -168,7 +168,7 @@ def main():
                     folder_name="paper_data/1D_M2", name="normal_u_Monomial_M2_1D_alpha", show_fig=False, log=False,
                     color_map=0)
 
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", data_dim=3,
                               selected_cols=[True, True, True])
     # max_h = np.max(h)
     # min_h = np.min(h)
@@ -184,7 +184,7 @@ def main():
                     log=False,
                     color_map=0)
 
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_gaussian.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_gaussian.csv", data_dim=3,
                               selected_cols=[True, True, True])
     # max_h = np.max(h)
     # min_h = np.min(h)

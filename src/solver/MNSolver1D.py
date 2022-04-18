@@ -16,7 +16,6 @@ import multiprocessing
 import pandas as pd
 
 # inpackage imports
-# from networks.configModel import initNeuralClosure
 from src import math
 from src.networks.configmodel import init_neural_closure
 
