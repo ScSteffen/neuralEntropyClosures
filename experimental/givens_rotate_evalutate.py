@@ -5,6 +5,7 @@ date: 12.04.22
 
 import numpy as np
 import tensorflow as tf
+import random
 import matplotlib.pyplot as plt
 
 from src.math import EntropyTools
@@ -12,13 +13,23 @@ from src.networks.configmodel import init_neural_closure
 
 
 def main():
+    err_list = []
+    for i in range(100):
+        alpha1 = np.random.uniform(low=-10, high=10, size=(1, 5))
+        alpha2 = np.random.uniform(low=-10, high=10, size=(1, 5))
+        err_list.append(tester(alpha1, alpha2))
+
+    return 0
+
+
+def tester(alpha1: np.ndarray, alpha2: np.ndarray):
     # Construct two moments
     et2 = EntropyTools(polynomial_degree=2, spatial_dimension=2)
-    alpha_orig = tf.constant([[3, 2, 1, 0.5, 0.2]], dtype=tf.float64)
+    alpha_orig = tf.constant(alpha1, dtype=tf.float64)
     alpha_orig = et2.reconstruct_alpha(alpha_orig)
     u_orig1 = et2.reconstruct_u(alpha_orig).numpy()
     alpha_orig1 = alpha_orig.numpy()
-    alpha_orig = tf.constant([[5, 0, -1, -2.5, -0.2]], dtype=tf.float64)
+    alpha_orig = tf.constant(alpha2, dtype=tf.float64)
     alpha_orig = et2.reconstruct_alpha(alpha_orig)
     u_orig2 = et2.reconstruct_u(alpha_orig).numpy()
     alpha_orig2 = alpha_orig.numpy()
@@ -31,18 +42,12 @@ def main():
         u_batch[i, :] = l * u_orig1 + (1 - l) * u_orig2
 
     # Rotate+evaluate
-    h_res, h_r, h_l, alpha_res, alpha_r, alpha_l = rotate_evaluate_M2_network(u_batch)
+    h_res, alpha_res = rotate_evaluate_M2_network(u_batch)
 
     # reconstruct u.... to check prediction
     alpha = tf.constant(alpha_res, dtype=tf.float64)
     alpha = et2.reconstruct_alpha(alpha)
     u_res = et2.reconstruct_u(alpha).numpy()
-    alpha = tf.constant(alpha_r, dtype=tf.float64)
-    alpha = et2.reconstruct_alpha(alpha)
-    u_res_r = et2.reconstruct_u(alpha).numpy()
-    alpha = tf.constant(alpha_l, dtype=tf.float64)
-    alpha = et2.reconstruct_alpha(alpha)
-    u_res_l = et2.reconstruct_u(alpha).numpy()
 
     # check against normal evaluation
     mk11_m2_2d_g0 = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=2, folder_name="tmp",
@@ -50,13 +55,16 @@ def main():
                                         input_decorrelation=True, scale_active=False, gamma_lvl=0)
     mk11_m2_2d_g0.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g0/")
     [h_pred, alpha_pred, u_pred] = mk11_m2_2d_g0.model(tf.constant(u_batch[:, 1:]))
-    t = u_pred.numpy()
-    plt.plot(lambdas, h_res)
-    plt.plot(lambdas, h_r)
-    plt.plot(lambdas, h_l)
-    plt.legend(["average", "right", "left"])
-    plt.show()
-    return 0
+    u_not_rotated = u_pred.numpy()
+
+    # plt.plot(lambdas, h_res)
+    # plt.plot(lambdas, h_r)
+    # plt.plot(lambdas, h_l)
+    # plt.legend(["average", "right", "left"])
+    # plt.show()
+
+    err = np.abs(u_res[:, 1:] - u_not_rotated)
+    return err
 
 
 def rotate_evaluate_M2_network(u_batch: np.ndarray):
@@ -104,14 +112,14 @@ def rotate_evaluate_M2_network(u_batch: np.ndarray):
     # 4) Rotate alpha_res back to original position
     for i in range(u_batch.shape[0]):
         alpha_res_1 = alpha_res[i, :2]
-        alpha_res_2 = np.asarray([[alpha_res[i, 2], alpha_res[i, 3]], [alpha_res[i, 3], alpha_res[i, 4]]])
+        alpha_res_2 = np.asarray([[alpha_res[i, 2], alpha_res[i, 3] * 0.5], [alpha_res[i, 3] * 0.5, alpha_res[i, 4]]])
         alpha_res_rot_1 = back_rotate_m1(alpha_res_1, G_list[i])
-        alpha_res_rot_2 = back_rotate_m1(alpha_res_2, G_list[i])
+        alpha_res_rot_2 = back_rotate_m2(alpha_res_2, G_list[i])
         alpha_res[i, :] = np.asarray(
-            [alpha_res_rot_1[0], alpha_res_rot_1[1], alpha_res_rot_2[0, 0], alpha_res_rot_2[1, 0],
+            [alpha_res_rot_1[0], alpha_res_rot_1[1], alpha_res_rot_2[0, 0], 2 * alpha_res_rot_2[1, 0],
              alpha_res_rot_2[1, 1]])
 
-    return h_res, h_pred, h_pred_mir, alpha_res, alpha_pred, alpha_pred_mir
+    return h_res, alpha_res
 
 
 def rotate_evaluate_M2_entropy(u_batch: np.ndarray) -> tf.Tensor:
