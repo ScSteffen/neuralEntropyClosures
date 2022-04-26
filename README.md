@@ -7,9 +7,9 @@ Computational Backbone for the following publications:
 ## Content
 
 * [Installation](#Installation)
-* [ilable network models](#ilable network models)
+* [Available network models](#Available network models)
 * [Training](#Training)
-* [Employing a network with KiT-RT C++ framework](#Employing a network with KiT-RT C++ framework)
+* [Usage with solver](#Usage with solver)
 * [Citation Info](#Cite)
 
 
@@ -56,7 +56,7 @@ Options:
 
 Type  "callNeuralClosure.py --help" for information on the options
 
-## Employing a network with KiT-RT C++ framework
+## Usage with solver
 
 Use the [KiT-RT](https://github.com/CSMMLab/KiT-RT) kinetic simulation suite. 
 
