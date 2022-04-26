@@ -6,11 +6,11 @@ Computational Backbone for the following publications:
 
 ## Content
 
-* [Installation](#Installation)
-* [Available network models](#Available network models)
-* [Training](#Training)
-* [Usage with solver](#Usage with solver)
-* [Citation Info](#Cite)
+* [Installation](##Installation)
+* [Available network models](##Models)
+* [Training](##Training)
+* [Usage with solver](##Solver)
+* [Citation Info](##Cite)
 
 
 ## Installation
@@ -20,7 +20,7 @@ Preliminary: Execute package_installer.sh to install all neccessary python packa
 pip install -r requirements.txt
 ```
 
-## Available network models
+## Models
 
 * MK11: ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
   network size. Can reconstruct u. Different network call possibilities
@@ -56,7 +56,7 @@ Options:
 
 Type  "callNeuralClosure.py --help" for information on the options
 
-## Usage with solver
+## Solver
 
 Use the [KiT-RT](https://github.com/CSMMLab/KiT-RT) kinetic simulation suite. 
 
