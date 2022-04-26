@@ -61,9 +61,6 @@ Type  "callNeuralClosure.py --help" for information on the options
 Use the [KiT-RT](https://github.com/CSMMLab/KiT-RT) kinetic simulation suite. 
 
 ## Cite
-
-## Cite
-
 ```
 @article{neuralEntropyClosure,
   author = {Schotthöfer, Steffen},
