@@ -6,11 +6,11 @@ Computational Backbone for the following publications:
 
 ## Content
 
-* [Installation](##Installation)
-* [Available network models](##Models)
-* [Training](##Training)
-* [Usage with solver](##Solver)
-* [Citation Info](##Cite)
+* [Installation](#Installation)
+* [Available network models](#Models)
+* [Training](#Training)
+* [Usage with solver](#Solver)
+* [Citation Info](#Cite)
 
 
 ## Installation
