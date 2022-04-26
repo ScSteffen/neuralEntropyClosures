@@ -1,4 +1,5 @@
-# neuralEntropyClosures package for deep learning entropy closures for the boltzmann equation
+# neuralEntropyClosures
+The repo contains neural network models and supplementary code for the minimal entropy closure of the Boltzmann moment system
 
 Computational Backbone for the following publications:
 * [Neural network-based, structure-preserving entropy closures for the Boltzmann moment system](https://arxiv.org/abs/2201.10364)
