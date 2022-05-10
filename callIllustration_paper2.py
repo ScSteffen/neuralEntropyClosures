@@ -19,10 +19,16 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 1) Training performance
-    print_training_performance()
+    # print_training_performance()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
+
+    # 3) Print memory-computational cost study
+    # print_comp_efficiency_memory()
+
+    # 4) Print cross sections
+    print_cross_sections()
     return True
 
 
@@ -537,6 +543,89 @@ def print_training_performance():
     return 0
 
 
+def print_cross_sections():
+    names = ["linesource_M4_g1", "linesource_N2_g0", "linesource_N2_g1", "linesource_N2_g2", "linesource_N2_g3",
+             "linesource_N2_g0_r", "linesource_N2_g1_r", "linesource_N2_g2_r", "linesource_N2_g3_r"]
+
+    for name in names:
+        print_single_xs(name)
+    return 0
+
+
+def print_single_xs(name):
+    load_name = "paper_data/paper2/linesource/cross_sections/"
+    save_name = "paper_data/paper2/illustrations/cross_sections/"
+    df_analytic = pd.read_csv(load_name + "linesource_analytic.csv")
+    x_analytic = df_analytic["Points:0"].to_numpy()
+    y_analytic = df_analytic["Points:1"].to_numpy()
+    xy = np.vstack([x_analytic, y_analytic]).T
+    radius_analytic = np.linalg.norm(xy, axis=1)
+    radius_analytic[:int(len(radius_analytic) / 2)] = -radius_analytic[:int(len(radius_analytic) / 2)]
+
+    df_name_vert = pd.read_csv(load_name + name + "_vert.csv")
+    x_analytic = df_name_vert["Points:0"].to_numpy()
+    y_analytic = df_name_vert["Points:1"].to_numpy()
+    xy = np.vstack([x_analytic, y_analytic]).T
+    radius_vert = np.linalg.norm(xy, axis=1)
+    radius_vert[:int(len(radius_vert) / 2)] = -radius_vert[:int(len(radius_vert) / 2)]
+
+    df_name_45 = pd.read_csv(load_name + name + ".csv")
+    x_analytic = df_name_45["Points:0"].to_numpy()
+    y_analytic = df_name_45["Points:1"].to_numpy()
+    xy = np.vstack([x_analytic, y_analytic]).T
+    radius_45 = np.linalg.norm(xy, axis=1)
+    radius_45[:int(len(radius_vert) / 2)] = -radius_45[:int(len(radius_45) / 2)]
+
+    plt.clf()
+    sns.set_theme()
+    sns.set_style("white")
+    plt.plot(radius_analytic, df_analytic["analytic radiation flux density"], "-k")
+    plt.plot(radius_vert, df_name_vert["radiation flux density"], "-b")
+    plt.plot(radius_45, df_name_45["radiation flux density"], "-.r")
+    plt.xlim([-1, 1])
+    plt.legend(["analytic", "vertical", "diagonal"], loc="upper left")
+    plt.xlabel("radius")
+    plt.ylabel("scalar flux")
+    plt.savefig(save_name + name + ".png", dpi=500)
+    plt.clf()
+
+
+def print_comp_efficiency_memory():
+    # list of tuples in format (time,sys_size)
+    data = [(105.570747, 6), (131.381264, 12), (285.899369, 20), (547.719602, 49), (1014.543704, 72), (356.75354, 100),
+            (1648.625912, 400), (4119.824155, 900), (30975.63164, 1600), (83928.613993, 2500), (16140.171279, 6),
+            (31281.166781, 10), (1658.046172, 6), (1884.270762, 10),
+            (2094.88887, 15), (2515.013316, 6), (1652.840298, 6), (1895.105454, 10), ]
+    # list of method names
+    names = [r"$P_2$", r"$P_3$", r"$P_5$", r"$P_7$", r"$P_9$", r"$S_{10}$", r"$S_{20}$", r"$S_{30}$", r"$S_{40}$",
+             r"$S_{50}$", r"$M_2^{\gamma_3}$", r"$M_3^{\gamma_3}$", r"$\mathcal{N}_{2}$", r"$\mathcal{N}_{3}$",
+             r"$\mathcal{N}_{4}$", r"$\mathcal{N}_{2}^{{rot}}$",
+             r"$M_{2,\mathcal{N}}^{\gamma_3}$", r"$M_{3,\mathcal{N}}^{\gamma_3}$"]
+
+    plt.clf()
+    sns.set_theme()
+    sns.set_style("white")
+    fig, ax = plt.subplots()
+
+    for i in range(len(data) - 2):
+        # circle = plt.Circle(data[i], radius=1)
+        plt.scatter(data[i][1], data[i][0], s=10, facecolors='red', edgecolors='red')
+        # ax.add_patch(circle)
+        label = ax.annotate(names[i], xy=(data[i][1], data[i][0]), fontsize=15, ha="center")
+
+    # ax.axis('off')
+    # ax.set_aspect('equal')
+    # ax.autoscale_view()
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("system size")
+    plt.ylabel("time [s]")
+    # plt.show()
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/methods.png", dpi=500)
+
+    return 0
+
+
 def get_infinum_subsequence(time_series: np.ndarray):
     """
     returns g(x_i) = min_k=1...,i g(x_k)
@@ -597,7 +686,7 @@ def plot_1dx(x, ys, labels=None, name='defaultName', log=True, folder_name="figu
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=12)
     plt.title(title, fontsize=14)
-    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     return 0
 
