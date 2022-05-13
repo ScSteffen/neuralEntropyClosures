@@ -1,27 +1,38 @@
-# neuralEntropy package for deep learning entropy closures for the boltzmann equation
+# neuralEntropyClosures
+The repo contains neural network models and supplementary code for the minimal entropy closure of the Boltzmann moment system
 
-A Project to construct some neural networks to solve the minimal entropy problem.
+Computational Backbone for the following publications:
+* [Neural network-based, structure-preserving entropy closures for the Boltzmann moment system](https://arxiv.org/abs/2201.10364)
+* [A structure-preserving surrogate model for the closure of the moment system of the Boltzmann equation using convex deep neural networks](https://arxiv.org/abs/2106.09445) (Accepted to AIAA Aviation Forum 2021, Conference Manuscript)
 
-## Packages needed
+## Content
 
-* Tensorflow v2.6.0
-* Pandas
-* Numpy
+* [Installation](#Installation)
+* [Available network models](#Models)
+* [Training](#Training)
+* [Usage with solver](#Solver)
+* [Citation Info](#Cite)
 
-## Available, tested network models ##
+
+## Installation
+
+Preliminary: Execute package_installer.sh to install all neccessary python packages. Or use
+```
+pip install -r requirements.txt
+```
+
+## Models
 
 * MK11: ICNN model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
   network size. Can reconstruct u. Different network call possibilities
 * MK12: ResNet model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
   network size. Can reconstruct u. Different network call possibilities (Not Convex!)
+* MK13: ICNN-ResNet model with sobolev core to train the mapping u to h, alpha (RMSE loss). Uses normalized data. Variable
+  network size. Can reconstruct u. Different network call possibilities
 * MK15: ResNet model that directly approximates alpha and reconstructs u and h. Equipped with Monotonicity loss
 
-## How to use ## 
 
-Preliminary: Execute package_installer.sh to install all neccessary python packages.
-
-
-### Training ### 
+## Training  
 
 To perform an end to end training for a network, call the "callNeuralClosure.py".
 
@@ -46,7 +57,19 @@ Options:
 
 Type  "callNeuralClosure.py --help" for information on the options
 
-### Employing a network with KiT-RT C++ framework ###.
+## Solver
 
 Use the [KiT-RT](https://github.com/CSMMLab/KiT-RT) kinetic simulation suite. 
 
+## Cite
+```
+@article{neuralEntropyClosure,
+  author = {Schotthöfer, Steffen},
+  title = {neuralEntropyClosure - Github Repository},
+  year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/ScSteffen/neuralEntropyClosures}},
+  commit = {af8e47386115b89a16f0f105e8302b650f47e68d}
+}
+``` 
