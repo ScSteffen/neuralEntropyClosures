@@ -28,7 +28,10 @@ def main():
     # print_comp_efficiency_memory()
 
     # 4) Print cross sections
-    print_cross_sections()
+    # print_cross_sections()
+
+    # 5) Print method errors
+    print_method_errors()
     return True
 
 
@@ -544,8 +547,14 @@ def print_training_performance():
 
 
 def print_cross_sections():
-    names = ["linesource_M4_g1", "linesource_N2_g0", "linesource_N2_g1", "linesource_N2_g2", "linesource_N2_g3",
-             "linesource_N2_g0_r", "linesource_N2_g1_r", "linesource_N2_g2_r", "linesource_N2_g3_r"]
+    names = ["linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3", "linesource_M4_g1",
+             "linesource_N2_g0", "linesource_N2_g1", "linesource_N2_g2", "linesource_N2_g3",
+             "linesource_N2_g0_r", "linesource_N2_g1_r", "linesource_N2_g2_r", "linesource_N2_g3_r",
+             "linesource_N2_g0_resnet", "linesource_N2_g1_resnet", "linesource_N2_g2_resnet", "linesource_N2_g3_resnet",
+             "linesource_N2_g0_r_resnet", "linesource_N2_g1_r_resnet", "linesource_N2_g2_r_resnet",
+             "linesource_N2_g3_r_resnet", "linesource_M4_g1",
+             "linesource_M3_g0", "linesource_M3_g1", "linesource_M3_g3",
+             "linesource_N3_g0", "linesource_N3_g1", "linesource_N3_g2", "linesource_N3_g3", ]
 
     for name in names:
         print_single_xs(name)
@@ -576,17 +585,22 @@ def print_single_xs(name):
     radius_45 = np.linalg.norm(xy, axis=1)
     radius_45[:int(len(radius_vert) / 2)] = -radius_45[:int(len(radius_45) / 2)]
 
+    # t = np.sum(df_analytic["analytic radiation flux density"].to_numpy())
+    # t2 = np.sum(df_name_vert["radiation flux density"].to_numpy())
+    # t3 = np.sum(df_name_45["radiation flux density"].to_numpy())
+
+    # ratio = t / t2
     plt.clf()
     sns.set_theme()
     sns.set_style("white")
-    plt.plot(radius_analytic, df_analytic["analytic radiation flux density"], "-k")
+    plt.plot(radius_analytic, df_analytic["analytic radiation flux density"] / 2, "-k")
     plt.plot(radius_vert, df_name_vert["radiation flux density"], "-b")
     plt.plot(radius_45, df_name_45["radiation flux density"], "-.r")
     plt.xlim([-1, 1])
     plt.legend(["analytic", "vertical", "diagonal"], loc="upper left")
     plt.xlabel("radius")
     plt.ylabel("scalar flux")
-    plt.savefig(save_name + name + ".png", dpi=500)
+    plt.savefig(save_name + "xs_" + name + ".png", dpi=500)
     plt.clf()
 
 
@@ -622,6 +636,136 @@ def print_comp_efficiency_memory():
     plt.ylabel("time [s]")
     # plt.show()
     plt.savefig("paper_data/paper2/illustrations/hohlraum/methods.png", dpi=500)
+
+    return 0
+
+
+def print_method_errors():
+    # list of tuples in format (time,sys_size)
+    # data = [(105.570747, 6),  # P2
+    #        (131.381264, 12),  # P3
+    #        (285.899369, 20),  # P5
+    #        (547.719602, 49),  # P7
+    #        (1014.543704, 72),  # P9
+    #        (356.75354, 100),  # S10
+    #        (1648.625912, 400),  # S20
+    #        (4119.824155, 900),  # S30
+    #        (30975.63164, 1600),  # S40
+    #        (83928.613993, 2500),  # S50
+    #        (16140.171279, 6),  # M2_g3
+    #        (31281.166781, 10),  # M3_g3
+    #        (1658.046172, 6),  # N2_g3
+    #        (1884.270762, 10),  # N3_g3
+    #        (2094.88887, 15),  # N4_g3
+    #        (2515.013316, 6),  # N2_g3_rot
+    #        (1652.840298, 6), (1895.105454, 10), ]
+    df = pd.read_csv("paper_data/paper2/hohlraum/errors/method_errors.csv", delimiter=";")
+    # list of method names
+    # names = [r"$P_2$", r"$P_3$", r"$P_5$", r"$P_7$", r"$P_9$", r"$S_{10}$", r"$S_{20}$", r"$S_{30}$", r"$S_{40}$",
+    #         r"$S_{50}$", r"$M_2^{\gamma_3}$", r"$M_3^{\gamma_3}$", r"$\mathcal{N}_{2}$", r"$\mathcal{N}_{3}$",
+    #         r"$\mathcal{N}_{4}$", r"$\mathcal{N}_{2}^{{rot}}$",
+    #         r"$M_{2,\mathcal{N}}^{\gamma_3}$", r"$M_{3,\mathcal{N}}^{\gamma_3}$"]
+
+    names = [r"$M_2^{\gamma_3}$",
+             r"$M_3^{\gamma_3}$",
+             r"$\mathcal{N}_2$",
+             r"$\mathcal{N}_2^{\gamma_1}$",
+             r"$\mathcal{N}_2^{\gamma_2}$",
+             r"$\mathcal{N}_2^{\gamma_3}$",
+             r"$\mathcal{N}_2^{r}$",
+             r"$\mathcal{N}_2^{\gamma_1,r}$",
+             r"$\mathcal{N}_2^{\gamma_2,r}$",
+             r"$\mathcal{N}_2^{\gamma_3,r}$",
+             r"$\mathcal{N}_3$",
+             r"$\mathcal{N}_3^{\gamma_1}$",
+             r"$\mathcal{N}_3^{\gamma_2}$",
+             r"$\mathcal{N}_3^{\gamma_3}$",
+             r"$\mathcal{N}_4$",
+             r"$\mathcal{N}_4^{\gamma_1}$",
+             r"$\mathcal{N}_4^{\gamma_2}$",
+             r"$\mathcal{N}_4^{\gamma_3}$",
+             r"$S_{10}$",
+             r"$S_{20}$",
+             r"$S_{30}$",
+             r"$S_{40}$",
+             r"$S_{50}$",
+             r"$P_{2}$",
+             r"$P_{3}$",
+             r"$P_{5}$",
+             r"$P_{7}$",
+             r"$P_{9}$"]
+    errors = df["spatial_error"].to_numpy(dtype=np.float)
+    sys_size = df["sys_size"].to_numpy()
+    timing = df["timing"].to_numpy()
+
+    plt.clf()
+    sns.set_theme()
+    sns.set_style("white")
+    fig, ax = plt.subplots()
+
+    indices = [0, 1, 2, 5, ]
+    # a) sysSize over errror
+    for i in range(df.shape[0]):
+        # circle = plt.Circle(data[i], radius=1)
+        plt.scatter(sys_size[i], errors[i], s=10, facecolors='red', edgecolors='red')
+        # ax.add_patch(circle)
+        label = ax.annotate(names[i], xy=(sys_size[i], errors[i]), fontsize=15, ha="center")
+
+    # ax.axis('off')
+    # ax.set_aspect('equal')
+    # ax.autoscale_view()
+    plt.xscale("log")
+    plt.yscale("linear")
+    plt.xlabel("system size")
+    plt.ylabel("error")
+    # plt.show()
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500)
+    plt.clf()
+
+    # b) timing over errror
+    plt.clf()
+    sns.set_theme()
+    sns.set_style("white")
+    fig, ax = plt.subplots()
+    for i in range(df.shape[0]):
+        # circle = plt.Circle(data[i], radius=1)
+        plt.scatter(timing[i], errors[i], s=10, facecolors='red', edgecolors='red')
+        # ax.add_patch(circle)
+        label = ax.annotate(names[i], xy=(timing[i], errors[i]), fontsize=15, ha="center")
+
+        # ax.axis('off')
+    # ax.set_aspect('equal')
+    # ax.autoscale_view()
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("timing")
+    plt.ylabel("error")
+    # plt.show()
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500)
+    plt.clf()
+
+    # c) sys size vs timing
+    plt.clf()
+    sns.set_theme()
+    sns.set_style("white")
+    fig, ax = plt.subplots()
+    for i in range(df.shape[0]):
+        # circle = plt.Circle(data[i], radius=1)
+        plt.scatter(sys_size[i], timing[i], s=10, facecolors='red', edgecolors='red')
+        # ax.add_patch(circle)
+        label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
+
+        # ax.axis('off')
+    # ax.set_aspect('equal')
+    # ax.autoscale_view()
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("system size")
+    plt.ylabel("timing")
+    # plt.show()
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500)
+
+    plt.clf()
 
     return 0
 
