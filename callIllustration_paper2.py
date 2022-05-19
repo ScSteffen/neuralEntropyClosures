@@ -698,36 +698,105 @@ def print_method_errors():
     sys_size = df["sys_size"].to_numpy()
     timing = df["timing"].to_numpy()
 
+    indices_ref = [0, 1, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+
+    indices_N2 = [2, 4, 5]
+    indices_N2_rot = [6, 8, 9]
+    indices_N3 = [10, 12, 13]
+    indices_N4 = [14, 16, 17]
+    errors_N2_mean = np.mean(errors[indices_N2])
+    errors_N2_std = np.std(errors[indices_N2])
+    errors_N3_mean = np.mean(errors[indices_N3])
+    errors_N3_std = np.std(errors[indices_N3])
+    errors_N2_r_mean = np.mean(errors[indices_N2_rot])
+    errors_N2_r_std = np.std(errors[indices_N2_rot])
+    errors_N4_mean = np.mean(errors[indices_N4])
+    errors_N4_std = np.std(errors[indices_N4])
+
+    # a) sysSize over errror
+
     plt.clf()
     sns.set_theme()
     sns.set_style("white")
     fig, ax = plt.subplots()
 
-    indices = [0, 1, 2, 5, ]
-    # a) sysSize over errror
-    for i in range(df.shape[0]):
+    plt.scatter(sys_size[2], errors_N2_mean, s=10, facecolors='blue', edgecolors='blue')
+    ax.errorbar(sys_size[2], y=errors_N2_mean,
+                yerr=errors_N2_std,
+                alpha=0.5,
+                ecolor='blue',
+                capsize=10)
+
+    plt.scatter(sys_size[7], errors_N2_r_mean, s=10, facecolors='green', edgecolors='green')
+    ax.errorbar(sys_size[7], y=errors_N2_r_mean,
+                yerr=errors_N2_std,
+                alpha=0.5,
+                ecolor='green',
+                capsize=10)
+
+    plt.scatter(sys_size[11], errors_N3_mean, s=10, facecolors='cyan', edgecolors='cyan')
+    ax.errorbar(sys_size[11], y=errors_N3_mean,
+                yerr=errors_N2_std,
+                alpha=0.5,
+                ecolor='cyan',
+                capsize=10)
+
+    plt.scatter(sys_size[14], errors_N4_mean, s=10, facecolors='orange', edgecolors='orange')
+    ax.errorbar(sys_size[14], y=errors_N4_mean,
+                yerr=errors_N4_std,
+                alpha=0.5,
+                ecolor='orange',
+                capsize=10)
+    plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
+
+    for i in indices_ref:
         # circle = plt.Circle(data[i], radius=1)
         plt.scatter(sys_size[i], errors[i], s=10, facecolors='red', edgecolors='red')
         # ax.add_patch(circle)
         label = ax.annotate(names[i], xy=(sys_size[i], errors[i]), fontsize=15, ha="center")
 
-    # ax.axis('off')
-    # ax.set_aspect('equal')
-    # ax.autoscale_view()
     plt.xscale("log")
     plt.yscale("linear")
     plt.xlabel("system size")
-    plt.ylabel("error")
+    plt.ylabel(r'$|M_N -S_{50}|$')
     # plt.show()
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500)
     plt.clf()
 
     # b) timing over errror
-    plt.clf()
     sns.set_theme()
     sns.set_style("white")
     fig, ax = plt.subplots()
-    for i in range(df.shape[0]):
+    plt.scatter(timing[2], errors_N2_mean, s=10, facecolors='blue', edgecolors='blue')
+    ax.errorbar(timing[2], y=errors_N2_mean,
+                yerr=errors_N2_std,
+                alpha=0.5,
+                ecolor='blue',
+                capsize=10)
+
+    plt.scatter(timing[7], errors_N2_r_mean, s=10, facecolors='green', edgecolors='green')
+    ax.errorbar(timing[7], y=errors_N2_r_mean,
+                yerr=errors_N2_std,
+                alpha=0.5,
+                ecolor='green',
+                capsize=10)
+
+    plt.scatter(timing[11], errors_N3_mean, s=10, facecolors='cyan', edgecolors='cyan')
+    ax.errorbar(timing[11], y=errors_N3_mean,
+                yerr=errors_N2_std,
+                alpha=0.5,
+                ecolor='cyan',
+                capsize=10)
+
+    plt.scatter(timing[14], errors_N4_mean, s=10, facecolors='orange', edgecolors='orange')
+    ax.errorbar(timing[14], y=errors_N4_mean,
+                yerr=errors_N4_std,
+                alpha=0.5,
+                ecolor='orange',
+                capsize=10)
+    plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
+
+    for i in indices_ref:
         # circle = plt.Circle(data[i], radius=1)
         plt.scatter(timing[i], errors[i], s=10, facecolors='red', edgecolors='red')
         # ax.add_patch(circle)
@@ -738,8 +807,8 @@ def print_method_errors():
     # ax.autoscale_view()
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("timing")
-    plt.ylabel("error")
+    plt.xlabel("simulation time")
+    plt.ylabel(r'$|M_N -S_{50}|$')
     # plt.show()
     plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500)
     plt.clf()
@@ -749,22 +818,61 @@ def print_method_errors():
     sns.set_theme()
     sns.set_style("white")
     fig, ax = plt.subplots()
-    for i in range(df.shape[0]):
+
+    plt.scatter(sys_size[2], timing[2], s=10, facecolors='red', edgecolors='red')
+    label = ax.annotate(names[2], xy=(sys_size[2], timing[2],), fontsize=15, ha="center")
+    plt.scatter(sys_size[7], timing[7], s=10, facecolors='red', edgecolors='red')
+    label = ax.annotate(names[6], xy=(sys_size[7], timing[7],), fontsize=15, ha="center")
+    plt.scatter(sys_size[11], timing[11], s=10, facecolors='red', edgecolors='red')
+    label = ax.annotate(names[10], xy=(sys_size[11], timing[11],), fontsize=15, ha="center")
+    plt.scatter(sys_size[14], timing[14], s=10, facecolors='red', edgecolors='red')
+    label = ax.annotate(names[14], xy=(sys_size[14], timing[14],), fontsize=15, ha="center")
+
+    # plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
+
+    for i in indices_ref:
         # circle = plt.Circle(data[i], radius=1)
         plt.scatter(sys_size[i], timing[i], s=10, facecolors='red', edgecolors='red')
-        # ax.add_patch(circle)
-        label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
+    # ax.add_patch(circle)
+    label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
 
-        # ax.axis('off')
+    # ax.axis('off')
     # ax.set_aspect('equal')
     # ax.autoscale_view()
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("system size")
-    plt.ylabel("timing")
+    plt.ylabel("simulation time")
     # plt.show()
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500)
+    plt.clf()
 
+    # d) plot only neural network errors
+    sns.set_theme()
+    sns.set_style("white")
+    fig, ax = plt.subplots()
+
+    indices_g0 = [2, 6, 10, 14]
+    indices_g1 = [3, 7, 11, 15]
+    indices_g2 = [4, 8, 12, 16]
+    indices_g3 = [5, 9, 13, 17]
+
+    ind = np.arange(4)  # the x locations for the groups
+    width = 0.1  # the width of the bars
+
+    rects1 = ax.bar(ind, errors[indices_g0], width, color='k')  # g0
+    rects4 = ax.bar(ind + width, errors[indices_g3], width, color='b')  # g3
+    rects3 = ax.bar(ind + 2 * width, errors[indices_g2], width, color='g')  # g2
+    rects2 = ax.bar(ind + 3 * width, errors[indices_g1], width, color='r')  # g1
+
+    # add some
+    ax.set_ylabel(r'$|M_N -S_{50}|$, ICNN based')
+    ax.set_xticks(ind + width / 2)
+    ax.set_xticklabels((r'$M_2$', r'$M_2$, rot', r'$M_3$', r'$M_4$'))
+    ax.legend((rects1[0], rects4[0], rects3[0], rects2[0]),
+              (r'$\gamma=0$', r'$\gamma=0.001$', r'$\gamma=0.01$', r'$\gamma=0.1$'))
+
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/neural_error_bars.png", dpi=500, bbox_inches="tight")
     plt.clf()
 
     return 0
@@ -807,7 +915,6 @@ def plot_1dx(x, ys, labels=None, name='defaultName', log=True, folder_name="figu
     colors = ['k', 'r', 'g', 'b']
     symbol_size = 0.7
 
-    x
     count = 0
     for y, lineType in zip(ys, linetypes):
         plt.plot(x, y, colors + lineType, linewidth=symbol_size, markersize=2.5,
