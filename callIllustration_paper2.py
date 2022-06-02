@@ -758,9 +758,9 @@ def print_method_errors():
     plt.xscale("log")
     plt.yscale("linear")
     plt.xlabel("system size")
-    plt.ylabel(r'$|M_N -S_{50}|$')
+    plt.ylabel(r'$|$ solution $  -S_{50}|$')
     # plt.show()
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500)
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
 
     # b) timing over errror
@@ -808,9 +808,9 @@ def print_method_errors():
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("simulation time")
-    plt.ylabel(r'$|M_N -S_{50}|$')
+    plt.ylabel(r'$|$ solution $ -S_{50}|$')
     # plt.show()
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500)
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
 
     # c) sys size vs timing
@@ -831,20 +831,15 @@ def print_method_errors():
     # plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
 
     for i in indices_ref:
-        # circle = plt.Circle(data[i], radius=1)
         plt.scatter(sys_size[i], timing[i], s=10, facecolors='red', edgecolors='red')
-    # ax.add_patch(circle)
-    label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
+        label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
 
-    # ax.axis('off')
-    # ax.set_aspect('equal')
-    # ax.autoscale_view()
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("system size")
     plt.ylabel("simulation time")
     # plt.show()
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500)
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500, bbox_inches="tight")
     plt.clf()
 
     # d) plot only neural network errors
@@ -867,7 +862,7 @@ def print_method_errors():
 
     # add some
     ax.set_ylabel(r'$|M_N -S_{50}|$, ICNN based')
-    ax.set_xticks(ind + width / 2)
+    ax.set_xticks(ind + width * 2)
     ax.set_xticklabels((r'$M_2$', r'$M_2$, rot', r'$M_3$', r'$M_4$'))
     ax.legend((rects1[0], rects4[0], rects3[0], rects2[0]),
               (r'$\gamma=0$', r'$\gamma=0.001$', r'$\gamma=0.01$', r'$\gamma=0.1$'))
