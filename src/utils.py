@@ -433,7 +433,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     if color_map == 1:
         c_map = cm.summer
     else:
-        c_map = cm.hot
+        c_map = cm.inferno
 
     fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
     # ax = fig.add_subplot(111)  # , projection='3d')
@@ -472,7 +472,7 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
     if color_map == 1:
         c_map = cm.summer
     else:
-        c_map = cm.hot
+        c_map = cm.inferno
 
     plt.plot()
     fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
