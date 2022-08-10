@@ -19,7 +19,7 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 1) Training performance
-    # print_training_performance()
+    print_training_performance()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
@@ -694,7 +694,7 @@ def print_method_errors():
              r"$P_{5}$",
              r"$P_{7}$",
              r"$P_{9}$"]
-    errors = df["spatial_error"].to_numpy(dtype=np.float)
+    errors = df["spatial_error"].to_numpy(dtype=float)
     sys_size = df["sys_size"].to_numpy()
     timing = df["timing"].to_numpy()
 
