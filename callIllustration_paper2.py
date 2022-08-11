@@ -38,8 +38,29 @@ def main():
     # print_method_errors()
 
     # 6) Print realizable set
-    print_realizable_set()
+    # print_realizable_set()
+    print_entropies()
     return True
+
+
+def print_entropies():
+    # 1) gamma 0
+    [u_g0, alpha_g0, h_g0] = load_data(filename="paper_data/paper2/realizable_set/M1_1D_g0.csv", data_dim=2,
+                                       selected_cols=[True, True, True])
+    [u_g3, alpha_g3, h_g3] = load_data(filename="paper_data/paper2/realizable_set/M1_1D_g3.csv", data_dim=2,
+                                       selected_cols=[True, True, True])
+    [u_g2, alpha_g2, h_g2] = load_data(filename="paper_data/paper2/realizable_set/M1_1D_g2.csv", data_dim=2,
+                                       selected_cols=[True, True, True])
+    [u_g1, alpha_g1, h_g1] = load_data(filename="paper_data/paper2/realizable_set/M1_1D_g1.csv", data_dim=2,
+                                       selected_cols=[True, True, True])
+    t0 = u_g0[:, 1].argsort()
+    t1 = u_g1[:, 1].argsort()
+    t2 = u_g2[:, 1].argsort()
+    t3 = u_g3[:, 1].argsort()
+    plot_1dv2(xs=[u_g0[t0, 1:], u_g3[t3, 1:], u_g2[t2, 1:], u_g1[t1, 1:]], ys=[h_g0[t0], h_g3[t3], h_g2[t2], h_g1[t1]],
+              xlim=(-1.3, 1.3), ylim=(-1.7, 0.5), xlabel=r"$u_1^n$", ylabel=r"$h^\gamma$",
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"], name="entropy_gammas",
+              log=False, folder_name="paper_data/paper2/illustrations/realizable_set", title="")
 
 
 def print_realizable_set():
@@ -136,22 +157,22 @@ def test_on_realizable_set_m2():
     mk11_m2_2d_g0 = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=2, folder_name="tmp",
                                         loss_combination=2, nw_width=100, nw_depth=3, normalized=True,
                                         input_decorrelation=True, scale_active=False, gamma_lvl=0)
-    mk11_m2_2d_g0.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g0/")
+    mk11_m2_2d_g0.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g0")
 
     mk11_m2_2d_g1 = init_neural_closure(network_mk=13, poly_degree=2, spatial_dim=2, folder_name="tmp",
                                         loss_combination=2, nw_width=100, nw_depth=3, normalized=True,
                                         input_decorrelation=True, scale_active=False, gamma_lvl=1)
-    mk11_m2_2d_g1.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g1_v2/")
+    mk11_m2_2d_g1.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g1_v2")
 
     mk11_m2_2d_g2 = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=2, folder_name="tmp",
                                         loss_combination=2, nw_width=100, nw_depth=3, normalized=True,
                                         input_decorrelation=True, scale_active=False, gamma_lvl=2)
-    mk11_m2_2d_g2.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g2/")
+    mk11_m2_2d_g2.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g2")
 
     mk11_m2_2d_g3 = init_neural_closure(network_mk=11, poly_degree=2, spatial_dim=2, folder_name="tmp",
                                         loss_combination=2, nw_width=100, nw_depth=3, normalized=True,
                                         input_decorrelation=True, scale_active=False, gamma_lvl=3)
-    mk11_m2_2d_g3.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g3/")
+    mk11_m2_2d_g3.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g3")
 
     # define curve in set of lagrange multipliers
     [u_recons, alpha_recons, h_recons, t_param] = get_lagrange_curve(poly_degree=2, spatial_dim=2, dim=5, n=100)
