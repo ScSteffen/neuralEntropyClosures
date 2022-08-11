@@ -1,0 +1,2 @@
+2022-05-05 15:59:04.826288 ,| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3.
+2022-05-05 16:00:21.175193 ,Iter,Mass,RMS_flux,VTK_out,CSV_out
