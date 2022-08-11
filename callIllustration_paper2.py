@@ -10,16 +10,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
-from src.utils import plot_1d, plot_1dv2, scatter_plot_2d
+from src.utils import plot_1d, plot_1dv2, scatter_plot_2d, load_data, scatter_plot_2d_N2
 from src.networks.configmodel import init_neural_closure
 from src.math import EntropyTools
+
+from adjustText import adjust_text
+from scipy.spatial import ConvexHull, convex_hull_plot_2d
+import pylab
 
 
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 1) Training performance
-    print_training_performance()
+    # print_training_performance()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
@@ -27,12 +31,105 @@ def main():
     # 3) Print memory-computational cost study
     # print_comp_efficiency_memory()
 
-    # 4) Print cross sections
+    # 4) Print cross-sections
     # print_cross_sections()
 
     # 5) Print method errors
-    print_method_errors()
+    # print_method_errors()
+
+    # 6) Print realizable set
+    print_realizable_set()
     return True
+
+
+def print_realizable_set():
+    # 1) gamma 0
+    [u_g0, alpha_g0, h] = load_data(filename="paper_data/paper2/realizable_set/M2_1D_g0.csv", data_dim=3,
+                                    selected_cols=[True, True, True])
+    [u_g3, alpha_g3, h] = load_data(filename="paper_data/paper2/realizable_set/M2_1D_g3.csv", data_dim=3,
+                                    selected_cols=[True, True, True])
+    [u_g2, alpha_g2, h] = load_data(filename="paper_data/paper2/realizable_set/M2_1D_g2.csv", data_dim=3,
+                                    selected_cols=[True, True, True])
+    [u_g1, alpha_g1, h] = load_data(filename="paper_data/paper2/realizable_set/M2_1D_g1.csv", data_dim=3,
+                                    selected_cols=[True, True, True])
+
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['k-', 'r-', 'g-', 'b-']
+    symbol_size = 0.7
+
+    points_g0 = u_g0[:, 1:]
+    hull = ConvexHull(points_g0)
+    for simplex in hull.simplices:
+        line1 = plt.plot(points_g0[simplex, 0], points_g0[simplex, 1], colors[0], linewidth=symbol_size)
+
+    # 2) gamma 0.001
+    points_g3 = u_g3[:, 1:]
+    hull = ConvexHull(points_g3)
+    for simplex in hull.simplices:
+        line2 = plt.plot(points_g3[simplex, 0], points_g3[simplex, 1], colors[1], linewidth=symbol_size)
+
+    # 3) gamma 0.01
+    points_g2 = u_g2[:, 1:]
+    hull = ConvexHull(points_g2)
+    for simplex in hull.simplices:
+        line3 = plt.plot(points_g2[simplex, 0], points_g2[simplex, 1], colors[2], linewidth=symbol_size)
+
+    # 4) gamma 0.1
+    points_g1 = u_g1[:, 1:]
+    hull = ConvexHull(points_g1)
+    for simplex in hull.simplices:
+        line4 = plt.plot(points_g1[simplex, 0], points_g1[simplex, 1], colors[3], linewidth=symbol_size)
+
+    plt.legend(
+        [line1[0], line2[0], line3[0], line4[0]], [r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+        loc="upper left")
+    plt.xlabel(r"$u_1^n$")
+    plt.ylabel(r"$u_2^n$")
+
+    plt.savefig("paper_data/paper2/illustrations/realizable_set/realizable_set_gammas" + ".png", dpi=400)
+    print(
+        "Figure successfully saved to file: " + str(
+            "paper_data/paper2/illustrations/realizable_set/realizable_set_gammas" + ".png"))
+
+    # ---- alphas
+    """
+    plt.clf()
+    points_g0 = alpha_g0[:, 1:]
+    hull = ConvexHull(points_g0)
+    for simplex in hull.simplices:
+        line1 = plt.plot(points_g0[simplex, 0], points_g0[simplex, 1], colors[0], linewidth=symbol_size)
+
+    # 2) gamma 0.001
+    points_g3 = alpha_g3[:, 1:]
+    hull = ConvexHull(points_g3)
+    for simplex in hull.simplices:
+        line2 = plt.plot(points_g3[simplex, 0], points_g3[simplex, 1], colors[1], linewidth=symbol_size)
+
+    # 3) gamma 0.01
+    points_g2 = alpha_g2[:, 1:]
+    hull = ConvexHull(points_g2)
+    for simplex in hull.simplices:
+        line3 = plt.plot(points_g2[simplex, 0], points_g2[simplex, 1], colors[2], linewidth=symbol_size)
+
+    # 4) gamma 0.1
+    points_g1 = alpha_g1[:, 1:]
+    hull = ConvexHull(points_g1)
+    for simplex in hull.simplices:
+        line4 = plt.plot(points_g1[simplex, 0], points_g1[simplex, 1], colors[3], linewidth=symbol_size)
+
+    plt.legend(
+        [line1[0], line2[0], line3[0], line4[0]], [r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+        loc="upper left")
+    plt.xlabel(r"$\alpha_{u,1}^n$")
+    plt.ylabel(r"$\alpha_{u,2}^n$")
+
+    plt.savefig("paper_data/paper2/illustrations/realizable_set/lagrange_gammas" + ".png", dpi=400)
+    print(
+        "Figure successfully saved to file: " + str(
+            "paper_data/paper2/illustrations/realizable_set/lagrange_gammas" + ".png"))
+    """
+    return 0
 
 
 def test_on_realizable_set_m2():
@@ -668,22 +765,22 @@ def print_method_errors():
 
     names = [r"$M_2^{\gamma_3}$",
              r"$M_3^{\gamma_3}$",
-             r"$\mathcal{N}_2$",
-             r"$\mathcal{N}_2^{\gamma_1}$",
-             r"$\mathcal{N}_2^{\gamma_2}$",
-             r"$\mathcal{N}_2^{\gamma_3}$",
-             r"$\mathcal{N}_2^{r}$",
-             r"$\mathcal{N}_2^{\gamma_1,r}$",
-             r"$\mathcal{N}_2^{\gamma_2,r}$",
-             r"$\mathcal{N}_2^{\gamma_3,r}$",
-             r"$\mathcal{N}_3$",
-             r"$\mathcal{N}_3^{\gamma_1}$",
-             r"$\mathcal{N}_3^{\gamma_2}$",
-             r"$\mathcal{N}_3^{\gamma_3}$",
-             r"$\mathcal{N}_4$",
-             r"$\mathcal{N}_4^{\gamma_1}$",
-             r"$\mathcal{N}_4^{\gamma_2}$",
-             r"$\mathcal{N}_4^{\gamma_3}$",
+             r"${NM}_2$",
+             r"${NM}_2^{\gamma_1}$",
+             r"${NM}_2^{\gamma_2}$",
+             r"${NM}_2^{\gamma_3}$",
+             r"${NM}_2^{r}$",
+             r"${NM}_2^{\gamma_1,r}$",
+             r"${NM}_2^{\gamma_2,r}$",
+             r"${NM}_2^{\gamma_3,r}$",
+             r"${NM}_3$",
+             r"${NM}_3^{\gamma_1}$",
+             r"${NM}_3^{\gamma_2}$",
+             r"${NM}_3$",  # ^{\gamma_3}$",
+             r"${NM}_4$",
+             r"${NM}_4^{\gamma_1}$",
+             r"${NM}_4$",  # ^{\gamma_2}$",
+             r"${NM}_4^{\gamma_3}$",
              r"$S_{10}$",
              r"$S_{20}$",
              r"$S_{30}$",
@@ -698,7 +795,7 @@ def print_method_errors():
     sys_size = df["sys_size"].to_numpy()
     timing = df["timing"].to_numpy()
 
-    indices_ref = [0, 1, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+    indices_ref = [0, 1, 2, 13, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26]
 
     indices_N2 = [2, 4, 5]
     indices_N2_rot = [6, 8, 9]
@@ -720,46 +817,31 @@ def print_method_errors():
     sns.set_style("white")
     fig, ax = plt.subplots()
 
+    """
     plt.scatter(sys_size[2], errors_N2_mean, s=10, facecolors='blue', edgecolors='blue')
-    ax.errorbar(sys_size[2], y=errors_N2_mean,
-                yerr=errors_N2_std,
-                alpha=0.5,
-                ecolor='blue',
-                capsize=10)
-
+    ax.errorbar(sys_size[2], y=errors_N2_mean, yerr=errors_N2_std, alpha=0.5, ecolor='blue', capsize=10)
     plt.scatter(sys_size[7], errors_N2_r_mean, s=10, facecolors='green', edgecolors='green')
-    ax.errorbar(sys_size[7], y=errors_N2_r_mean,
-                yerr=errors_N2_std,
-                alpha=0.5,
-                ecolor='green',
-                capsize=10)
-
+    ax.errorbar(sys_size[7], y=errors_N2_r_mean, yerr=errors_N2_std, alpha=0.5, ecolor='green', capsize=10)
     plt.scatter(sys_size[11], errors_N3_mean, s=10, facecolors='cyan', edgecolors='cyan')
-    ax.errorbar(sys_size[11], y=errors_N3_mean,
-                yerr=errors_N2_std,
-                alpha=0.5,
-                ecolor='cyan',
-                capsize=10)
-
+    ax.errorbar(sys_size[11], y=errors_N3_mean, yerr=errors_N2_std, alpha=0.5, ecolor='cyan', capsize=10)
     plt.scatter(sys_size[14], errors_N4_mean, s=10, facecolors='orange', edgecolors='orange')
-    ax.errorbar(sys_size[14], y=errors_N4_mean,
-                yerr=errors_N4_std,
-                alpha=0.5,
-                ecolor='orange',
-                capsize=10)
+    ax.errorbar(sys_size[14], y=errors_N4_mean, yerr=errors_N4_std, alpha=0.5, ecolor='orange', capsize=10)
     plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
-
+    """
+    texts = []
     for i in indices_ref:
         # circle = plt.Circle(data[i], radius=1)
         plt.scatter(sys_size[i], errors[i], s=10, facecolors='red', edgecolors='red')
         # ax.add_patch(circle)
-        label = ax.annotate(names[i], xy=(sys_size[i], errors[i]), fontsize=15, ha="center")
+        # label = ax.annotate(names[i], xy=(sys_size[i], errors[i]), fontsize=15, ha="center")
+        texts.append(plt.text(sys_size[i], errors[i], names[i]))
 
     plt.xscale("log")
     plt.yscale("linear")
     plt.xlabel("system size")
     plt.ylabel(r'$|$ solution $  -S_{50}|$')
     # plt.show()
+    adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
 
@@ -767,6 +849,7 @@ def print_method_errors():
     sns.set_theme()
     sns.set_style("white")
     fig, ax = plt.subplots()
+    """
     plt.scatter(timing[2], errors_N2_mean, s=10, facecolors='blue', edgecolors='blue')
     ax.errorbar(timing[2], y=errors_N2_mean,
                 yerr=errors_N2_std,
@@ -795,21 +878,24 @@ def print_method_errors():
                 ecolor='orange',
                 capsize=10)
     plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
-
+    """
     for i in indices_ref:
         # circle = plt.Circle(data[i], radius=1)
         plt.scatter(timing[i], errors[i], s=10, facecolors='red', edgecolors='red')
         # ax.add_patch(circle)
-        label = ax.annotate(names[i], xy=(timing[i], errors[i]), fontsize=15, ha="center")
+        # label = ax.annotate(names[i], xy=(timing[i], errors[i]), fontsize=15, ha="center")
+        texts.append(plt.text(timing[i], errors[i], names[i]))
 
         # ax.axis('off')
     # ax.set_aspect('equal')
     # ax.autoscale_view()
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("simulation time")
+    plt.xlabel("simulation time [s]")
     plt.ylabel(r'$|$ solution $ -S_{50}|$')
     # plt.show()
+    adjust_text(texts, only_move={'texts': 'y'})
+
     plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
 
@@ -819,6 +905,7 @@ def print_method_errors():
     sns.set_style("white")
     fig, ax = plt.subplots()
 
+    """
     plt.scatter(sys_size[2], timing[2], s=10, facecolors='red', edgecolors='red')
     label = ax.annotate(names[2], xy=(sys_size[2], timing[2],), fontsize=15, ha="center")
     plt.scatter(sys_size[7], timing[7], s=10, facecolors='red', edgecolors='red')
@@ -829,16 +916,19 @@ def print_method_errors():
     label = ax.annotate(names[14], xy=(sys_size[14], timing[14],), fontsize=15, ha="center")
 
     # plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
-
+    """
     for i in indices_ref:
         plt.scatter(sys_size[i], timing[i], s=10, facecolors='red', edgecolors='red')
-        label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
+        # label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
+        texts.append(plt.text(sys_size[i], timing[i], names[i]))
 
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("system size")
-    plt.ylabel("simulation time")
+    plt.ylabel("simulation time [s]")
     # plt.show()
+    adjust_text(texts, only_move={'texts': 'y'})
+
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500, bbox_inches="tight")
     plt.clf()
 
@@ -861,9 +951,9 @@ def print_method_errors():
     rects2 = ax.bar(ind + 3 * width, errors[indices_g1], width, color='r')  # g1
 
     # add some
-    ax.set_ylabel(r'$|M_N -S_{50}|$, ICNN based')
+    ax.set_ylabel(r'$|NM_N -S_{50}|$')
     ax.set_xticks(ind + width * 2)
-    ax.set_xticklabels((r'$M_2$', r'$M_2$, rot', r'$M_3$', r'$M_4$'))
+    ax.set_xticklabels((r'$NM_2$', r'$NM_2$, rot', r'$NM_3$', r'$NM_4$'))
     ax.legend((rects1[0], rects4[0], rects3[0], rects2[0]),
               (r'$\gamma=0$', r'$\gamma=0.001$', r'$\gamma=0.01$', r'$\gamma=0.1$'))
 
