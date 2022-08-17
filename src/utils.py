@@ -264,14 +264,14 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
                 plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
             i += 1
         if labels != None:
-            plt.legend(labels)
+            plt.legend(labels, loc="upper left")
     elif len(xs) is not len(ys):
         print("Error: List of x entries must be of same length as y entries")
         exit(1)
     else:
         for x, y, lineType, color in zip(xs, ys, linetypes, colors):
             plt.plot(x, y, color + lineType, linewidth=symbol_size)
-        plt.legend(labels)  # , prop={'size': 6})
+        plt.legend(labels, loc="upper left")  # , prop={'size': 6})
     if log:
         plt.yscale('log')
     if loglog:
