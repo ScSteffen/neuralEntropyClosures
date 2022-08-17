@@ -38,8 +38,9 @@ def main():
     # print_method_errors()
 
     # 6) Print realizable set
+    print_realizable_set_new_condition()
     # print_realizable_set()
-    print_entropies()
+    # print_entropies()
     return True
 
 
@@ -114,6 +115,125 @@ def print_realizable_set():
             "paper_data/paper2/illustrations/realizable_set/realizable_set_gammas" + ".png"))
 
     # ---- alphas
+    """
+    plt.clf()
+    points_g0 = alpha_g0[:, 1:]
+    hull = ConvexHull(points_g0)
+    for simplex in hull.simplices:
+        line1 = plt.plot(points_g0[simplex, 0], points_g0[simplex, 1], colors[0], linewidth=symbol_size)
+
+    # 2) gamma 0.001
+    points_g3 = alpha_g3[:, 1:]
+    hull = ConvexHull(points_g3)
+    for simplex in hull.simplices:
+        line2 = plt.plot(points_g3[simplex, 0], points_g3[simplex, 1], colors[1], linewidth=symbol_size)
+
+    # 3) gamma 0.01
+    points_g2 = alpha_g2[:, 1:]
+    hull = ConvexHull(points_g2)
+    for simplex in hull.simplices:
+        line3 = plt.plot(points_g2[simplex, 0], points_g2[simplex, 1], colors[2], linewidth=symbol_size)
+
+    # 4) gamma 0.1
+    points_g1 = alpha_g1[:, 1:]
+    hull = ConvexHull(points_g1)
+    for simplex in hull.simplices:
+        line4 = plt.plot(points_g1[simplex, 0], points_g1[simplex, 1], colors[3], linewidth=symbol_size)
+
+    plt.legend(
+        [line1[0], line2[0], line3[0], line4[0]], [r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+        loc="upper left")
+    plt.xlabel(r"$\alpha_{u,1}^n$")
+    plt.ylabel(r"$\alpha_{u,2}^n$")
+
+    plt.savefig("paper_data/paper2/illustrations/realizable_set/lagrange_gammas" + ".png", dpi=400)
+    print(
+        "Figure successfully saved to file: " + str(
+            "paper_data/paper2/illustrations/realizable_set/lagrange_gammas" + ".png"))
+    """
+    return 0
+
+
+def print_realizable_set_new_condition():
+    # 1) gamma 0
+    [u_g0, alpha_g0, h_g0] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g0.csv",
+                                       data_dim=3,
+                                       selected_cols=[True, True, True])
+    [u_g3, alpha_g3, h_g3] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g3.csv",
+                                       data_dim=3,
+                                       selected_cols=[True, True, True])
+    [u_g2, alpha_g2, h_g2] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g2.csv",
+                                       data_dim=3,
+                                       selected_cols=[True, True, True])
+    [u_g1, alpha_g1, h_g1] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g1.csv",
+                                       data_dim=3,
+                                       selected_cols=[True, True, True])
+
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['k-', 'r-', 'g-', 'b-']
+    symbol_size = 0.7
+
+    points_g0 = u_g0[:, 1:]
+    hull = ConvexHull(points_g0)
+    for simplex in hull.simplices:
+        line1 = plt.plot(points_g0[simplex, 0], points_g0[simplex, 1], colors[0], linewidth=symbol_size)
+
+    # 2) gamma 0.001
+    points_g3 = u_g3[:, 1:]
+    hull = ConvexHull(points_g3)
+    for simplex in hull.simplices:
+        line2 = plt.plot(points_g3[simplex, 0], points_g3[simplex, 1], colors[1], linewidth=symbol_size)
+
+    # 3) gamma 0.01
+    points_g2 = u_g2[:, 1:]
+    hull = ConvexHull(points_g2)
+    for simplex in hull.simplices:
+        line3 = plt.plot(points_g2[simplex, 0], points_g2[simplex, 1], colors[2], linewidth=symbol_size)
+
+    # 4) gamma 0.1
+    points_g1 = u_g1[:, 1:]
+    hull = ConvexHull(points_g1)
+    for simplex in hull.simplices:
+        line4 = plt.plot(points_g1[simplex, 0], points_g1[simplex, 1], colors[3], linewidth=symbol_size)
+
+    plt.legend(
+        [line1[0], line2[0], line3[0], line4[0]], [r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+        loc="upper left")
+    plt.xlabel(r"$u_1^n$")
+    plt.ylabel(r"$u_2^n$")
+
+    plt.savefig("paper_data/paper2/illustrations/realizable_set/nc_realizable_set_gammas" + ".png", dpi=400)
+    print(
+        "Figure successfully saved to file: " + str(
+            "paper_data/paper2/illustrations/realizable_set/nc_realizable_set_gammas" + ".png"))
+
+    # ---- alphas
+    scatter_plot_2d(alpha_g0[:, 1:], h_g0, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
+                    label_y=r"$\alpha_u^2", title="", name="lagrange_g0", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
+    scatter_plot_2d(alpha_g1[:, 1:], h_g1, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
+                    label_y=r"$\alpha_u^2", title="", name="lagrange_g1", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
+    scatter_plot_2d(alpha_g2[:, 1:], h_g2, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
+                    label_y=r"$\alpha_u^2", title="", name="lagrange_g2", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
+    scatter_plot_2d(alpha_g3[:, 1:], h_g3, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
+                    label_y=r"$\alpha_u^2", title="", name="lagrange_g3", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
+
+    scatter_plot_2d(u_g0[:, 1:], h_g0, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
+                    label_y=r"$\alpha_u^2", title="", name="u_g0", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
+    scatter_plot_2d(u_g1[:, 1:], h_g1, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
+                    label_y=r"$\alpha_u^2", title="", name="u_g1", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
+    scatter_plot_2d(u_g2[:, 1:], h_g2, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
+                    label_y=r"$\alpha_u^2", title="", name="u_g2", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
+    scatter_plot_2d(u_g3[:, 1:], h_g3, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$u^1$",
+                    label_y=r"$u^2", title="", name="u_g3", log=False,
+                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
     """
     plt.clf()
     points_g0 = alpha_g0[:, 1:]
