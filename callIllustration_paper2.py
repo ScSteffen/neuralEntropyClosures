@@ -32,13 +32,13 @@ def main():
     # print_comp_efficiency_memory()
 
     # 4) Print cross-sections
-    # print_cross_sections()
+    print_cross_sections()
 
     # 5) Print method errors
     # print_method_errors()
 
     # 6) Print realizable set
-    print_realizable_set()
+    # print_realizable_set()
     return True
 
 
@@ -644,21 +644,32 @@ def print_training_performance():
 
 
 def print_cross_sections():
-    names = ["linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3", "linesource_M4_g1",
-             "linesource_N2_g0", "linesource_N2_g1", "linesource_N2_g2", "linesource_N2_g3",
+    # names = ["linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3", "linesource_M4_g1",
+    #         "linesource_N2_g0", "linesource_N2_g1", "linesource_N2_g2", "linesource_N2_g3",
+    #         "linesource_N2_g0_r", "linesource_N2_g1_r", "linesource_N2_g2_r", "linesource_N2_g3_r",
+    #         "linesource_N2_g0_resnet", "linesource_N2_g1_resnet", "linesource_N2_g2_resnet", "linesource_N2_g3_resnet",
+    #         "linesource_N2_g0_r_resnet", "linesource_N2_g1_r_resnet", "linesource_N2_g2_r_resnet",
+    #         "linesource_N2_g3_r_resnet", "linesource_M4_g1",
+    #         "linesource_M3_g0", "linesource_M3_g1", "linesource_M3_g3",
+    #         "linesource_N3_g0", "linesource_N3_g1", "linesource_N3_g2", "linesource_N3_g3", ]
+
+    names = ["linesource_N2_g0", "linesource_N2_g1", "linesource_N2_g2", "linesource_N2_g3",
              "linesource_N2_g0_r", "linesource_N2_g1_r", "linesource_N2_g2_r", "linesource_N2_g3_r",
              "linesource_N2_g0_resnet", "linesource_N2_g1_resnet", "linesource_N2_g2_resnet", "linesource_N2_g3_resnet",
              "linesource_N2_g0_r_resnet", "linesource_N2_g1_r_resnet", "linesource_N2_g2_r_resnet",
-             "linesource_N2_g3_r_resnet", "linesource_M4_g1",
-             "linesource_M3_g0", "linesource_M3_g1", "linesource_M3_g3",
-             "linesource_N3_g0", "linesource_N3_g1", "linesource_N3_g2", "linesource_N3_g3", ]
+             "linesource_N2_g3_r_resnet"]
 
-    for name in names:
-        print_single_xs(name)
+    newton_names = ["linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3",
+                    "linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3",
+                    "linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3",
+                    "linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3", ]
+
+    for (name, newton_name) in zip(names, newton_names):
+        print_single_xs(name, newton_name)
     return 0
 
 
-def print_single_xs(name):
+def print_single_xs(name, newton_name):
     load_name = "paper_data/paper2/linesource/cross_sections/"
     save_name = "paper_data/paper2/illustrations/cross_sections/"
     df_analytic = pd.read_csv(load_name + "linesource_analytic.csv")
@@ -667,6 +678,13 @@ def print_single_xs(name):
     xy = np.vstack([x_analytic, y_analytic]).T
     radius_analytic = np.linalg.norm(xy, axis=1)
     radius_analytic[:int(len(radius_analytic) / 2)] = -radius_analytic[:int(len(radius_analytic) / 2)]
+
+    df_newton_vert = pd.read_csv(load_name + newton_name + "_vert.csv")
+    x_analytic = df_newton_vert["Points:0"].to_numpy()
+    y_analytic = df_newton_vert["Points:1"].to_numpy()
+    xy = np.vstack([x_analytic, y_analytic]).T
+    radius_vert = np.linalg.norm(xy, axis=1)
+    radius_vert[:int(len(radius_vert) / 2)] = -radius_vert[:int(len(radius_vert) / 2)]
 
     df_name_vert = pd.read_csv(load_name + name + "_vert.csv")
     x_analytic = df_name_vert["Points:0"].to_numpy()
@@ -693,8 +711,10 @@ def print_single_xs(name):
     plt.plot(radius_analytic, df_analytic["analytic radiation flux density"] / 2, "-k")
     plt.plot(radius_vert, df_name_vert["radiation flux density"], "-b")
     plt.plot(radius_45, df_name_45["radiation flux density"], "-.r")
+    plt.plot(radius_vert, df_newton_vert["radiation flux density"], ":g")
+
     plt.xlim([-1, 1])
-    plt.legend(["analytic", "vertical", "diagonal"], loc="upper left")
+    plt.legend(["analytic", "vertical", "diagonal", "Newton"], loc="upper left")
     plt.xlabel("radius")
     plt.ylabel("scalar flux")
     plt.savefig(save_name + "xs_" + name + ".png", dpi=500)
