@@ -350,6 +350,194 @@ class EntropyTools:
         return 0
 
 
+class EntropyToolsBoseEinstein:
+    """
+    Same functions implemented in the sobolev Network.
+    Also uses Tensorflow
+    """
+    spatial_dimension: int
+    poly_degree: int
+    nq: int
+    input_dim: int
+    quadPts: tf.Tensor  # dims = (1 x nq)
+    quadWeights: tf.Tensor  # dims = (1 x nq)
+    momentBasis: tf.Tensor  # dims = (batchSIze x N x nq)
+    opti_u: np.ndarray
+    opti_m: np.ndarray
+    opti_w: np.ndarray
+
+    # @brief: Regularization Parameter for regularized entropy. =0 means non regularized
+    regularization_gamma: tf.Tensor
+    # @brief: tensor of the form [0,gamma,gamma,...]
+    regularization_gamma_vector: tf.Tensor
+
+    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0) -> object:
+        """
+        Class to compute the 1D entropy closure up to degree N
+        input: N  = degree of polynomial basis
+        """
+
+        # Create quadrature and momentBasis. Currently only for 1D problems
+        self.poly_degree = polynomial_degree
+        self.spatial_dimension = spatial_dimension
+        quad_order = 100
+        if spatial_dimension == 1:
+            self.nq = quad_order
+            [quad_pts, quad_weights] = qGaussLegendre1D(
+                quad_order)  # order = nq
+            m_basis = computeMonomialBasis1D(
+                quad_pts, self.poly_degree)  # dims = (N x nq)
+        if spatial_dimension == 2:
+            [quad_pts, quad_weights] = qGaussLegendre2D(
+                quad_order)  # dims = nq
+            self.nq = quad_weights.size  # is not 10 * polyDegree
+            m_basis = computeMonomialBasis2D(
+                quad_pts, self.poly_degree)  # dims = (N x nq)
+
+        self.quadPts = tf.constant(quad_pts, shape=(
+            self.spatial_dimension, self.nq), dtype=tf.float64)
+        self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq),
+                                       dtype=tf.float64)
+
+        self.input_dim = m_basis.shape[0]
+        self.momentBasis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
+                                       dtype=tf.float64)
+        self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
+        gamma_vec = gamma * np.ones(shape=(1, self.input_dim))
+        self.regularization_gamma_vector = tf.constant(
+            gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
+
+    def reconstruct_u(self, alpha: tf.Tensor) -> tf.Tensor:
+        """
+        brief: reconstructs u from alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                      w    , dims = nq
+        returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+        """
+        # Only for Bose Einstein entropy
+        f_quad = 1 / (tf.math.exp(tf.tensordot(
+            alpha, self.momentBasis, axes=([1], [0]))) - 1)  # alpha*m
+        tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
+        # f * w * momentBasis
+        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1])) + tf.math.multiply(
+            self.regularization_gamma_vector, alpha)
+
+    def reconstruct_f(self, alpha: tf.Tensor) -> tf.Tensor:
+        """
+        brief: reconstructs u from alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                      w    , dims = nq
+        returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+        """
+        # Only for Bose Einstein entropy
+        f_quad = 1 / (tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0]))) - 1)  # alpha*m
+
+        return f_quad
+
+    def reconstruct_alpha(self, alpha_r: tf.Tensor) -> tf.Tensor:  # WRONG
+        """
+        brief:  Reconstructs alpha_0 and then concats alpha_0 to alpha_1,... , from alpha1,...
+                Only works for maxwell Boltzmann entropy so far.
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N-1)
+               m    , dims = (N x nq)
+               w    , dims = nq
+        returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
+        """
+        tmp = tf.math.exp(tf.tensordot(
+            alpha_r, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        # ln(2)-ln(<tmp>)
+        tmp2 = - tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))
+
+        tmp3 = tf.math.log(tf.constant(2.0, dtype=tf.float64))
+        alpha_0 = tmp3 + tmp2
+        return tf.concat([alpha_0, alpha_r], axis=1)  # concat [alpha_0,alpha]
+
+    def compute_u(self, f: tf.Tensor) -> tf.Tensor:
+        """
+                brief: reconstructs u from kinetic density f
+                nS = batchSize
+                N = basisSize
+                nq = number of quadPts
+
+                input: f, dims = (nS x nq)
+                used members: m    , dims = (N x nq)
+                              w    , dims = nq
+                returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+                """
+        tmp = tf.math.multiply(f, self.quadWeights)  # f*w
+        # f * w * momentBasis
+        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))
+
+    def compute_h(self, u: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
+        """
+        brief: computes the entropy functional h on u and alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+               u, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = alpha*u - <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        eta_star = -tf.math.log(1 - tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0]))))
+        tmp = tf.tensordot(eta_star, self.quadWeights, axes=([1], [1]))  # f*w
+        # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(
+            alpha, u), axis=1, keepdims=True)  # alpha*u
+        # 0.5*gamma*alpha_r*alpha_r
+        entropy_pt3 = 0.5 * self.regularization_gamma * tf.math.reduce_sum(tf.math.multiply(alpha[:, 1:], alpha[:, 1:]),
+                                                                           axis=1, keepdims=True)
+        return tmp2 - tmp - entropy_pt3
+
+    def compute_h_rot(self, u: tf.Tensor, alpha: tf.Tensor, alpha_orig: tf.Tensor) -> tf.Tensor:
+        """
+        brief: computes the entropy functional h on u and alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+               u, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                    w    , dims = nq
+
+        returns h = alpha*u - <eta_*(alpha*m)>
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = tf.math.exp(tf.tensordot(
+            alpha_orig, self.momentBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
+        # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(
+            alpha, u), axis=1, keepdims=True)
+        # 0.5*gamma*alpha_r*alpha_r
+        entropy_pt3 = 0.5 * self.regularization_gamma * tf.math.reduce_sum(tf.math.multiply(alpha[:, 1:], alpha[:, 1:]),
+                                                                           axis=1, keepdims=True)
+        return tmp2 - tmp - entropy_pt3
+
+
 # Standalone features
 
 
