@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
-from src.utils import plot_1d, plot_1dv2, scatter_plot_2d
+from src.utils import plot_1d, plot_1dv2, scatter_plot_2d, load_data
 from src.networks.configmodel import init_neural_closure
 from src.math import EntropyTools
 
@@ -31,8 +31,154 @@ def main():
     # print_cross_sections()
 
     # 5) Print method errors
-    print_method_errors()
+    # print_method_errors()
+
+    # 6) Get regularization errors
+    test_regularization_error()
     return True
+
+
+def test_regularization_error():
+    errors_m2 = test_regularization_error_m2()
+    errors_m3 = test_regularization_error_m3()
+    errors_m4 = test_regularization_error_m4()
+
+    return 0
+
+
+def test_regularization_error_m2() -> list:
+    # M2 2D
+    data = load_data(filename="paper_data/paper2/regularization_error/Monomial_M2_2D_normal_gaussian.csv", data_dim=6,
+                     selected_cols=[True, True, True])
+    u_test = tf.constant(data[0][:, 1:], dtype=tf.float32)
+
+    # Input Convex
+    mk11_m2_2d_g0 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g0/best_model")
+    mk11_m2_2d_g1 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g1_v2/best_model")
+    mk11_m2_2d_g2 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g2/best_model")
+    mk11_m2_2d_g3 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk11_m2_2d_g3/best_model")
+    # Get model predictions
+    pred_g0 = mk11_m2_2d_g0(u_test, training=False)
+    errors_M2_g0 = get_mean_error(pred_g0, data)
+    pred_g1 = mk11_m2_2d_g1(u_test, training=False)
+    errors_M2_g1 = get_mean_error(pred_g1, data)
+    pred_g2 = mk11_m2_2d_g2(u_test, training=False)
+    errors_M2_g2 = get_mean_error(pred_g2, data)
+    pred_g3 = mk11_m2_2d_g3(u_test, training=False)
+    errors_M2_g3 = get_mean_error(pred_g3, data)
+
+    # Resnet
+    mk12_m2_2d_g0 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk12_m2_2d_g0/best_model")
+    mk12_m2_2d_g1 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk12_m2_2d_g1/best_model")
+    mk12_m2_2d_g2 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk12_m2_2d_g2/best_model")
+    mk12_m2_2d_g3 = tf.keras.models.load_model("paper_data/paper2/2D_M2/mk12_m2_2d_g3/best_model")
+    # Get model predictions
+    pred_g0 = mk12_m2_2d_g0(u_test, training=False)
+    res_errors_M2_g0 = get_mean_error(pred_g0, data)
+    pred_g1 = mk12_m2_2d_g1(u_test, training=False)
+    res_errors_M2_g1 = get_mean_error(pred_g1, data)
+    pred_g2 = mk12_m2_2d_g2(u_test, training=False)
+    res_errors_M2_g2 = get_mean_error(pred_g2, data)
+    pred_g3 = mk12_m2_2d_g3(u_test, training=False)
+    res_errors_M2_g3 = get_mean_error(pred_g3, data)
+
+    return [errors_M2_g0, errors_M2_g3, errors_M2_g2, errors_M2_g1, res_errors_M2_g0, res_errors_M2_g3,
+            res_errors_M2_g2, res_errors_M2_g1]
+
+
+def test_regularization_error_m3() -> list:
+    # ------------------------- M3 2D ------------------------------
+    data = load_data(filename="paper_data/paper2/regularization_error/Monomial_M3_2D_normal_gaussian.csv", data_dim=10,
+                     selected_cols=[True, True, True])
+    u_test = tf.constant(data[0][:, 1:], dtype=tf.float32)
+
+    # ICNN
+    mk11_m3_2d_g0 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk11_M3_2D_g0/best_model")
+    mk11_m3_2d_g1 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk11_M3_2D_g1/best_model")
+    mk11_m3_2d_g2 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk11_M3_2D_g2/best_model")
+    mk11_m3_2d_g3 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk11_M3_2D_g3/best_model")
+    # Get model predictions
+    pred_g0 = mk11_m3_2d_g0(u_test, training=False)
+    errors_M3_g0 = get_mean_error(pred_g0, data)
+    pred_g1 = mk11_m3_2d_g1(u_test, training=False)
+    errors_M3_g1 = get_mean_error(pred_g1, data)
+    pred_g2 = mk11_m3_2d_g2(u_test, training=False)
+    errors_M3_g2 = get_mean_error(pred_g2, data)
+    pred_g3 = mk11_m3_2d_g3(u_test, training=False)
+    errors_M3_g3 = get_mean_error(pred_g3, data)
+
+    # ResNet
+    mk12_m3_2d_g0 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk12_M3_2D_g0/best_model")
+    mk12_m3_2d_g1 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk12_M3_2D_g1/best_model")
+    mk12_m3_2d_g2 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk12_M3_2D_g2/best_model")
+    mk12_m3_2d_g3 = tf.keras.models.load_model("paper_data/paper2/2D_M3/mk12_M3_2D_g3/best_model")
+    # Get model predictions
+    pred_g0 = mk12_m3_2d_g0(u_test, training=False)
+    res_errors_M3_g0 = get_mean_error(pred_g0, data)
+    pred_g1 = mk12_m3_2d_g1(u_test, training=False)
+    res_errors_M3_g1 = get_mean_error(pred_g1, data)
+    pred_g2 = mk12_m3_2d_g2(u_test, training=False)
+    res_errors_M3_g2 = get_mean_error(pred_g2, data)
+    pred_g3 = mk12_m3_2d_g3(u_test, training=False)
+    res_errors_M3_g3 = get_mean_error(pred_g3, data)
+
+    return [errors_M3_g0, errors_M3_g3, errors_M3_g2, errors_M3_g1, res_errors_M3_g0, res_errors_M3_g3,
+            res_errors_M3_g2, res_errors_M3_g1]
+
+
+def test_regularization_error_m4() -> list:
+    # M4 2D
+    data = load_data(filename="paper_data/paper2/regularization_error/Monomial_M4_2D_normal_gaussian.csv", data_dim=15,
+                     selected_cols=[True, True, True])
+    u_test = tf.constant(data[0][:, 1:], dtype=tf.float32)
+
+    # ICNN
+    mk11_m4_2d_g0 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk11_m4_2d_g0/best_model")
+    mk11_m4_2d_g1 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk11_m4_2d_g1/best_model")
+    mk11_m4_2d_g2 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk11_m4_2d_g2/best_model")
+    mk11_m4_2d_g3 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk11_m4_2d_g3/best_model")
+    # Get model predictions
+    pred_g0 = mk11_m4_2d_g0(u_test, training=False)
+    errors_M4_g0 = get_mean_error(pred_g0, data)
+    pred_g1 = mk11_m4_2d_g1(u_test, training=False)
+    errors_M4_g1 = get_mean_error(pred_g1, data)
+    pred_g2 = mk11_m4_2d_g2(u_test, training=False)
+    errors_M4_g2 = get_mean_error(pred_g2, data)
+    pred_g3 = mk11_m4_2d_g3(u_test, training=False)
+    errors_M4_g3 = get_mean_error(pred_g3, data)
+
+    # REsNet
+    mk12_m4_2d_g0 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk12_m4_2d_g0/best_model")
+    mk12_m4_2d_g1 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk12_m4_2d_g1/best_model")
+    mk12_m4_2d_g2 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk12_m4_2d_g2/best_model")
+    mk12_m4_2d_g3 = tf.keras.models.load_model("paper_data/paper2/2D_M4/mk12_m4_2d_g3/best_model")
+    # Get model predictions
+    pred_g0 = mk12_m4_2d_g0(u_test, training=False)
+    res_errors_M4_g0 = get_mean_error(pred_g0, data)
+    pred_g1 = mk12_m4_2d_g1(u_test, training=False)
+    res_errors_M4_g1 = get_mean_error(pred_g1, data)
+    pred_g2 = mk12_m4_2d_g2(u_test, training=False)
+    res_errors_M4_g2 = get_mean_error(pred_g2, data)
+    pred_g3 = mk12_m4_2d_g3(u_test, training=False)
+    res_errors_M4_g3 = get_mean_error(pred_g3, data)
+
+    return [errors_M4_g0, errors_M4_g3, errors_M4_g2, errors_M4_g1, res_errors_M4_g0, res_errors_M4_g3,
+            res_errors_M4_g2, res_errors_M4_g1]
+
+
+def get_mean_error(predictions: list, test_data: list) -> list:
+    u_test = tf.constant(test_data[0][:, 1:], dtype=tf.float32)
+    alpha_test = tf.constant(test_data[1][:, 1:], dtype=tf.float32)
+    h_test = tf.constant(test_data[2], dtype=tf.float32)
+    h_pred_g0 = tf.cast(predictions[0], dtype=tf.float32)
+    alpha_pred_g0 = tf.cast(predictions[1], dtype=tf.float32)
+    u_pred_g0 = tf.cast(predictions[2], dtype=tf.float32)
+
+    err_u = tf.reduce_mean(tf.norm(u_test - u_pred_g0, axis=1, keepdims=False))
+    err_alpha = tf.reduce_mean(tf.norm(alpha_test - alpha_pred_g0, axis=1, keepdims=False))
+    err_h = tf.reduce_mean(tf.norm(h_test - h_pred_g0, axis=1, keepdims=False))
+
+    return [err_u.numpy(), err_alpha.numpy(), err_h.numpy()]
 
 
 def test_on_realizable_set_m2():
