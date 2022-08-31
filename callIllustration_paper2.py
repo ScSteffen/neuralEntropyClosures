@@ -5,6 +5,7 @@ Version: 0.1
 Date 5.4.2022
 """
 
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -33,16 +34,48 @@ def main():
     # 5) Print method errors
     # print_method_errors()
 
-    # 6) Get regularization errors
+    # 6) Get regularization errorswa
     test_regularization_error()
     return True
 
 
 def test_regularization_error():
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
     errors_m2 = test_regularization_error_m2()
     errors_m3 = test_regularization_error_m3()
     errors_m4 = test_regularization_error_m4()
 
+    print("ICNN-M2")
+    print(errors_m2[0])
+    print(errors_m2[2])
+    print(errors_m2[4])
+    print(errors_m2[6])
+    print("ICNN-M3")
+    print(errors_m3[0])
+    print(errors_m3[2])
+    print(errors_m3[4])
+    print(errors_m3[6])
+    print("ICNN-M4")
+    print(errors_m4[0])
+    print(errors_m4[2])
+    print(errors_m4[4])
+    print(errors_m4[6])
+    print("ResNet-M2")
+    print(errors_m2[1])
+    print(errors_m2[3])
+    print(errors_m2[5])
+    print(errors_m2[7])
+    print("ResNet-M3")
+    print(errors_m3[1])
+    print(errors_m3[3])
+    print(errors_m3[5])
+    print(errors_m3[7])
+    print("ResNet-M4")
+    print(errors_m4[1])
+    print(errors_m4[3])
+    print(errors_m4[5])
+    print(errors_m4[7])
     return 0
 
 
@@ -174,9 +207,15 @@ def get_mean_error(predictions: list, test_data: list) -> list:
     alpha_pred_g0 = tf.cast(predictions[1], dtype=tf.float32)
     u_pred_g0 = tf.cast(predictions[2], dtype=tf.float32)
 
-    err_u = tf.reduce_mean(tf.norm(u_test - u_pred_g0, axis=1, keepdims=False))
-    err_alpha = tf.reduce_mean(tf.norm(alpha_test - alpha_pred_g0, axis=1, keepdims=False))
-    err_h = tf.reduce_mean(tf.norm(h_test - h_pred_g0, axis=1, keepdims=False))
+    #err_u = tf.reduce_mean(tf.square(tf.norm(u_test - u_pred_g0, axis=1, keepdims=False)))
+    #err_alpha = tf.reduce_mean(tf.square(tf.norm(alpha_test - alpha_pred_g0, axis=1, keepdims=False)))
+    #err_h = tf.reduce_mean(tf.square(tf.norm(h_test - h_pred_g0, axis=1, keepdims=False)))
+
+    mse = tf.keras.losses.MeanSquaredError()
+
+    err_u = mse(u_test,u_pred_g0)
+    err_alpha = mse(alpha_test,alpha_pred_g0)
+    err_h = mse(h_test,h_pred_g0)
 
     return [err_u.numpy(), err_alpha.numpy(), err_h.numpy()]
 
