@@ -229,8 +229,8 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
 
 
 def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
-              show_fig=False,
-              xlim=None, ylim=None, xlabel=None, ylabel=None, title: str = r"$h^n$ over ${\mathcal{R}^r}$"):
+              show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, ticks=None, symbol_size=3.0,
+              legend_pos=None):
     """
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
@@ -239,16 +239,14 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     plt.figure(figsize=(5.8, 4.7), dpi=400)
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
-                     'h',
-                     'H',
-                     '+', 'x', 'D', 'd', '|']
+                     'h', 'H', '+', 'x', 'D', 'd', '|']
         if labels is not None:
             linetypes = linetypes[0:len(labels)]
 
     sns.set_theme()
     sns.set_style("white")
     colors = ['k', 'r', 'g', 'b', 'c', 'm', 'y']
-    symbol_size = 0.7
+    symbol_size = symbol_size
     if len(xs) == 1:
         x = xs[0]
         i = 0
@@ -263,8 +261,12 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             else:
                 plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
             i += 1
-        if labels != None:
-            plt.legend(labels)
+        if labels:
+            if legend_pos:
+                plt.legend(labels, loc=legend_pos)
+            else:
+                plt.legend(labels)
+
     elif len(xs) is not len(ys):
         print("Error: List of x entries must be of same length as y entries")
         exit(1)
@@ -291,6 +293,10 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
         plt.ylabel(ylabel, fontsize=12)
     # plt.title(title, fontsize=14)
     plt.tight_layout()
+    if ticks:
+        plt.xticks(ticks[0])
+        plt.yticks(ticks[1])
+
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     plt.close()
