@@ -1226,7 +1226,7 @@ def print_method_errors():
     texts = []
     for i in indices_ref:
         plt.scatter(sys_size[i], errors[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(sys_size[i], errors[i], names[i]))
+        texts.append(plt.text(sys_size[i], errors[i], names[i], size="x-large"))
 
     plt.xscale("log")
     plt.yscale("log")
@@ -1241,7 +1241,7 @@ def print_method_errors():
     sns.set_style("white")
     for i in indices_ref:
         plt.scatter(timing[i], errors[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(timing[i], errors[i], names[i]))
+        texts.append(plt.text(timing[i], errors[i], names[i], size="x-large"))
 
     plt.xscale("log")
     plt.yscale("log")
@@ -1255,29 +1255,15 @@ def print_method_errors():
     plt.clf()
     sns.set_theme()
     sns.set_style("white")
-    fig, ax = plt.subplots()
 
-    """
-    plt.scatter(sys_size[2], timing[2], s=10, facecolors='red', edgecolors='red')
-    label = ax.annotate(names[2], xy=(sys_size[2], timing[2],), fontsize=15, ha="center")
-    plt.scatter(sys_size[7], timing[7], s=10, facecolors='red', edgecolors='red')
-    label = ax.annotate(names[6], xy=(sys_size[7], timing[7],), fontsize=15, ha="center")
-    plt.scatter(sys_size[11], timing[11], s=10, facecolors='red', edgecolors='red')
-    label = ax.annotate(names[10], xy=(sys_size[11], timing[11],), fontsize=15, ha="center")
-    plt.scatter(sys_size[14], timing[14], s=10, facecolors='red', edgecolors='red')
-    label = ax.annotate(names[14], xy=(sys_size[14], timing[14],), fontsize=15, ha="center")
-    # plt.legend([r"ICNN $M_2$", r"ICNN $M_2$, rotated", r"ICNN $M_3$", r"ICNN $M_4$"])
-    """
     for i in indices_ref:
         plt.scatter(sys_size[i], timing[i], s=10, facecolors='red', edgecolors='red')
-        # label = ax.annotate(names[i], xy=(sys_size[i], timing[i],), fontsize=15, ha="center")
-        texts.append(plt.text(sys_size[i], timing[i], names[i]))
+        texts.append(plt.text(sys_size[i], timing[i], names[i], size="x-large"))
 
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("system size")
     plt.ylabel("simulation time [s]")
-    # plt.show()
     adjust_text(texts, only_move={'texts': 'y'})
 
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500, bbox_inches="tight")
