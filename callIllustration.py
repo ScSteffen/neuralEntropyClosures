@@ -14,86 +14,92 @@ from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1d
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
+    # print_1D_inflow()
+
+    # print_M1_closure()
+
+    # print_synthetic_tests()
+
+    # print_periodic_test_case()
+
+    # print_realizable_set()
+
+    # print_training_performance()
+
+    # --- illustrate Convergence errors ---
+
+    # Plot banach fixed point for 1D
+    print_convergence_rates("periodic")
+    print_convergence_rates("inflow M1")
+    print_convergence_rates2("inflow M2")
+
+    # ---- periodic M1 with fine grid -----
+
+    print_error_test_case("periodic")
+    print_error_test_case("inflow M1")
+    # rint_convergence_rates2("inflow M2")
+
+    return True
+
+
+def print_1D_inflow():
     # --- inflow M2 1D --- illustration
     [u_neural15, u_ref15] = load_solution("paper_data/1D_M2/1D_M2_MK15_inflow.csv")
     [u_neural11, u_ref11] = load_solution("paper_data/1D_M2/1D_M2_MK11_inflow.csv")
     x = np.linspace(0, 1, 100)
-
-    res_list = [u_ref11, u_neural11, u_neural15]
-    plot_1d([x], res_list,
-            labels=[r"$u_0$", r"$u_1$", r"$u_2$", r"Convex - $u_{0,\theta}$", r"Convex - $u_{1,\theta}$",
-                    r"Convex - $u_{2,\theta}$", r"Mono - $u_{0,\theta}$", r"Mono - $u_{1,\theta}$",
-                    r"Mono - $u_{2,\theta}$"],
-            name="inflow_1D_M2",
-            folder_name="paper_data/illustration/1D_M2", linetypes=['-', 'o', '^'], xlim=[0, 1],
-            xlabel='x', ylabel='u', log=False, title=r"$u$ and $u_\theta$  over $x$")
+    n_jump = 2
+    res_list = [[u_ref11[::n_jump, 0], u_ref11[::n_jump, 1], u_ref11[::n_jump, 2]],
+                [u_neural11[::n_jump, 0], u_neural11[::n_jump, 1], u_neural11[::n_jump, 2]],
+                [u_neural15[::n_jump, 0], u_neural15[::n_jump, 1], u_neural15[::n_jump, 2]]]
+    # res_list = [u_ref11, u_neural11, u_neural15]
+    plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M2", folder_name="paper_data/illustration/1D_M2",
+                xlim=[0, 1], xlabel='x', ylabel=r"$\mathbf{u}$")
 
     err_mk11 = np.linalg.norm(u_ref11 - u_neural11, axis=1).reshape((u_ref15.shape[0], 1)) / 2.
     rel_errmk11 = err_mk11 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
     err_mk15 = np.linalg.norm(u_ref15 - u_neural15, axis=1).reshape((u_ref15.shape[0], 1))
     rel_errmk15 = err_mk15 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
 
-    err_res_list = [err_mk11, err_mk15]
-    plot_1dv2([x], err_res_list, labels=["Convex", "Mono"], name="err_inflow_1D_M2",
+    err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
+    plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M2",
               folder_name="paper_data/illustration/1D_M2",
-              linetypes=['o', '^'], xlim=[0, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2$", log=True,
-              title=r"$||u-u_\theta||_2$ over $x$")
-    # rel_err_res_list = np.concatenate([rel_errmk11, rel_errmk15], axis=1)
-    rel_err_res_list = [rel_errmk11, rel_errmk15]
+              linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2], xlabel='x',
+              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
+    rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
 
-    plot_1dv2([x], rel_err_res_list, labels=["Convex", "Mono"], name="rel_err_inflow_1D_M2",
-              folder_name="paper_data/illustration/1D_M2", linetypes=['o', '^'], xlim=[0, 1], xlabel='x',
-              ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True, title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
-    # --- inflow M2 1D Data Dynamics
-    """
-    [x, _, kinetic_f] = load_density_function("test_a10_ev5.csv")
-
-    for i in range(kinetic_f.shape[0]):
-        plt.plot(x[0], kinetic_f[i, :])
-
-    plt.ylim(0, 3)
-    plt.savefig("test_a10_ev5")
-    # for i in range(int(kinetic_f.shape[0] / 5)):
-    #    kinetic_list = [kinetic_f[i + 0], kinetic_f[i + 1], kinetic_f[i + 2], kinetic_f[i + 3], kinetic_f[i + 4]]
-    #    plot_1d(x, kinetic_list, show_fig=False, log=False, name='kinetics_kond3_' + str(i).zfill(3), ylim=[0, 3],
-    #            xlim=[x[0, 0], x[0, -1]])
-    """
+    plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M2",
+              folder_name="paper_data/illustration/1D_M2", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-4, 5e-1],
+              xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
 
     # --- inflow M1 1D --- illustration
     [u_neural15, u_ref15] = load_solution("paper_data/1D_M1/1D_M1_MK15_inflow.csv")
     [u_neural11, u_ref11] = load_solution("paper_data/1D_M1/1D_M1_MK11_inflow.csv")
     x = np.linspace(0, 1, 100)
-    n_jump = 2
     res_list = [[u_ref11[::n_jump, 0], u_ref11[::n_jump, 1]],
                 [u_neural11[::n_jump, 0], u_neural11[::n_jump, 1]],
                 [u_neural15[::n_jump, 0], u_neural15[::n_jump, 1]]]
 
-    # res_list = [[u_ref11[::n_jump, 1], u_ref11[::n_jump, 1], u_ref11[::n_jump, 2]],
-    #            [u_neural11[::n_jump, 1], u_neural11[::n_jump, 1], u_neural11[::n_jump, 2]],
-    #            [u_neural15[::n_jump, 1], u_neural15[::n_jump, 1], u_neural15[::n_jump, 2]]]
-    plot_inflow([x[::n_jump]], res_list,
-                labels=[r"$u_0$", r"$u_1$", r"Convex - $u_{0,\theta}$", r"Convex - $u_{1,\theta}$",
-                        r"Mono - $u_{0,\theta}$",
-                        r"Mono - $u_{1,\theta}$"], name="inflow_1D_M1", folder_name="paper_data/illustration/1D_M1",
-                linetypes=['-', 'o', '^'], xlim=[0, 1], xlabel='x', ylabel='u', log=False,
-                title=r"$u$ and $u_\theta$  over $x$")
+    plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M1", folder_name="paper_data/illustration/1D_M1", xlim=[0, 1],
+                xlabel='x', ylabel=r"$\mathbf{u}$")
 
     err_mk11 = np.linalg.norm(u_ref11 - u_neural11, axis=1).reshape((u_ref15.shape[0], 1))
     rel_errmk11 = err_mk11 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
     err_mk15 = np.linalg.norm(u_ref15 - u_neural15, axis=1).reshape((u_ref15.shape[0], 1))
     rel_errmk15 = err_mk15 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
 
-    err_res_list = [err_mk11, err_mk15]
-    plot_1dv2([x], err_res_list, labels=["Convex", "Mono"], name="err_inflow_1D_M1",
-              folder_name="paper_data/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[0, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2$", log=True,
-              title=r"$||u-u_\theta||_2$ over $x$")
-    rel_err_res_list = [rel_errmk11, rel_errmk15]
-    plot_1dv2([x], rel_err_res_list, labels=["Convex", "Mono"], name="rel_err_inflow_1D_M1",
-              folder_name="paper_data/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[0, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
-              title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
+    err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
+    plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M1",
+              folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2],
+              xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
+    rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
+    plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M1",
+              folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], xlabel='x',
+              ylim=[1e-4, 5e-1],
+              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
+    return 0
 
+
+def print_M1_closure():
     # --- ilustration M1 1D closure
     df = pd.read_csv("paper_data/1D_M1/Monomial_M1_1D_normal_high_range.csv")
     df = df.iloc[:, 1:]  # drop timestamp
@@ -108,15 +114,15 @@ def main():
 
     plot_1dv2([u_1], alphas, labels=[r"$\alpha^n_{u,0}$", r"$\alpha^n_{u,1}$"], name="M1_1D_alpha_over_u",
               folder_name="paper_data/illustration/1D_M1", xlim=[-1, 1], xlabel=r"$u^n_{1}$", ylabel=r"$\alpha^n_{u}$",
-              log=False,
-              title=r"$\alpha^n_{u}$ over $u^n_{1}$")
+              log=False, black_first=True, legend_pos="upper center")
 
     plot_1dv2([u_1], [h.reshape((h.shape[0], 1))], labels=[r"$h$"],
-              name="M1_1D_h_over_u",
-              folder_name="paper_data/illustration/1D_M1",
-              xlim=[-1, 1], xlabel=r"$u^n_{1}$", ylabel=r"$h$", log=False,
-              title=r"$h$ over $u^n_{1}$")
+              name="M1_1D_h_over_u", folder_name="paper_data/illustration/1D_M1", xlim=[-1, 1], xlabel=r"$u^n_{1}$",
+              ylabel=r"$h$", log=False, black_first=True, legend_pos="upper center")
+    return 0
 
+
+def print_synthetic_tests():
     # --- synthetic test M1 mk11
     df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_synthetic.csv")
     data_mk11 = df.to_numpy()
@@ -132,24 +138,24 @@ def main():
     data_jump = 7
     plot_1dv2([data_mk11[::data_jump, 0]],
               [u_mk11[::data_jump], u_mk15[::data_jump]],
-              labels=["Convex", "Monotone"], name="rel_err_u_1D_M1_synthetic",
+              labels=["convex", "monotonic"], name="rel_err_u_1D_M1_synthetic",
               folder_name="paper_data/illustration/1D_M1",
               linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u^n_1$',
-              ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
-              title=r"$||u-u_\theta||_2/||u||_2$ over $u^n_1$")
+              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
     plot_1dv2([data_mk11[::data_jump, 0]],
               [alpha_mk11[::data_jump], alpha_mk15[::data_jump]],
-              labels=["Convex", "Mono"], name="rel_err_alpha_1D_M1_synthetic",
+              labels=["convex", "monotonic"], name="rel_err_alpha_1D_M1_synthetic",
               folder_name="paper_data/illustration/1D_M1",
               linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$u^n_1$',
-              ylabel=r"$||\alpha^n_u-\alpha^n_\theta||_2/||\alpha^n_u||_2$",
-              log=True, title=r"$||\alpha^n_u-\alpha^n_\theta||_2/||\alpha^n_u||_2$ over $u^n_1$")
+              ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
+              log=True)
     plot_1dv2([data_mk11[::data_jump, 0]],
               [h_mk11[::data_jump], h_mk15[::data_jump]],
-              labels=["Convex", "Mono"], name="rel_err_h_1D_M1_synthetic", folder_name="paper_data/illustration/1D_M1",
+              labels=["convex", "monotonic"], name="rel_err_h_1D_M1_synthetic",
+              folder_name="paper_data/illustration/1D_M1",
               linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u_1$',
               ylabel=r"$||h-h_\theta||_2/||h||_2$",
-              log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u^n_1$")
+              log=True)
 
     df = pd.read_csv("paper_data/1D_M1/1D_M1_normal_vs_alpha_synthetic.csv")
     data_sampling_compare = df.to_numpy()
@@ -167,8 +173,9 @@ def main():
             labels=[r"uniform $u^n$", r"uniform $\alpha_u^n$"], name="rel_err_alpha_compare_sampling_synthetic",
             folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1],
             xlabel=r'$u^n_1$',
-            ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
-            log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $u^n_1$")
+            ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
+            log=True,
+            title=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$ over $u^n_1$")
     plot_1d([data_sampling_compare[:, 0]],
             [data_sampling_compare[:, 3].reshape((data_sampling_compare.shape[0], 1)),
              data_sampling_compare[:, 6].reshape((data_sampling_compare.shape[0], 1))],
@@ -177,13 +184,62 @@ def main():
             xlabel=r'$u^n_1$',
             ylabel=r"$||h-h_\theta||_2/||h||_2$",
             log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u^n_1$")
+    return 0
 
+
+def print_error_test_case(case_str: str = "periodic"):
+    # Plot banach fixed point for 1D
+    case_str_title = case_str
+    if case_str == "inflow M1":
+        case_str = "inflow_M1"
+    if case_str == "inflow M2":
+        case_str = "inflow_M2"
+
+    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_20480.csv")
+    u_ref = df.to_numpy()
+    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk11_20480.csv")
+    u_neural11 = df.to_numpy()
+    u_neural11 = u_neural11[:, 1:]
+    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk15_20480.csv")
+    u_neural15 = df.to_numpy()
+    u_neural15 = u_neural15[:, 1:]
+    x = u_ref[:, 0]
+    u_ref = u_ref[:, 1:]
+
+    res_list = [u_ref[:, 1:], u_neural11, u_neural15]
+    plot_1d([x], res_list,
+            labels=[r"$u_0$", r"$u_1$", r"convex - $u_{0,\theta}$", r"convex - $u_{1,\theta}$",
+                    r"Mono - $u_{0,\theta}$",
+                    r"Mono - $u_{1,\theta}$"], name=case_str, folder_name="paper_data/illustration/banach",
+            linetypes=['-', 'o', '^'], xlim=[0, 1], xlabel='x', ylabel='u', log=False,
+            title=r"$u$ and $u_\theta$  over $x$")
+
+    err_mk11 = np.linalg.norm(u_ref - u_neural11, axis=1).reshape((u_ref.shape[0], 1))
+    rel_errmk11 = err_mk11 / np.linalg.norm(u_ref, axis=1).reshape((u_ref.shape[0], 1))
+    err_mk15 = np.linalg.norm(u_ref - u_neural15, axis=1).reshape((u_ref.shape[0], 1))
+    rel_errmk15 = err_mk15 / np.linalg.norm(u_ref, axis=1).reshape((u_ref.shape[0], 1))
+
+    err_res_list = [err_mk11, err_mk15]
+    plot_1d([x], err_res_list, labels=["convex", "monotonic"], name="err_" + case_str,
+            folder_name="paper_data/illustration/banach",
+            linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2$", log=True,
+            title=r"$||u-u_\theta||_2$ over $x$")
+    rel_err_res_list = [rel_errmk11, rel_errmk15]
+    plot_1d([x], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_" + case_str,
+            folder_name="paper_data/illustration/banach", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1],
+            xlabel='x',
+            ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True, title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
+    return 0
+
+
+def print_periodic_test_case():
     # --- perodic M1 2D test case.
     df = pd.read_csv("paper_data/2D_M1/err_2D_M1_MK11_periodic.csv")
     data_mk11 = df.to_numpy()
     df = pd.read_csv("paper_data/2D_M1/err_2D_M1_MK15_periodic.csv")
     data_mk15 = df.to_numpy()
     n = 30
+    data_jump = 2
     time = data_mk11[::n, 0]
     err_u_mk11 = data_mk11[::n, 1]
     err_alpha_mk11 = data_mk11[::n, 2]
@@ -194,23 +250,24 @@ def main():
     err_alpha_mk15 = data_mk15[::n, 2]
     h_mk15 = data_mk15[::n, 3]
     h_ref2 = data_mk15[::n, 4]
-    plot_1dv2([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)), err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
-              labels=["Convex", "Mono"], name="rel_err_u_2D_M1_over_time", folder_name="paper_data/illustration/2D_M1",
+    plot_1dv2([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)),
+                       err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
+              labels=["convex", "monotonic"], name="rel_err_u_2D_M1_over_time",
+              folder_name="paper_data/illustration/2D_M1",
               linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-4, 1e-1], xlabel=r'$t$',
-              ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
-              title=r"$||u-u_\theta||_2/||u||_2$ over $t$")
-    plot_1dv2([time],
-              [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)), err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
-              labels=["Convex", "Mono"], name="rel_err_alpha_2D_M1_over_time",
+              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
+    plot_1dv2([time], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)),
+                       err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
+              labels=["convex", "monotonic"], name="rel_err_alpha_2D_M1_over_time",
               folder_name="paper_data/illustration/2D_M1",
               linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
-              ylabel=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$",
-              log=True, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
-    plot_1dv2([time], [h_ref, h_mk11, h_mk15], labels=["Newton", "Convex", "Mono"],
+              ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
+              log=True)
+    plot_1dv2([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
+              labels=["reference", "convex", "monotonic"],
               name="entropy_2D_M1_over_time", folder_name="paper_data/illustration/2D_M1",
-              linetypes=['-', '--', '-.'], xlim=[0, time[-1]], xlabel=r'$t$',
-              ylabel=r"$\int h(t,x,y)dxdy$",
-              log=False, title=r"$||\alpha-\alpha_\theta||_2/||\alpha||_2$ over $t$")
+              linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
+              ylabel=r"$\int h(t,x,y)dxdy$", log=False, black_first=True)
 
     # 2D snapshot
     x = np.linspace(-1.5, 1.5, 200)
@@ -228,7 +285,10 @@ def main():
                    z_max=1e-2)
     plot_flowfield(x, y, u_mk15_err, name="periodic_mk15_M1_2D_err", contour=False, logscale=True, z_min=1e-5,
                    z_max=1e-2)
+    return 0
 
+
+def print_realizable_set():
     # --- Realizable set illustrations ---
     [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
                               selected_cols=[True, True, True])
@@ -283,7 +343,10 @@ def main():
                     show_fig=False,
                     log=False,
                     color_map=0)
+    return 0
 
+
+def print_training_performance():
     # --- illustrate training history for alpha sampling vs u sampling ---
 
     df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_history_normal.csv")
@@ -356,65 +419,6 @@ def main():
             linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-5, 1e-1], xlabel='epoch',
             ylabel=r"loss",
             log=True, title=r"relative training loss $u$ over epochs")
-
-    # --- illustrate Convergence errors ---
-
-    # Plot banach fixed point for 1D
-    print_convergence_rates("periodic")
-    print_convergence_rates("inflow M1")
-    print_convergence_rates2("inflow M2")
-
-    # ---- periodic M1 with fine grid -----
-
-    print_error_test_case("periodic")
-    print_error_test_case("inflow M1")
-    # rint_convergence_rates2("inflow M2")
-
-    return True
-
-
-def print_error_test_case(case_str: str = "periodic"):
-    # Plot banach fixed point for 1D
-    case_str_title = case_str
-    if case_str == "inflow M1":
-        case_str = "inflow_M1"
-    if case_str == "inflow M2":
-        case_str = "inflow_M2"
-
-    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_20480.csv")
-    u_ref = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk11_20480.csv")
-    u_neural11 = df.to_numpy()
-    u_neural11 = u_neural11[:, 1:]
-    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk15_20480.csv")
-    u_neural15 = df.to_numpy()
-    u_neural15 = u_neural15[:, 1:]
-    x = u_ref[:, 0]
-    u_ref = u_ref[:, 1:]
-
-    res_list = [u_ref[:, 1:], u_neural11, u_neural15]
-    plot_1d([x], res_list,
-            labels=[r"$u_0$", r"$u_1$", r"Convex - $u_{0,\theta}$", r"Convex - $u_{1,\theta}$",
-                    r"Mono - $u_{0,\theta}$",
-                    r"Mono - $u_{1,\theta}$"], name=case_str, folder_name="paper_data/illustration/banach",
-            linetypes=['-', 'o', '^'], xlim=[0, 1], xlabel='x', ylabel='u', log=False,
-            title=r"$u$ and $u_\theta$  over $x$")
-
-    err_mk11 = np.linalg.norm(u_ref - u_neural11, axis=1).reshape((u_ref.shape[0], 1))
-    rel_errmk11 = err_mk11 / np.linalg.norm(u_ref, axis=1).reshape((u_ref.shape[0], 1))
-    err_mk15 = np.linalg.norm(u_ref - u_neural15, axis=1).reshape((u_ref.shape[0], 1))
-    rel_errmk15 = err_mk15 / np.linalg.norm(u_ref, axis=1).reshape((u_ref.shape[0], 1))
-
-    err_res_list = [err_mk11, err_mk15]
-    plot_1d([x], err_res_list, labels=["Convex", "Mono"], name="err_" + case_str,
-            folder_name="paper_data/illustration/banach",
-            linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2$", log=True,
-            title=r"$||u-u_\theta||_2$ over $x$")
-    rel_err_res_list = [rel_errmk11, rel_errmk15]
-    plot_1d([x], rel_err_res_list, labels=["Convex", "Mono"], name="rel_err_" + case_str,
-            folder_name="paper_data/illustration/banach", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1],
-            xlabel='x',
-            ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True, title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
     return 0
 
 
@@ -823,11 +827,11 @@ def print_convergence_rates(case_str: str = "periodic"):
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
-        labels=[r'$1^{st}$ order slope', 'Convex', 'Mono', 'Newton'],
+        labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/illustration/banach", linetypes=['-', 'o', '^', '>'],
         xlim=[x_len / 10., x_len / 10240.],
-        ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||u-u^*||_2^2$",
+        ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2^2$",
         loglog=True, title="discretization error " + case_str_title + "test")
 
     return 0
@@ -1238,7 +1242,7 @@ def print_convergence_rates2(case_str: str = "periodic"):
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
-        labels=[r'$1^{st}$ order slope', 'Convex', 'Mono', 'Newton'],
+        labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'Newton'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/illustration/banach",
         linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
