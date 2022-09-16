@@ -14,17 +14,17 @@ from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1d
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
-    # print_1D_inflow()
+    print_1D_inflow()
 
-    # print_M1_closure()
+    print_M1_closure()
 
-    # print_synthetic_tests()
+    print_synthetic_tests()
 
-    # print_periodic_test_case()
+    print_periodic_test_case()
 
-    # print_realizable_set()
+    print_realizable_set()
 
-    # print_training_performance()
+    print_training_performance()
 
     # --- illustrate Convergence errors ---
 
@@ -35,8 +35,8 @@ def main():
 
     # ---- periodic M1 with fine grid -----
 
-    print_error_test_case("periodic")
-    print_error_test_case("inflow M1")
+    # print_error_test_case("periodic")
+    # print_error_test_case("inflow M1")
     # rint_convergence_rates2("inflow M2")
 
     return True
@@ -822,6 +822,18 @@ def print_convergence_rates(case_str: str = "periodic"):
     #        ylabel=r"$||u-u^*||_2^2$",
     #        loglog=True, title=r"discretization error")
     x_len = 0.5
+    # plot_1dv4(xs=[np.asarray(
+    #    [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
+    #     x_len / 2560.,
+    #     x_len / 5120., x_len / 10240.])],
+    #    ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
+    #    labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
+    #    name="discretization_error_" + case_str,
+    #    folder_name="paper_data/illustration/banach", linetypes=['-', 'o', '^', '>'],
+    #    xlim=[x_len / 10., x_len / 10240.],
+    #    ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
+    #    loglog=True, title="discretization error " + case_str_title + "test")
+
     plot_1dv4(xs=[np.asarray(
         [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
          x_len / 2560.,
@@ -829,9 +841,9 @@ def print_convergence_rates(case_str: str = "periodic"):
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
         labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
         name="discretization_error_" + case_str,
-        folder_name="paper_data/illustration/banach", linetypes=['-', 'o', '^', '>'],
-        xlim=[x_len / 10., x_len / 10240.],
-        ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2^2$",
+        folder_name="paper_data/illustration/banach",
+        linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
+        ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
         loglog=True, title="discretization error " + case_str_title + "test")
 
     return 0
@@ -1242,11 +1254,11 @@ def print_convergence_rates2(case_str: str = "periodic"):
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
-        labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'Newton'],
+        labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/illustration/banach",
         linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
-        ylabel=r"$||u-u^*||_2^2$",
+        ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
         loglog=True, title="discretization error " + case_str_title + "test")
 
     return 0

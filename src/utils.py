@@ -425,12 +425,14 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
     """
-    symbol_size = 1.2
-    marker_size = 4
+    symbol_size = 2
+    marker_size = 6
     marker_width = 0.5
 
     plt.clf()
     plt.figure(figsize=(5.8, 4.7), dpi=400)
+    sns.set_theme()
+    sns.set_style("white")
 
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
@@ -440,8 +442,6 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
         if labels is not None:
             linetypes = linetypes[0:len(labels)]
 
-    sns.set_theme()
-    sns.set_style("white")
     colors = ['k', 'r', 'g', 'b']
     if len(xs) == 1:
         x = xs[0]
