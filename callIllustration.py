@@ -8,23 +8,23 @@ Date 22.10.2021
 import numpy as np
 import pandas as pd
 from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1dv4, load_data, scatter_plot_2d_N2, \
-    scatter_plot_2d, plot_inflow
+    scatter_plot_2d, plot_inflow, plot_wide
 
 
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
-    print_1D_inflow()
+    # print_1D_inflow()
 
-    print_M1_closure()
+    # print_M1_closure()
 
-    print_synthetic_tests()
+    # print_synthetic_tests()
 
     print_periodic_test_case()
 
-    print_realizable_set()
+    # print_realizable_set()
 
-    print_training_performance()
+    # print_training_performance()
 
     # --- illustrate Convergence errors ---
 
@@ -263,7 +263,9 @@ def print_periodic_test_case():
               linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
               ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
               log=True)
-    plot_1dv2([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
+    data_jump = 1
+
+    plot_wide([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
               labels=["reference", "convex", "monotonic"],
               name="entropy_2D_M1_over_time", folder_name="paper_data/illustration/2D_M1",
               linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
