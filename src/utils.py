@@ -567,7 +567,7 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
 def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
                     lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
                     title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
-                    folder_name: str = "figures", show_fig: bool = False, color_map: int = 0):
+                    folder_name: str = "figures", show_fig: bool = False, color_map: int = 0, marker_size=6):
     '''
     brief: Compute a scatter plot
     input: x_in = [x1,x2] function arguments
@@ -586,9 +586,9 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     y = x_in[:, 1]
     z = z_in
     if log:
-        out = plt.scatter(x, y, s=6, c=z, cmap=c_map, norm=colors.LogNorm(vmin=lim_z[0], vmax=lim_z[1]))
+        out = plt.scatter(x, y, s=marker_size, c=z, cmap=c_map, norm=colors.LogNorm(vmin=lim_z[0], vmax=lim_z[1]))
     else:
-        out = plt.scatter(x, y, s=6, c=z, cmap=c_map, vmin=lim_z[0], vmax=lim_z[1])
+        out = plt.scatter(x, y, s=marker_size, c=z, cmap=c_map, vmin=lim_z[0], vmax=lim_z[1])
     plt.xlim(lim_x[0], lim_x[1])
     plt.ylim(lim_y[0], lim_y[1])
     # ax.set_title(title, fontsize=14)
@@ -600,6 +600,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
         plt.show()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     plt.close(fig)
+    print("Saved image at: " + folder_name + "/" + name + ".png")
     return 0
 
 
