@@ -350,40 +350,6 @@ def print_realizable_set():
     return 0
 
 
-def print_realizable_set_by_gamma():
-    folder_name = "paper_data/1D_M2/u_sampling_by_gamma/"
-    save_folder = "paper_data/illustration/1D_M2/u_sampling_by_gamma"
-    # --- Realizable set illustrations ---
-    for i in range(0, 4):
-        [u, alpha, h] = load_data(filename=folder_name + "Monomial_M2_1D_normal_g" + str(i) + "_ev3.csv", input_dim=3,
-                                  selected_cols=[True, True, True])
-        max_h = 3
-        min_h = np.min(h)
-        alpha_bound = 40
-        marker_size = 1
-        if i == 1:
-            lim_x = (-5.2, 5.2)
-            lim_y = (-4.5, 5.2)
-        elif i == 2:
-            lim_x = (-1.5, 1.5)
-            lim_y = (-0.5, 1.5)
-        else:
-            lim_x = (-1.1, 1.1)
-            lim_y = (-0.1, 1.1)
-
-        lim_z = (np.min(h), np.max(h))
-        scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=lim_x, lim_y=lim_y, lim_z=lim_z, title=r"$h$ over $\mathcal{R}^r$",
-                        folder_name=save_folder, name="Monomial_M2_1D_normal_g" + str(i) + "_u", show_fig=False,
-                        log=False, color_map=0, marker_size=marker_size)
-        scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                        lim_z=(min_h, max_h), title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_{u,1}^r$",
-                        label_y=r"$\alpha_{u,2}^r$",
-                        folder_name=save_folder, name="Monomial_M2_1D_normal_g" + str(i) + "_alpha", show_fig=False,
-                        log=False, color_map=0, marker_size=marker_size)
-
-    return 0
-
-
 def print_training_performance():
     # --- illustrate training history for alpha sampling vs u sampling ---
 
