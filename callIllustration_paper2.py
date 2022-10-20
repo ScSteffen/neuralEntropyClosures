@@ -35,16 +35,51 @@ def main():
     # print_cross_sections()
 
     # 5) Print method errors
-    print_method_errors()
+    # print_method_errors()
 
     # 6) Get regularization errors
     # test_regularization_error()
 
     # 7) Print moment reconstructions
-    # print_realizable_set_new_condition()
-    # print_realizable_set()
+    print_realizable_set_new_condition()
     # print_entropies()
+    # print_realizable_set_by_gamma()
+
     return True
+
+
+def print_realizable_set_by_gamma():
+    folder_name = "paper_data/paper2/u_sampling_by_gamma/"
+    save_folder = "paper_data/paper2/illustrations/u_sampling_by_gamma"
+    # --- Realizable set illustrations ---
+    for i in range(0, 4):
+        [u, alpha, h] = load_data(filename=folder_name + "M2_1D_g" + str(i) + "_reduced_ev5.csv",
+                                  data_dim=3, selected_cols=[True, True, True])
+        max_h = 3
+        min_h = np.min(h)
+        alpha_bound = 40
+        marker_size = 1
+        if i == 1:
+            lim_x = (-5.2, 5.2)
+            lim_y = (-4.5, 5.2)
+        elif i == 2:
+            lim_x = (-1.5, 1.5)
+            lim_y = (-0.5, 1.5)
+        else:
+            lim_x = (-1.1, 1.1)
+            lim_y = (-0.1, 1.1)
+
+        lim_z = (np.min(h), np.max(h))
+        scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=lim_x, lim_y=lim_y, lim_z=lim_z, title=r"$h$ over $\mathcal{R}^r$",
+                        folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_u", show_fig=False,
+                        log=False, color_map=0, marker_size=marker_size)
+        scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                        lim_z=lim_z, title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_{u,1}^r$",
+                        label_y=r"$\alpha_{u,2}^r$",
+                        folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_alpha", show_fig=False,
+                        log=False, color_map=0, marker_size=marker_size)
+
+    return 0
 
 
 def print_entropies():
@@ -128,16 +163,17 @@ def print_entropies():
 
 
 def print_realizable_set_new_condition():
-    [u_g0, alpha_g0, h_g0] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g0.csv",
+    foldername = "paper_data/paper2/u_sampling_by_gamma/"
+    [u_g0, alpha_g0, h_g0] = load_data(filename=foldername + "M2_1D_g0_reduced_ev5.csv",
                                        data_dim=3,
                                        selected_cols=[True, True, True])
-    [u_g3, alpha_g3, h_g3] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g3.csv",
+    [u_g3, alpha_g3, h_g3] = load_data(filename=foldername + "M2_1D_g3_reduced_ev5.csv",
                                        data_dim=3,
                                        selected_cols=[True, True, True])
-    [u_g2, alpha_g2, h_g2] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g2.csv",
+    [u_g2, alpha_g2, h_g2] = load_data(filename=foldername + "M2_1D_g2_reduced_ev5.csv",
                                        data_dim=3,
                                        selected_cols=[True, True, True])
-    [u_g1, alpha_g1, h_g1] = load_data(filename="paper_data/paper2/realizable_set/new_condition/M2_1D_g1.csv",
+    [u_g1, alpha_g1, h_g1] = load_data(filename=foldername + "M2_1D_g1_reduced_ev5.csv",
                                        data_dim=3,
                                        selected_cols=[True, True, True])
 
@@ -157,6 +193,7 @@ def print_realizable_set_new_condition():
     for simplex in hull.simplices:
         pts_line0_x.append(points_g0[simplex, 0][0])
         pts_line0_y.append(points_g0[simplex, 1][0])
+
     pts_line0_x = np.asarray(pts_line0_x)
     pts_line0_y = np.asarray(pts_line0_y)
     mask = pts_line0_x.argsort()
@@ -174,14 +211,39 @@ def print_realizable_set_new_condition():
     for simplex in hull.simplices:
         pts_line3_x.append(points_g3[simplex, 0][0])
         pts_line3_y.append(points_g3[simplex, 1][0])
-    pts_line3_x = np.asarray(pts_line3_x)
-    pts_line3_y = np.asarray(pts_line3_y)
-    mask = pts_line3_x.argsort()
-    pts_line3_x = pts_line3_x[mask]
-    pts_line3_y = pts_line3_y[mask]
-    line2 = plt.plot(pts_line3_x, pts_line3_y, colors[1], linewidth=symbol_size)  # plot underbelly
-    plt.plot([pts_line3_x[0], pts_line3_x[-1]], [pts_line3_y[0], pts_line3_y[-1]], colors[1],
-             linewidth=symbol_size)  # plot top
+
+    pts_line3_x_p = []
+    pts_line3_y_p = []
+    pts_line3_x_m = []
+    pts_line3_y_m = []
+
+    for i in range(len(pts_line3_x)):
+        if pts_line3_y[i] > 0.98:
+            pts_line3_x_p.append(pts_line3_x[i])
+            pts_line3_y_p.append(pts_line3_y[i])
+        else:
+            pts_line3_x_m.append(pts_line3_x[i])
+            pts_line3_y_m.append(pts_line3_y[i])
+
+    pts_line3_x_p = np.asarray(pts_line3_x_p)
+    pts_line3_y_p = np.asarray(pts_line3_y_p)
+    pts_line3_x_m = np.asarray(pts_line3_x_m)
+    pts_line3_y_m = np.asarray(pts_line3_y_m)
+
+    mask_p = pts_line3_x_p.argsort()
+    mask_m = pts_line3_x_m.argsort()
+
+    pts_line3_x_p = pts_line3_x_p[mask_p]
+    pts_line3_y_p = pts_line3_y_p[mask_p]
+    pts_line3_x_m = pts_line3_x_m[mask_m]
+    pts_line3_y_m = pts_line3_y_m[mask_m]
+
+    line2 = plt.plot(pts_line3_x_p, pts_line3_y_p, colors[1], linewidth=symbol_size)  # plot underbelly
+    plt.plot(pts_line3_x_m, pts_line3_y_m, colors[1], linewidth=symbol_size)  # plot top
+    # plt.plot([pts_line3_x_m[0], pts_line3_x_p[0]], [pts_line3_y_m[0], pts_line3_y_p[0]], colors[1],
+    #         linewidth=symbol_size)
+    # plt.plot([pts_line3_x_m[-1], pts_line3_x_p[-1]], [pts_line3_y_m[-1], pts_line3_y_p[-1]], colors[1],
+    #         linewidth=symbol_size)
 
     # 3) gamma 0.01
     points_g2 = u_g2[:, 1:]
@@ -191,17 +253,39 @@ def print_realizable_set_new_condition():
     for simplex in hull.simplices:
         pts_line2_x.append(points_g2[simplex, 0][1])
         pts_line2_y.append(points_g2[simplex, 1][1])
-    pts_line2_x = np.asarray(pts_line2_x)
-    pts_line2_y = np.asarray(pts_line2_y)
-    mask = pts_line2_x.argsort()
-    pts_line2_x = np.concatenate(
-        [pts_line2_x[mask][0].reshape((1,)), pts_line2_x[mask][2:104], pts_line2_x[mask][106:]])
-    pts_line2_y = np.concatenate(
-        [pts_line2_y[mask][0].reshape((1,)), pts_line2_y[mask][2:104], pts_line2_y[mask][106:]])
 
-    line3 = plt.plot(pts_line2_x, pts_line2_y, colors[2], linewidth=symbol_size)  # plot underbelly
-    plt.plot([pts_line2_x[0], pts_line2_x[-1]], [pts_line2_y[0], pts_line2_y[-1]], colors[2],
-             linewidth=symbol_size)  # plot top
+    pts_line2_x_p = []
+    pts_line2_y_p = []
+    pts_line2_x_m = []
+    pts_line2_y_m = []
+
+    for i in range(len(pts_line2_x)):
+        if pts_line2_y[i] > 1.0:
+            pts_line2_x_p.append(pts_line2_x[i])
+            pts_line2_y_p.append(pts_line2_y[i])
+        else:
+            pts_line2_x_m.append(pts_line2_x[i])
+            pts_line2_y_m.append(pts_line2_y[i])
+
+    pts_line2_x_p = np.asarray(pts_line2_x_p)
+    pts_line2_y_p = np.asarray(pts_line2_y_p)
+    pts_line2_x_m = np.asarray(pts_line2_x_m)
+    pts_line2_y_m = np.asarray(pts_line2_y_m)
+
+    mask_p = pts_line2_x_p.argsort()
+    mask_m = pts_line2_x_m.argsort()
+
+    pts_line2_x_p = pts_line2_x_p[mask_p]
+    pts_line2_y_p = pts_line2_y_p[mask_p]
+    pts_line2_x_m = pts_line2_x_m[mask_m]
+    pts_line2_y_m = pts_line2_y_m[mask_m]
+
+    line3 = plt.plot(pts_line2_x_p, pts_line2_y_p, colors[2], linewidth=symbol_size)  # plot underbelly
+    plt.plot(pts_line2_x_m, pts_line2_y_m, colors[2], linewidth=symbol_size)  # plot top
+    plt.plot([pts_line2_x_m[0], pts_line2_x_p[0]], [pts_line2_y_m[0], pts_line2_y_p[0]], colors[2],
+             linewidth=symbol_size)
+    plt.plot([pts_line2_x_m[-1], pts_line2_x_p[-1]], [pts_line2_y_m[-1], pts_line2_y_p[-1]], colors[2],
+             linewidth=symbol_size)
 
     # 4) gamma 0.1
     points_g1 = u_g1[:, 1:]
@@ -211,28 +295,51 @@ def print_realizable_set_new_condition():
     for simplex in hull.simplices:
         pts_line1_x.append(points_g1[simplex, 0][0])
         pts_line1_y.append(points_g1[simplex, 1][0])
-    pts_line1_x = np.asarray(pts_line1_x)
-    pts_line1_y = np.asarray(pts_line1_y)
-    mask = pts_line1_x.argsort()
-    pts_line1_x = pts_line1_x[mask]
-    pts_line1_y = pts_line1_y[mask]
-    line4 = plt.plot(pts_line1_x, pts_line1_y, colors[3], linewidth=symbol_size)  # plot underbelly
-    plt.plot([pts_line1_x[0], pts_line1_x[-1]], [pts_line1_y[0], pts_line1_y[-1]], colors[3],
-             linewidth=symbol_size)  # plot top
 
+    pts_line1_x_p = []
+    pts_line1_y_p = []
+    pts_line1_x_m = []
+    pts_line1_y_m = []
+
+    for i in range(len(pts_line1_x)):
+        if pts_line1_y[i] > 1.0:
+            pts_line1_x_p.append(pts_line1_x[i])
+            pts_line1_y_p.append(pts_line1_y[i])
+        else:
+            pts_line1_x_m.append(pts_line1_x[i])
+            pts_line1_y_m.append(pts_line1_y[i])
+
+    pts_line1_x_p = np.asarray(pts_line1_x_p)
+    pts_line1_y_p = np.asarray(pts_line1_y_p)
+    pts_line1_x_m = np.asarray(pts_line1_x_m)
+    pts_line1_y_m = np.asarray(pts_line1_y_m)
+
+    mask_p = pts_line1_x_p.argsort()
+    mask_m = pts_line1_x_m.argsort()
+
+    pts_line1_x_p = pts_line1_x_p[mask_p]
+    pts_line1_y_p = pts_line1_y_p[mask_p]
+    pts_line1_x_m = pts_line1_x_m[mask_m]
+    pts_line1_y_m = pts_line1_y_m[mask_m]
+    line4 = plt.plot(pts_line1_x_p, pts_line1_y_p, colors[3], linewidth=symbol_size)  # plot underbelly
+    plt.plot(pts_line1_x_m, pts_line1_y_m, colors[3], linewidth=symbol_size)  # plot top
+    plt.plot([pts_line1_x_m[0], pts_line1_x_p[0]], [pts_line1_y_m[0], pts_line1_y_p[0]], colors[3],
+             linewidth=symbol_size)
+    plt.plot([pts_line1_x_m[-1], pts_line1_x_p[-1]], [pts_line1_y_m[-1], pts_line1_y_p[-1]], colors[3],
+             linewidth=symbol_size)
     # draw zoom box
     left = 0.9
-    right = 1.01
+    right = 1.05
     bottom = 0.9
-    top = 1.01
+    top = 1.05
     plt.plot([left, bottom], [left, top], 'k-', linewidth=0.7)
     plt.plot([right, bottom], [right, top], 'k-', linewidth=0.7)
     plt.plot([right, bottom], [left, bottom], 'k-', linewidth=0.7)
     plt.plot([right, top], [left, top], 'k-', linewidth=0.7)
 
     # draw "zoom lines"
-    plt.plot([left, 1.29], [top, 2.67], 'k-', linewidth=0.7)
-    plt.plot([right, 2.45], [bottom, 1.45], 'k-', linewidth=0.7)
+    plt.plot([left, 1.5], [top, 3.8], 'k-', linewidth=0.7)
+    plt.plot([right, 3.44], [bottom, 1.63], 'k-', linewidth=0.7)
 
     # 1) gamma 0
     plt.legend(
@@ -244,7 +351,7 @@ def print_realizable_set_new_condition():
 
     # create zoom in view
     # location for the zoomed portion
-    sub_axes = plt.axes([.7, .7, 0.18, 0.18])  # [left, bottom, width, height]
+    sub_axes = plt.axes([.65, .65, 0.18, 0.18])  # [left, bottom, width, height]
 
     # plot the zoomed portion
     #  gamma 0
@@ -253,9 +360,8 @@ def print_realizable_set_new_condition():
                   linewidth=symbol_size)  # plot top
 
     #  gamma 0.001
-    sub_axes.plot(pts_line3_x[:-2], pts_line3_y[:-2], colors[1], linewidth=symbol_size)  # plot underbelly
-    sub_axes.plot([pts_line3_x[0], pts_line3_x[-1]], [pts_line3_y[0], pts_line3_y[-1]], colors[1],
-                  linewidth=symbol_size)  # plot top
+    sub_axes.plot(pts_line3_x_p, pts_line3_y_p, colors[1], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot(pts_line3_x_m, pts_line3_y_m, colors[1], linewidth=symbol_size)  # plot top
 
     sub_axes.set_xlim(left=left, right=right)
     sub_axes.set_ylim(bottom=bottom, top=top)
@@ -277,65 +383,7 @@ def print_realizable_set_new_condition():
         "paper_data/paper2/illustrations/realizable_set/nc_realizable_set_gammas" + ".png"))
     plt.close()
     plt.clf()
-    """
-    # ---- alphas
-    scatter_plot_2d(alpha_g0[:, 1:], h_g0, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
-                    label_y=r"$\alpha_u^2",  name="lagrange_g0", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    scatter_plot_2d(alpha_g1[:, 1:], h_g1, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
-                    label_y=r"$\alpha_u^2",  name="lagrange_g1", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    scatter_plot_2d(alpha_g2[:, 1:], h_g2, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
-                    label_y=r"$\alpha_u^2",  name="lagrange_g2", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    scatter_plot_2d(alpha_g3[:, 1:], h_g3, lim_x=(-20, 20), lim_y=(-20, 20), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
-                    label_y=r"$\alpha_u^2",  name="lagrange_g3", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    
-    scatter_plot_2d(u_g0[:, 1:], h_g0, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
-                    label_y=r"$\alpha_u^2",  name="u_g0", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    scatter_plot_2d(u_g1[:, 1:], h_g1, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
-                    label_y=r"$\alpha_u^2",  name="u_g1", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    scatter_plot_2d(u_g2[:, 1:], h_g2, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$\alpha_u^1$",
-                    label_y=r"$\alpha_u^2",  name="u_g2", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    scatter_plot_2d(u_g3[:, 1:], h_g3, lim_y=(-1.2, 2), lim_x=(-2, 2), lim_z=(-2, 3), label_x=r"$u^1$",
-                    label_y=r"$u^2",  name="u_g3", log=False,
-                    folder_name="paper_data/paper2/illustrations/realizable_set/", show_fig=False)
-    """ \
-    """
-    plt.clf()
-    points_g0 = alpha_g0[:, 1:]
-    hull = ConvexHull(points_g0)
-    for simplex in hull.simplices:
-        line1 = plt.plot(points_g0[simplex, 0], points_g0[simplex, 1], colors[0], linewidth=symbol_size)
-    # 2) gamma 0.001
-    points_g3 = alpha_g3[:, 1:]
-    hull = ConvexHull(points_g3)
-    for simplex in hull.simplices:
-        line2 = plt.plot(points_g3[simplex, 0], points_g3[simplex, 1], colors[1], linewidth=symbol_size)
-    # 3) gamma 0.01
-    points_g2 = alpha_g2[:, 1:]
-    hull = ConvexHull(points_g2)
-    for simplex in hull.simplices:
-        line3 = plt.plot(points_g2[simplex, 0], points_g2[simplex, 1], colors[2], linewidth=symbol_size)
-    # 4) gamma 0.1
-    points_g1 = alpha_g1[:, 1:]
-    hull = ConvexHull(points_g1)
-    for simplex in hull.simplices:
-        line4 = plt.plot(points_g1[simplex, 0], points_g1[simplex, 1], colors[3], linewidth=symbol_size)
-    plt.legend(
-        [line1[0], line2[0], line3[0], line4[0]], [r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-        loc="upper left")
-    plt.xlabel(r"$\alpha_{u,1}^n$")
-    plt.ylabel(r"$\alpha_{u,2}^n$")
-    plt.savefig("paper_data/paper2/illustrations/realizable_set/lagrange_gammas" + ".png", dpi=400)
-    print(
-        "Figure successfully saved to file: " + str(
-            "paper_data/paper2/illustrations/realizable_set/lagrange_gammas" + ".png"))
-    """
+
     return 0
 
 
