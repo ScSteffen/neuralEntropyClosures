@@ -24,6 +24,7 @@ def main():
 
     # 1) Training performance
     # print_training_performance()
+    print_training_performance_stats()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
@@ -41,7 +42,7 @@ def main():
     # test_regularization_error()
 
     # 7) Print moment reconstructions
-    print_realizable_set_new_condition()
+    # print_realizable_set_new_condition()
     # print_entropies()
     # print_realizable_set_by_gamma()
 
@@ -1112,6 +1113,203 @@ def print_training_performance():
               xlabel="epochs", ylabel="loss u", xlim=[0, 2000], ylim=[1e-7, 1e-2],
               legend_pos="lower left")
     return 0
+
+
+def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folder: str, mk: str, order: str):
+    n_epochs = 2000
+    epochs = np.linspace(1, n_epochs, n_epochs)
+
+    g0_runs = []
+    g1_runs = []
+    g2_runs = []
+    g3_runs = []
+
+    # load losses
+    for i in range(1, 7):
+        df = load_history_file(g_0_folder + "history_" + str(i).zfill(3) + "_.csv")
+        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        t_arr = np.concatenate((t0, t1, t2), axis=1)
+        g0_runs.append(t_arr)
+
+        df = load_history_file(g_1_folder + "history_" + str(i).zfill(3) + "_.csv")
+        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        t_arr = np.concatenate((t0, t1, t2), axis=1)
+        g1_runs.append(t_arr)
+
+        df = load_history_file(g_2_folder + "history_" + str(i).zfill(3) + "_.csv")
+        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        t_arr = np.concatenate((t0, t1, t2), axis=1)
+        g2_runs.append(t_arr)
+
+        df = load_history_file(g_3_folder + "history_" + str(i).zfill(3) + "_.csv")
+        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        t_arr = np.concatenate((t0, t1, t2), axis=1)
+        g3_runs.append(t_arr)
+
+    # Compute mean of the losses
+    g0_mean_runs = np.zeros((n_epochs, 3))
+    g1_mean_runs = np.zeros((n_epochs, 3))
+    g2_mean_runs = np.zeros((n_epochs, 3))
+    g3_mean_runs = np.zeros((n_epochs, 3))
+
+    for i in range(0, 6):
+        g0_mean_runs += g0_runs[i]
+        g1_mean_runs += g1_runs[i]
+        g2_mean_runs += g2_runs[i]
+        g3_mean_runs += g3_runs[i]
+
+    g0_mean_runs /= 6
+    g1_mean_runs /= 6
+    g2_mean_runs /= 6
+    g3_mean_runs /= 6
+
+    plot_1dv2([epochs],
+              [g0_mean_runs[:, 0], g3_mean_runs[:, 0], g2_mean_runs[:, 0], g1_mean_runs[:, 0]],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk" + mk + "_m" + order + "_h_gammas", log=True,
+              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
+              show_fig=False, xlabel="epochs", ylabel="loss h", xlim=[0, 2000], ylim=[1e-6, 1e-2],
+              legend_pos="lower left")
+
+    plot_1dv2([epochs],
+              [g0_mean_runs[:, 1], g3_mean_runs[:, 1], g2_mean_runs[:, 1], g1_mean_runs[:, 0]],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk" + mk + "_m" + order + "_alpha_gammas", log=True,
+              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
+              show_fig=False,
+              xlabel="epochs", ylabel=r"loss $\alpha_u$", xlim=[0, 2000], ylim=[1e-5, 1e-0],
+              legend_pos="lower left")
+
+    plot_1dv2([epochs],
+              [g0_mean_runs[:, 2], g3_mean_runs[:, 2], g2_mean_runs[:, 2], g1_mean_runs[:, 0]],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk" + mk + "_m" + order + "_u_gammas", log=True,
+              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
+              show_fig=False,
+              xlabel="epochs", ylabel="loss u", xlim=[0, 2000], ylim=[1e-7, 1e-2],
+              legend_pos="lower left")
+
+    with open("paper_data/paper2/illustrations/training/stats_runs/loss_mk" + mk + "_m" + order + ".txt", "w") as f:
+        f.write("gamma, h, alpha, u\n")
+        f.write(
+            "0," + str(g0_mean_runs[-1, 0]) + "," + str(g0_mean_runs[-1, 1]) + "," + str(g0_mean_runs[-1, 2]) + "\n")
+        f.write(
+            "0.001," + str(g3_mean_runs[-1, 0]) + "," + str(g3_mean_runs[-1, 1]) + "," + str(
+                g3_mean_runs[-1, 2]) + "\n")
+        f.write(
+            "0.01," + str(g2_mean_runs[-1, 0]) + "," + str(g2_mean_runs[-1, 1]) + "," + str(g2_mean_runs[-1, 2]) + "\n")
+        f.write(
+            "0.1," + str(g1_mean_runs[-1, 0]) + "," + str(g1_mean_runs[-1, 1]) + "," + str(g1_mean_runs[-1, 2]) + "\n")
+    return 0
+
+
+def print_training_performance_stats():
+    # --------------- M2 2D -----------------------
+    n_epochs = 2000
+    epochs = np.linspace(1, n_epochs, n_epochs)
+    mk11_m2_2d_g0_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g0/historyLogs/"
+    mk11_m2_2d_g1_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g1/historyLogs/"
+    mk11_m2_2d_g2_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g2/historyLogs/"
+    mk11_m2_2d_g3_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g3/historyLogs/"
+
+    mk11_m2_2d_g0 = []
+    mk11_m2_2d_g1 = []
+    mk11_m2_2d_g2 = []
+    mk11_m2_2d_g3 = []
+
+    # load losses
+    for j in range(1, 7):
+        i = 2 * j  # because of warmup run
+        df = load_history_file(mk11_m2_2d_g0_folder + "history_" + str(i).zfill(3) + "_.csv")
+        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        t_arr = np.concatenate((t0, t1, t2), axis=1)
+        mk11_m2_2d_g0.append(t_arr)
+
+        # df = load_history_file(mk11_m2_2d_g1_folder + "history_" + str(i).zfill(3) + "_.csv")
+        # t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        # t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        # t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        # t_arr = np.concatenate((t0, t1, t2), axis=1)
+        # mk11_m2_2d_g1.append(t_arr)
+
+        df = load_history_file(mk11_m2_2d_g2_folder + "history_" + str(i).zfill(3) + "_.csv")
+        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        t_arr = np.concatenate((t0, t1, t2), axis=1)
+        mk11_m2_2d_g2.append(t_arr)
+
+        df = load_history_file(mk11_m2_2d_g3_folder + "history_" + str(i).zfill(3) + "_.csv")
+        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
+        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
+        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
+        t_arr = np.concatenate((t0, t1, t2), axis=1)
+        mk11_m2_2d_g3.append(t_arr)
+
+    # Compute mean of the losses
+    mk11_m2_2d_g0_mean_runs = np.zeros((n_epochs, 3))
+    # mk11_m2_2d_g1_mean_runs = np.zeros((n_epochs, 3))
+    mk11_m2_2d_g2_mean_runs = np.zeros((n_epochs, 3))
+    mk11_m2_2d_g3_mean_runs = np.zeros((n_epochs, 3))
+
+    for i in range(0, 6):
+        mk11_m2_2d_g0_mean_runs += mk11_m2_2d_g0[i]
+        # mk11_m2_2d_g1_mean_runs += mk11_m2_2d_g1[i]
+        mk11_m2_2d_g2_mean_runs += mk11_m2_2d_g2[i]
+        mk11_m2_2d_g3_mean_runs += mk11_m2_2d_g3[i]
+
+    mk11_m2_2d_g0_mean_runs /= 6
+    # mk11_m2_2d_g1_mean_runs /= 6
+    mk11_m2_2d_g2_mean_runs /= 6
+    mk11_m2_2d_g3_mean_runs /= 6
+
+    plot_1dv2([epochs],
+              [mk11_m2_2d_g0_mean_runs[:, 0],
+               mk11_m2_2d_g3_mean_runs[:, 0], mk11_m2_2d_g2_mean_runs[:, 0]],  # , mk11_m2_2d_g1_mean_runs[:, 0]],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk11_m2_h_gammas", log=True,
+              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
+              show_fig=False, xlabel="epochs", ylabel="loss h", xlim=[0, 2000], ylim=[1e-6, 1e-2],
+              legend_pos="lower left")
+
+    plot_1dv2([epochs],
+              [mk11_m2_2d_g0_mean_runs[:, 1],
+               mk11_m2_2d_g3_mean_runs[:, 1], mk11_m2_2d_g2_mean_runs[:, 1]],  # , mk11_m2_2d_g1_mean_runs[:, 0]],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk11_m2_alpha_gammas", log=True,
+              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
+              show_fig=False,
+              xlabel="epochs", ylabel=r"loss $\alpha_u$", xlim=[0, 2000], ylim=[1e-5, 1e-0],
+              legend_pos="lower left")
+
+    plot_1dv2([epochs],
+              [mk11_m2_2d_g0_mean_runs[:, 2],
+               mk11_m2_2d_g3_mean_runs[:, 2], mk11_m2_2d_g2_mean_runs[:, 2]],  # , mk11_m2_2d_g1_mean_runs[:, 0]],
+              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
+              name="loss_mk11_m2_u_gammas", log=True,
+              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
+              show_fig=False,
+              xlabel="epochs", ylabel="loss u", xlim=[0, 2000], ylim=[1e-7, 1e-2],
+              legend_pos="lower left")
+
+    # mk12 ---------------
+    mk12_m2_2d_g0_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g0/historyLogs/"
+    mk12_m2_2d_g1_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g1/historyLogs/"
+    mk12_m2_2d_g2_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g2/historyLogs/"
+    mk12_m2_2d_g3_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g3/historyLogs/"
+
+    print_stats_run(g_0_folder=mk12_m2_2d_g0_folder, g_1_folder=mk12_m2_2d_g1_folder, g_2_folder=mk12_m2_2d_g2_folder,
+                    g_3_folder=mk12_m2_2d_g3_folder, mk="12", order="2")
 
 
 def print_cross_sections():
