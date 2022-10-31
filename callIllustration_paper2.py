@@ -1126,28 +1126,32 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
 
     # load losses
     for i in range(1, 7):
-        df = load_history_file(g_0_folder + "history_" + str(i).zfill(3) + "_.csv")
+        if mk == "11":
+            j = 2 * i
+        else:
+            j = i
+        df = load_history_file(g_0_folder + "history_" + str(j).zfill(3) + "_.csv")
         t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
         t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
         t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
         t_arr = np.concatenate((t0, t1, t2), axis=1)
         g0_runs.append(t_arr)
 
-        df = load_history_file(g_1_folder + "history_" + str(i).zfill(3) + "_.csv")
+        df = load_history_file(g_1_folder + "history_" + str(j).zfill(3) + "_.csv")
         t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
         t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
         t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
         t_arr = np.concatenate((t0, t1, t2), axis=1)
         g1_runs.append(t_arr)
 
-        df = load_history_file(g_2_folder + "history_" + str(i).zfill(3) + "_.csv")
+        df = load_history_file(g_2_folder + "history_" + str(j).zfill(3) + "_.csv")
         t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
         t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
         t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
         t_arr = np.concatenate((t0, t1, t2), axis=1)
         g2_runs.append(t_arr)
 
-        df = load_history_file(g_3_folder + "history_" + str(i).zfill(3) + "_.csv")
+        df = load_history_file(g_3_folder + "history_" + str(j).zfill(3) + "_.csv")
         t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
         t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
         t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
@@ -1308,8 +1312,44 @@ def print_training_performance_stats():
     mk12_m2_2d_g2_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g2/historyLogs/"
     mk12_m2_2d_g3_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g3/historyLogs/"
 
-    print_stats_run(g_0_folder=mk12_m2_2d_g0_folder, g_1_folder=mk12_m2_2d_g1_folder, g_2_folder=mk12_m2_2d_g2_folder,
-                    g_3_folder=mk12_m2_2d_g3_folder, mk="12", order="2")
+    # print_stats_run(g_0_folder=mk12_m2_2d_g0_folder, g_1_folder=mk12_m2_2d_g1_folder, g_2_folder=mk12_m2_2d_g2_folder,
+    #                g_3_folder=mk12_m2_2d_g3_folder, mk="12", order="2")
+
+    # ---------------------M3 mk11 ---------------
+    g0_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_M3_2D_g0/historyLogs/"
+    g1_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_M3_2D_g1/historyLogs/"
+    g2_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_M3_2D_g2/historyLogs/"
+    g3_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_M3_2D_g3/historyLogs/"
+
+    print_stats_run(g_0_folder=g0_folder, g_1_folder=g1_folder, g_2_folder=g2_folder, g_3_folder=g3_folder, mk="11",
+                    order="3")
+
+    # mk12
+    g0_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_M3_2D_g0/historyLogs/"
+    g1_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_M3_2D_g1/historyLogs/"
+    g2_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_M3_2D_g2/historyLogs/"
+    g3_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_M3_2D_g3/historyLogs/"
+
+    print_stats_run(g_0_folder=g0_folder, g_1_folder=g1_folder, g_2_folder=g2_folder, g_3_folder=g3_folder, mk="12",
+                    order="3")
+
+    # ----------------M4 2D -------------------
+    g0_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g0/historyLogs/"
+    g1_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g1/historyLogs/"
+    g2_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g2/historyLogs/"
+    g3_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g3/historyLogs/"
+
+    print_stats_run(g_0_folder=g0_folder, g_1_folder=g1_folder, g_2_folder=g2_folder, g_3_folder=g3_folder, mk="11",
+                    order="4")
+
+    # mk12
+    g0_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g0/historyLogs/"
+    g1_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g1/historyLogs/"
+    g2_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g2/historyLogs/"
+    g3_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g3/historyLogs/"
+
+    print_stats_run(g_0_folder=g0_folder, g_1_folder=g1_folder, g_2_folder=g2_folder, g_3_folder=g3_folder, mk="12",
+                    order="4")
 
 
 def print_cross_sections():
