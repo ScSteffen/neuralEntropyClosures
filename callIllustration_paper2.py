@@ -1175,6 +1175,23 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
     g2_mean_runs /= 6
     g3_mean_runs /= 6
 
+    # compute variance of the losses
+    g0_var_runs = np.zeros((n_epochs, 3))
+    g1_var_runs = np.zeros((n_epochs, 3))
+    g2_var_runs = np.zeros((n_epochs, 3))
+    g3_var_runs = np.zeros((n_epochs, 3))
+
+    for i in range(0, 6):
+        g0_var_runs += (g0_runs[i] - g0_mean_runs) ** 2
+        g1_var_runs += (g1_runs[i] - g1_mean_runs) ** 2
+        g2_var_runs += (g2_runs[i] - g2_mean_runs) ** 2
+        g3_var_runs += (g3_runs[i] - g3_mean_runs) ** 2
+
+    g0_var_runs /= 6
+    g1_var_runs /= 6
+    g2_var_runs /= 6
+    g3_var_runs /= 6
+
     plot_1dv2([epochs],
               [g0_mean_runs[:, 0], g3_mean_runs[:, 0], g2_mean_runs[:, 0], g1_mean_runs[:, 0]],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
@@ -1212,6 +1229,15 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
             "0.01," + str(g2_mean_runs[-1, 0]) + "," + str(g2_mean_runs[-1, 1]) + "," + str(g2_mean_runs[-1, 2]) + "\n")
         f.write(
             "0.1," + str(g1_mean_runs[-1, 0]) + "," + str(g1_mean_runs[-1, 1]) + "," + str(g1_mean_runs[-1, 2]) + "\n")
+        f.write("gamma, h-std, alpha-std, u-std\n")
+        f.write("0," + str(np.sqrt(g0_var_runs[-1, 0])) + "," + str(np.sqrt(g0_var_runs[-1, 1])) + "," + str(
+            np.sqrt(g0_var_runs[-1, 2])) + "\n")
+        f.write("0.001," + str(np.sqrt(g3_var_runs[-1, 0])) + "," + str(np.sqrt(g3_var_runs[-1, 1])) + "," + str(
+            np.sqrt(g3_var_runs[-1, 2])) + "\n")
+        f.write("0.01," + str(np.sqrt(g2_var_runs[-1, 0])) + "," + str(np.sqrt(g2_var_runs[-1, 1])) + "," + str(
+            np.sqrt(g2_var_runs[-1, 2])) + "\n")
+        f.write("0.1," + str(np.sqrt(g1_var_runs[-1, 0])) + "," + str(np.sqrt(g1_var_runs[-1, 1])) + "," + str(
+            np.sqrt(g1_var_runs[-1, 2])) + "\n")
     return 0
 
 
@@ -1312,8 +1338,8 @@ def print_training_performance_stats():
     mk12_m2_2d_g2_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g2/historyLogs/"
     mk12_m2_2d_g3_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g3/historyLogs/"
 
-    # print_stats_run(g_0_folder=mk12_m2_2d_g0_folder, g_1_folder=mk12_m2_2d_g1_folder, g_2_folder=mk12_m2_2d_g2_folder,
-    #                g_3_folder=mk12_m2_2d_g3_folder, mk="12", order="2")
+    print_stats_run(g_0_folder=mk12_m2_2d_g0_folder, g_1_folder=mk12_m2_2d_g1_folder, g_2_folder=mk12_m2_2d_g2_folder,
+                    g_3_folder=mk12_m2_2d_g3_folder, mk="12", order="2")
 
     # ---------------------M3 mk11 ---------------
     g0_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_M3_2D_g0/historyLogs/"
