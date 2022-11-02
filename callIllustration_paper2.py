@@ -1198,25 +1198,25 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               name="loss_mk" + mk + "_m" + order + "_h_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
               show_fig=False, xlabel="epochs", ylabel="loss h", xlim=[0, 2000], ylim=[1e-6, 1e-2],
-              legend_pos="lower left")
+              legend_pos="upper right")
 
     plot_1dv2([epochs],
-              [g0_mean_runs[:, 1], g3_mean_runs[:, 1], g2_mean_runs[:, 1], g1_mean_runs[:, 0]],
+              [g0_mean_runs[:, 1], g3_mean_runs[:, 1], g2_mean_runs[:, 1], g1_mean_runs[:, 1]],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
               name="loss_mk" + mk + "_m" + order + "_alpha_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
               show_fig=False,
               xlabel="epochs", ylabel=r"loss $\alpha_u$", xlim=[0, 2000], ylim=[1e-5, 1e-0],
-              legend_pos="lower left")
+              legend_pos="upper right")
 
     plot_1dv2([epochs],
-              [g0_mean_runs[:, 2], g3_mean_runs[:, 2], g2_mean_runs[:, 2], g1_mean_runs[:, 0]],
+              [g0_mean_runs[:, 2], g3_mean_runs[:, 2], g2_mean_runs[:, 2], g1_mean_runs[:, 2]],
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
               name="loss_mk" + mk + "_m" + order + "_u_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
               show_fig=False,
               xlabel="epochs", ylabel="loss u", xlim=[0, 2000], ylim=[1e-7, 1e-2],
-              legend_pos="lower left")
+              legend_pos="upper right")
 
     with open("paper_data/paper2/illustrations/training/stats_runs/loss_mk" + mk + "_m" + order + ".txt", "w") as f:
         f.write("gamma, h, alpha, u\n")
@@ -1243,94 +1243,14 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
 
 def print_training_performance_stats():
     # --------------- M2 2D -----------------------
-    n_epochs = 2000
-    epochs = np.linspace(1, n_epochs, n_epochs)
-    mk11_m2_2d_g0_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g0/historyLogs/"
-    mk11_m2_2d_g1_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g1/historyLogs/"
-    mk11_m2_2d_g2_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g2/historyLogs/"
-    mk11_m2_2d_g3_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g3/historyLogs/"
+    # mk11 ---------------
+    g0_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g0/historyLogs/"
+    g1_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g1/historyLogs/"
+    g2_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g2/historyLogs/"
+    g3_folder = "paper_data/paper2/2D_M2/stats_runs/mk11_m2_2d_g3/historyLogs/"
 
-    mk11_m2_2d_g0 = []
-    mk11_m2_2d_g1 = []
-    mk11_m2_2d_g2 = []
-    mk11_m2_2d_g3 = []
-
-    # load losses
-    for j in range(1, 7):
-        i = 2 * j  # because of warmup run
-        df = load_history_file(mk11_m2_2d_g0_folder + "history_" + str(i).zfill(3) + "_.csv")
-        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
-        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
-        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
-        t_arr = np.concatenate((t0, t1, t2), axis=1)
-        mk11_m2_2d_g0.append(t_arr)
-
-        # df = load_history_file(mk11_m2_2d_g1_folder + "history_" + str(i).zfill(3) + "_.csv")
-        # t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
-        # t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
-        # t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
-        # t_arr = np.concatenate((t0, t1, t2), axis=1)
-        # mk11_m2_2d_g1.append(t_arr)
-
-        df = load_history_file(mk11_m2_2d_g2_folder + "history_" + str(i).zfill(3) + "_.csv")
-        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
-        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
-        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
-        t_arr = np.concatenate((t0, t1, t2), axis=1)
-        mk11_m2_2d_g2.append(t_arr)
-
-        df = load_history_file(mk11_m2_2d_g3_folder + "history_" + str(i).zfill(3) + "_.csv")
-        t0 = get_infinum_subsequence(df["val_output_1_loss"].to_numpy().reshape(n_epochs, 1))
-        t1 = get_infinum_subsequence(df["val_output_2_loss"].to_numpy().reshape(n_epochs, 1))
-        t2 = get_infinum_subsequence(df["val_output_3_loss"].to_numpy().reshape(n_epochs, 1))
-        t_arr = np.concatenate((t0, t1, t2), axis=1)
-        mk11_m2_2d_g3.append(t_arr)
-
-    # Compute mean of the losses
-    mk11_m2_2d_g0_mean_runs = np.zeros((n_epochs, 3))
-    # mk11_m2_2d_g1_mean_runs = np.zeros((n_epochs, 3))
-    mk11_m2_2d_g2_mean_runs = np.zeros((n_epochs, 3))
-    mk11_m2_2d_g3_mean_runs = np.zeros((n_epochs, 3))
-
-    for i in range(0, 6):
-        mk11_m2_2d_g0_mean_runs += mk11_m2_2d_g0[i]
-        # mk11_m2_2d_g1_mean_runs += mk11_m2_2d_g1[i]
-        mk11_m2_2d_g2_mean_runs += mk11_m2_2d_g2[i]
-        mk11_m2_2d_g3_mean_runs += mk11_m2_2d_g3[i]
-
-    mk11_m2_2d_g0_mean_runs /= 6
-    # mk11_m2_2d_g1_mean_runs /= 6
-    mk11_m2_2d_g2_mean_runs /= 6
-    mk11_m2_2d_g3_mean_runs /= 6
-
-    plot_1dv2([epochs],
-              [mk11_m2_2d_g0_mean_runs[:, 0],
-               mk11_m2_2d_g3_mean_runs[:, 0], mk11_m2_2d_g2_mean_runs[:, 0]],  # , mk11_m2_2d_g1_mean_runs[:, 0]],
-              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m2_h_gammas", log=True,
-              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
-              show_fig=False, xlabel="epochs", ylabel="loss h", xlim=[0, 2000], ylim=[1e-6, 1e-2],
-              legend_pos="lower left")
-
-    plot_1dv2([epochs],
-              [mk11_m2_2d_g0_mean_runs[:, 1],
-               mk11_m2_2d_g3_mean_runs[:, 1], mk11_m2_2d_g2_mean_runs[:, 1]],  # , mk11_m2_2d_g1_mean_runs[:, 0]],
-              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m2_alpha_gammas", log=True,
-              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
-              show_fig=False,
-              xlabel="epochs", ylabel=r"loss $\alpha_u$", xlim=[0, 2000], ylim=[1e-5, 1e-0],
-              legend_pos="lower left")
-
-    plot_1dv2([epochs],
-              [mk11_m2_2d_g0_mean_runs[:, 2],
-               mk11_m2_2d_g3_mean_runs[:, 2], mk11_m2_2d_g2_mean_runs[:, 2]],  # , mk11_m2_2d_g1_mean_runs[:, 0]],
-              labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-              name="loss_mk11_m2_u_gammas", log=True,
-              folder_name="paper_data/paper2/illustrations/training/stats_runs/",
-              show_fig=False,
-              xlabel="epochs", ylabel="loss u", xlim=[0, 2000], ylim=[1e-7, 1e-2],
-              legend_pos="lower left")
+    print_stats_run(g_0_folder=g0_folder, g_1_folder=g1_folder, g_2_folder=g2_folder, g_3_folder=g3_folder, mk="11",
+                    order="2")
 
     # mk12 ---------------
     mk12_m2_2d_g0_folder = "paper_data/paper2/2D_M2/stats_runs/mk12_m2_2d_g0/historyLogs/"
@@ -1360,19 +1280,19 @@ def print_training_performance_stats():
                     order="3")
 
     # ----------------M4 2D -------------------
-    g0_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g0/historyLogs/"
-    g1_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g1/historyLogs/"
-    g2_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g2/historyLogs/"
-    g3_folder = "paper_data/paper2/2D_M3/stats_runs/mk11_m4_2_g3/historyLogs/"
+    g0_folder = "paper_data/paper2/2D_M4/stats_runs/mk11_m4_2d_g0/historyLogs/"
+    g1_folder = "paper_data/paper2/2D_M4/stats_runs/mk11_m4_2d_g1/historyLogs/"
+    g2_folder = "paper_data/paper2/2D_M4/stats_runs/mk11_m4_2d_g2/historyLogs/"
+    g3_folder = "paper_data/paper2/2D_M4/stats_runs/mk11_m4_2d_g3/historyLogs/"
 
     print_stats_run(g_0_folder=g0_folder, g_1_folder=g1_folder, g_2_folder=g2_folder, g_3_folder=g3_folder, mk="11",
                     order="4")
 
     # mk12
-    g0_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g0/historyLogs/"
-    g1_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g1/historyLogs/"
-    g2_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g2/historyLogs/"
-    g3_folder = "paper_data/paper2/2D_M3/stats_runs/mk12_m4_2d_g3/historyLogs/"
+    g0_folder = "paper_data/paper2/2D_M4/stats_runs/mk12_m4_2d_g0/historyLogs/"
+    g1_folder = "paper_data/paper2/2D_M4/stats_runs/mk12_m4_2d_g1/historyLogs/"
+    g2_folder = "paper_data/paper2/2D_M4/stats_runs/mk12_m4_2d_g2/historyLogs/"
+    g3_folder = "paper_data/paper2/2D_M4/stats_runs/mk12_m4_2d_g3/historyLogs/"
 
     print_stats_run(g_0_folder=g0_folder, g_1_folder=g1_folder, g_2_folder=g2_folder, g_3_folder=g3_folder, mk="12",
                     order="4")
