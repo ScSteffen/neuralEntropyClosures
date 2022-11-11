@@ -24,7 +24,7 @@ def main():
 
     # 1) Training performance
     # print_training_performance()
-    print_training_performance_stats()
+    # print_training_performance_stats()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
@@ -36,7 +36,7 @@ def main():
     # print_cross_sections()
 
     # 5) Print method errors
-    # print_method_errors()
+    print_method_errors()
 
     # 6) Get regularization errors
     # test_regularization_error()
@@ -1415,7 +1415,7 @@ def print_comp_efficiency_memory():
 
 
 def print_method_errors():
-    df = pd.read_csv("paper_data/paper2/hohlraum/errors/method_errors.csv", delimiter=";")
+    df = pd.read_csv("paper_data/paper2/hohlraum/errors/method_errors_relative.csv", delimiter=";")
 
     names = [r"M$_2^{\gamma_3}$",
              r"M$_3^{\gamma_3}$",
@@ -1445,11 +1445,11 @@ def print_method_errors():
              r"P$_{5}$",
              r"P$_{7}$",
              r"P$_{9}$"]
-    errors = df["spatial_error"].to_numpy(dtype=float)
+    errors = df["rel_spatial_err"].to_numpy(dtype=float)
     sys_size = df["sys_size"].to_numpy()
     timing = df["timing"].to_numpy()
 
-    indices_ref = [0, 1, 2, 13, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+    indices_ref = [0, 1, 2, 13, 16, 18, 19, 20, 21, 23, 24, 25, 26, 27]
 
     # a) sysSize over errror
     plt.clf()
