@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import git
 from datetime import date
+from matplotlib.ticker import StrMethodFormatter
 
 
 # plt.style.use("kitish")
@@ -306,7 +307,8 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
 def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
                     lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
                     title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
-                    folder_name: str = "figures", show_fig: bool = False, color_map: int = 0, marker_size=6):
+                    folder_name: str = "figures", show_fig: bool = False, color_map: int = 0, marker_size=6,
+                    axis_formatter=False):
     '''
     brief: Compute a scatter plot
     input: x_in = [x1,x2] function arguments
@@ -337,6 +339,11 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     cbar = fig.colorbar(out, pad=0.02)
     if show_fig:
         plt.show()
+    if axis_formatter:
+        plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))  # 1 decimal places
+        plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))  # 1 decimal places
+
+    plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     plt.close(fig)
     print("Saved image at: " + folder_name + "/" + name + ".png")
