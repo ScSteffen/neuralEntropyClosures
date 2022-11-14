@@ -9,6 +9,10 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
+
+# matplotlib.rc('text', usetex=True)
+# matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
 import seaborn as sns
 import tensorflow as tf
 from src.utils import plot_1d, plot_1dv2, scatter_plot_2d, load_data
@@ -24,7 +28,7 @@ def main():
 
     # 1) Training performance
     # print_training_performance()
-    print_training_performance_stats()
+    # print_training_performance_stats()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
@@ -42,9 +46,9 @@ def main():
     # test_regularization_error()
 
     # 7) Print moment reconstructions
-    # print_realizable_set_new_condition()
-    # print_entropies()
-    # print_realizable_set_by_gamma()
+    print_realizable_set_new_condition()
+    print_entropies()
+    print_realizable_set_by_gamma()
 
     return True
 
@@ -72,11 +76,13 @@ def print_realizable_set_by_gamma():
 
         lim_z = (np.min(h), np.max(h))
         scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=lim_x, lim_y=lim_y, lim_z=lim_z, title=r"$h$ over $\mathcal{R}^r$",
+                        label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
                         folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_u", show_fig=False,
-                        log=False, color_map=0, marker_size=marker_size)
+                        log=False, color_map=0, marker_size=marker_size, axis_formatter=True)
         scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                        lim_z=lim_z, title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_{u,1}^r$",
-                        label_y=r"$\alpha_{u,2}^r$",
+                        lim_z=lim_z, title=r"$h$ over $\alpha^r$",
+                        label_x=r"$\alpha_{\overline{\mathbf{u}},1}^\gamma$",
+                        label_y=r"$\alpha_{\overline{\mathbf{u}},2}^\gamma$",
                         folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_alpha", show_fig=False,
                         log=False, color_map=0, marker_size=marker_size)
 
@@ -113,8 +119,8 @@ def print_entropies():
     plt.plot(u_g1[t1, 1:], h_g1[t1], colors[3], linewidth=symbol_size)
     plt.xlim((-1.3, 1.3))
     plt.ylim((-1.7, 0.5))
-    plt.xlabel(r"$u_1^n$")
-    plt.ylabel(r"$h^\gamma$")
+    plt.xlabel(r"$\overline{u}_1$")
+    plt.ylabel(r"$\hat{h}^\gamma$")
     plt.legend([r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"])
     plt.xticks(x_ticks)
     plt.yticks(y_ticks)
@@ -347,8 +353,8 @@ def print_realizable_set_new_condition():
         [line1[0], line2[0], line3[0], line4[0]], [r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
         loc="upper left")
 
-    plt.xlabel(r"$u_1^n$")
-    plt.ylabel(r"$u_2^n$")
+    plt.xlabel(r"$\overline{u}_1$")
+    plt.ylabel(r"$\overline{u}_2$")
 
     # create zoom in view
     # location for the zoomed portion
@@ -1197,7 +1203,7 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
               name="loss_mk" + mk + "_m" + order + "_h_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
-              show_fig=False, xlabel="epochs", ylabel="loss h", xlim=[0, 2000], ylim=[1e-6, 1e-2],
+              show_fig=False, xlabel="epochs", ylabel=r"${e}_{\hat{h}}^\gamma$", xlim=[0, 2000], ylim=[1e-6, 1e-2],
               legend_pos="upper right")
 
     plot_1dv2([epochs],
@@ -1206,7 +1212,9 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               name="loss_mk" + mk + "_m" + order + "_alpha_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
               show_fig=False,
-              xlabel="epochs", ylabel=r"loss $\alpha_u$", xlim=[0, 2000], ylim=[1e-5, 1e-0],
+              xlabel="epochs", ylabel=r"$e_{(\mathbf{\alpha}^\gamma_{\overline{\mathbf{u}}})_\#}$",
+              xlim=[0, 2000],
+              ylim=[1e-5, 1e-0],
               legend_pos="upper right")
 
     plot_1dv2([epochs],
@@ -1215,7 +1223,7 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               name="loss_mk" + mk + "_m" + order + "_u_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
               show_fig=False,
-              xlabel="epochs", ylabel="loss u", xlim=[0, 2000], ylim=[1e-7, 1e-2],
+              xlabel="epochs", ylabel=r"$e_{\overline{\mathbf{u}}}$", xlim=[0, 2000], ylim=[1e-7, 1e-2],
               legend_pos="upper right")
 
     with open("paper_data/paper2/illustrations/training/stats_runs/loss_mk" + mk + "_m" + order + ".txt", "w") as f:
@@ -1463,7 +1471,7 @@ def print_method_errors():
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("system size")
-    plt.ylabel(r'$|$ solution $  -S_{50}|$')
+    plt.ylabel(r'$e_{\rm{rel},u_0}$')
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
@@ -1478,7 +1486,7 @@ def print_method_errors():
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("simulation time [s]")
-    plt.ylabel(r'$|$ solution $ -S_{50}|$')
+    plt.ylabel(r'$e_{\rm{rel},u_0}$')
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
