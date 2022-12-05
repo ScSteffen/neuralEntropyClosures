@@ -26,7 +26,7 @@ def main():
 
     # print_periodic_test_case()
 
-    # print_realizable_set_countours()
+    print_realizable_set_countours()
     print_realizable_set()
 
     # --- illustrate Convergence errors ---
@@ -367,40 +367,33 @@ def print_realizable_set_countours():
     colors = ['k-', 'r--', 'g-.', 'b:']
     symbol_size = 2
 
-    # original realizable set
+    n = 1000
+    # 1) original realizable set
 
-    u1 = np.linspace(-1, 1, 100)
+    u1 = np.linspace(-1, 1, n)
     u2 = u1 * u1
-    u2_top = np.ones(100)
-    plt.plot(u1, u2, colors[0])
-    plt.plot(u1, u2_top, colors[0])
+    u2_top = np.ones(n)
+    plt.plot(u1, u2, colors[0], markersize=2.5)
+    line1 = plt.plot(u1, u2_top, colors[0], markersize=2.5)
 
-    # 1) u grid
-    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
-                              selected_cols=[True, True, True])
-    points_g0 = u[:, 1:]
-    hull = ConvexHull(points_g0)
-    pts_line0_x = []
-    pts_line0_y = []
-    for simplex in hull.simplices:
-        pts_line0_x.append(points_g0[simplex, 0][0])
-        pts_line0_y.append(points_g0[simplex, 1][0])
+    # 2)  norm distance
 
-    pts_line0_x = np.asarray(pts_line0_x)
-    pts_line0_y = np.asarray(pts_line0_y)
-    mask = pts_line0_x.argsort()
-    pts_line0_x = pts_line0_x[mask]
-    pts_line0_y = pts_line0_y[mask]
-    # line1 = plt.plot(pts_line0_x, pts_line0_y, colors[2], linewidth=symbol_size)  # plot underbelly
-    # plt.plot([pts_line0_x[0], pts_line0_x[-1]], [pts_line0_y[0], pts_line0_y[-1]], colors[2],
-    #         linewidth=symbol_size)  # plot top
-    # plt.show()
+    u1_n = []
+    u2_n = []
+    eps = 0.02
+    for i in range(n):
+        if u2[i] + eps / np.linalg.norm([-u1[i], 1]) < (1 - eps):
+            u1_n.append(u1[i] - u1[i] * eps / np.linalg.norm([-u1[i], 1]))
+            u2_n.append(u2[i] + eps / np.linalg.norm([-u1[i], 1]))
+
+    plt.plot(u1_n, u2_n, colors[1], markersize=2.5)
+    line2 = plt.plot(u1_n, (1 - eps) * np.ones(len(u1_n)), colors[1], markersize=2.5)
 
     # alpha grid
-    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", data_dim=3,
                               selected_cols=[True, True, True])
     u_plot = u[315::316, 1:]
-    line1 = plt.plot(u_plot[:, 0], u_plot[:, 1], colors[3], linewidth=symbol_size)  # plot top
+    line3 = plt.plot(u_plot[:, 0], u_plot[:, 1], colors[2], linewidth=symbol_size)  # plot top
 
     points_g0 = u[:, 1:]
     hull = ConvexHull(points_g0)
@@ -415,9 +408,57 @@ def print_realizable_set_countours():
     mask = pts_line0_x.argsort()
     pts_line0_x = pts_line0_x[mask]
     pts_line0_y = pts_line0_y[mask]
-    line1 = plt.plot(pts_line0_x, pts_line0_y, colors[3], linewidth=symbol_size)  # plot underbelly
+    plt.plot(pts_line0_x, pts_line0_y, colors[2], linewidth=symbol_size)  # plot underbelly
 
-    plt.show()
+    # plt.xlim(-1.01, 1.01)
+    # plt.ylim(0., 1.01)
+    plt.legend([line1[0], line2[0], line3[0]],
+               [r"$\partial\widetilde{\mathcal{R}}$", r"$l_2,\overline{\mathbf{u}}_\#$",
+                r"$l_2,\mathbf{\alpha}_{\overline{\mathbf{u}},\#}$", ""],
+               loc="lower left")
+
+    # draw zoom box
+    left = 0.9
+    right = 0.995
+    bottom = 0.9
+    top = 0.995
+    plt.plot([left, bottom], [left, top], 'k-', linewidth=0.7)
+    plt.plot([right, bottom], [right, top], 'k-', linewidth=0.7)
+    plt.plot([right, bottom], [left, bottom], 'k-', linewidth=0.7)
+    plt.plot([right, top], [left, top], 'k-', linewidth=0.7)
+
+    # create zoom in view
+    # location for the zoomed portion
+    sub_axes = plt.axes([.5, .5, 0.25, 0.25])  # [left, bottom, width, height]
+
+    # plot the zoomed portion
+
+    # draw "zoom lines"
+    plt.plot([left, 0.5], [top, 0.6], 'k-', linewidth=0.7)
+    plt.plot([right, 0.5], [bottom, 0.5], 'k-', linewidth=0.7)
+    sub_axes.plot(pts_line0_x, pts_line0_y, colors[0], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot([u_plot[:, 0], u_plot[:, 1]], [pts_line0_y[0], pts_line0_y[-1]], colors[0],
+                  linewidth=symbol_size)  # plot top
+
+    #  gamma 0.001
+    # sub_axes.plot(pts_line3_x_p, pts_line3_y_p, colors[1], linewidth=symbol_size)  # plot underbelly
+    # sub_axes.plot(pts_line3_x_m, pts_line3_y_m, colors[1], linewidth=symbol_size)  # plot top
+
+    sub_axes.set_xlim(left=left, right=right)
+    sub_axes.set_ylim(bottom=bottom, top=top)
+    sub_axes.set_yticklabels([])
+    sub_axes.set_xticklabels([])
+    # Set aspect ratio
+    ax = plt.gca()  # you first need to get the axis handle
+    x_left, x_right = ax.get_xlim()
+    y_low, y_high = ax.get_ylim()
+    ratio = 1.0
+    ax.set_aspect(abs((x_right - x_left) / (y_low - y_high)) * ratio)
+
+    # plt.tight_layout()
+
+    plt.savefig("paper_data/paper1/illustration/1D_M2/R_countour", dpi=500)
+    plt.plot()
     return 0
 
 
