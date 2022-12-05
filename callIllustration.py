@@ -10,6 +10,9 @@ import pandas as pd
 from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1dv4, load_data, scatter_plot_2d_N2, \
     scatter_plot_2d, plot_inflow, plot_wide
 import seaborn as sns
+from scipy.spatial import ConvexHull
+import matplotlib.pyplot as plt
+import matplotlib
 
 
 def main():
@@ -23,6 +26,7 @@ def main():
 
     # print_periodic_test_case()
 
+    # print_realizable_set_countours()
     print_realizable_set()
 
     # --- illustrate Convergence errors ---
@@ -289,6 +293,9 @@ def print_periodic_test_case():
 
 
 def print_realizable_set():
+    # matplotlib.rc('text', usetex=True)
+    # matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
+
     # --- Realizable set illustrations ---
     [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
                               selected_cols=[True, True, True])
@@ -296,13 +303,13 @@ def print_realizable_set():
     min_h = np.min(h)
     alpha_bound = 40
     scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
-                       title=r"$h$ over $\mathcal{R}^r$",
+                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
                        folder_name="paper_data/illustration/1D_M2", name="normal_u_Monomial_M2_1D_u", show_fig=False,
                        log=False,
                        color_map=0)
     scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                    lim_z=(min_h, max_h),
-                    title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_{u,1}^r$", label_y=r"$\alpha_{u,2}^r$",
+                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
                     folder_name="paper_data/illustration/1D_M2", name="normal_u_Monomial_M2_1D_alpha", show_fig=False,
                     log=False,
                     color_map=0)
@@ -313,14 +320,14 @@ def print_realizable_set():
     # max_h = np.max(h)
     # min_h = np.min(h)
     scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
-                       title=r"$h$ over $\mathcal{R}^r$",
+                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
                        folder_name="paper_data/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_u",
                        show_fig=False,
                        log=False,
                        color_map=0)
     scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                    lim_z=(min_h, max_h),
-                    title=r"$h$ over $\alpha^r_u$", label_x=r"$\alpha_{u,1}^r$", label_y=r"$\alpha_{u,2}^r$",
+                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
                     folder_name="paper_data/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_alpha",
                     show_fig=False,
                     log=False,
@@ -331,14 +338,14 @@ def print_realizable_set():
     # max_h = np.max(h)
     # min_h = np.min(h)
     scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
-                       title=r"$h$ over $\mathcal{R}^r$",
+                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
                        folder_name="paper_data/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_u",
                        show_fig=False,
                        log=False,
                        color_map=0)
     scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                    lim_z=(min_h, max_h),
-                    title=r"$h$ over $\alpha^r$", label_x=r"$\alpha_{u,1}^r$", label_y=r"$\alpha_{u,2}^r$",
+                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
                     folder_name="paper_data/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_alpha",
                     show_fig=False,
                     log=False,
@@ -347,17 +354,23 @@ def print_realizable_set():
 
 
 def print_realizable_set_countours():
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
-                              selected_cols=[True, True, True])
-    max_h = 3
-
     sns.set_theme()
     sns.set_style("white")
     colors = ['k-', 'r--', 'g-.', 'b:']
     symbol_size = 2
 
-    # 1) gamma 0
-    points_g0 = u_g0[:, 1:]
+    # original realizable set
+
+    u1 = np.linspace(-1, 1, 100)
+    u2 = u1 * u1
+    u2_top = np.ones(100)
+    plt.plot(u1, u2, colors[0])
+    plt.plot(u1, u2_top, colors[0])
+
+    # 1) u grid
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
+                              selected_cols=[True, True, True])
+    points_g0 = u[:, 1:]
     hull = ConvexHull(points_g0)
     pts_line0_x = []
     pts_line0_y = []
@@ -370,10 +383,33 @@ def print_realizable_set_countours():
     mask = pts_line0_x.argsort()
     pts_line0_x = pts_line0_x[mask]
     pts_line0_y = pts_line0_y[mask]
-    line1 = plt.plot(pts_line0_x, pts_line0_y, colors[0], linewidth=symbol_size)  # plot underbelly
-    plt.plot([pts_line0_x[0], pts_line0_x[-1]], [pts_line0_y[0], pts_line0_y[-1]], colors[0],
-             linewidth=symbol_size)  # plot top
+    # line1 = plt.plot(pts_line0_x, pts_line0_y, colors[2], linewidth=symbol_size)  # plot underbelly
+    # plt.plot([pts_line0_x[0], pts_line0_x[-1]], [pts_line0_y[0], pts_line0_y[-1]], colors[2],
+    #         linewidth=symbol_size)  # plot top
+    # plt.show()
 
+    # alpha grid
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", input_dim=3,
+                              selected_cols=[True, True, True])
+    u_plot = u[315::316, 1:]
+    line1 = plt.plot(u_plot[:, 0], u_plot[:, 1], colors[3], linewidth=symbol_size)  # plot top
+
+    points_g0 = u[:, 1:]
+    hull = ConvexHull(points_g0)
+    pts_line0_x = []
+    pts_line0_y = []
+    for simplex in hull.simplices:
+        pts_line0_x.append(points_g0[simplex, 0][0])
+        pts_line0_y.append(points_g0[simplex, 1][0])
+
+    pts_line0_x = np.asarray(pts_line0_x)
+    pts_line0_y = np.asarray(pts_line0_y)
+    mask = pts_line0_x.argsort()
+    pts_line0_x = pts_line0_x[mask]
+    pts_line0_y = pts_line0_y[mask]
+    line1 = plt.plot(pts_line0_x, pts_line0_y, colors[3], linewidth=symbol_size)  # plot underbelly
+
+    plt.show()
     return 0
 
 
