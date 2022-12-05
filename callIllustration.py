@@ -14,32 +14,27 @@ from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1d
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
-    # print_1D_inflow()
+    print_1D_inflow()
 
-    # print_M1_closure()
+    print_M1_closure()
 
-    # print_synthetic_tests()
+    print_synthetic_tests()
 
-    # print_periodic_test_case()
+    print_periodic_test_case()
 
-    # print_realizable_set()
-
-    print_realizable_set_by_gamma()
-
-    # print_training_performance()
+    print_realizable_set()
 
     # --- illustrate Convergence errors ---
 
     # Plot banach fixed point for 1D
-    # print_convergence_rates("periodic")
-    # print_convergence_rates("inflow M1")
-    # print_convergence_rates2("inflow M2")
+    print_convergence_rates("periodic")
+    print_convergence_rates("inflow M1")
+    print_convergence_rates2("inflow M2")
 
     # ---- periodic M1 with fine grid -----
 
-    # print_error_test_case("periodic")
-    # print_error_test_case("inflow M1")
-    # rint_convergence_rates2("inflow M2")
+    print_error_test_case("periodic")
+    print_error_test_case("inflow M1")
 
     return True
 
