@@ -20,7 +20,7 @@ def main():
 
     # print_1D_inflow()
 
-    # print_M1_closure()
+    print_M1_closure()
 
     # print_synthetic_tests()
 
@@ -46,15 +46,15 @@ def main():
 
 def print_1D_inflow():
     # --- inflow M2 1D --- illustration
-    [u_neural15, u_ref15] = load_solution("paper_data/1D_M2/1D_M2_MK15_inflow.csv")
-    [u_neural11, u_ref11] = load_solution("paper_data/1D_M2/1D_M2_MK11_inflow.csv")
+    [u_neural15, u_ref15] = load_solution("paper_data/paper1/1D_M2/1D_M2_MK15_inflow.csv")
+    [u_neural11, u_ref11] = load_solution("paper_data/paper1/1D_M2/1D_M2_MK11_inflow.csv")
     x = np.linspace(0, 1, 100)
     n_jump = 2
     res_list = [[u_ref11[::n_jump, 0], u_ref11[::n_jump, 1], u_ref11[::n_jump, 2]],
                 [u_neural11[::n_jump, 0], u_neural11[::n_jump, 1], u_neural11[::n_jump, 2]],
                 [u_neural15[::n_jump, 0], u_neural15[::n_jump, 1], u_neural15[::n_jump, 2]]]
     # res_list = [u_ref11, u_neural11, u_neural15]
-    plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M2", folder_name="paper_data/illustration/1D_M2",
+    plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M2", folder_name="paper_data/paper1/illustration/1D_M2",
                 xlim=[0, 1], xlabel='x', ylabel=r"$\mathbf{u}$")
 
     err_mk11 = np.linalg.norm(u_ref11 - u_neural11, axis=1).reshape((u_ref15.shape[0], 1)) / 2.
@@ -64,24 +64,25 @@ def print_1D_inflow():
 
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
     plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M2",
-              folder_name="paper_data/illustration/1D_M2",
+              folder_name="paper_data/paper1/illustration/1D_M2",
               linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2], xlabel='x',
               ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
 
     plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M2",
-              folder_name="paper_data/illustration/1D_M2", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-4, 5e-1],
+              folder_name="paper_data/paper1/illustration/1D_M2", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-4, 5e-1],
               xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
 
     # --- inflow M1 1D --- illustration
-    [u_neural15, u_ref15] = load_solution("paper_data/1D_M1/1D_M1_MK15_inflow.csv")
-    [u_neural11, u_ref11] = load_solution("paper_data/1D_M1/1D_M1_MK11_inflow.csv")
+    [u_neural15, u_ref15] = load_solution("paper_data/paper1/1D_M1/1D_M1_MK15_inflow.csv")
+    [u_neural11, u_ref11] = load_solution("paper_data/paper1/1D_M1/1D_M1_MK11_inflow.csv")
     x = np.linspace(0, 1, 100)
     res_list = [[u_ref11[::n_jump, 0], u_ref11[::n_jump, 1]],
                 [u_neural11[::n_jump, 0], u_neural11[::n_jump, 1]],
                 [u_neural15[::n_jump, 0], u_neural15[::n_jump, 1]]]
 
-    plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M1", folder_name="paper_data/illustration/1D_M1", xlim=[0, 1],
+    plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M1", folder_name="paper_data/paper1/illustration/1D_M1",
+                xlim=[0, 1],
                 xlabel='x', ylabel=r"$\mathbf{u}$")
 
     err_mk11 = np.linalg.norm(u_ref11 - u_neural11, axis=1).reshape((u_ref15.shape[0], 1))
@@ -91,11 +92,11 @@ def print_1D_inflow():
 
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
     plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M1",
-              folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2],
+              folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2],
               xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
     plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M1",
-              folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], xlabel='x',
+              folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], xlabel='x',
               ylim=[1e-4, 5e-1],
               ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
     return 0
@@ -103,7 +104,7 @@ def print_1D_inflow():
 
 def print_M1_closure():
     # --- ilustration M1 1D closure
-    df = pd.read_csv("paper_data/1D_M1/Monomial_M1_1D_normal_high_range.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/Monomial_M1_1D_normal_high_range.csv")
     df = df.iloc[:, 1:]  # drop timestamp
     data = df.to_numpy()
 
@@ -114,21 +115,24 @@ def print_M1_closure():
     h = data[:, 4]
     alphas = [alpha_0.reshape((alpha_0.shape[0], 1)), alpha_1.reshape((alpha_1.shape[0], 1))]
 
-    plot_1dv2([u_1], alphas, labels=[r"$\alpha^n_{u,0}$", r"$\alpha^n_{u,1}$"], name="M1_1D_alpha_over_u",
-              folder_name="paper_data/illustration/1D_M1", xlim=[-1, 1], xlabel=r"$u^n_{1}$", ylabel=r"$\alpha^n_{u}$",
-              log=False, black_first=True, legend_pos="upper center")
+    plot_1dv2([u_1], alphas, labels=[r"${\alpha_{\overline{\mathbf{u}},0}}$", r"${\alpha_{\overline{\mathbf{u}},1}}$"],
+              name="M1_1D_alpha_over_u",
+              folder_name="paper_data/paper1/illustration/1D_M1", xlim=[-1, 1], xlabel=r"$\overline{u}_{1}$",
+              ylabel=r"$\mathbf{\alpha_{\overline{\mathbf{u}}}}$",
+              log=False, legend_pos="upper center")
 
     plot_1dv2([u_1], [h.reshape((h.shape[0], 1))], labels=[r"$h$"],
-              name="M1_1D_h_over_u", folder_name="paper_data/illustration/1D_M1", xlim=[-1, 1], xlabel=r"$u^n_{1}$",
-              ylabel=r"$h$", log=False, black_first=True, legend_pos="upper center")
+              name="M1_1D_h_over_u", folder_name="paper_data/paper1/illustration/1D_M1", xlim=[-1, 1],
+              xlabel=r"$\overline{u}_{1}$",
+              ylabel=r"$\hat{h}$", log=False, legend_pos="upper center")
     return 0
 
 
 def print_synthetic_tests():
     # --- synthetic test M1 mk11
-    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_synthetic.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_MK11_synthetic.csv")
     data_mk11 = df.to_numpy()
-    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK15_synthetic.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_MK15_synthetic.csv")
     data_mk15 = df.to_numpy()
     u_mk11 = data_mk11[:, 2].reshape((data_mk11.shape[0], 1))
     u_mk15 = data_mk15[:, 2].reshape((data_mk15.shape[0], 1)) / 2.
@@ -141,31 +145,31 @@ def print_synthetic_tests():
     plot_1dv2([data_mk11[::data_jump, 0]],
               [u_mk11[::data_jump], u_mk15[::data_jump]],
               labels=["convex", "monotonic"], name="rel_err_u_1D_M1_synthetic",
-              folder_name="paper_data/illustration/1D_M1",
+              folder_name="paper_data/paper1/illustration/1D_M1",
               linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u^n_1$',
               ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
     plot_1dv2([data_mk11[::data_jump, 0]],
               [alpha_mk11[::data_jump], alpha_mk15[::data_jump]],
               labels=["convex", "monotonic"], name="rel_err_alpha_1D_M1_synthetic",
-              folder_name="paper_data/illustration/1D_M1",
+              folder_name="paper_data/paper1/illustration/1D_M1",
               linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$u^n_1$',
               ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
               log=True)
     plot_1dv2([data_mk11[::data_jump, 0]],
               [h_mk11[::data_jump], h_mk15[::data_jump]],
               labels=["convex", "monotonic"], name="rel_err_h_1D_M1_synthetic",
-              folder_name="paper_data/illustration/1D_M1",
+              folder_name="paper_data/paper1/illustration/1D_M1",
               linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u_1$',
               ylabel=r"$||h-h_\theta||_2/||h||_2$",
               log=True)
 
-    df = pd.read_csv("paper_data/1D_M1/1D_M1_normal_vs_alpha_synthetic.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_normal_vs_alpha_synthetic.csv")
     data_sampling_compare = df.to_numpy()
     plot_1d([data_sampling_compare[:, 0]],
             [data_sampling_compare[:, 1].reshape((data_sampling_compare.shape[0], 1)),
              data_sampling_compare[:, 4].reshape((data_sampling_compare.shape[0], 1))],
             labels=[r"uniform $u^n$", r"uniform $\alpha_u^n$"], name="rel_err_u_compare_sampling_synthetic",
-            folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1],
+            folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1],
             xlabel=r'$u^n_1$',
             ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True,
             title=r"$||u-u_\theta||_2/||u||_2$ over $u^n_1$")
@@ -173,7 +177,7 @@ def print_synthetic_tests():
             [data_sampling_compare[:, 2].reshape((data_sampling_compare.shape[0], 1)),
              data_sampling_compare[:, 5].reshape((data_sampling_compare.shape[0], 1))],
             labels=[r"uniform $u^n$", r"uniform $\alpha_u^n$"], name="rel_err_alpha_compare_sampling_synthetic",
-            folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1],
+            folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1],
             xlabel=r'$u^n_1$',
             ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
             log=True,
@@ -182,7 +186,7 @@ def print_synthetic_tests():
             [data_sampling_compare[:, 3].reshape((data_sampling_compare.shape[0], 1)),
              data_sampling_compare[:, 6].reshape((data_sampling_compare.shape[0], 1))],
             labels=[r"uniform $u^n$", r"uniform $\alpha_u^n$"], name="rel_err_h_compare_sampling_synthetic",
-            folder_name="paper_data/illustration/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1],
+            folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1],
             xlabel=r'$u^n_1$',
             ylabel=r"$||h-h_\theta||_2/||h||_2$",
             log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u^n_1$")
@@ -197,12 +201,12 @@ def print_error_test_case(case_str: str = "periodic"):
     if case_str == "inflow M2":
         case_str = "inflow_M2"
 
-    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_20480.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + case_str + "/solution_20480.csv")
     u_ref = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk11_20480.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + case_str + "/solution_ml_mk11_20480.csv")
     u_neural11 = df.to_numpy()
     u_neural11 = u_neural11[:, 1:]
-    df = pd.read_csv("paper_data/banach/" + case_str + "/solution_ml_mk15_20480.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + case_str + "/solution_ml_mk15_20480.csv")
     u_neural15 = df.to_numpy()
     u_neural15 = u_neural15[:, 1:]
     x = u_ref[:, 0]
@@ -212,7 +216,7 @@ def print_error_test_case(case_str: str = "periodic"):
     plot_1d([x], res_list,
             labels=[r"$u_0$", r"$u_1$", r"convex - $u_{0,\theta}$", r"convex - $u_{1,\theta}$",
                     r"Mono - $u_{0,\theta}$",
-                    r"Mono - $u_{1,\theta}$"], name=case_str, folder_name="paper_data/illustration/banach",
+                    r"Mono - $u_{1,\theta}$"], name=case_str, folder_name="paper_data/paper1/illustration/banach",
             linetypes=['-', 'o', '^'], xlim=[0, 1], xlabel='x', ylabel='u', log=False,
             title=r"$u$ and $u_\theta$  over $x$")
 
@@ -223,12 +227,12 @@ def print_error_test_case(case_str: str = "periodic"):
 
     err_res_list = [err_mk11, err_mk15]
     plot_1d([x], err_res_list, labels=["convex", "monotonic"], name="err_" + case_str,
-            folder_name="paper_data/illustration/banach",
+            folder_name="paper_data/paper1/illustration/banach",
             linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1], xlabel='x', ylabel=r"$||u-u_\theta||_2$", log=True,
             title=r"$||u-u_\theta||_2$ over $x$")
     rel_err_res_list = [rel_errmk11, rel_errmk15]
     plot_1d([x], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_" + case_str,
-            folder_name="paper_data/illustration/banach", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1],
+            folder_name="paper_data/paper1/illustration/banach", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-12, 1],
             xlabel='x',
             ylabel=r"$||u-u_\theta||_2/||u||_2$", log=True, title=r"$||u-u_\theta||_2/||u||_2$ over $x$")
     return 0
@@ -236,9 +240,9 @@ def print_error_test_case(case_str: str = "periodic"):
 
 def print_periodic_test_case():
     # --- perodic M1 2D test case.
-    df = pd.read_csv("paper_data/2D_M1/err_2D_M1_MK11_periodic.csv")
+    df = pd.read_csv("paper_data/paper1/2D_M1/err_2D_M1_MK11_periodic.csv")
     data_mk11 = df.to_numpy()
-    df = pd.read_csv("paper_data/2D_M1/err_2D_M1_MK15_periodic.csv")
+    df = pd.read_csv("paper_data/paper1/2D_M1/err_2D_M1_MK15_periodic.csv")
     data_mk15 = df.to_numpy()
     n = 30
     data_jump = 2
@@ -255,13 +259,13 @@ def print_periodic_test_case():
     plot_1dv2([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)),
                        err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
               labels=["convex", "monotonic"], name="rel_err_u_2D_M1_over_time",
-              folder_name="paper_data/illustration/2D_M1",
+              folder_name="paper_data/paper1/illustration/2D_M1",
               linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-4, 1e-1], xlabel=r'$t$',
               ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
     plot_1dv2([time], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)),
                        err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
               labels=["convex", "monotonic"], name="rel_err_alpha_2D_M1_over_time",
-              folder_name="paper_data/illustration/2D_M1",
+              folder_name="paper_data/paper1/illustration/2D_M1",
               linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
               ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
               log=True)
@@ -269,16 +273,16 @@ def print_periodic_test_case():
 
     plot_wide([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
               labels=["reference", "convex", "monotonic"],
-              name="entropy_2D_M1_over_time", folder_name="paper_data/illustration/2D_M1",
+              name="entropy_2D_M1_over_time", folder_name="paper_data/paper1/illustration/2D_M1",
               linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
               ylabel=r"$\int h(t,x,y)dxdy$", log=False, black_first=True)
 
     # 2D snapshot
     x = np.linspace(-1.5, 1.5, 200)
     y = np.linspace(-1.5, 1.5, 200)
-    u_ref = np.genfromtxt('paper_data/2D_M1/u_ref_snapshot.csv', delimiter=',')
-    u_mk11 = np.genfromtxt('paper_data/2D_M1/u_mk11_snapshot.csv', delimiter=',')
-    u_mk15 = np.genfromtxt('paper_data/2D_M1/u_mk15_snapshot.csv', delimiter=',')
+    u_ref = np.genfromtxt('paper_data/paper1/2D_M1/u_ref_snapshot.csv', delimiter=',')
+    u_mk11 = np.genfromtxt('paper_data/paper1/2D_M1/u_mk11_snapshot.csv', delimiter=',')
+    u_mk15 = np.genfromtxt('paper_data/paper1/2D_M1/u_mk15_snapshot.csv', delimiter=',')
     u_mk11_err = np.abs((u_ref[:, :] - u_mk11[:, :]) / u_ref[:, :]) / 5
     u_mk15_err = np.abs((u_ref[:, :] - u_mk15[:, :]) / u_ref[:, :])
 
@@ -297,58 +301,62 @@ def print_realizable_set():
     # matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
 
     # --- Realizable set illustrations ---
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", data_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal.csv", data_dim=3,
                               selected_cols=[True, True, True])
+
+    marker_size = 1
     max_h = 3
     min_h = np.min(h)
     alpha_bound = 40
     scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
                        label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
-                       folder_name="paper_data/illustration/1D_M2", name="normal_u_Monomial_M2_1D_u", show_fig=False,
-                       log=False,
+                       folder_name="paper_data/paper1/illustration/1D_M2", name="normal_u_Monomial_M2_1D_u",
+                       show_fig=False,
+                       log=False, marker_size=marker_size,
                        color_map=0)
     scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
                     lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
                     label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    folder_name="paper_data/illustration/1D_M2", name="normal_u_Monomial_M2_1D_alpha", show_fig=False,
-                    log=False,
+                    folder_name="paper_data/paper1/illustration/1D_M2", name="normal_u_Monomial_M2_1D_alpha",
+                    show_fig=False,
+                    log=False, marker_size=marker_size,
                     color_map=0)
 
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv",
-                              input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv",
+                              data_dim=3,
                               selected_cols=[True, True, True])
     # max_h = np.max(h)
     # min_h = np.min(h)
     scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
                        label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
-                       folder_name="paper_data/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_u",
+                       folder_name="paper_data/paper1/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_u",
                        show_fig=False,
-                       log=False,
+                       log=False, marker_size=marker_size,
                        color_map=0)
     scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
                     lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
                     label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    folder_name="paper_data/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_alpha",
+                    folder_name="paper_data/paper1/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_alpha",
                     show_fig=False,
-                    log=False,
+                    log=False, marker_size=marker_size,
                     color_map=0)
 
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_gaussian.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_gaussian.csv", data_dim=3,
                               selected_cols=[True, True, True])
     # max_h = np.max(h)
     # min_h = np.min(h)
     scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
                        label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
-                       folder_name="paper_data/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_u",
+                       folder_name="paper_data/paper1/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_u",
                        show_fig=False,
-                       log=False,
+                       log=False, marker_size=marker_size,
                        color_map=0)
     scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
                     lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
                     label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    folder_name="paper_data/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_alpha",
+                    folder_name="paper_data/paper1/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_alpha",
                     show_fig=False,
-                    log=False,
+                    log=False, marker_size=marker_size,
                     color_map=0)
     return 0
 
@@ -368,7 +376,7 @@ def print_realizable_set_countours():
     plt.plot(u1, u2_top, colors[0])
 
     # 1) u grid
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
                               selected_cols=[True, True, True])
     points_g0 = u[:, 1:]
     hull = ConvexHull(points_g0)
@@ -389,7 +397,7 @@ def print_realizable_set_countours():
     # plt.show()
 
     # alpha grid
-    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", input_dim=3,
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv", input_dim=3,
                               selected_cols=[True, True, True])
     u_plot = u[315::316, 1:]
     line1 = plt.plot(u_plot[:, 0], u_plot[:, 1], colors[3], linewidth=symbol_size)  # plot top
@@ -416,14 +424,14 @@ def print_realizable_set_countours():
 def print_training_performance():
     # --- illustrate training history for alpha sampling vs u sampling ---
 
-    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_history_normal.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_MK11_history_normal.csv")
     data_normal = df.to_numpy()
-    df = pd.read_csv("paper_data/1D_M1/1D_M1_MK11_history_normal_alpha.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_MK11_history_normal_alpha.csv")
     data_alpha = df.to_numpy()
-    df = pd.read_csv("paper_data/1D_M1/Monomial_M1_1D_normal.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/Monomial_M1_1D_normal.csv")
     df = df.iloc[:, 1:]  # drop timestamp
     data_train_u = df.to_numpy()
-    df = pd.read_csv("paper_data/1D_M1/Monomial_M1_1D_normal_alpha.csv")
+    df = pd.read_csv("paper_data/paper1/1D_M1/Monomial_M1_1D_normal_alpha.csv")
     df = df.iloc[:, 1:]  # drop timestamp
     data_train_alpha = df.to_numpy()
 
@@ -464,7 +472,7 @@ def print_training_performance():
             [np.concatenate([normal_loss_h, alpha_loss_h], axis=1)],
             labels=[r"$\frac{||h_\theta-h||_2^2}{||h||_2^2}$, uniform sampling u",
                     r"$\frac{||h_\theta-h||_2^2}{||h||_2^2}$, uniform sampling $\alpha^r_u$"],
-            name="training_loss_h_over_epochs", folder_name="paper_data/illustration/1D_M1",
+            name="training_loss_h_over_epochs", folder_name="paper_data/paper1/illustration/1D_M1",
             linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-7, 1e-1], xlabel='epoch',
             ylabel=r"loss",
             log=True, title=r"relative training loss $h$ over epochs")
@@ -473,7 +481,7 @@ def print_training_performance():
             [np.concatenate([normal_loss_alpha, alpha_loss_alpha], axis=1)],
             labels=[r"$\frac{||\alpha^r_\theta-\alpha^r_u||_2^2}{||\alpha^r_u||_2^2}$, uniform sampling u",
                     r"$\frac{||\alpha^r_\theta-\alpha^r_u||_2^2}{||\alpha^r_u||_2^2}$, uniform sampling $\alpha^r_u$"],
-            name="training_loss_alpha_over_epochs", folder_name="paper_data/illustration/1D_M1",
+            name="training_loss_alpha_over_epochs", folder_name="paper_data/paper1/illustration/1D_M1",
             linetypes=['-', ], xlim=[0, epoch[-1]], ylim=[1e-5, 1e0], xlabel='epoch',
             ylabel=r"loss",
             log=True, title=r"relative training loss $\alpha_u^r$ over epochs")
@@ -482,7 +490,7 @@ def print_training_performance():
             [np.concatenate([normal_loss_u, alpha_loss_u], axis=1)],
             labels=[r"$\frac{||u^n_\theta-u^n||_2^2}{||u^n||_2^2}$, uniform sampling u",
                     r"$\frac{||u^n_\theta-u^n||_2^2}{||u^n||_2^2}$, uniform sampling $\alpha^r_u$"],
-            name="training_loss_u_over_epochs", folder_name="paper_data/illustration/1D_M1",
+            name="training_loss_u_over_epochs", folder_name="paper_data/paper1/illustration/1D_M1",
             linetypes=['-'], xlim=[0, epoch[-1]], ylim=[1e-5, 1e-1], xlabel='epoch',
             ylabel=r"loss",
             log=True, title=r"relative training loss $u$ over epochs")
@@ -498,79 +506,79 @@ def print_convergence_rates(case_str: str = "periodic"):
         case_str = "inflow_M1"
     if case_str == "inflow M2":
         case_str = "inflow_M2"
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_10.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_10.csv")
     data_10 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_20.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_20.csv")
     data_20 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_40.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_40.csv")
     data_40 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_80.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_80.csv")
     data_80 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_160.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_160.csv")
     data_160 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_320.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_320.csv")
     data_320 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_640.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_640.csv")
     data_640 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_1280.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_1280.csv")
     data_1280 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_2560.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_2560.csv")
     data_2560 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_5120.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_5120.csv")
     data_5120 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_10240.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_10240.csv")
     data_10240 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_20480.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_20480.csv")
     data_20480 = df.to_numpy()
 
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_10.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_10.csv")
     data_ml_mk11_10 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_20.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_20.csv")
     data_ml_mk11_20 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_40.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_40.csv")
     data_ml_mk11_40 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_80.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_80.csv")
     data_ml_mk11_80 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_160.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_160.csv")
     data_ml_mk11_160 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_320.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_320.csv")
     data_ml_mk11_320 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_640.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_640.csv")
     data_ml_mk11_640 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_1280.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_1280.csv")
     data_ml_mk11_1280 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_2560.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_2560.csv")
     data_ml_mk11_2560 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_5120.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_5120.csv")
     data_ml_mk11_5120 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_10240.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_10240.csv")
     data_ml_mk11_10240 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_20480.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_20480.csv")
     data_ml_mk11_20480 = df.to_numpy()
 
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_10.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_10.csv")
     data_ml_mk15_10 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_20.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_20.csv")
     data_ml_mk15_20 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_40.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_40.csv")
     data_ml_mk15_40 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_80.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_80.csv")
     data_ml_mk15_80 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_160.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_160.csv")
     data_ml_mk15_160 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_320.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_320.csv")
     data_ml_mk15_320 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_640.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_640.csv")
     data_ml_mk15_640 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_1280.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_1280.csv")
     data_ml_mk15_1280 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_2560.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_2560.csv")
     data_ml_mk15_2560 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_5120.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_5120.csv")
     data_ml_mk15_5120 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_10240.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_10240.csv")
     data_ml_mk15_10240 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_20480.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_20480.csv")
     data_ml_mk15_20480 = df.to_numpy()
 
     # ---- compute errors ----
@@ -884,7 +892,7 @@ def print_convergence_rates(case_str: str = "periodic"):
     #                'mk11 error direct estimate', 'mk15 error banach estimate',
     #                'mk15 error direct estimate', 'slope'],
     #        name="discretization_error",
-    #        folder_name="paper_data/banach",
+    #        folder_name="paper_data/paper1/banach",
     #        linetypes=['o', 'o', 'v', 'v', '^', '^', '-'], xlim=[10, 3000], ylim=[1e-4, 1], xlabel='$n_x$',
     #        ylabel=r"$||u-u^*||_2^2$",
     #        loglog=True, title=r"discretization error")
@@ -896,7 +904,7 @@ def print_convergence_rates(case_str: str = "periodic"):
     #    ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
     #    labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
     #    name="discretization_error_" + case_str,
-    #    folder_name="paper_data/illustration/banach", linetypes=['-', 'o', '^', '>'],
+    #    folder_name="paper_data/paper1/illustration/banach", linetypes=['-', 'o', '^', '>'],
     #    xlim=[x_len / 10., x_len / 10240.],
     #    ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
     #    loglog=True, title="discretization error " + case_str_title + "test")
@@ -908,7 +916,7 @@ def print_convergence_rates(case_str: str = "periodic"):
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
         labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
         name="discretization_error_" + case_str,
-        folder_name="paper_data/illustration/banach",
+        folder_name="paper_data/paper1/illustration/banach",
         linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
         loglog=True, title="discretization error " + case_str_title + "test")
@@ -925,79 +933,79 @@ def print_convergence_rates2(case_str: str = "periodic"):
         case_str = "inflow_M1"
     if case_str == "inflow M2":
         case_str = "inflow_M2"
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_10.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_10.csv")
     data_10 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_20.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_20.csv")
     data_20 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_40.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_40.csv")
     data_40 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_80.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_80.csv")
     data_80 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_160.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_160.csv")
     data_160 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_320.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_320.csv")
     data_320 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_640.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_640.csv")
     data_640 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_1280.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_1280.csv")
     data_1280 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_2560.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_2560.csv")
     data_2560 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_5120.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_5120.csv")
     data_5120 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_10240.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_10240.csv")
     data_10240 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_20480.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_20480.csv")
     data_20480 = df.to_numpy()
 
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_10.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_10.csv")
     data_ml_mk11_10 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_20.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_20.csv")
     data_ml_mk11_20 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_40.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_40.csv")
     data_ml_mk11_40 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_80.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_80.csv")
     data_ml_mk11_80 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_160.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_160.csv")
     data_ml_mk11_160 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_320.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_320.csv")
     data_ml_mk11_320 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_640.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_640.csv")
     data_ml_mk11_640 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_1280.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_1280.csv")
     data_ml_mk11_1280 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_2560.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_2560.csv")
     data_ml_mk11_2560 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_5120.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_5120.csv")
     data_ml_mk11_5120 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_10240.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_10240.csv")
     data_ml_mk11_10240 = df.to_numpy()
-    # df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk11_20480.csv")
+    # df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk11_20480.csv")
     # data_ml_mk11_20480 = df.to_numpy()
 
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_10.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_10.csv")
     data_ml_mk15_10 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_20.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_20.csv")
     data_ml_mk15_20 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_40.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_40.csv")
     data_ml_mk15_40 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_80.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_80.csv")
     data_ml_mk15_80 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_160.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_160.csv")
     data_ml_mk15_160 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_320.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_320.csv")
     data_ml_mk15_320 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_640.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_640.csv")
     data_ml_mk15_640 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_1280.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_1280.csv")
     data_ml_mk15_1280 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_2560.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_2560.csv")
     data_ml_mk15_2560 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_5120.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_5120.csv")
     data_ml_mk15_5120 = df.to_numpy()
-    df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_10240.csv")
+    df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_10240.csv")
     data_ml_mk15_10240 = df.to_numpy()
-    # df = pd.read_csv("paper_data/banach/" + str(case_str) + "/solution_ml_mk15_20480.csv")
+    # df = pd.read_csv("paper_data/paper1/banach/" + str(case_str) + "/solution_ml_mk15_20480.csv")
     # data_ml_mk15_20480 = df.to_numpy()
 
     # ---- compute errors ----
@@ -1311,7 +1319,7 @@ def print_convergence_rates2(case_str: str = "periodic"):
     #                'mk11 error direct estimate', 'mk15 error banach estimate',
     #                'mk15 error direct estimate', 'slope'],
     #        name="discretization_error",
-    #        folder_name="paper_data/banach",
+    #        folder_name="paper_data/paper1/banach",
     #        linetypes=['o', 'o', 'v', 'v', '^', '^', '-'], xlim=[10, 3000], ylim=[1e-4, 1], xlabel='$n_x$',
     #        ylabel=r"$||u-u^*||_2^2$",
     #        loglog=True, title=r"discretization error")
@@ -1323,7 +1331,7 @@ def print_convergence_rates2(case_str: str = "periodic"):
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
         labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
         name="discretization_error_" + case_str,
-        folder_name="paper_data/illustration/banach",
+        folder_name="paper_data/paper1/illustration/banach",
         linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
         loglog=True, title="discretization error " + case_str_title + "test")
