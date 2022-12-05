@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1dv4, load_data, scatter_plot_2d_N2, \
     scatter_plot_2d, plot_inflow, plot_wide
+import seaborn as sns
 
 
 def main():
@@ -342,6 +343,37 @@ def print_realizable_set():
                     show_fig=False,
                     log=False,
                     color_map=0)
+    return 0
+
+
+def print_realizable_set_countours():
+    [u, alpha, h] = load_data(filename="paper_data/1D_M2/Monomial_M2_1D_normal.csv", input_dim=3,
+                              selected_cols=[True, True, True])
+    max_h = 3
+
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['k-', 'r--', 'g-.', 'b:']
+    symbol_size = 2
+
+    # 1) gamma 0
+    points_g0 = u_g0[:, 1:]
+    hull = ConvexHull(points_g0)
+    pts_line0_x = []
+    pts_line0_y = []
+    for simplex in hull.simplices:
+        pts_line0_x.append(points_g0[simplex, 0][0])
+        pts_line0_y.append(points_g0[simplex, 1][0])
+
+    pts_line0_x = np.asarray(pts_line0_x)
+    pts_line0_y = np.asarray(pts_line0_y)
+    mask = pts_line0_x.argsort()
+    pts_line0_x = pts_line0_x[mask]
+    pts_line0_y = pts_line0_y[mask]
+    line1 = plt.plot(pts_line0_x, pts_line0_y, colors[0], linewidth=symbol_size)  # plot underbelly
+    plt.plot([pts_line0_x[0], pts_line0_x[-1]], [pts_line0_y[0], pts_line0_y[-1]], colors[0],
+             linewidth=symbol_size)  # plot top
+
     return 0
 
 
