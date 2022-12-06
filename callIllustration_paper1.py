@@ -20,7 +20,7 @@ def main():
 
     # print_1D_inflow()
 
-    print_M1_closure()
+    # print_M1_closure()
 
     # print_synthetic_tests()
 
@@ -410,18 +410,46 @@ def print_realizable_set_countours():
     pts_line0_y = pts_line0_y[mask]
     plt.plot(pts_line0_x, pts_line0_y, colors[2], linewidth=symbol_size)  # plot underbelly
 
+    # BMT
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_gaussian.csv", data_dim=3,
+                              selected_cols=[True, True, True])
+    # u_plot = u[315::316, 1:]
+    # line3 = plt.plot(u_plot[:, 0], u_plot[:, 1], colors[2], linewidth=symbol_size)  # plot top
+
+    points_g0 = u[:, 1:]
+    hull = ConvexHull(points_g0)
+    pts_line0_xBMT = []
+    pts_line0_yBMT = []
+    for simplex in hull.simplices:
+        pts_line0_xBMT.append(points_g0[simplex, 0][0])
+        pts_line0_yBMT.append(points_g0[simplex, 1][0])
+
+    pts_line0_xBMT = np.asarray(pts_line0_xBMT)
+    pts_line0_yBMT = np.asarray(pts_line0_yBMT)
+    mask = pts_line0_xBMT.argsort()
+    pts_line0_xBMT = pts_line0_xBMT[mask]
+    pts_line0_yBMT = pts_line0_yBMT[mask]
+    # line4 = plt.plot(pts_line0_xBMT, pts_line0_yBMT, colors[3], linewidth=symbol_size)  # plot underbelly
+
     # plt.xlim(-1.01, 1.01)
     # plt.ylim(0., 1.01)
     plt.legend([line1[0], line2[0], line3[0]],
                [r"$\partial\widetilde{\mathcal{R}}$", r"$l_2,\overline{\mathbf{u}}_\#$",
-                r"$l_2,\mathbf{\alpha}_{\overline{\mathbf{u}},\#}$", ""],
+                r"$l_2,\mathbf{\alpha}_{\overline{\mathbf{u}},\#}$"],  # , r"$B_{M,\tau}$"],
                loc="lower left")
+    plt.xlabel(r"$\overline{u}_1$")
+    plt.ylabel(r"$\overline{u}_2$")
 
     # draw zoom box
-    left = 0.9
-    right = 0.995
-    bottom = 0.9
-    top = 0.995
+    left = 0.85
+    right = 1.01
+    bottom = 0.85
+    top = 1.01
+
+    # draw "zoom lines"
+    plt.plot([-0.049, left], [0.772, top], 'k-', linewidth=0.7)
+    plt.plot([0.45, right], [0.425, bottom], 'k-', linewidth=0.7)
+
     plt.plot([left, bottom], [left, top], 'k-', linewidth=0.7)
     plt.plot([right, bottom], [right, top], 'k-', linewidth=0.7)
     plt.plot([right, bottom], [left, bottom], 'k-', linewidth=0.7)
@@ -433,16 +461,18 @@ def print_realizable_set_countours():
 
     # plot the zoomed portion
 
-    # draw "zoom lines"
-    plt.plot([left, 0.5], [top, 0.6], 'k-', linewidth=0.7)
-    plt.plot([right, 0.5], [bottom, 0.5], 'k-', linewidth=0.7)
-    sub_axes.plot(pts_line0_x, pts_line0_y, colors[0], linewidth=symbol_size)  # plot underbelly
-    sub_axes.plot([u_plot[:, 0], u_plot[:, 1]], [pts_line0_y[0], pts_line0_y[-1]], colors[0],
-                  linewidth=symbol_size)  # plot top
-
-    #  gamma 0.001
-    # sub_axes.plot(pts_line3_x_p, pts_line3_y_p, colors[1], linewidth=symbol_size)  # plot underbelly
-    # sub_axes.plot(pts_line3_x_m, pts_line3_y_m, colors[1], linewidth=symbol_size)  # plot top
+    # plot zoomed lines
+    # realizable
+    sub_axes.plot(u1, u2, colors[0], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot(u1, u2_top, colors[0], linewidth=symbol_size)  # plot top
+    # u norm
+    sub_axes.plot(u1_n, u2_n, colors[1], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot(u1_n, (1 - eps) * np.ones(len(u1_n)), colors[1], linewidth=symbol_size)  # plot top
+    # alpha_grid
+    sub_axes.plot(pts_line0_x, pts_line0_y, colors[2], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot(u_plot[:, 0], u_plot[:, 1], colors[2], linewidth=symbol_size)  # plot top
+    # BMT
+    # sub_axes.plot(pts_line0_xBMT, pts_line0_yBMT, colors[3], linewidth=symbol_size)  # plot underbelly
 
     sub_axes.set_xlim(left=left, right=right)
     sub_axes.set_ylim(bottom=bottom, top=top)
@@ -455,7 +485,7 @@ def print_realizable_set_countours():
     ratio = 1.0
     ax.set_aspect(abs((x_right - x_left) / (y_low - y_high)) * ratio)
 
-    # plt.tight_layout()
+    plt.tight_layout()
 
     plt.savefig("paper_data/paper1/illustration/1D_M2/R_countour", dpi=500)
     plt.plot()
