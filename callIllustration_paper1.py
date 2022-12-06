@@ -8,7 +8,7 @@ Date 22.10.2021
 import numpy as np
 import pandas as pd
 from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1dv4, load_data, scatter_plot_2d_N2, \
-    scatter_plot_2d, plot_inflow, plot_wide
+    scatter_plot_2d, plot_inflow, plot_wide, plot_1dv2_thic
 import seaborn as sns
 from scipy.spatial import ConvexHull
 import matplotlib.pyplot as plt
@@ -24,10 +24,10 @@ def main():
 
     # print_synthetic_tests()
 
-    # print_periodic_test_case()
+    print_periodic_test_case()
 
-    print_realizable_set_countours()
-    print_realizable_set()
+    # print_realizable_set_countours()
+    # print_realizable_set()
 
     # --- illustrate Convergence errors ---
 
@@ -63,15 +63,16 @@ def print_1D_inflow():
     rel_errmk15 = err_mk15 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
 
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
-    plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M2",
-              folder_name="paper_data/paper1/illustration/1D_M2",
-              linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2], xlabel='x',
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], err_res_list, labels=["ICNN", "IMNN"], name="err_inflow_1D_M2",
+                   folder_name="paper_data/paper1/illustration/1D_M2",
+                   linetypes=['-o', '-^'], xlim=[0, 1], ylim=[1e-6, 5e-2], xlabel='x',
+                   ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
 
-    plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M2",
-              folder_name="paper_data/paper1/illustration/1D_M2", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-4, 5e-1],
-              xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], rel_err_res_list, labels=["ICNN", "IMNN"], name="rel_err_inflow_1D_M2",
+                   folder_name="paper_data/paper1/illustration/1D_M2", linetypes=['-o', '-^'], xlim=[0, 1],
+                   ylim=[1e-4, 5e-1],
+                   xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
 
     # --- inflow M1 1D --- illustration
     [u_neural15, u_ref15] = load_solution("paper_data/paper1/1D_M1/1D_M1_MK15_inflow.csv")
@@ -91,14 +92,13 @@ def print_1D_inflow():
     rel_errmk15 = err_mk15 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
 
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
-    plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M1",
-              folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2],
-              xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], err_res_list, labels=["ICNN", "IMNN"], name="err_inflow_1D_M1",
+                   folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['-o', '-^'], xlim=[0, 1],
+                   ylim=[1e-6, 5e-2], xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
-    plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M1",
-              folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], xlabel='x',
-              ylim=[1e-4, 5e-1],
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], rel_err_res_list, labels=["ICNN", "IMNN"], name="rel_err_inflow_1D_M1",
+                   folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['-o', '-^'], xlim=[0, 1], xlabel='x',
+                   ylim=[1e-4, 5e-1], ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
     return 0
 
 
@@ -142,26 +142,27 @@ def print_synthetic_tests():
     h_mk15 = data_mk15[:, 6].reshape((data_mk15.shape[0], 1)) / 2.
 
     data_jump = 7
-    plot_1dv2([data_mk11[::data_jump, 0]],
-              [u_mk11[::data_jump], u_mk15[::data_jump]],
-              labels=["convex", "monotonic"], name="rel_err_u_1D_M1_synthetic",
-              folder_name="paper_data/paper1/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u^n_1$',
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
-    plot_1dv2([data_mk11[::data_jump, 0]],
-              [alpha_mk11[::data_jump], alpha_mk15[::data_jump]],
-              labels=["convex", "monotonic"], name="rel_err_alpha_1D_M1_synthetic",
-              folder_name="paper_data/paper1/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$u^n_1$',
-              ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
-              log=True)
-    plot_1dv2([data_mk11[::data_jump, 0]],
-              [h_mk11[::data_jump], h_mk15[::data_jump]],
-              labels=["convex", "monotonic"], name="rel_err_h_1D_M1_synthetic",
-              folder_name="paper_data/paper1/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u_1$',
-              ylabel=r"$||h-h_\theta||_2/||h||_2$",
-              log=True)
+    plot_1dv2_thic([data_mk11[::data_jump, 0]],
+                   [u_mk11[::data_jump], u_mk15[::data_jump]],
+                   labels=["ICNN", "IMNN"], name="rel_err_u_1D_M1_synthetic",
+                   folder_name="paper_data/paper1/illustration/1D_M1",
+                   linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$\overline{{u}}_1$',
+                   ylabel=r"$||\overline{\mathbf{u}}_\#-\overline{\mathbf{u}}_\#^\theta||_2/||\overline{\mathbf{u}}_\#||_2$",
+                   log=True, legend_pos="upper right")
+    plot_1dv2_thic([data_mk11[::data_jump, 0]],
+                   [alpha_mk11[::data_jump], alpha_mk15[::data_jump]],
+                   labels=["ICNN", "IMNN"], name="rel_err_alpha_1D_M1_synthetic",
+                   folder_name="paper_data/paper1/illustration/1D_M1",
+                   linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$\overline{{u}}_1$',
+                   ylabel=r"$||(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#-(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#^\theta||_2/||(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#||_2$",
+                   log=True, legend_pos="upper right")
+    plot_1dv2_thic([data_mk11[::data_jump, 0]],
+                   [h_mk11[::data_jump], h_mk15[::data_jump]],
+                   labels=["ICNN", "IMNN"], name="rel_err_h_1D_M1_synthetic",
+                   folder_name="paper_data/paper1/illustration/1D_M1",
+                   linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$\overline{{u}}_1$',
+                   ylabel=r"$||\hat{h}-\hat{h}^\theta||_2/||\hat{h}||_2$",
+                   log=True, legend_pos="upper right")
 
     df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_normal_vs_alpha_synthetic.csv")
     data_sampling_compare = df.to_numpy()
@@ -256,23 +257,23 @@ def print_periodic_test_case():
     err_alpha_mk15 = data_mk15[::n, 2]
     h_mk15 = data_mk15[::n, 3]
     h_ref2 = data_mk15[::n, 4]
-    plot_1dv2([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)),
-                       err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
-              labels=["convex", "monotonic"], name="rel_err_u_2D_M1_over_time",
-              folder_name="paper_data/paper1/illustration/2D_M1",
-              linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-4, 1e-1], xlabel=r'$t$',
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
-    plot_1dv2([time], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)),
-                       err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
-              labels=["convex", "monotonic"], name="rel_err_alpha_2D_M1_over_time",
-              folder_name="paper_data/paper1/illustration/2D_M1",
-              linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
-              ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
-              log=True)
+    plot_1dv2_thic([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)),
+                            err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
+                   labels=["ICNN", "IMNN"], name="rel_err_u_2D_M1_over_time",
+                   folder_name="paper_data/paper1/illustration/2D_M1",
+                   linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-4, 1e-1], xlabel=r'$t$',
+                   ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
+    plot_1dv2_thic([time], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)),
+                            err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
+                   labels=["ICNN", "IMNN"], name="rel_err_alpha_2D_M1_over_time",
+                   folder_name="paper_data/paper1/illustration/2D_M1",
+                   linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
+                   ylabel=r"$||\mathbf{\alpha}_{\overline{\mathbf{u}}}-\mathbf{\alpha}_{\overline{\mathbf{u}}}^\theta||_2$",
+                   log=True)
     data_jump = 1
 
     plot_wide([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
-              labels=["reference", "convex", "monotonic"],
+              labels=["reference", "ICNN", "IMNN"],
               name="entropy_2D_M1_over_time", folder_name="paper_data/paper1/illustration/2D_M1",
               linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
               ylabel=r"$\int h(t,x,y)dxdy$", log=False, black_first=True)
@@ -980,7 +981,7 @@ def print_convergence_rates(case_str: str = "periodic"):
     #    ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
     #    loglog=True, title="discretization error " + case_str_title + "test")
 
-    plot_1dv4(xs=[np.asarray(
+    plot_1dv2_thic(xs=[np.asarray(
         [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
@@ -988,9 +989,9 @@ def print_convergence_rates(case_str: str = "periodic"):
         labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/paper1/illustration/banach",
-        linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
+        linetypes=['-', '-o', '-^', '->'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
-        loglog=True, title="discretization error " + case_str_title + "test")
+        loglog=True, black_first=True)
 
     return 0
 
@@ -1395,17 +1396,17 @@ def print_convergence_rates2(case_str: str = "periodic"):
     #        ylabel=r"$||u-u^*||_2^2$",
     #        loglog=True, title=r"discretization error")
     x_len = 0.5
-    plot_1dv4(xs=[np.asarray(
+    plot_1dv2_thic(xs=[np.asarray(
         [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
-        labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
+        labels=[r'$1^{st}$ order slope', 'ICNN', 'IMNN', 'Newton'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/paper1/illustration/banach",
-        linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
+        linetypes=['-', '-o', '-^', '->'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
-        loglog=True, title="discretization error " + case_str_title + "test")
+        loglog=True, black_first=True)
 
     return 0
 
