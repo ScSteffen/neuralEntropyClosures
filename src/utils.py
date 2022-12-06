@@ -304,6 +304,62 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     return 0
 
 
+def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures",
+                   linetypes=None, show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, ticks=None,
+                   symbol_size=3.0, legend_pos=None, black_first=False):
+    """
+    Expected shape for x in xs : (nx,)
+                       y in ys : (1,nx)
+    """
+
+    plt.clf()
+    plt.figure(figsize=(5.8, 4.7), dpi=400)
+    if not linetypes:
+        linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
+                     'h', 'H', '+', 'x', 'D', 'd', '|']
+        if labels is not None:
+            linetypes = linetypes[0:len(labels)]
+
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['r', 'g', 'b', 'k']
+    if black_first:
+        colors = ['k', 'r', 'g', 'b']
+    symbol_size = 1
+    marker_size = 5
+    marker_width = 0.5
+
+    x = xs[0]
+    for y, lineType, color in zip(ys, linetypes, colors):
+        plt.plot(x, y, color + lineType, linewidth=symbol_size, markersize=marker_size,
+                 markeredgewidth=marker_width, markeredgecolor='k')
+    if labels:
+        if legend_pos:
+            plt.legend(labels, loc=legend_pos)
+        else:
+            plt.legend(labels)
+    if log:
+        plt.yscale('log')
+    if loglog:
+        plt.yscale('log')
+        plt.xscale('log')
+    if show_fig:
+        plt.show()
+    if ylim is not None:
+        plt.ylim(ylim[0], ylim[1])
+    if xlim is not None:
+        plt.xlim(xlim[0], xlim[1])
+    if xlabel is not None:
+        plt.xlabel(xlabel, fontsize=14)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=14)
+    plt.tight_layout()
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.close()
+    return 0
+
+
 def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), lim_y: tuple = (0, 1),
                     lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
                     title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
@@ -495,10 +551,10 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
     # contour lines
     if contour:
         im2 = ax.contour(x, y, z, colors='k', vmin=z_min, vmax=z_max)
-    plt.xlabel("x")
-    plt.ylabel("y")
+    plt.xlabel(r"$x_1$")
+    plt.ylabel(r"$x_2$")
     fig.colorbar(im, ax=ax, pad=0.02)
-    plt.savefig("paper_data/illustration/2D_M1/" + name + ".png", dpi=500)
+    plt.savefig("paper_data/paper1/illustration/2D_M1/" + name + ".png", dpi=500)
     plt.close(fig)
     return 0
 
@@ -601,7 +657,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     # Convex
     case_y = ys[1]
     plt.plot(xs[0], case_y[0], "or", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="convex")
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="ICNN")
     plt.plot(xs[0], case_y[1], "or", linewidth=symbol_size,
              markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
     if len(case_y) == 3:
@@ -610,7 +666,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     # Monotonic
     case_y = ys[2]
     plt.plot(xs[0], case_y[0], "^g", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="monotonic")
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="IMNN")
     plt.plot(xs[0], case_y[1], "^g", linewidth=symbol_size,
              markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
     if len(case_y) == 3:
