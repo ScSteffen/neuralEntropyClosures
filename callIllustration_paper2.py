@@ -46,9 +46,9 @@ def main():
     # test_regularization_error()
 
     # 7) Print moment reconstructions
-    print_realizable_set_new_condition()
-    print_entropies()
-    print_realizable_set_by_gamma()
+    # print_realizable_set_new_condition()
+    # print_entropies()
+    # print_realizable_set_by_gamma()
 
     return True
 
@@ -1460,18 +1460,26 @@ def print_method_errors():
     indices_ref = [0, 1, 2, 13, 16, 18, 19, 20, 21, 23, 24, 25, 26, 27]
 
     # a) sysSize over errror
+    font_size = 22
     plt.clf()
     sns.set_theme()
     sns.set_style("white")
     texts = []
     for i in indices_ref:
-        plt.scatter(sys_size[i], errors[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(sys_size[i], errors[i], names[i], size="x-large"))
+        if i in [2, 13, 16]:
+            label1 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='green', edgecolors='black')
+        else:
+            label2 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='red', edgecolors='black')
+        texts.append(plt.text(sys_size[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("system size")
-    plt.ylabel(r'$e_{\rm{rel},u_0}$')
+    plt.xticks(fontsize=int(font_size * 0.7))
+    plt.yticks(fontsize=int(font_size * 0.7))
+    plt.xlabel("system size", fontsize=font_size)
+    plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
+    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
+
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
@@ -1480,13 +1488,19 @@ def print_method_errors():
     sns.set_theme()
     sns.set_style("white")
     for i in indices_ref:
-        plt.scatter(timing[i], errors[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(timing[i], errors[i], names[i], size="x-large"))
+        if i in [2, 13, 16]:
+            label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='black')
+        else:
+            label2 = plt.scatter(timing[i], errors[i], s=40, facecolors='red', edgecolors='black')
+        texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("simulation time [s]")
-    plt.ylabel(r'$e_{\rm{rel},u_0}$')
+    plt.xticks(fontsize=int(font_size * 0.7))
+    plt.yticks(fontsize=int(font_size * 0.7))
+    plt.xlabel("time [s]", fontsize=font_size)
+    plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
+    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
@@ -1497,13 +1511,20 @@ def print_method_errors():
     sns.set_style("white")
 
     for i in indices_ref:
-        plt.scatter(sys_size[i], timing[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(sys_size[i], timing[i], names[i], size="x-large"))
+        if i in [2, 13, 16]:
+            label1 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='green', edgecolors='black')
+        else:
+            label2 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='red', edgecolors='black')
+        texts.append(plt.text(sys_size[i], timing[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("system size")
-    plt.ylabel("simulation time [s]")
+    plt.xticks(fontsize=int(font_size * 0.7))
+    plt.yticks(fontsize=int(font_size * 0.7))
+    plt.xlabel("system size", fontsize=font_size)
+    plt.ylabel("time [s]", fontsize=font_size)
+    plt.legend([label1, label2], ["ours", "reference"], fontsize=int(font_size * 0.7))
+
     adjust_text(texts, only_move={'texts': 'y'})
 
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500, bbox_inches="tight")
