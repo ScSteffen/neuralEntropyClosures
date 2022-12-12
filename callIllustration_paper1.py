@@ -26,7 +26,7 @@ def main():
 
     print_periodic_test_case()
 
-    # print_realizable_set_countours()
+    print_realizable_set_countours()
     # print_realizable_set()
 
     # --- illustrate Convergence errors ---
