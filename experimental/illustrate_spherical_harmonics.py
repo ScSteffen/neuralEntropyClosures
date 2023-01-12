@@ -13,12 +13,11 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 def main():
-    plot_family_Ys(max_degree_l=4, res=100)
+    plot_family_Ys(max_degree_l=5, res=100)
     # max_l = 2
     # for l in range(0, max_l + 1):
-    #    for k in range(-l, l + 1):
+    # for k in range(-l, l + 1):
     #        plot_sh(80, l, k)
-
     return 0
 
 
@@ -121,7 +120,28 @@ def plot_sh(res: int, order_l: int, degree_k: int):
 
 def plot_family_Ys(max_degree_l=3, res=100):
     el_max = max_degree_l
-    figsize_px, DPI = 800, 100
+    figsize_px, DPI = 900, 500
+    figsize_in = 9
+    fig = plt.figure(figsize=(figsize_in, figsize_in), dpi=DPI)
+    spec = gridspec.GridSpec(ncols=el_max + 1, nrows=el_max + 1, figure=fig)
+    for el in range(el_max + 1):
+        for m_el in range(0, el + 1):
+            print(el, m_el)
+            ax = fig.add_subplot(spec[el, m_el], projection='3d')
+            plot_Y(ax, el, m_el, res)
+    # plt.tight_layout()
+    # plt.subplots_adjust(left=-5, right=-5, bottom=-5, top=-5)
+    # plt.subplots_adjust(wspace=0, hspace=0)
+    plt.tight_layout()
+
+    plt.savefig('sph_harm.png')
+    # plt.show()
+    return 0
+
+
+def plot_family_Ys_single(max_degree_l=3, res=100):
+    el_max = max_degree_l
+    figsize_px, DPI = 800, 400
     figsize_in = figsize_px / DPI
     fig = plt.figure(figsize=(figsize_in, figsize_in), dpi=DPI)
     spec = gridspec.GridSpec(ncols=2 * el_max + 1, nrows=el_max + 1, figure=fig)
@@ -132,7 +152,8 @@ def plot_family_Ys(max_degree_l=3, res=100):
             plot_Y(ax, el, m_el, res)
     # plt.tight_layout()
     # plt.subplots_adjust(left=-5, right=-5, bottom=-5, top=-5)
-    fig.tight_layout()
+    plt.subplots_adjust(left=-5, right=-5, bottom=-5, top=-50)
+    # fig.tight_layout()
 
     plt.savefig('sph_harm.png')
     # plt.show()
@@ -177,12 +198,13 @@ def plot_Y(ax, el, m, res):
     # ax.plot([0, 0], [-ax_lim, ax_lim], [0, 0], c='0.5', lw=1, zorder=10)
     # ax.plot([0, 0], [0, 0], [-ax_lim, ax_lim], c='0.5', lw=1, zorder=10)
     # Set the Axes limits and title, turn off the Axes frame.
-    ax.set_title(r"$Y_{" + str(el) + "}^{" + str(m) + "}$")
+    ax.set_title(r"$Y_{" + str(el) + "}^{" + str(m) + "}$", y=-0.1)
     ax_lim = 0.5
     ax.set_xlim(-ax_lim, ax_lim)
     ax.set_ylim(-ax_lim, ax_lim)
     ax.set_zlim(-ax_lim, ax_lim)
     ax.axis('off')
+    # ax.tight_layout()
 
     # plt.tight_layout()
     # plt.savefig("spherical_harmonics_" + str(el) + "_" + str(m) + ".png", dpi=400)

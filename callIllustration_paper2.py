@@ -28,7 +28,7 @@ def main():
 
     # 1) Training performance
     # print_training_performance()
-    # print_training_performance_stats()
+    print_training_performance_stats()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
@@ -46,8 +46,8 @@ def main():
     # test_regularization_error()
 
     # 7) Print moment reconstructions
-    print_realizable_set_new_condition()
-    print_entropies()
+    # print_realizable_set_new_condition()
+    # print_entropies()
     # print_realizable_set_by_gamma()
 
     return True
@@ -1219,7 +1219,7 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
               name="loss_mk" + mk + "_m" + order + "_h_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
-              show_fig=False, xlabel="epochs", ylabel=r"${e}_{\hat{h}}^\gamma$", xlim=[0, 2000], ylim=[1e-6, 1e-2],
+              show_fig=False, xlabel="epochs", ylabel=r"${e}_{\hat{h}^\gamma}$", xlim=[0, 2000], ylim=[1e-6, 1e-2],
               legend_pos="upper right", font_size=20, xticks=[0, 500, 1000, 1500, 2000])
 
     plot_1dv2([epochs],
