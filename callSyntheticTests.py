@@ -8,14 +8,57 @@ Date 22.10.2021
 import numpy as np
 import csv
 import src.utils
-from src.utils import load_density_function, load_solution, plot_1d
+from src.utils import load_data
 from optparse import OptionParser
 from src.networks.configmodel import init_neural_closure
 
+from src.math import EntropyTools
 import tensorflow as tf
 
 
-def main():
+def synth_tests2():
+    print("---------- Start Synthetic test Suite ------------")
+    print("Check combined regularization and nn approximation error")
+    n_data = 20000
+    imported_model = tf.keras.models.load_model("models/mk11_m2_2d_g3/best_model")
+    [u, alpha, h] = load_data(filename="data/2D/Monomial_M2_2D_normal_gaussian.csv",
+                              data_dim=6, selected_cols=[True, True, True])
+    [u, alpha, h] = [u[:n_data, :], alpha[:n_data, :], h[:n_data, :]]  # mem overflow :(
+    u_reduced = u[:, 1:]
+    # evaluate network
+    [h_pred, alpha_pred, u_pred] = imported_model(u_reduced)
+    # compute regularized u
+    et = EntropyTools(polynomial_degree=2, spatial_dimension=2, gamma=0.0)
+    alpha_pred_full = et.reconstruct_alpha(alpha=tf.cast(alpha_pred, tf.float64))
+    u_gamma_pred = et.reconstruct_u(alpha=alpha_pred_full)
+
+    # compute errors
+    m = tf.keras.metrics.MeanSquaredError()
+    m.reset_state()
+    m.update_state(h, h_pred)
+    e_h = m.result().numpy()
+
+    m.reset_state()
+    m.update_state(alpha[:, 1:], alpha_pred)
+    e_alpha = m.result().numpy()
+
+    m.reset_state()
+    m.update_state(u_reduced, u_pred)
+    e_u = m.result().numpy()
+
+    m.reset_state()
+    m.update_state(u[:, 1:], u_gamma_pred[:, 1:])
+    e_u_gamma = m.result().numpy()
+
+    print(e_h)
+    print(e_alpha)
+    print(e_u)
+    print(e_u_gamma)
+
+    return 0
+
+
+def synth_tests():
     print("---------- Start Synthetic test Suite ------------")
     print("Parsing options")
     # --- parse options ---
@@ -86,8 +129,9 @@ def main():
         writer = csv.writer(f)
         writer.writerow(["u_1", "err_u", "rel_err_u", "err_alpha", "rel_err_alpha", "err_h", "rel_err_h"])
         for i in range(u_t.shape[0]):
-            writer.writerow([u_t[i, 1], err_u[i, 0], rel_err_u[i, 0], err_alpha[i, 0], rel_err_alpha[i, 0], err_h[i, 0],
-                             rel_err_h[i, 0]])
+            writer.writerow(
+                [u_t[i, 1], err_u[i, 0], rel_err_u[i, 0], err_alpha[i, 0], rel_err_alpha[i, 0], err_h[i, 0],
+                 rel_err_h[i, 0]])
 
     # --- Synthetic test for  alpha vs u sampling ---
 
@@ -153,4 +197,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    synth_tests2()
+    # synth_tests()
