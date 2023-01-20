@@ -108,6 +108,29 @@ class EntropyTools:
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1])) + tf.math.multiply(
             self.regularization_gamma_vector, alpha)
 
+    def reconstruct_u_reduced_regularized(self, alpha: tf.Tensor) -> tf.Tensor:
+        """
+        brief: reconstructs u from alpha
+
+        nS = batchSize
+        N = basisSize
+        nq = number of quadPts
+
+        input: alpha, dims = (nS x N)
+        used members: m    , dims = (N x nq)
+                      w    , dims = nq
+        returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
+        """
+        # Currently only for maxwell Boltzmann entropy
+        f_quad = tf.math.exp(tf.tensordot(
+            alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
+        # f * w * momentBasis
+        u_0 = tf.tensordot(tmp, self.momentBasis[0, :], axes=([1], [0]))
+        u_sharp = tf.tensordot(tmp, self.momentBasis[1:, :], axes=([1], [1])) + tf.math.multiply(
+            self.regularization_gamma_vector[:, 1:], alpha[:, 1:])
+        return tf.concat([tf.reshape(u_0, shape=(u_0.shape[0], 1)), u_sharp], axis=1)
+
     def compute_u(self, f: tf.Tensor) -> tf.Tensor:
         """
                 brief: reconstructs u from kinetic density f
