@@ -50,7 +50,7 @@ class BaseNetwork:
     loss_comp_dict: dict = {0: [1, 0, 0, 0], 1: [1, 1, 0, 0], 2: [1, 1, 1, 0],
                             3: [0, 0, 0, 1]}  # hash table for loss combination
     # hash table for input dimension depending on polyDegree
-    input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15}
+    input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
@@ -85,9 +85,9 @@ class BaseNetwork:
         if spatial_dimension == 1:
             self.input_dim = polynomial_degree + 1
         elif spatial_dimension == 2:
-            if self.poly_degree > 4:
+            if self.poly_degree > 5:
                 print(
-                    "Polynomial degeree higher than 3 not supported atm")
+                    "Polynomial degeree higher than 5 not supported atm")
                 exit(1)
             self.input_dim = self.input_dim_dict_2D[self.poly_degree]
         else:
