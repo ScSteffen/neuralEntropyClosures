@@ -264,14 +264,14 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
                 plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
             i += 1
         if labels != None:
-            plt.legend(labels)
+            plt.legend(labels, loc="upper left")
     elif len(xs) is not len(ys):
         print("Error: List of x entries must be of same length as y entries")
         exit(1)
     else:
         for x, y, lineType, color in zip(xs, ys, linetypes, colors):
             plt.plot(x, y, color + lineType, linewidth=symbol_size)
-        plt.legend(labels)  # , prop={'size': 6})
+        plt.legend(labels, loc="upper left")  # , prop={'size': 6})
     if log:
         plt.yscale('log')
     if loglog:
@@ -311,7 +311,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     if color_map == 1:
         c_map = cm.summer
     else:
-        c_map = cm.hot
+        c_map = cm.inferno
 
     fig = plt.figure(figsize=(5.8, 4.7), dpi=400)
     ax = fig.add_subplot(111)  # , projection='3d')
