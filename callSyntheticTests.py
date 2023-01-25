@@ -15,20 +15,23 @@ from src.networks.configmodel import init_neural_closure
 from src.math import EntropyTools
 import tensorflow as tf
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 
 def synth_tests2():
     print("---------- Start Synthetic test Suite ------------")
     print("Check combined regularization and nn approximation error")
-    n_data = 20000
-    imported_model = tf.keras.models.load_model("models/mk11_m2_2d_g3/best_model")
-    [u, alpha, h] = load_data(filename="data/2D/Monomial_M2_2D_normal_gaussian.csv",
-                              data_dim=6, selected_cols=[True, True, True])
+    n_data = 200000
+    imported_model = tf.keras.models.load_model("models/mk12_M3_2D_g2/best_model")
+    [u, alpha, h] = load_data(filename="data/2D/Monomial_M3_2D_normal_gaussian.csv",
+                              data_dim=10, selected_cols=[True, True, True])
     [u, alpha, h] = [u[:n_data, :], alpha[:n_data, :], h[:n_data, :]]  # mem overflow :(
     u_reduced = u[:, 1:]
     # evaluate network
     [h_pred, alpha_pred, u_pred] = imported_model(u_reduced)
     # compute regularized u
-    et = EntropyTools(polynomial_degree=2, spatial_dimension=2, gamma=0.0)
+    et = EntropyTools(polynomial_degree=3, spatial_dimension=2, gamma=0.0)
     alpha_pred_full = et.reconstruct_alpha(alpha=tf.cast(alpha_pred, tf.float64))
     u_gamma_pred = et.reconstruct_u(alpha=alpha_pred_full)
 
@@ -50,10 +53,10 @@ def synth_tests2():
     m.update_state(u[:, 1:], u_gamma_pred[:, 1:])
     e_u_gamma = m.result().numpy()
 
-    print(e_h)
-    print(e_alpha)
-    print(e_u)
-    print(e_u_gamma)
+    print("e_h:       " + str(e_h))
+    print("e_alpha:   " +str(e_alpha))
+    print("e_u:       " + str(e_u))
+    print("e_u_gamma: " +str(e_u_gamma))
 
     return 0
 
