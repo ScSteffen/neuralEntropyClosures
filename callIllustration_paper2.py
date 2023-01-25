@@ -28,7 +28,7 @@ def main():
 
     # 1) Training performance
     # print_training_performance()
-    print_training_performance_stats()
+    # print_training_performance_stats()
 
     # 2) Tests for realizable set
     # test_on_realizable_set_m2()
@@ -37,7 +37,7 @@ def main():
     # print_comp_efficiency_memory()
 
     # 4) Print cross-sections
-    # print_cross_sections()
+    print_cross_sections()
 
     # 5) Print method errors
     # print_method_errors()
@@ -1347,15 +1347,17 @@ def print_cross_sections():
               [0, 2, 4, 6, 8], [0, 4, 8, 12, 16], [0, 4, 8, 12, 16], [0, 2, 4, 6, 8],
               [0, 2, 4, 6, 8], [0, 4, 8, 12, 16], [0, 4, 8, 12, 16], [0, 2, 4, 6, 8],
               [0, 2, 4, 6, 8], [0, 4, 8, 12, 16], [0, 4, 8, 12, 16], [0, 2, 4, 6, 8]]
-    legend_posis = ["upper left", "upper center", "upper left", "upper left",
-                    "upper left", "upper center", "upper left", "upper left",
-                    "upper left", "upper center", "upper left", "upper left",
-                    "upper left", "upper center", "upper left", "upper left"]
-    y_lims = [[-0.4, 8], [-0.4, 17], [-0.4, 16], [-0.4, 8],
-              [-0.4, 8], [-0.4, 17], [-0.4, 16], [-0.4, 8],
-              [-0.4, 8], [-0.4, 17], [-0.4, 16], [-0.4, 8],
-              [-0.4, 8], [-0.4, 17], [-0.4, 16], [-0.4, 8], ]
+    legend_posis = ["upper left", "upper left", "upper left", "upper left",
+                    "upper left", "upper left", "upper left", "upper left",
+                    "upper left", "upper left", "upper left", "upper left",
+                    "upper left", "upper left", "upper left", "upper left"]
+    y_lims = [[-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9],
+              [-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9],
+              [-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9],
+              [-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9], ]
     for (name, newton_name, tick, pos, y_lim) in zip(names, newton_names, yticks, legend_posis, y_lims):
+        # if name != "linesource_N2_g1_r":
+        #    newton_name += "_vert"
         print_single_xs(name, newton_name, ticks=tick, legend_pos=pos, y_lim=y_lim)
     return 0
 
@@ -1402,33 +1404,33 @@ def print_single_xs(name, newton_name, ticks, legend_pos, y_lim):
 
     sns.set_theme()
     sns.set_style("white")
-    colors = ['k-', 'r-o', 'g-^', 'b->']
+    colors = ["", 'k-', 'r--', 'g-.']
     symbol_size = 2
     marker_size = 6
     marker_width = 0.5
-    data_jump = 18
+    data_jump = 1  # 18
     font_size = 26
 
-    line1 = plt.plot(radius_analytic[::data_jump], df_analytic["analytic radiation flux density"][::data_jump] / 2,
-                     colors[0],
+    # line1 = plt.plot(radius_analytic[::data_jump], df_analytic["analytic radiation flux density"][::data_jump] / 2,
+    #                 colors[0],
+    #                 linewidth=symbol_size,
+    #                 markersize=marker_size,
+    #                 markeredgewidth=marker_width, markeredgecolor='k')
+    line4 = plt.plot(radius_vert[::data_jump], df_newton_vert["radiation flux density"][::data_jump], colors[1],
                      linewidth=symbol_size,
                      markersize=marker_size,
                      markeredgewidth=marker_width, markeredgecolor='k')
-    line4 = plt.plot(radius_vert[::data_jump], df_newton_vert["radiation flux density"][::data_jump], colors[3],
+    line2 = plt.plot(radius_vert[::data_jump], df_name_vert["radiation flux density"][::data_jump], colors[2],
                      linewidth=symbol_size,
                      markersize=marker_size,
                      markeredgewidth=marker_width, markeredgecolor='k')
-    line2 = plt.plot(radius_vert[::data_jump], df_name_vert["radiation flux density"][::data_jump], colors[1],
-                     linewidth=symbol_size,
-                     markersize=marker_size,
-                     markeredgewidth=marker_width, markeredgecolor='k')
-    line3 = plt.plot(radius_45[::data_jump], df_name_45["radiation flux density"][::data_jump], colors[2],
+    line3 = plt.plot(radius_45[::data_jump], df_name_45["radiation flux density"][::data_jump], colors[3],
                      linewidth=symbol_size, markersize=marker_size,
                      markeredgewidth=marker_width, markeredgecolor='k')
 
     plt.xlim([-1, 1])
     plt.ylim(y_lim)
-    plt.legend([line1[0], line2[0], line3[0], line4[0]], ["analytic", "vertical", "diagonal", "Newton"], loc=legend_pos,
+    plt.legend([line4[0], line2[0], line3[0]], ["Newton", "vertical", "diagonal"], loc=legend_pos,
                fontsize=int(0.6 * font_size))
     plt.xlabel(r"$x$", fontsize=font_size)
     plt.ylabel(r"$u_0$", fontsize=font_size)
