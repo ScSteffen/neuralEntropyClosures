@@ -18,11 +18,11 @@ import matplotlib
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
-    # print_1D_inflow()
+    print_1D_inflow()
 
-    # print_M1_closure()
+    print_M1_closure()
 
-    # print_synthetic_tests()
+    print_synthetic_tests()
 
     print_periodic_test_case()
 
@@ -32,9 +32,9 @@ def main():
     # --- illustrate Convergence errors ---
 
     # Plot banach fixed point for 1D
-    # print_convergence_rates("periodic")
-    # print_convergence_rates("inflow M1")
-    # print_convergence_rates2("inflow M2")
+    print_convergence_rates("periodic")
+    print_convergence_rates("inflow M1")
+    print_convergence_rates2("inflow M2")
 
     # ---- periodic M1 with fine grid -----
 
@@ -45,6 +45,10 @@ def main():
 
 
 def print_1D_inflow():
+    xticks = [0, 0.5, 1]
+    symbol_size = 3
+    fontsize = 30
+    marker_size = 8
     # --- inflow M2 1D --- illustration
     [u_neural15, u_ref15] = load_solution("paper_data/paper1/1D_M2/1D_M2_MK15_inflow.csv")
     [u_neural11, u_ref11] = load_solution("paper_data/paper1/1D_M2/1D_M2_MK11_inflow.csv")
@@ -55,7 +59,8 @@ def print_1D_inflow():
                 [u_neural15[::n_jump, 0], u_neural15[::n_jump, 1], u_neural15[::n_jump, 2]]]
     # res_list = [u_ref11, u_neural11, u_neural15]
     plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M2", folder_name="paper_data/paper1/illustration/1D_M2",
-                xlim=[0, 1], xlabel='x', ylabel=r"$\mathbf{u}$")
+                xlim=[0, 1], xlabel='x', ylabel=r"$\mathbf{u}$", font_size=fontsize / 2,
+                xticks=[0, 0.2, 0.4, 0.6, 0.8, 1])
 
     err_mk11 = np.linalg.norm(u_ref11 - u_neural11, axis=1).reshape((u_ref15.shape[0], 1)) / 2.
     rel_errmk11 = err_mk11 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
@@ -64,15 +69,15 @@ def print_1D_inflow():
 
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
     plot_1dv2_thic([x[::n_jump]], err_res_list, labels=["ICNN", "IMNN"], name="err_inflow_1D_M2",
-                   folder_name="paper_data/paper1/illustration/1D_M2",
-                   linetypes=['-o', '-^'], xlim=[0, 1], ylim=[1e-6, 5e-2], xlabel='x',
-                   ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True)
+                   folder_name="paper_data/paper1/illustration/1D_M2", linetypes=['-o', '-^'], xlim=[0, 1],
+                   ylim=[1e-6, 5e-2], xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True,
+                   font_size=fontsize, symbol_size=symbol_size, xticks=xticks, marker_size=marker_size)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
 
     plot_1dv2_thic([x[::n_jump]], rel_err_res_list, labels=["ICNN", "IMNN"], name="rel_err_inflow_1D_M2",
                    folder_name="paper_data/paper1/illustration/1D_M2", linetypes=['-o', '-^'], xlim=[0, 1],
-                   ylim=[1e-4, 5e-1],
-                   xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
+                   ylim=[1e-4, 5e-1], xlabel='x', ylabel=r"$e_{\overline{\mathbf{u}},\rm{rel}} $",
+                   log=True, font_size=fontsize, symbol_size=symbol_size, xticks=xticks, marker_size=marker_size)
 
     # --- inflow M1 1D --- illustration
     [u_neural15, u_ref15] = load_solution("paper_data/paper1/1D_M1/1D_M1_MK15_inflow.csv")
@@ -83,8 +88,8 @@ def print_1D_inflow():
                 [u_neural15[::n_jump, 0], u_neural15[::n_jump, 1]]]
 
     plot_inflow([x[::n_jump]], res_list, name="inflow_1D_M1", folder_name="paper_data/paper1/illustration/1D_M1",
-                xlim=[0, 1],
-                xlabel='x', ylabel=r"$\mathbf{u}$")
+                xlim=[0, 1], xlabel='x', ylabel=r"$\mathbf{u}$", font_size=fontsize / 2,
+                xticks=[0, 0.2, 0.4, 0.6, 0.8, 1])
 
     err_mk11 = np.linalg.norm(u_ref11 - u_neural11, axis=1).reshape((u_ref15.shape[0], 1))
     rel_errmk11 = err_mk11 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
@@ -94,11 +99,13 @@ def print_1D_inflow():
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
     plot_1dv2_thic([x[::n_jump]], err_res_list, labels=["ICNN", "IMNN"], name="err_inflow_1D_M1",
                    folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['-o', '-^'], xlim=[0, 1],
-                   ylim=[1e-6, 5e-2], xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True)
+                   ylim=[1e-6, 5e-2], xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True,
+                   font_size=fontsize, symbol_size=symbol_size, xticks=xticks, marker_size=marker_size)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
     plot_1dv2_thic([x[::n_jump]], rel_err_res_list, labels=["ICNN", "IMNN"], name="rel_err_inflow_1D_M1",
                    folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['-o', '-^'], xlim=[0, 1], xlabel='x',
-                   ylim=[1e-4, 5e-1], ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
+                   ylim=[1e-4, 5e-1], ylabel=r"$e_{\overline{\mathbf{u}},\rm{rel}} $", log=True,
+                   font_size=fontsize, symbol_size=symbol_size, xticks=xticks, marker_size=marker_size)
     return 0
 
 
@@ -115,15 +122,16 @@ def print_M1_closure():
     h = data[:, 4]
     alphas = [alpha_0.reshape((alpha_0.shape[0], 1)), alpha_1.reshape((alpha_1.shape[0], 1))]
 
+    fontsize = 16
     plot_1dv2([u_1], alphas, labels=[r"${\alpha_{\overline{\mathbf{u}},0}}$", r"${\alpha_{\overline{\mathbf{u}},1}}$"],
               name="M1_1D_alpha_over_u",
               folder_name="paper_data/paper1/illustration/1D_M1", xlim=[-1, 1], xlabel=r"$\overline{u}_{1}$",
-              ylabel=r"$\mathbf{\alpha_{\overline{\mathbf{u}}}}$",
+              ylabel=r"$\mathbf{\alpha_{\overline{\mathbf{u}}}}$", xticks=[-1, -0.5, 0, 0.5, 1], font_size=fontsize,
               log=False, legend_pos="upper center")
 
-    plot_1dv2([u_1], [h.reshape((h.shape[0], 1))], labels=[r"$h$"],
+    plot_1dv2([u_1], [h.reshape((h.shape[0], 1))], labels=[r"$\hat{h}$"],
               name="M1_1D_h_over_u", folder_name="paper_data/paper1/illustration/1D_M1", xlim=[-1, 1],
-              xlabel=r"$\overline{u}_{1}$",
+              xlabel=r"$\overline{u}_{1}$", xticks=[-1, -0.5, 0, 0.5, 1], font_size=fontsize,
               ylabel=r"$\hat{h}$", log=False, legend_pos="upper center")
     return 0
 
@@ -141,29 +149,34 @@ def print_synthetic_tests():
     h_mk11 = data_mk11[:, 6].reshape((data_mk11.shape[0], 1))
     h_mk15 = data_mk15[:, 6].reshape((data_mk15.shape[0], 1)) / 2.
 
+    xticks = [-1, -0.5, 0, 0.5, 1]
+    fontsize = 26
     data_jump = 7
     plot_1dv2_thic([data_mk11[::data_jump, 0]],
                    [u_mk11[::data_jump], u_mk15[::data_jump]],
                    labels=["ICNN", "IMNN"], name="rel_err_u_1D_M1_synthetic",
                    folder_name="paper_data/paper1/illustration/1D_M1",
                    linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$\overline{{u}}_1$',
-                   ylabel=r"$||\overline{\mathbf{u}}_\#-\overline{\mathbf{u}}_\#^\theta||_2/||\overline{\mathbf{u}}_\#||_2$",
-                   log=True, legend_pos="upper right")
+                   font_size=fontsize,
+                   ylabel=r"$e_{\overline{\mathbf{u}},\rm{rel}} $",
+                   log=True, legend_pos="upper right", xticks=xticks)
     plot_1dv2_thic([data_mk11[::data_jump, 0]],
                    [alpha_mk11[::data_jump], alpha_mk15[::data_jump]],
                    labels=["ICNN", "IMNN"], name="rel_err_alpha_1D_M1_synthetic",
                    folder_name="paper_data/paper1/illustration/1D_M1",
                    linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$\overline{{u}}_1$',
-                   ylabel=r"$||(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#-(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#^\theta||_2/||(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#||_2$",
-                   log=True, legend_pos="upper right")
+                   font_size=fontsize,
+                   ylabel=r"$e_{(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#,\rm{rel}}$",
+                   log=True, legend_pos="upper right", xticks=xticks)
     plot_1dv2_thic([data_mk11[::data_jump, 0]],
                    [h_mk11[::data_jump], h_mk15[::data_jump]],
                    labels=["ICNN", "IMNN"], name="rel_err_h_1D_M1_synthetic",
                    folder_name="paper_data/paper1/illustration/1D_M1",
                    linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$\overline{{u}}_1$',
-                   ylabel=r"$||\hat{h}-\hat{h}^\theta||_2/||\hat{h}||_2$",
-                   log=True, legend_pos="upper right")
+                   ylabel=r"$e_{\hat{h},\rm{rel}}$", font_size=fontsize,
+                   log=True, legend_pos="upper right", xticks=xticks)
 
+    """
     df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_normal_vs_alpha_synthetic.csv")
     data_sampling_compare = df.to_numpy()
     plot_1d([data_sampling_compare[:, 0]],
@@ -191,6 +204,7 @@ def print_synthetic_tests():
             xlabel=r'$u^n_1$',
             ylabel=r"$||h-h_\theta||_2/||h||_2$",
             log=True, title=r"$||h-h_\theta||_2/||h||_2$ over $u^n_1$")
+    """
     return 0
 
 
@@ -257,18 +271,21 @@ def print_periodic_test_case():
     err_alpha_mk15 = data_mk15[::n, 2]
     h_mk15 = data_mk15[::n, 3]
     h_ref2 = data_mk15[::n, 4]
-    plot_1dv2_thic([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)),
-                            err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
-                   labels=["ICNN", "IMNN"], name="rel_err_u_2D_M1_over_time",
-                   folder_name="paper_data/paper1/illustration/2D_M1",
-                   linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-4, 1e-1], xlabel=r'$t$',
-                   ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
-    plot_1dv2_thic([time], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)),
-                            err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
-                   labels=["ICNN", "IMNN"], name="rel_err_alpha_2D_M1_over_time",
-                   folder_name="paper_data/paper1/illustration/2D_M1",
+
+    font_size = 18
+    marker_size = 5
+    xticks = [0, 2, 4, 6, 8, 10]
+    plot_1dv2_thic([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)), err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
+                   labels=["ICNN", "IMNN"], name="rel_err_u_2D_M1_over_time", xticks=xticks,
+                   folder_name="paper_data/paper1/illustration/2D_M1", linetypes=['-o', '-^'], xlim=[0, time[-1]],
+                   ylim=[1e-4, 1e-1], xlabel=r'$t$', font_size=font_size, marker_size=marker_size,
+                   ylabel=r"$e_{\overline{\mathbf{u}},\rm{rel}} $", log=True)
+    plot_1dv2_thic([time],
+                   [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)), err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
+                   labels=["ICNN", "IMNN"], name="rel_err_alpha_2D_M1_over_time", xticks=xticks,
+                   folder_name="paper_data/paper1/illustration/2D_M1", font_size=font_size, marker_size=marker_size,
                    linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
-                   ylabel=r"$||\mathbf{\alpha}_{\overline{\mathbf{u}}}-\mathbf{\alpha}_{\overline{\mathbf{u}}}^\theta||_2$",
+                   ylabel=r"$e_{(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#,\rm{rel}}$",
                    log=True)
     data_jump = 1
 
@@ -276,7 +293,7 @@ def print_periodic_test_case():
               labels=["reference", "ICNN", "IMNN"],
               name="entropy_2D_M1_over_time", folder_name="paper_data/paper1/illustration/2D_M1",
               linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
-              ylabel=r"$\int h(t,x,y)dxdy$", log=False, black_first=True)
+              ylabel=r"$\int h(t,\mathbf{x})d\mathbf{x}$", log=False, black_first=True)
 
     # 2D snapshot
     x = np.linspace(-1.5, 1.5, 200)
@@ -287,13 +304,17 @@ def print_periodic_test_case():
     u_mk11_err = np.abs((u_ref[:, :] - u_mk11[:, :]) / u_ref[:, :]) / 5
     u_mk15_err = np.abs((u_ref[:, :] - u_mk15[:, :]) / u_ref[:, :])
 
-    plot_flowfield(x, y, u_ref, name="periodic_reference_M1_2D")
-    plot_flowfield(x, y, u_mk11, name="periodic_mk11_M1_2D")
-    plot_flowfield(x, y, u_mk15, name="periodic_mk15_M1_2D")
+    xticks = [-1.5, -0.5, 0.5, 1.5]
+    yticks = [-1.5, -0.5, 0.5, 1.5]
+    font_size = 26
+
+    plot_flowfield(x, y, u_ref, name="periodic_reference_M1_2D", xticks=xticks, yticks=yticks, font_size=font_size)
+    plot_flowfield(x, y, u_mk11, name="periodic_mk11_M1_2D", xticks=xticks, yticks=yticks, font_size=font_size)
+    plot_flowfield(x, y, u_mk15, name="periodic_mk15_M1_2D", xticks=xticks, yticks=yticks, font_size=font_size)
     plot_flowfield(x, y, u_mk11_err, name="periodic_mk11_M1_2D_err", contour=False, logscale=True, z_min=1e-5,
-                   z_max=1e-2)
+                   z_max=1e-2, xticks=xticks, yticks=yticks, font_size=font_size, err_plot=True)
     plot_flowfield(x, y, u_mk15_err, name="periodic_mk15_M1_2D_err", contour=False, logscale=True, z_min=1e-5,
-                   z_max=1e-2)
+                   z_max=1e-2, xticks=xticks, yticks=yticks, font_size=font_size, err_plot=True)
     return 0
 
 
@@ -916,17 +937,20 @@ def print_convergence_rates(case_str: str = "periodic"):
     #    ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
     #    loglog=True, title="discretization error " + case_str_title + "test")
 
+    fontsize = 26
+    markersize = 8
+    symbolsize = 2
     plot_1dv2_thic(xs=[np.asarray(
         [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
-        labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
+        labels=[r'$1^{st}$ order', 'ICNN', 'IMNN', 'reference'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/paper1/illustration/banach",
         linetypes=['-', '-o', '-^', '->'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
-        loglog=True, black_first=True)
+        loglog=True, black_first=True, font_size=fontsize, marker_size=markersize, symbol_size=symbolsize)
 
     return 0
 
@@ -1330,18 +1354,21 @@ def print_convergence_rates2(case_str: str = "periodic"):
     #        linetypes=['o', 'o', 'v', 'v', '^', '^', '-'], xlim=[10, 3000], ylim=[1e-4, 1], xlabel='$n_x$',
     #        ylabel=r"$||u-u^*||_2^2$",
     #        loglog=True, title=r"discretization error")
+    fontsize = 26
+    markersize = 8
+    symbolsize = 2
     x_len = 0.5
     plot_1dv2_thic(xs=[np.asarray(
         [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
-        labels=[r'$1^{st}$ order slope', 'ICNN', 'IMNN', 'Newton'],
+        labels=[r'$1^{st}$ order', 'ICNN', 'IMNN', 'reference'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/paper1/illustration/banach",
         linetypes=['-', '-o', '-^', '->'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
-        loglog=True, black_first=True)
+        loglog=True, black_first=True, font_size=fontsize, marker_size=markersize, symbol_size=symbolsize)
 
     return 0
 

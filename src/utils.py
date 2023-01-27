@@ -264,9 +264,9 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             i += 1
         if labels:
             if legend_pos:
-                plt.legend(labels, loc=legend_pos, fontsize=int(0.6 * font_size))
+                plt.legend(labels, loc=legend_pos, fontsize=int(0.75 * font_size))
             else:
-                plt.legend(labels, fontsize=int(0.6 * font_size))
+                plt.legend(labels, fontsize=int(0.75 * font_size))
 
     elif len(xs) is not len(ys):
         print("Error: List of x entries must be of same length as y entries")
@@ -274,7 +274,7 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     else:
         for x, y, lineType, color in zip(xs, ys, linetypes, colors):
             plt.plot(x, y, color + lineType, linewidth=symbol_size)
-        plt.legend(labels, fontsize=int(0.6 * font_size))  # , prop={'size': 6})
+        plt.legend(labels, fontsize=int(0.75 * font_size))  # , prop={'size': 6})
     if log:
         plt.yscale('log')
     if loglog:
@@ -310,7 +310,7 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
 
 def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures",
                    linetypes=None, show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, ticks=None,
-                   symbol_size=3.0, legend_pos=None, black_first=False):
+                   xticks=None, legend_pos=None, black_first=False, font_size=20, symbol_size=1, marker_size=5):
     """
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
@@ -329,8 +329,8 @@ def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=Fal
     colors = ['r', 'g', 'b', 'k']
     if black_first:
         colors = ['k', 'r', 'g', 'b']
-    symbol_size = 1
-    marker_size = 5
+    symbol_size = symbol_size
+    marker_size = marker_size
     marker_width = 0.5
 
     x = xs[0]
@@ -339,9 +339,9 @@ def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=Fal
                  markeredgewidth=marker_width, markeredgecolor='k')
     if labels:
         if legend_pos:
-            plt.legend(labels, loc=legend_pos)
+            plt.legend(labels, loc=legend_pos, fontsize=int(0.75 * font_size))
         else:
-            plt.legend(labels)
+            plt.legend(labels, fontsize=int(0.75 * font_size))
     if log:
         plt.yscale('log')
     if loglog:
@@ -354,9 +354,19 @@ def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=Fal
     if xlim is not None:
         plt.xlim(xlim[0], xlim[1])
     if xlabel is not None:
-        plt.xlabel(xlabel, fontsize=14)
+        plt.xlabel(xlabel, fontsize=font_size)
     if ylabel is not None:
-        plt.ylabel(ylabel, fontsize=14)
+        plt.ylabel(ylabel, fontsize=font_size)
+
+    plt.yticks(fontsize=int(0.7 * font_size))
+    plt.xticks(fontsize=int(0.7 * font_size))
+    if ticks:
+        plt.xticks(ticks[0])
+        plt.yticks(ticks[1])
+    if xticks:
+        plt.xticks(xticks, fontsize=int(0.7 * font_size))
+        plt.yticks(fontsize=int(0.7 * font_size))
+
     plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
@@ -615,7 +625,8 @@ def make_directory(path_to_directory):
     return 0
 
 
-def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contour=True, logscale=False):
+def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contour=True, logscale=False, font_size=16,
+                   xticks=None, yticks=None, err_plot=False):
     # --- plot ---
     c_map = cm.inferno
     cLevel = 1000
@@ -629,9 +640,25 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
     # contour lines
     if contour:
         im2 = ax.contour(x, y, z, colors='k', vmin=z_min, vmax=z_max)
-    plt.xlabel(r"$x_1$")
-    plt.ylabel(r"$x_2$")
-    fig.colorbar(im, ax=ax, pad=0.02)
+    plt.xlabel(r"$x_1$", fontsize=int(0.75 * font_size))
+    plt.ylabel(r"$x_2$", fontsize=int(0.75 * font_size))
+
+    if xticks:
+        plt.xticks(xticks, fontsize=int(0.7 * font_size))
+    else:
+        plt.xticks(fontsize=int(0.7 * font_size))
+    if yticks:
+        plt.yticks(yticks, fontsize=int(0.7 * font_size))
+    else:
+        plt.yticks(fontsize=int(0.7 * font_size))
+    if err_plot:
+        cbar = fig.colorbar(im, ax=ax, pad=0.02, ticks=[1e-5, 1e-4, 1e-3, 1e-2])
+
+    else:
+        cbar = fig.colorbar(im, ax=ax, pad=0.02, ticks=[0.5, 1.0, 1.5, 2.0, 2.5])
+    for t in cbar.ax.get_yticklabels():
+        t.set_fontsize(int(0.7 * font_size))
+    plt.tight_layout()
     plt.savefig("paper_data/paper1/illustration/2D_M1/" + name + ".png", dpi=500)
     plt.close(fig)
     return 0
@@ -710,7 +737,8 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     return 0
 
 
-def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], xlabel=None, ylabel=None):
+def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], xlabel=None, ylabel=None, font_size=16,
+                xticks=None):
     """
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
@@ -759,11 +787,16 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     else:
         texts.append(plt.text(x=0.1, y=0.38, s=r"$u_0$", size="x-large"))
         texts.append(plt.text(x=0.1, y=0.15, s=r"$u_1$", size="x-large"))
+
+    if xticks:
+        plt.xticks(xticks, fontsize=int(0.7 * font_size))
+        plt.yticks(fontsize=int(0.7 * font_size))
+
     # adjust_text(texts, only_move={'texts': 'y'})
-    plt.xlabel(xlabel, fontsize=14)
-    plt.ylabel(ylabel, fontsize=14)
+    plt.xlabel(xlabel, fontsize=font_size)
+    plt.ylabel(ylabel, fontsize=font_size)
     plt.xlim(xlim[0], xlim[1])
-    plt.legend(loc="upper right")
+    plt.legend(loc="upper right", fontsize=font_size)
     plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
@@ -818,7 +851,7 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     else:
         for x, y, lineType, color in zip(xs, ys, linetypes, colors):
             plt.plot(x, y, color + lineType, linewidth=symbol_size)
-        plt.legend(labels)  # , prop={'size': 6})
+        plt.legend(labels, fontsize=16)  # , prop={'size': 6})
     if log:
         plt.yscale('log')
     if loglog:
@@ -831,11 +864,11 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     if xlim is not None:
         plt.xlim(xlim[0], xlim[1])
     if xlabel is not None:
-        plt.xlabel(xlabel, fontsize=14)
-        # plt.xticks(fontsize=6)
-        # plt.yticks(fontsize=6)
+        plt.xlabel(xlabel, fontsize=16)
+    plt.xticks([0, 2, 4, 6, 8, 10], fontsize=14)
+    plt.yticks([-5.2, -5, -4.8, -4.6], fontsize=14)
     if ylabel is not None:
-        plt.ylabel(ylabel, fontsize=14)
+        plt.ylabel(ylabel, fontsize=18)
     # plt.title(title, fontsize=14)
     plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
