@@ -27,28 +27,28 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 1) Training performance
-    # print_training_performance()
-    # print_training_performance_stats()
+    print_training_performance()
+    print_training_performance_stats()
 
     # 2) Tests for realizable set
-    # test_on_realizable_set_m2()
+    test_on_realizable_set_m2()
 
     # 3) Print memory-computational cost study
-    # print_comp_efficiency_memory()
+    print_comp_efficiency_memory()
 
     # 4) Print cross-sections
     print_cross_sections()
 
     # 5) Print method errors
-    # print_method_errors()
+    print_method_errors()
 
     # 6) Get regularization errors
-    test_regularization_error()
+    # test_regularization_error()
 
     # 7) Print moment reconstructions
-    # print_realizable_set_new_condition()
-    # print_entropies()
-    # print_realizable_set_by_gamma()
+    print_realizable_set_new_condition()
+    print_entropies()
+    print_realizable_set_by_gamma()
 
     return True
 
