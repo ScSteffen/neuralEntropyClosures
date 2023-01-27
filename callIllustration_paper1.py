@@ -296,71 +296,6 @@ def print_periodic_test_case():
     return 0
 
 
-def print_realizable_set():
-    # matplotlib.rc('text', usetex=True)
-    # matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
-
-    # --- Realizable set illustrations ---
-    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal.csv", data_dim=3,
-                              selected_cols=[True, True, True])
-
-    marker_size = 1
-    max_h = 3
-    min_h = np.min(h)
-    alpha_bound = 40
-    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
-                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
-                       folder_name="paper_data/paper1/illustration/1D_M2", name="normal_u_Monomial_M2_1D_u",
-                       show_fig=False,
-                       log=False, marker_size=marker_size,
-                       color_map=0)
-    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    folder_name="paper_data/paper1/illustration/1D_M2", name="normal_u_Monomial_M2_1D_alpha",
-                    show_fig=False,
-                    log=False, marker_size=marker_size,
-                    color_map=0)
-
-    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv",
-                              data_dim=3,
-                              selected_cols=[True, True, True])
-    # max_h = np.max(h)
-    # min_h = np.min(h)
-    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
-                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
-                       folder_name="paper_data/paper1/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_u",
-                       show_fig=False,
-                       log=False, marker_size=marker_size,
-                       color_map=0)
-    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    folder_name="paper_data/paper1/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_alpha",
-                    show_fig=False,
-                    log=False, marker_size=marker_size,
-                    color_map=0)
-
-    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_gaussian.csv", data_dim=3,
-                              selected_cols=[True, True, True])
-    # max_h = np.max(h)
-    # min_h = np.min(h)
-    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
-                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
-                       folder_name="paper_data/paper1/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_u",
-                       show_fig=False,
-                       log=False, marker_size=marker_size,
-                       color_map=0)
-    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
-                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
-                    folder_name="paper_data/paper1/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_alpha",
-                    show_fig=False,
-                    log=False, marker_size=marker_size,
-                    color_map=0)
-    return 0
-
-
 def print_realizable_set_countours():
     sns.set_theme()
     sns.set_style("white")
@@ -1377,6 +1312,107 @@ def print_convergence_rates2(case_str: str = "periodic"):
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
         loglog=True, title="discretization error " + case_str_title + "test")
 
+    return 0
+
+
+def print_realizable_set_by_gamma():
+    folder_name = "paper_data/paper1/u_sampling_by_gamma/"
+    save_folder = "paper_data/paper1/illustrations/u_sampling_by_gamma"
+    # --- Realizable set illustrations ---
+    for i in range(0, 4):
+        [u, alpha, h] = load_data(filename=folder_name + "M2_1D_g" + str(i) + "_reduced_ev5.csv",
+                                  data_dim=3, selected_cols=[True, True, True])
+        max_h = 3
+        min_h = np.min(h)
+        alpha_bound = 40
+        marker_size = 1
+        if i == 1:
+            lim_x = (-5.2, 5.2)
+            lim_y = (-4.5, 5.2)
+        elif i == 2:
+            lim_x = (-1.5, 1.5)
+            lim_y = (-0.5, 1.5)
+        else:
+            lim_x = (-1.1, 1.1)
+            lim_y = (-0.1, 1.1)
+
+        lim_z = (np.min(h), np.max(h))
+        scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=lim_x, lim_y=lim_y, lim_z=lim_z, title=r"$h$ over $\mathcal{R}^r$",
+                        label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
+                        folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_u", show_fig=False,
+                        log=False, color_map=0, marker_size=marker_size, axis_formatter=True)
+        scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                        lim_z=lim_z, title=r"$h$ over $\alpha^r$",
+                        label_x=r"$\alpha_{\overline{\mathbf{u}},1}^\gamma$",
+                        label_y=r"$\alpha_{\overline{\mathbf{u}},2}^\gamma$",
+                        folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_alpha", show_fig=False,
+                        log=False, color_map=0, marker_size=marker_size)
+
+    return 0
+
+
+def print_realizable_set():
+    # matplotlib.rc('text', usetex=True)
+    # matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
+
+    # --- Realizable set illustrations ---
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal.csv", data_dim=3,
+                              selected_cols=[True, True, True])
+
+    marker_size = 1
+    max_h = 3
+    min_h = np.min(h)
+    alpha_bound = 40
+    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
+                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
+                       folder_name="paper_data/paper1/illustration/1D_M2", name="normal_u_Monomial_M2_1D_u",
+                       show_fig=False,
+                       log=False, marker_size=marker_size,
+                       color_map=0)
+    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    folder_name="paper_data/paper1/illustration/1D_M2", name="normal_u_Monomial_M2_1D_alpha",
+                    show_fig=False,
+                    log=False, marker_size=marker_size,
+                    color_map=0)
+
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_alpha_grid.csv",
+                              data_dim=3,
+                              selected_cols=[True, True, True])
+    # max_h = np.max(h)
+    # min_h = np.min(h)
+    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
+                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
+                       folder_name="paper_data/paper1/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_u",
+                       show_fig=False,
+                       log=False, marker_size=marker_size,
+                       color_map=0)
+    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    folder_name="paper_data/paper1/illustration/1D_M2", name="normal_alpha_grid_Monomial_M2_1D_alpha",
+                    show_fig=False,
+                    log=False, marker_size=marker_size,
+                    color_map=0)
+
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_gaussian.csv", data_dim=3,
+                              selected_cols=[True, True, True])
+    # max_h = np.max(h)
+    # min_h = np.min(h)
+    scatter_plot_2d_N2(x_in=u[:, 1:], z_in=h, lim_x=(-1, 1), lim_y=(0, 1), lim_z=(min_h, max_h),
+                       label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
+                       folder_name="paper_data/paper1/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_u",
+                       show_fig=False,
+                       log=False, marker_size=marker_size,
+                       color_map=0)
+    scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
+                    lim_z=(min_h, max_h), label_x=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    label_y=r"$\alpha_{\overline{\mathbf{u}},1}$",
+                    folder_name="paper_data/paper1/illustration/1D_M2", name="alpha_gauss_Monomial_M2_1D_normal_alpha",
+                    show_fig=False,
+                    log=False, marker_size=marker_size,
+                    color_map=0)
     return 0
 
 
