@@ -8,7 +8,7 @@ Date 22.10.2021
 import numpy as np
 import pandas as pd
 from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1dv4, load_data, scatter_plot_2d_N2, \
-    scatter_plot_2d, plot_inflow, plot_wide
+    scatter_plot_2d, plot_inflow, plot_wide, plot_1dv2_thic
 import seaborn as sns
 from scipy.spatial import ConvexHull
 import matplotlib.pyplot as plt
@@ -20,14 +20,14 @@ def main():
 
     # print_1D_inflow()
 
-    print_M1_closure()
+    # print_M1_closure()
 
     # print_synthetic_tests()
 
-    # print_periodic_test_case()
+    print_periodic_test_case()
 
     print_realizable_set_countours()
-    print_realizable_set()
+    # print_realizable_set()
 
     # --- illustrate Convergence errors ---
 
@@ -63,15 +63,16 @@ def print_1D_inflow():
     rel_errmk15 = err_mk15 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
 
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
-    plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M2",
-              folder_name="paper_data/paper1/illustration/1D_M2",
-              linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2], xlabel='x',
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], err_res_list, labels=["ICNN", "IMNN"], name="err_inflow_1D_M2",
+                   folder_name="paper_data/paper1/illustration/1D_M2",
+                   linetypes=['-o', '-^'], xlim=[0, 1], ylim=[1e-6, 5e-2], xlabel='x',
+                   ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
 
-    plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M2",
-              folder_name="paper_data/paper1/illustration/1D_M2", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-4, 5e-1],
-              xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], rel_err_res_list, labels=["ICNN", "IMNN"], name="rel_err_inflow_1D_M2",
+                   folder_name="paper_data/paper1/illustration/1D_M2", linetypes=['-o', '-^'], xlim=[0, 1],
+                   ylim=[1e-4, 5e-1],
+                   xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
 
     # --- inflow M1 1D --- illustration
     [u_neural15, u_ref15] = load_solution("paper_data/paper1/1D_M1/1D_M1_MK15_inflow.csv")
@@ -91,14 +92,13 @@ def print_1D_inflow():
     rel_errmk15 = err_mk15 / np.linalg.norm(u_ref11, axis=1).reshape((u_ref15.shape[0], 1))
 
     err_res_list = [err_mk11[::n_jump], err_mk15[::n_jump]]
-    plot_1dv2([x[::n_jump]], err_res_list, labels=["convex", "monotonic"], name="err_inflow_1D_M1",
-              folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], ylim=[1e-6, 5e-2],
-              xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], err_res_list, labels=["ICNN", "IMNN"], name="err_inflow_1D_M1",
+                   folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['-o', '-^'], xlim=[0, 1],
+                   ylim=[1e-6, 5e-2], xlabel='x', ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2$", log=True)
     rel_err_res_list = [rel_errmk11[::n_jump], rel_errmk15[::n_jump]]
-    plot_1dv2([x[::n_jump]], rel_err_res_list, labels=["convex", "monotonic"], name="rel_err_inflow_1D_M1",
-              folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['o', '^'], xlim=[0, 1], xlabel='x',
-              ylim=[1e-4, 5e-1],
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
+    plot_1dv2_thic([x[::n_jump]], rel_err_res_list, labels=["ICNN", "IMNN"], name="rel_err_inflow_1D_M1",
+                   folder_name="paper_data/paper1/illustration/1D_M1", linetypes=['-o', '-^'], xlim=[0, 1], xlabel='x',
+                   ylim=[1e-4, 5e-1], ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
     return 0
 
 
@@ -142,26 +142,27 @@ def print_synthetic_tests():
     h_mk15 = data_mk15[:, 6].reshape((data_mk15.shape[0], 1)) / 2.
 
     data_jump = 7
-    plot_1dv2([data_mk11[::data_jump, 0]],
-              [u_mk11[::data_jump], u_mk15[::data_jump]],
-              labels=["convex", "monotonic"], name="rel_err_u_1D_M1_synthetic",
-              folder_name="paper_data/paper1/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u^n_1$',
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
-    plot_1dv2([data_mk11[::data_jump, 0]],
-              [alpha_mk11[::data_jump], alpha_mk15[::data_jump]],
-              labels=["convex", "monotonic"], name="rel_err_alpha_1D_M1_synthetic",
-              folder_name="paper_data/paper1/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$u^n_1$',
-              ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
-              log=True)
-    plot_1dv2([data_mk11[::data_jump, 0]],
-              [h_mk11[::data_jump], h_mk15[::data_jump]],
-              labels=["convex", "monotonic"], name="rel_err_h_1D_M1_synthetic",
-              folder_name="paper_data/paper1/illustration/1D_M1",
-              linetypes=['o', '^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$u_1$',
-              ylabel=r"$||h-h_\theta||_2/||h||_2$",
-              log=True)
+    plot_1dv2_thic([data_mk11[::data_jump, 0]],
+                   [u_mk11[::data_jump], u_mk15[::data_jump]],
+                   labels=["ICNN", "IMNN"], name="rel_err_u_1D_M1_synthetic",
+                   folder_name="paper_data/paper1/illustration/1D_M1",
+                   linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$\overline{{u}}_1$',
+                   ylabel=r"$||\overline{\mathbf{u}}_\#-\overline{\mathbf{u}}_\#^\theta||_2/||\overline{\mathbf{u}}_\#||_2$",
+                   log=True, legend_pos="upper right")
+    plot_1dv2_thic([data_mk11[::data_jump, 0]],
+                   [alpha_mk11[::data_jump], alpha_mk15[::data_jump]],
+                   labels=["ICNN", "IMNN"], name="rel_err_alpha_1D_M1_synthetic",
+                   folder_name="paper_data/paper1/illustration/1D_M1",
+                   linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1], xlabel=r'$\overline{{u}}_1$',
+                   ylabel=r"$||(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#-(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#^\theta||_2/||(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#||_2$",
+                   log=True, legend_pos="upper right")
+    plot_1dv2_thic([data_mk11[::data_jump, 0]],
+                   [h_mk11[::data_jump], h_mk15[::data_jump]],
+                   labels=["ICNN", "IMNN"], name="rel_err_h_1D_M1_synthetic",
+                   folder_name="paper_data/paper1/illustration/1D_M1",
+                   linetypes=['-o', '-^'], xlim=[-1, 1], ylim=[1e-5, 1e-1], xlabel=r'$\overline{{u}}_1$',
+                   ylabel=r"$||\hat{h}-\hat{h}^\theta||_2/||\hat{h}||_2$",
+                   log=True, legend_pos="upper right")
 
     df = pd.read_csv("paper_data/paper1/1D_M1/1D_M1_normal_vs_alpha_synthetic.csv")
     data_sampling_compare = df.to_numpy()
@@ -256,23 +257,23 @@ def print_periodic_test_case():
     err_alpha_mk15 = data_mk15[::n, 2]
     h_mk15 = data_mk15[::n, 3]
     h_ref2 = data_mk15[::n, 4]
-    plot_1dv2([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)),
-                       err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
-              labels=["convex", "monotonic"], name="rel_err_u_2D_M1_over_time",
-              folder_name="paper_data/paper1/illustration/2D_M1",
-              linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-4, 1e-1], xlabel=r'$t$',
-              ylabel=r"$||\mathbf{u}-\mathbf{u}_\theta||_2/||\mathbf{u}||_2$", log=True)
-    plot_1dv2([time], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)),
-                       err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
-              labels=["convex", "monotonic"], name="rel_err_alpha_2D_M1_over_time",
-              folder_name="paper_data/paper1/illustration/2D_M1",
-              linetypes=['o', '^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
-              ylabel=r"$||\mathbf{\alpha}^n_\mathbf{u}-\mathbf{\alpha}^n_\theta||_2/||\mathbf{\alpha}^n_\mathbf{u}||_2$",
-              log=True)
+    plot_1dv2_thic([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)),
+                            err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
+                   labels=["ICNN", "IMNN"], name="rel_err_u_2D_M1_over_time",
+                   folder_name="paper_data/paper1/illustration/2D_M1",
+                   linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-4, 1e-1], xlabel=r'$t$',
+                   ylabel=r"$||\mathbf{u}-\mathbf{u}^\theta||_2/||\mathbf{u}||_2$", log=True)
+    plot_1dv2_thic([time], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)),
+                            err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
+                   labels=["ICNN", "IMNN"], name="rel_err_alpha_2D_M1_over_time",
+                   folder_name="paper_data/paper1/illustration/2D_M1",
+                   linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
+                   ylabel=r"$||\mathbf{\alpha}_{\overline{\mathbf{u}}}-\mathbf{\alpha}_{\overline{\mathbf{u}}}^\theta||_2$",
+                   log=True)
     data_jump = 1
 
     plot_wide([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
-              labels=["reference", "convex", "monotonic"],
+              labels=["reference", "ICNN", "IMNN"],
               name="entropy_2D_M1_over_time", folder_name="paper_data/paper1/illustration/2D_M1",
               linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
               ylabel=r"$\int h(t,x,y)dxdy$", log=False, black_first=True)
@@ -345,18 +346,46 @@ def print_realizable_set_countours():
     pts_line0_y = pts_line0_y[mask]
     plt.plot(pts_line0_x, pts_line0_y, colors[2], linewidth=symbol_size)  # plot underbelly
 
+    # BMT
+    [u, alpha, h] = load_data(filename="paper_data/paper1/1D_M2/Monomial_M2_1D_normal_gaussian.csv", data_dim=3,
+                              selected_cols=[True, True, True])
+    # u_plot = u[315::316, 1:]
+    # line3 = plt.plot(u_plot[:, 0], u_plot[:, 1], colors[2], linewidth=symbol_size)  # plot top
+
+    points_g0 = u[:, 1:]
+    hull = ConvexHull(points_g0)
+    pts_line0_xBMT = []
+    pts_line0_yBMT = []
+    for simplex in hull.simplices:
+        pts_line0_xBMT.append(points_g0[simplex, 0][0])
+        pts_line0_yBMT.append(points_g0[simplex, 1][0])
+
+    pts_line0_xBMT = np.asarray(pts_line0_xBMT)
+    pts_line0_yBMT = np.asarray(pts_line0_yBMT)
+    mask = pts_line0_xBMT.argsort()
+    pts_line0_xBMT = pts_line0_xBMT[mask]
+    pts_line0_yBMT = pts_line0_yBMT[mask]
+    # line4 = plt.plot(pts_line0_xBMT, pts_line0_yBMT, colors[3], linewidth=symbol_size)  # plot underbelly
+
     # plt.xlim(-1.01, 1.01)
     # plt.ylim(0., 1.01)
     plt.legend([line1[0], line2[0], line3[0]],
                [r"$\partial\widetilde{\mathcal{R}}$", r"$l_2,\overline{\mathbf{u}}_\#$",
-                r"$l_2,\mathbf{\alpha}_{\overline{\mathbf{u}},\#}$", ""],
+                r"$l_2,\mathbf{\alpha}_{\overline{\mathbf{u}},\#}$"],  # , r"$B_{M,\tau}$"],
                loc="lower left")
+    plt.xlabel(r"$\overline{u}_1$")
+    plt.ylabel(r"$\overline{u}_2$")
 
     # draw zoom box
-    left = 0.9
-    right = 0.995
-    bottom = 0.9
-    top = 0.995
+    left = 0.85
+    right = 1.01
+    bottom = 0.85
+    top = 1.01
+
+    # draw "zoom lines"
+    plt.plot([-0.049, left], [0.772, top], 'k-', linewidth=0.7)
+    plt.plot([0.45, right], [0.425, bottom], 'k-', linewidth=0.7)
+
     plt.plot([left, bottom], [left, top], 'k-', linewidth=0.7)
     plt.plot([right, bottom], [right, top], 'k-', linewidth=0.7)
     plt.plot([right, bottom], [left, bottom], 'k-', linewidth=0.7)
@@ -368,16 +397,18 @@ def print_realizable_set_countours():
 
     # plot the zoomed portion
 
-    # draw "zoom lines"
-    plt.plot([left, 0.5], [top, 0.6], 'k-', linewidth=0.7)
-    plt.plot([right, 0.5], [bottom, 0.5], 'k-', linewidth=0.7)
-    sub_axes.plot(pts_line0_x, pts_line0_y, colors[0], linewidth=symbol_size)  # plot underbelly
-    sub_axes.plot([u_plot[:, 0], u_plot[:, 1]], [pts_line0_y[0], pts_line0_y[-1]], colors[0],
-                  linewidth=symbol_size)  # plot top
-
-    #  gamma 0.001
-    # sub_axes.plot(pts_line3_x_p, pts_line3_y_p, colors[1], linewidth=symbol_size)  # plot underbelly
-    # sub_axes.plot(pts_line3_x_m, pts_line3_y_m, colors[1], linewidth=symbol_size)  # plot top
+    # plot zoomed lines
+    # realizable
+    sub_axes.plot(u1, u2, colors[0], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot(u1, u2_top, colors[0], linewidth=symbol_size)  # plot top
+    # u norm
+    sub_axes.plot(u1_n, u2_n, colors[1], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot(u1_n, (1 - eps) * np.ones(len(u1_n)), colors[1], linewidth=symbol_size)  # plot top
+    # alpha_grid
+    sub_axes.plot(pts_line0_x, pts_line0_y, colors[2], linewidth=symbol_size)  # plot underbelly
+    sub_axes.plot(u_plot[:, 0], u_plot[:, 1], colors[2], linewidth=symbol_size)  # plot top
+    # BMT
+    # sub_axes.plot(pts_line0_xBMT, pts_line0_yBMT, colors[3], linewidth=symbol_size)  # plot underbelly
 
     sub_axes.set_xlim(left=left, right=right)
     sub_axes.set_ylim(bottom=bottom, top=top)
@@ -390,7 +421,7 @@ def print_realizable_set_countours():
     ratio = 1.0
     ax.set_aspect(abs((x_right - x_left) / (y_low - y_high)) * ratio)
 
-    # plt.tight_layout()
+    plt.tight_layout()
 
     plt.savefig("paper_data/paper1/illustration/1D_M2/R_countour", dpi=500)
     plt.plot()
@@ -885,7 +916,7 @@ def print_convergence_rates(case_str: str = "periodic"):
     #    ylim=[1e-4, 1e-1], xlabel='$\Delta_x$', ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
     #    loglog=True, title="discretization error " + case_str_title + "test")
 
-    plot_1dv4(xs=[np.asarray(
+    plot_1dv2_thic(xs=[np.asarray(
         [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
@@ -893,9 +924,9 @@ def print_convergence_rates(case_str: str = "periodic"):
         labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/paper1/illustration/banach",
-        linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
+        linetypes=['-', '-o', '-^', '->'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
-        loglog=True, title="discretization error " + case_str_title + "test")
+        loglog=True, black_first=True)
 
     return 0
 
@@ -1300,17 +1331,17 @@ def print_convergence_rates2(case_str: str = "periodic"):
     #        ylabel=r"$||u-u^*||_2^2$",
     #        loglog=True, title=r"discretization error")
     x_len = 0.5
-    plot_1dv4(xs=[np.asarray(
+    plot_1dv2_thic(xs=[np.asarray(
         [x_len / 10., x_len / 20., x_len / 40., x_len / 80., x_len / 160., x_len / 320., x_len / 640., x_len / 1280.,
          x_len / 2560.,
          x_len / 5120., x_len / 10240.])],
         ys=[slope_1x, errors_direct_mk11, errors_direct_mk15, errors_direct],
-        labels=[r'$1^{st}$ order slope', 'convex', 'monotonic', 'reference'],
+        labels=[r'$1^{st}$ order slope', 'ICNN', 'IMNN', 'Newton'],
         name="discretization_error_" + case_str,
         folder_name="paper_data/paper1/illustration/banach",
-        linetypes=['-', 'o', '^', '>'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
+        linetypes=['-', '-o', '-^', '->'], xlim=[x_len / 10., x_len / 10240.], ylim=[1e-4, 1e-1], xlabel='$\Delta_x$',
         ylabel=r"$||\mathbf{u}-\mathbf{u}^*||_2$",
-        loglog=True, title="discretization error " + case_str_title + "test")
+        loglog=True, black_first=True)
 
     return 0
 

@@ -40,15 +40,15 @@ def main():
     print_cross_sections()
 
     # 5) Print method errors
-    print_method_errors()
+    # print_method_errors()
 
     # 6) Get regularization errors
     test_regularization_error()
 
     # 7) Print moment reconstructions
-    print_realizable_set_new_condition()
-    print_entropies()
-    print_realizable_set_by_gamma()
+    # print_realizable_set_new_condition()
+    # print_entropies()
+    # print_realizable_set_by_gamma()
 
     return True
 
@@ -75,16 +75,27 @@ def print_realizable_set_by_gamma():
             lim_y = (-0.1, 1.1)
 
         lim_z = (np.min(h), np.max(h))
+        xticks_a = [-40, -20, 0, 20, 40]
+        xticks_u = [-1, -0.5, 0., 0.5, 1]
+        yticks_u = [0, 0.3, 0.6, 1]
+        if i == 1:
+            yticks_u = [-4, -2, 0, 2, 4]
+            xticks_u = [-4, -2, 0, 2, 4]
+        if i == 2:
+            yticks_u = [-.5, 0, .5, 1, 1.5]
+            xticks_u = [-1.5, -0.5, 0.5, 1.5]
+
         scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=lim_x, lim_y=lim_y, lim_z=lim_z, title=r"$h$ over $\mathcal{R}^r$",
                         label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
                         folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_u", show_fig=False,
-                        log=False, color_map=0, marker_size=marker_size, axis_formatter=True)
+                        log=False, color_map=0, marker_size=marker_size, axis_formatter=True, font_size=26,
+                        xticks=xticks_u, yticks=yticks_u)
         scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
                         lim_z=lim_z, title=r"$h$ over $\alpha^r$",
                         label_x=r"$\alpha_{\overline{\mathbf{u}},1}^\gamma$",
                         label_y=r"$\alpha_{\overline{\mathbf{u}},2}^\gamma$",
                         folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_alpha", show_fig=False,
-                        log=False, color_map=0, marker_size=marker_size)
+                        log=False, color_map=0, marker_size=marker_size, font_size=26, xticks=xticks_a, yticks=xticks_a)
 
     return 0
 
@@ -110,6 +121,7 @@ def print_entropies():
     sns.set_style("white")
     colors = ['k-', 'r--', 'g-.', 'b:']
     symbol_size = 2
+    font_size = 15
 
     plt.figure(figsize=(5.8, 4.7), dpi=400)
 
@@ -119,9 +131,11 @@ def print_entropies():
     plt.plot(u_g1[t1, 1:], h_g1[t1], colors[3], linewidth=symbol_size)
     plt.xlim((-1.3, 1.3))
     plt.ylim((-1.7, 0.5))
-    plt.xlabel(r"$\overline{u}_1$")
-    plt.ylabel(r"$\hat{h}^\gamma$")
-    plt.legend([r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"])
+    plt.ylabel(r"$\hat{h}^\gamma$", fontsize=font_size)
+    plt.xlabel(r"$\overline{u}_1$", fontsize=font_size)
+    plt.xticks(fontsize=int(0.7 * font_size))
+    plt.yticks(fontsize=int(0.7 * font_size))
+    plt.legend([r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"], fontsize=int(0.6 * font_size))
     plt.xticks(x_ticks)
     plt.yticks(y_ticks)
 
@@ -191,7 +205,7 @@ def print_realizable_set_new_condition():
     sns.set_style("white")
     colors = ['k-', 'r--', 'g-.', 'b:']
     symbol_size = 2
-
+    font_size = 15
     # 1) gamma 0
     points_g0 = u_g0[:, 1:]
     hull = ConvexHull(points_g0)
@@ -351,10 +365,12 @@ def print_realizable_set_new_condition():
     # 1) gamma 0
     plt.legend(
         [line1[0], line2[0], line3[0], line4[0]], [r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
-        loc="upper left")
+        loc="upper left", fontsize=int(0.6 * font_size))
 
-    plt.xlabel(r"$\overline{u}_1$")
-    plt.ylabel(r"$\overline{u}_2$")
+    plt.xlabel(r"$\overline{u}_1$", fontsize=font_size)
+    plt.ylabel(r"$\overline{u}_2$", fontsize=font_size)
+    plt.xticks(fontsize=int(0.7 * font_size))
+    plt.yticks(fontsize=int(0.7 * font_size))
 
     # create zoom in view
     # location for the zoomed portion
@@ -1203,8 +1219,8 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               labels=[r"$\gamma=0$", r"$\gamma=0.001$", r"$\gamma=0.01$", r"$\gamma=0.1$"],
               name="loss_mk" + mk + "_m" + order + "_h_gammas", log=True,
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
-              show_fig=False, xlabel="epochs", ylabel=r"${e}_{\hat{h}}^\gamma$", xlim=[0, 2000], ylim=[1e-6, 1e-2],
-              legend_pos="upper right")
+              show_fig=False, xlabel="epochs", ylabel=r"${e}_{\hat{h}^\gamma}$", xlim=[0, 2000], ylim=[1e-6, 1e-2],
+              legend_pos="upper right", font_size=20, xticks=[0, 500, 1000, 1500, 2000])
 
     plot_1dv2([epochs],
               [g0_mean_runs[:, 1], g3_mean_runs[:, 1], g2_mean_runs[:, 1], g1_mean_runs[:, 1]],
@@ -1215,7 +1231,7 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               xlabel="epochs", ylabel=r"$e_{(\mathbf{\alpha}^\gamma_{\overline{\mathbf{u}}})_\#}$",
               xlim=[0, 2000],
               ylim=[1e-5, 1e-0],
-              legend_pos="upper right")
+              legend_pos="upper right", font_size=20, xticks=[0, 500, 1000, 1500, 2000])
 
     plot_1dv2([epochs],
               [g0_mean_runs[:, 2], g3_mean_runs[:, 2], g2_mean_runs[:, 2], g1_mean_runs[:, 2]],
@@ -1224,7 +1240,7 @@ def print_stats_run(g_0_folder: str, g_1_folder: str, g_2_folder: str, g_3_folde
               folder_name="paper_data/paper2/illustrations/training/stats_runs/",
               show_fig=False,
               xlabel="epochs", ylabel=r"$e_{\overline{\mathbf{u}}}$", xlim=[0, 2000], ylim=[1e-7, 1e-2],
-              legend_pos="upper right")
+              legend_pos="upper right", font_size=20, xticks=[0, 500, 1000, 1500, 2000])
 
     with open("paper_data/paper2/illustrations/training/stats_runs/loss_mk" + mk + "_m" + order + ".txt", "w") as f:
         f.write("gamma, h, alpha, u\n")
@@ -1327,12 +1343,26 @@ def print_cross_sections():
                     "linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3",
                     "linesource_M2_g0", "linesource_M2_g1", "linesource_M2_g2", "linesource_M2_g3", ]
 
-    for (name, newton_name) in zip(names, newton_names):
-        print_single_xs(name, newton_name)
+    yticks = [[0, 2, 4, 6, 8], [0, 4, 8, 12, 16], [0, 4, 8, 12, 16], [0, 2, 4, 6, 8],
+              [0, 2, 4, 6, 8], [0, 4, 8, 12, 16], [0, 4, 8, 12, 16], [0, 2, 4, 6, 8],
+              [0, 2, 4, 6, 8], [0, 4, 8, 12, 16], [0, 4, 8, 12, 16], [0, 2, 4, 6, 8],
+              [0, 2, 4, 6, 8], [0, 4, 8, 12, 16], [0, 4, 8, 12, 16], [0, 2, 4, 6, 8]]
+    legend_posis = ["upper left", "upper left", "upper left", "upper left",
+                    "upper left", "upper left", "upper left", "upper left",
+                    "upper left", "upper left", "upper left", "upper left",
+                    "upper left", "upper left", "upper left", "upper left"]
+    y_lims = [[-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9],
+              [-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9],
+              [-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9],
+              [-0.4, 8], [-0.4, 20], [-0.4, 18], [-0.4, 9], ]
+    for (name, newton_name, tick, pos, y_lim) in zip(names, newton_names, yticks, legend_posis, y_lims):
+        # if name != "linesource_N2_g1_r":
+        #    newton_name += "_vert"
+        print_single_xs(name, newton_name, ticks=tick, legend_pos=pos, y_lim=y_lim)
     return 0
 
 
-def print_single_xs(name, newton_name):
+def print_single_xs(name, newton_name, ticks, legend_pos, y_lim):
     load_name = "paper_data/paper2/linesource/cross_sections/"
     save_name = "paper_data/paper2/illustrations/cross_sections/"
     df_analytic = pd.read_csv(load_name + "linesource_analytic.csv")
@@ -1368,20 +1398,45 @@ def print_single_xs(name, newton_name):
     # t3 = np.sum(df_name_45["radiation flux density"].to_numpy())
 
     # ratio = t / t2
+
     plt.clf()
+    plt.figure(figsize=(5.8, 4.7), dpi=400)
+
     sns.set_theme()
     sns.set_style("white")
-    colors = ['k-', 'r--', 'g-.', 'b:']
-    symbol_size = 3
-    plt.plot(radius_analytic, df_analytic["analytic radiation flux density"] / 2, colors[0], linewidth=symbol_size)
-    plt.plot(radius_vert, df_name_vert["radiation flux density"], colors[1], linewidth=symbol_size)
-    plt.plot(radius_45, df_name_45["radiation flux density"], colors[2], linewidth=symbol_size)
-    plt.plot(radius_vert, df_newton_vert["radiation flux density"], colors[3], linewidth=symbol_size)
+    colors = ["", 'k-', 'r--', 'g-.']
+    symbol_size = 2
+    marker_size = 6
+    marker_width = 0.5
+    data_jump = 1  # 18
+    font_size = 26
+
+    # line1 = plt.plot(radius_analytic[::data_jump], df_analytic["analytic radiation flux density"][::data_jump] / 2,
+    #                 colors[0],
+    #                 linewidth=symbol_size,
+    #                 markersize=marker_size,
+    #                 markeredgewidth=marker_width, markeredgecolor='k')
+    line4 = plt.plot(radius_vert[::data_jump], df_newton_vert["radiation flux density"][::data_jump], colors[1],
+                     linewidth=symbol_size,
+                     markersize=marker_size,
+                     markeredgewidth=marker_width, markeredgecolor='k')
+    line2 = plt.plot(radius_vert[::data_jump], df_name_vert["radiation flux density"][::data_jump], colors[2],
+                     linewidth=symbol_size,
+                     markersize=marker_size,
+                     markeredgewidth=marker_width, markeredgecolor='k')
+    line3 = plt.plot(radius_45[::data_jump], df_name_45["radiation flux density"][::data_jump], colors[3],
+                     linewidth=symbol_size, markersize=marker_size,
+                     markeredgewidth=marker_width, markeredgecolor='k')
 
     plt.xlim([-1, 1])
-    plt.legend(["analytic", "vertical", "diagonal", "Newton"], loc="upper left")
-    plt.xlabel("radius")
-    plt.ylabel("scalar flux")
+    plt.ylim(y_lim)
+    plt.legend([line4[0], line2[0], line3[0]], ["Newton", "vertical", "diagonal"], loc=legend_pos,
+               fontsize=int(0.6 * font_size))
+    plt.xlabel(r"$x$", fontsize=font_size)
+    plt.ylabel(r"$u_0$", fontsize=font_size)
+    plt.xticks([-1.0, -0.5, 0.0, 0.5, 1.0], fontsize=int(0.7 * font_size))
+    plt.yticks(ticks, fontsize=int(0.7 * font_size))
+    plt.tight_layout()
     plt.savefig(save_name + "xs_" + name + ".png", dpi=500)
     plt.clf()
 
@@ -1460,18 +1515,26 @@ def print_method_errors():
     indices_ref = [0, 1, 2, 13, 16, 18, 19, 20, 21, 23, 24, 25, 26, 27]
 
     # a) sysSize over errror
+    font_size = 22
     plt.clf()
     sns.set_theme()
     sns.set_style("white")
     texts = []
     for i in indices_ref:
-        plt.scatter(sys_size[i], errors[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(sys_size[i], errors[i], names[i], size="x-large"))
+        if i in [2, 13, 16]:
+            label1 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='green', edgecolors='black')
+        else:
+            label2 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='red', edgecolors='black')
+        texts.append(plt.text(sys_size[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("system size")
-    plt.ylabel(r'$e_{\rm{rel},u_0}$')
+    plt.xticks(fontsize=int(font_size * 0.7))
+    plt.yticks(fontsize=int(font_size * 0.7))
+    plt.xlabel("system size", fontsize=font_size)
+    plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
+    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
+
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
@@ -1480,13 +1543,19 @@ def print_method_errors():
     sns.set_theme()
     sns.set_style("white")
     for i in indices_ref:
-        plt.scatter(timing[i], errors[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(timing[i], errors[i], names[i], size="x-large"))
+        if i in [2, 13, 16]:
+            label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='black')
+        else:
+            label2 = plt.scatter(timing[i], errors[i], s=40, facecolors='red', edgecolors='black')
+        texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("simulation time [s]")
-    plt.ylabel(r'$e_{\rm{rel},u_0}$')
+    plt.xticks(fontsize=int(font_size * 0.7))
+    plt.yticks(fontsize=int(font_size * 0.7))
+    plt.xlabel("time [s]", fontsize=font_size)
+    plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
+    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500, bbox_inches="tight")
     plt.clf()
@@ -1497,13 +1566,20 @@ def print_method_errors():
     sns.set_style("white")
 
     for i in indices_ref:
-        plt.scatter(sys_size[i], timing[i], s=10, facecolors='red', edgecolors='red')
-        texts.append(plt.text(sys_size[i], timing[i], names[i], size="x-large"))
+        if i in [2, 13, 16]:
+            label1 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='green', edgecolors='black')
+        else:
+            label2 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='red', edgecolors='black')
+        texts.append(plt.text(sys_size[i], timing[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
-    plt.xlabel("system size")
-    plt.ylabel("simulation time [s]")
+    plt.xticks(fontsize=int(font_size * 0.7))
+    plt.yticks(fontsize=int(font_size * 0.7))
+    plt.xlabel("system size", fontsize=font_size)
+    plt.ylabel("time [s]", fontsize=font_size)
+    plt.legend([label1, label2], ["ours", "reference"], fontsize=int(font_size * 0.7))
+
     adjust_text(texts, only_move={'texts': 'y'})
 
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500, bbox_inches="tight")

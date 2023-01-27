@@ -231,13 +231,13 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
 
 def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
               show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, ticks=None, symbol_size=3.0,
-              legend_pos=None):
+              legend_pos=None, font_size=20, xticks=None):
     """
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
     """
     plt.clf()
-    plt.figure(figsize=(5.8, 4.7), dpi=400)
+    plt.figure(figsize=(5.8, 4.7), dpi=500)
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
                      'h', 'H', '+', 'x', 'D', 'd', '|']
@@ -264,9 +264,9 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             i += 1
         if labels:
             if legend_pos:
-                plt.legend(labels, loc=legend_pos)
+                plt.legend(labels, loc=legend_pos, fontsize=int(0.6 * font_size))
             else:
-                plt.legend(labels)
+                plt.legend(labels, fontsize=int(0.6 * font_size))
 
     elif len(xs) is not len(ys):
         print("Error: List of x entries must be of same length as y entries")
@@ -274,7 +274,7 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     else:
         for x, y, lineType, color in zip(xs, ys, linetypes, colors):
             plt.plot(x, y, color + lineType, linewidth=symbol_size)
-        plt.legend(labels)  # , prop={'size': 6})
+        plt.legend(labels, fontsize=int(0.6 * font_size))  # , prop={'size': 6})
     if log:
         plt.yscale('log')
     if loglog:
@@ -287,17 +287,77 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     if xlim is not None:
         plt.xlim(xlim[0], xlim[1])
     if xlabel is not None:
-        plt.xlabel(xlabel, fontsize=12)
+        plt.xlabel(xlabel, fontsize=font_size)
         # plt.xticks(fontsize=6)
         # plt.yticks(fontsize=6)
     if ylabel is not None:
-        plt.ylabel(ylabel, fontsize=12)
+        plt.ylabel(ylabel, fontsize=font_size)
     # plt.title(title, fontsize=14)
     plt.tight_layout()
     if ticks:
         plt.xticks(ticks[0])
         plt.yticks(ticks[1])
 
+    if xticks:
+        plt.xticks(xticks, fontsize=int(0.7 * font_size))
+        plt.yticks(fontsize=int(0.7 * font_size))
+
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.close()
+    return 0
+
+
+def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures",
+                   linetypes=None, show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, ticks=None,
+                   symbol_size=3.0, legend_pos=None, black_first=False):
+    """
+    Expected shape for x in xs : (nx,)
+                       y in ys : (1,nx)
+    """
+
+    plt.clf()
+    plt.figure(figsize=(5.8, 4.7), dpi=400)
+    if not linetypes:
+        linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
+                     'h', 'H', '+', 'x', 'D', 'd', '|']
+        if labels is not None:
+            linetypes = linetypes[0:len(labels)]
+
+    sns.set_theme()
+    sns.set_style("white")
+    colors = ['r', 'g', 'b', 'k']
+    if black_first:
+        colors = ['k', 'r', 'g', 'b']
+    symbol_size = 1
+    marker_size = 5
+    marker_width = 0.5
+
+    x = xs[0]
+    for y, lineType, color in zip(ys, linetypes, colors):
+        plt.plot(x, y, color + lineType, linewidth=symbol_size, markersize=marker_size,
+                 markeredgewidth=marker_width, markeredgecolor='k')
+    if labels:
+        if legend_pos:
+            plt.legend(labels, loc=legend_pos)
+        else:
+            plt.legend(labels)
+    if log:
+        plt.yscale('log')
+    if loglog:
+        plt.yscale('log')
+        plt.xscale('log')
+    if show_fig:
+        plt.show()
+    if ylim is not None:
+        plt.ylim(ylim[0], ylim[1])
+    if xlim is not None:
+        plt.xlim(xlim[0], xlim[1])
+    if xlabel is not None:
+        plt.xlabel(xlabel, fontsize=14)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=14)
+    plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
     plt.close()
@@ -308,7 +368,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
                     lim_z: tuple = (0, 1), label_x: str = r"$u_1^r$", label_y: str = r"$u_2^r$",
                     title: str = r"$h^n$ over ${\mathcal{R}^r}$", name: str = 'defaultName', log: bool = True,
                     folder_name: str = "figures", show_fig: bool = False, color_map: int = 0, marker_size=6,
-                    axis_formatter=False):
+                    axis_formatter=False, font_size=20, xticks=None, yticks=None):
     '''
     brief: Compute a scatter plot
     input: x_in = [x1,x2] function arguments
@@ -333,10 +393,21 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
     plt.xlim(lim_x[0], lim_x[1])
     plt.ylim(lim_y[0], lim_y[1])
     # ax.set_title(title, fontsize=14)
-    plt.xlabel(label_x)
-    plt.ylabel(label_y)
+    plt.xlabel(label_x, fontsize=font_size)
+    plt.ylabel(label_y, fontsize=font_size)
+    if xticks:
+        plt.xticks(xticks, fontsize=int(0.7 * font_size))
+    else:
+        plt.xticks(fontsize=int(0.7 * font_size))
+    if yticks:
+        plt.yticks(yticks, fontsize=int(0.7 * font_size))
+    else:
+        plt.yticks(fontsize=int(0.7 * font_size))
     # fig.set_aspect('auto')
     cbar = fig.colorbar(out, pad=0.02)
+    for t in cbar.ax.get_yticklabels():
+        t.set_fontsize(int(0.5 * font_size))
+
     if show_fig:
         plt.show()
     if axis_formatter:
@@ -495,10 +566,10 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
     # contour lines
     if contour:
         im2 = ax.contour(x, y, z, colors='k', vmin=z_min, vmax=z_max)
-    plt.xlabel("x")
-    plt.ylabel("y")
+    plt.xlabel(r"$x_1$")
+    plt.ylabel(r"$x_2$")
     fig.colorbar(im, ax=ax, pad=0.02)
-    plt.savefig("paper_data/illustration/2D_M1/" + name + ".png", dpi=500)
+    plt.savefig("paper_data/paper1/illustration/2D_M1/" + name + ".png", dpi=500)
     plt.close(fig)
     return 0
 
@@ -601,7 +672,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     # Convex
     case_y = ys[1]
     plt.plot(xs[0], case_y[0], "or", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="convex")
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="ICNN")
     plt.plot(xs[0], case_y[1], "or", linewidth=symbol_size,
              markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
     if len(case_y) == 3:
@@ -610,7 +681,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     # Monotonic
     case_y = ys[2]
     plt.plot(xs[0], case_y[0], "^g", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="monotonic")
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="IMNN")
     plt.plot(xs[0], case_y[1], "^g", linewidth=symbol_size,
              markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
     if len(case_y) == 3:
