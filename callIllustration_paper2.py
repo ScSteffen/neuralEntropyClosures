@@ -37,13 +37,13 @@ def main():
     # print_comp_efficiency_memory()
 
     # 4) Print cross-sections
-    # print_cross_sections()
+    print_cross_sections()
 
     # 5) Print method errors
     print_method_errors()
 
     # 6) Get regularization errors
-    # test_regularization_error()
+    test_regularization_error()
 
     # 7) Print moment reconstructions
     print_realizable_set_new_condition()
