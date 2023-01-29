@@ -188,7 +188,7 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
             linetypes = linetypes[0:len(labels)]
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['k', 'r', 'g', 'b']
     symbol_size = 0.7
     if len(xs) == 1:
@@ -245,7 +245,7 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             linetypes = linetypes[0:len(labels)]
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['k', 'r', 'g', 'b', 'c', 'm', 'y']
     symbol_size = symbol_size
     if len(xs) == 1:
@@ -325,7 +325,7 @@ def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=Fal
             linetypes = linetypes[0:len(labels)]
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['r', 'g', 'b', 'k']
     if black_first:
         colors = ['k', 'r', 'g', 'b']
@@ -678,7 +678,7 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     plt.clf()
     plt.figure(figsize=(5.8, 4.7), dpi=400)
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
 
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
@@ -747,7 +747,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     plt.figure(figsize=(5.8, 4.7), dpi=400)
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['k', 'r', 'g', 'b']
     symbol_size = 1.2
     marker_size = 4
@@ -822,7 +822,7 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             linetypes = linetypes[0:len(labels)]
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['r', 'g', 'b', 'k']
     if black_first:
         colors = ['k', 'r', 'g', 'b']

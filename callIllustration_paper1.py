@@ -320,7 +320,7 @@ def print_periodic_test_case():
 
 def print_realizable_set_countours():
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['k-', 'r--', 'g-.', 'b:']
     symbol_size = 2
 
