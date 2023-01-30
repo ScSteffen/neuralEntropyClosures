@@ -27,28 +27,28 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 1) Training performance
-    # print_training_performance()
-    # print_training_performance_stats()
+    print_training_performance()
+    print_training_performance_stats()
 
     # 2) Tests for realizable set
-    # test_on_realizable_set_m2()
+    test_on_realizable_set_m2()
 
     # 3) Print memory-computational cost study
-    # print_comp_efficiency_memory()
+    print_comp_efficiency_memory()
 
     # 4) Print cross-sections
     print_cross_sections()
 
     # 5) Print method errors
-    # print_method_errors()
+    print_method_errors()
 
     # 6) Get regularization errors
     # test_regularization_error()
 
     # 7) Print moment reconstructions
-    # print_realizable_set_new_condition()
-    # print_entropies()
-    # print_realizable_set_by_gamma()
+    print_realizable_set_new_condition()
+    print_entropies()
+    print_realizable_set_by_gamma()
 
     return True
 
@@ -118,7 +118,7 @@ def print_entropies():
     x_ticks = [-1.0, -0.5, 0.0, 0.5, 1.0]
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['k-', 'r--', 'g-.', 'b:']
     symbol_size = 2
     font_size = 15
@@ -168,8 +168,8 @@ def print_entropies():
 
     sub_axes.set_xlim(left=left, right=right)
     sub_axes.set_ylim(bottom=bottom, top=top)
-    sub_axes.set_yticklabels([])
-    sub_axes.set_xticklabels([])
+    # sub_axes.set_yticklabels([])
+    # sub_axes.set_xticklabels([])
     # Set aspect ratio
     ax = plt.gca()  # you first need to get the axis handle
     x_left, x_right = ax.get_xlim()
@@ -202,7 +202,7 @@ def print_realizable_set_new_condition():
     plt.figure(figsize=(5.8, 4.7), dpi=400)
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ['k-', 'r--', 'g-.', 'b:']
     symbol_size = 2
     font_size = 15
@@ -388,8 +388,8 @@ def print_realizable_set_new_condition():
 
     sub_axes.set_xlim(left=left, right=right)
     sub_axes.set_ylim(bottom=bottom, top=top)
-    sub_axes.set_yticklabels([])
-    sub_axes.set_xticklabels([])
+    # sub_axes.set_yticklabels([])
+    # sub_axes.set_xticklabels([])
     # Set aspect ratio
     ax = plt.gca()  # you first need to get the axis handle
     x_left, x_right = ax.get_xlim()
@@ -1403,7 +1403,7 @@ def print_single_xs(name, newton_name, ticks, legend_pos, y_lim):
     plt.figure(figsize=(5.8, 4.7), dpi=400)
 
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     colors = ["", 'k-', 'r--', 'g-.']
     symbol_size = 2
     marker_size = 6
@@ -1455,7 +1455,7 @@ def print_comp_efficiency_memory():
 
     plt.clf()
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     fig, ax = plt.subplots()
 
     for i in range(len(data) - 2):
@@ -1518,7 +1518,7 @@ def print_method_errors():
     font_size = 22
     plt.clf()
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     texts = []
     for i in indices_ref:
         if i in [2, 13, 16]:
@@ -1541,7 +1541,7 @@ def print_method_errors():
 
     # b) timing over errror
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     for i in indices_ref:
         if i in [2, 13, 16]:
             label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='black')
@@ -1563,7 +1563,7 @@ def print_method_errors():
     # c) sys size vs timing
     plt.clf()
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
 
     for i in indices_ref:
         if i in [2, 13, 16]:
@@ -1587,7 +1587,7 @@ def print_method_errors():
 
     # d) plot only neural network errors
     sns.set_theme()
-    sns.set_style("white")
+    sns.set_style("ticks")
     fig, ax = plt.subplots()
 
     indices_g0 = [2, 6, 10, 14]
