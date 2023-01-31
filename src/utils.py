@@ -806,7 +806,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
 
 def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
               show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, legend_pos="upper right",
-              black_first=False):
+              black_first=False, font_size=20):
     """
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
@@ -826,8 +826,8 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     colors = ['r', 'g', 'b', 'k']
     if black_first:
         colors = ['k', 'r', 'g', 'b']
-    symbol_size = 3
-    marker_size = 4
+    symbol_size = 4
+    marker_size = 8
     marker_width = 0.5
     if len(xs) == 1:
         x = xs[0]
@@ -844,14 +844,14 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
                 plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
             i += 1
         if labels != None:
-            plt.legend(labels, loc=legend_pos)
+            plt.legend(labels, loc=legend_pos, fontsize=font_size)
     elif len(xs) is not len(ys):
         print("Error: List of x entries must be of same length as y entries")
         exit(1)
     else:
         for x, y, lineType, color in zip(xs, ys, linetypes, colors):
             plt.plot(x, y, color + lineType, linewidth=symbol_size)
-        plt.legend(labels, fontsize=16)  # , prop={'size': 6})
+        plt.legend(labels, fontsize=font_size)  # , prop={'size': 6})
     if log:
         plt.yscale('log')
     if loglog:
@@ -864,11 +864,11 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     if xlim is not None:
         plt.xlim(xlim[0], xlim[1])
     if xlabel is not None:
-        plt.xlabel(xlabel, fontsize=16)
-    plt.xticks([0, 2, 4, 6, 8, 10], fontsize=14)
-    plt.yticks([-5.2, -5, -4.8, -4.6], fontsize=14)
+        plt.xlabel(xlabel, fontsize=font_size)
+    plt.xticks([0, 2, 4, 6, 8, 10], fontsize=int(font_size * 0.75))
+    plt.yticks([-5.2, -5, -4.8, -4.6], fontsize=int(font_size * 0.75))
     if ylabel is not None:
-        plt.ylabel(ylabel, fontsize=18)
+        plt.ylabel(ylabel, fontsize=font_size)
     # plt.title(title, fontsize=14)
     plt.tight_layout()
     plt.savefig(folder_name + "/" + name + ".png", dpi=500)

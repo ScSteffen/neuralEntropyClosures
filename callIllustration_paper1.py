@@ -18,23 +18,23 @@ import matplotlib
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
-    print_1D_inflow()
+    # print_1D_inflow()
 
-    print_M1_closure()
+    # print_M1_closure()
 
-    print_synthetic_tests()
+    # print_synthetic_tests()
 
     print_periodic_test_case()
 
     # print_realizable_set_countours()
-    print_realizable_set()
+    # print_realizable_set()
 
     # --- illustrate Convergence errors ---
 
     # Plot banach fixed point for 1D
-    print_convergence_rates("periodic")
-    print_convergence_rates("inflow M1")
-    print_convergence_rates2("inflow M2")
+    # print_convergence_rates("periodic")
+    # print_convergence_rates("inflow M1")
+    # print_convergence_rates2("inflow M2")
 
     # ---- periodic M1 with fine grid -----
 
@@ -287,12 +287,12 @@ def print_periodic_test_case():
                    linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
                    ylabel=r"$e_{(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#,\rm{rel}}$",
                    log=True)
-    data_jump = 1
+    data_jump = 2
 
     plot_wide([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
               labels=["reference", "ICNN", "IMNN"],
               name="entropy_2D_M1_over_time", folder_name="paper_data/paper1/illustration/2D_M1",
-              linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$',
+              linetypes=['-', 'o', '^'], xlim=[0, time[-1]], xlabel=r'$t$', font_size=20,
               ylabel=r"$\int h(t,\mathbf{x})d\mathbf{x}$", log=False, black_first=True)
 
     # 2D snapshot
