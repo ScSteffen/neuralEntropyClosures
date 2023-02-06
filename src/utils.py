@@ -806,7 +806,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
 
 def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
               show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, legend_pos="upper right",
-              black_first=False, font_size=20):
+              black_first=False):
     """
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
