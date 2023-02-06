@@ -14,7 +14,7 @@ from src import math
 
 
 def main():
-    plot_family_Ys(max_degree_l=3, res=100)
+    plot_family_Ys(max_degree_l=4, res=100)
     # max_l = 2
     # for l in range(0, max_l + 1):
     # for k in range(-l, l + 1):
@@ -120,7 +120,7 @@ def plot_sh(res: int, order_l: int, degree_k: int):
 
 
 def plot_family_Ys(max_degree_l=3, res=100):
-    figsize_px, DPI = 900, 500
+    figsize_px, DPI = 2000, 1000
     figsize_in = 9
     fig = plt.figure(figsize=(figsize_in, figsize_in), dpi=DPI)
 
@@ -128,11 +128,14 @@ def plot_family_Ys(max_degree_l=3, res=100):
     spec = gridspec.GridSpec(ncols=max_cols, nrows=max_degree_l + 1, figure=fig)
     for idx_degree in range(0, max_degree_l + 1):
         count = 0
+        print("----")
+        print(idx_degree)
         for a in range(0, idx_degree + 1):
             for b in range(0, idx_degree - a + 1):
                 c = idx_degree - a - b
                 ax = fig.add_subplot(spec[idx_degree, count], projection='3d')
                 plot_monomial(ax, a, b, c, res)
+                print("a:" + str(a) + ", b:" + str(b) + ", c:" + str(c))
                 count += 1
 
     # plt.tight_layout()
