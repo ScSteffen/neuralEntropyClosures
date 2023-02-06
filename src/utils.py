@@ -19,7 +19,8 @@ from datetime import date
 from matplotlib.ticker import StrMethodFormatter
 
 
-# plt.style.use("kitish")
+# from matplotlib import rcParams
+# rcParams['font.family'] = 'serif'
 
 
 def finiteDiff(x, y):

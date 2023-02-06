@@ -615,6 +615,46 @@ def qGaussLegendre2D(Qorder):
     return [pts, weights]
 
 
+def qGaussLegendre3D(Qorder):
+    """
+       order: order of quadrature, uses all quadpts... inefficient
+       returns: [pts, weights] : quadrature points and weights, dim(pts) = nq x 2
+    """
+
+    def computequadpoints(order):
+        """Quadrature points for GaussLegendre quadrature. Read from file."""
+        mu, _ = leggauss(order)
+        phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
+        xyz = np.zeros((order * order, 3))
+        count = 0
+        for i in range(int(order / 2)):
+            for j in range(2 * order):
+                mui = mu[i]
+                phij = phi[j]
+                xyz[count, 0] = np.sqrt(1 - mui ** 2) * np.cos(phij)
+                xyz[count, 1] = np.sqrt(1 - mui ** 2) * np.sin(phij)
+                xyz[count, 2] = mui
+                count += 1
+
+        return xyz
+
+    def computequadweights(order):
+        """Quadrature weights for GaussLegendre quadrature. Read from file."""
+        _, leggaussweights = leggauss(order)
+        w = np.zeros(order * order)
+        count = 0
+        for i in range(int(order / 2)):
+            for j in range(2 * order):
+                w[count] = 0.5 * np.pi / order * leggaussweights[i]
+                count += 1
+        return w
+
+    pts = computequadpoints(Qorder)
+    weights = computequadweights(Qorder)
+
+    return [pts, weights]
+
+
 def integrate(integrand, weights):
     """
     params: weights = quadweights vector (at quadpoints) (dim = nq)
@@ -741,6 +781,39 @@ def computeMonomialBasis2D(quadPts, polyDegree):
                 monomialBasis[idx_vector, idx_quad] = np.power(
                     omega_x, a) * np.power(omega_y, b)
                 idx_vector += 1
+
+    return monomialBasis
+
+
+def computeMonomialBasis3D(quadPts, polyDegree):
+    """
+    brief: Same basis function ordering as in KiT-RT code
+    params: quadPts = quadrature points to evaluate
+            polyDegree = maximum degree of the basis
+    return: monomial basis evaluated at quadrature points
+    """
+    basisLen = getBasisSize(polyDegree, 3)
+    nq = quadPts.shape[0]
+    monomialBasis = np.zeros((basisLen, nq))
+
+    for idx_quad in range(0, nq):
+        # Hardcoded for degree 1
+        # monomialBasis[0, idx_quad] = 1.0
+        # monomialBasis[1, idx_quad] = quadPts[idx_quad, 0]
+        # monomialBasis[2, idx_quad] = quadPts[idx_quad, 1]
+
+        omega_x = quadPts[idx_quad, 0]
+        omega_y = quadPts[idx_quad, 1]
+        omega_z = quadPts[idx_quad, 2]
+
+        idx_vector = 0
+        for idx_degree in range(0, polyDegree + 1):
+            for a in range(0, idx_degree + 1):
+                for b in range(0, idx_degree - a + 1):
+                    c = idx_degree - a - b
+                    monomialBasis[idx_vector, idx_quad] = np.power(omega_x, a) * np.power(omega_y, b) * np.power(
+                        omega_z, c)
+                    idx_vector += 1
 
     return monomialBasis
 
