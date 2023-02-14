@@ -60,6 +60,33 @@ def print_checkerboard():
     beautify_img(load_name=img_path, folder_name="paper_data/paper1/illustration/checkerboard", name=name,
                  xlabel="", ylabel="", cbar_ticks=[1e-4, 1e-3, 1e-2, 1e-1, 1], cbar_log=True,
                  font_size=fontsize, img_size=[0, 7, 0, 7])
+
+    # cross - sections
+    dfM1 = pd.read_csv("paper_data/paper1/checkerboard/cross_sections/M1.csv")
+    data_M1 = dfM1["radiation flux density"].to_numpy()
+    dfM1_neural = pd.read_csv("paper_data/paper1/checkerboard/cross_sections/M1_neural.csv")
+    data_M1_neural = dfM1_neural["radiation flux density"].to_numpy()
+    x_data = dfM1["Points:1"].to_numpy()
+
+    npts = x_data.size
+
+    folder_name = "paper_data/paper1/illustration/checkerboard"
+
+    data_jump = 15
+    plot_1dv2_thic([x_data.reshape((npts, 1))[::data_jump]],
+                   [data_M1.reshape((npts, 1))[::data_jump], data_M1_neural.reshape((npts, 1))[::data_jump]],
+                   font_size=fontsize, black_first=True, legend_pos="upper left",
+                   name='cross_section_checker2d_MN', log=False, loglog=False, folder_name=folder_name,
+                   labels=["reference", "ICNN"], linetypes=["-", "o"], show_fig=False, xlim=(0, 7),
+                   ylim=(0.0, 1.1), xlabel=r"$x_2$", ylabel=r"$u_0$", symbol_size=2, marker_size=5)
+
+    plot_1dv2_thic([x_data.reshape((npts, 1))[::data_jump]],
+                   [data_M1.reshape((npts, 1))[::data_jump], data_M1_neural.reshape((npts, 1))[::data_jump]],
+                   font_size=fontsize, black_first=True, legend_pos="lower right",
+                   name='cross_section_checker2d_MN_log', log=True, loglog=False, folder_name=folder_name,
+                   labels=["reference", "ICNN"], linetypes=["-", "o"], show_fig=False, xlim=(0, 7),
+                   ylim=(1e-5, 1.1), xlabel=r"$x_2$", ylabel=r"$u_0$", symbol_size=2, marker_size=5)
+
     return 0
 
 
