@@ -700,7 +700,10 @@ def beautify_img(load_name: str, xlabel: str = None, ylabel: str = None, xticks:
 
     if cbar_ticks is not None:
         cax = fig.add_axes([ax.get_position().x1 + 0.01, ax.get_position().y0, 0.02, ax.get_position().height])
-        plt.colorbar(im, cax=cax)  # Similar to fig.colorbar(im, cax = cax)
+        cbar = plt.colorbar(im, cax=cax)  # Similar to fig.colorbar(im, cax = cax)
+
+        for t in cbar.ax.get_yticklabels():
+            t.set_fontsize(int(0.7 * font_size))
 
     plt.setp(ax.get_xticklabels(), visible=False)
     plt.setp(ax.get_yticklabels(), visible=False)
