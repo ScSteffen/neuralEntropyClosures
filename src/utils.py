@@ -198,7 +198,7 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
                 if colors[i] == 'k' and lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
                     colors[i] = 'w'
                 plt.plot(x, y[:, i], colors[i] + lineType, linewidth=symbol_size, markersize=2.5,
-                         markeredgewidth=0.5, markeredgecolor='k')
+                         markeredgewidth=0.5, markeredgecolor=colors[i])
         if labels != None:
             plt.legend(labels)
     elif len(xs) is not len(ys):
@@ -224,8 +224,8 @@ def plot_1d(xs, ys, labels=None, name='defaultName', log=True, folder_name="figu
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=12)
     plt.title(title, fontsize=14)
-    plt.savefig(folder_name + "/" + name + ".png", dpi=400)
-    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=400)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".pdf"))
     return 0
 
 
@@ -255,10 +255,10 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             if lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
                 if colors[i] == 'k':
                     plt.plot(x, y, 'w' + lineType, linewidth=symbol_size, markersize=2.5,
-                             markeredgewidth=0.5, markeredgecolor='k')
+                             markeredgewidth=0.5, markeredgecolor='w')
                 else:
                     plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size, markersize=2.5,
-                             markeredgewidth=0.5, markeredgecolor='k')
+                             markeredgewidth=0.5, markeredgecolor=colors[i])
             else:
                 plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
             i += 1
@@ -302,8 +302,8 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
         plt.xticks(xticks, fontsize=int(0.7 * font_size))
         plt.yticks(fontsize=int(0.7 * font_size))
 
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
-    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".pdf"))
     plt.close()
     return 0
 
@@ -331,12 +331,12 @@ def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=Fal
         colors = ['k', 'r', 'g', 'b']
     symbol_size = symbol_size
     marker_size = marker_size
-    marker_width = 0.5
+    marker_width = 0.1
 
     x = xs[0]
     for y, lineType, color in zip(ys, linetypes, colors):
         plt.plot(x, y, color + lineType, linewidth=symbol_size, markersize=marker_size,
-                 markeredgewidth=marker_width, markeredgecolor='k')
+                 markeredgewidth=marker_width, markeredgecolor=color)
     if labels:
         if legend_pos:
             plt.legend(labels, loc=legend_pos, fontsize=int(0.75 * font_size))
@@ -368,8 +368,8 @@ def plot_1dv2_thic(xs, ys, labels=None, name='defaultName', log=True, loglog=Fal
         plt.yticks(fontsize=int(0.7 * font_size))
 
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
-    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".pdf"))
     plt.close()
     return 0
 
@@ -425,9 +425,9 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
         plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))  # 1 decimal places
 
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
     plt.close(fig)
-    print("Saved image at: " + folder_name + "/" + name + ".png")
+    print("Saved image at: " + folder_name + "/" + name + ".pdf")
     return 0
 
 
@@ -488,9 +488,9 @@ def scatter_plot_2d_N2(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1
         plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))  # 1 decimal places
 
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
     plt.close(fig)
-    print("Saved image at: " + folder_name + "/" + name + ".png")
+    print("Saved image at: " + folder_name + "/" + name + ".pdf")
     return 0
 
 
@@ -536,7 +536,7 @@ def scatter_plot_2d_N2_old(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-
         plt.show()
 
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
     plt.close(fig)
     return 0
 
@@ -631,7 +631,7 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
     c_map = cm.inferno
     cLevel = 1000
     # 1) rel error
-    fig, ax = plt.subplots(figsize=(5.8, 4.7), dpi=400)
+    fig, ax = plt.subplots(figsize=(5.8, 4.7), dpi=500)
     # filled contours
     if logscale:
         im = plt.imshow(z, extent=[x[0], x[-1], y[0], y[-1]], cmap=c_map, norm=colors.LogNorm(vmin=z_min, vmax=z_max))
@@ -640,8 +640,8 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
     # contour lines
     if contour:
         im2 = ax.contour(x, y, z, colors='k', vmin=z_min, vmax=z_max)
-    plt.xlabel(r"$x_1$", fontsize=int(0.75 * font_size))
-    plt.ylabel(r"$x_2$", fontsize=int(0.75 * font_size))
+    # plt.xlabel(r"$x_1$", fontsize=int(0.75 * font_size))
+    # plt.ylabel(r"$x_2$", fontsize=int(0.75 * font_size))
 
     if xticks:
         plt.xticks(xticks, fontsize=int(0.7 * font_size))
@@ -651,6 +651,9 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
         plt.yticks(yticks, fontsize=int(0.7 * font_size))
     else:
         plt.yticks(fontsize=int(0.7 * font_size))
+
+    plt.setp(ax.get_xticklabels(), visible=False)
+    plt.setp(ax.get_yticklabels(), visible=False)
     if err_plot:
         cbar = fig.colorbar(im, ax=ax, pad=0.02, ticks=[1e-5, 1e-4, 1e-3, 1e-2])
 
@@ -664,6 +667,53 @@ def plot_flowfield(x, y, z, name="reference_M1_2D", z_min=0.5, z_max=2.5, contou
     return 0
 
 
+def beautify_img(load_name: str, xlabel: str = None, ylabel: str = None, xticks: list = None, yticks: list = None,
+                 font_size: int = 14, folder_name: str = "figures", name: str = 'defaultName',
+                 cbar_ticks: list = None, cbar_log: bool = False, img_size: list = [0, 1, 0, 1]) -> bool:
+    plt.clf()
+    fig = plt.figure(figsize=(5.8, 4.7), dpi=500)
+    ax = plt.axes()
+
+    sns.set_theme()
+    sns.set_style("ticks")
+
+    if xlabel is not None:
+        plt.xlabel(xlabel, fontsize=font_size)
+        plt.xticks(fontsize=int(0.7 * font_size))
+        if xticks is not None:
+            plt.xticks(xticks, fontsize=int(0.7 * font_size))
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=font_size)
+        plt.yticks(fontsize=int(0.7 * font_size))
+        if yticks is not None:
+            plt.yticks(yticks, fontsize=int(0.7 * font_size))
+
+    if cbar_ticks:
+        if cbar_log:
+            im = plt.imshow(np.array([cbar_ticks]), cmap="inferno",
+                            norm=colors.LogNorm(vmin=cbar_ticks[0], vmax=cbar_ticks[-1]))
+        else:
+            im = plt.imshow(np.array([cbar_ticks]), cmap="inferno")
+
+    img = plt.imread(load_name)
+    plt.imshow(img, extent=img_size)
+
+    if cbar_ticks is not None:
+        cax = fig.add_axes([ax.get_position().x1 + 0.01, ax.get_position().y0, 0.02, ax.get_position().height])
+        plt.colorbar(im, cax=cax)  # Similar to fig.colorbar(im, cax = cax)
+
+    plt.setp(ax.get_xticklabels(), visible=False)
+    plt.setp(ax.get_yticklabels(), visible=False)
+
+    # plt.tight_layout()
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500, bbox_inches='tight', pad_inches=0)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".pdf"))
+    plt.close()
+    plt.clf()
+
+    return True
+
+
 def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
               show_fig=False,
               xlim=None, ylim=None, xlabel=None, ylabel=None, title: str = r"$h^n$ over ${\mathcal{R}^r}$"):
@@ -673,7 +723,7 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
     """
     symbol_size = 2
     marker_size = 6
-    marker_width = 0.5
+    marker_width = 0.1
 
     plt.clf()
     plt.figure(figsize=(5.8, 4.7), dpi=400)
@@ -696,10 +746,10 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             if lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
                 if colors[i] == 'k':
                     plt.plot(x, y, 'w' + lineType, linewidth=symbol_size, markersize=marker_size,
-                             markeredgewidth=marker_width, markeredgecolor='k')
+                             markeredgewidth=marker_width, markeredgecolor='w')
                 else:
                     plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size, markersize=marker_size,
-                             markeredgewidth=marker_width, markeredgecolor='k')
+                             markeredgewidth=marker_width, markeredgecolor='w')
             else:
                 plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
             i += 1
@@ -731,8 +781,8 @@ def plot_1dv4(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
         plt.ylabel(ylabel, fontsize=14)
     # plt.title(title, fontsize=14)
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
-    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".pdf"))
     plt.close()
     return 0
 
@@ -751,7 +801,7 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     colors = ['k', 'r', 'g', 'b']
     symbol_size = 1.2
     marker_size = 4
-    marker_width = 0.5
+    marker_width = 0.1
 
     case_y = ys[0]
 
@@ -763,21 +813,21 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     # Convex
     case_y = ys[1]
     plt.plot(xs[0], case_y[0], "or", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="ICNN")
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='r', label="ICNN")
     plt.plot(xs[0], case_y[1], "or", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='r')
     if len(case_y) == 3:
         plt.plot(xs[0], case_y[2], "or", linewidth=symbol_size,
-                 markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
+                 markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='r')
     # Monotonic
     case_y = ys[2]
     plt.plot(xs[0], case_y[0], "^g", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k', label="IMNN")
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='g', label="IMNN")
     plt.plot(xs[0], case_y[1], "^g", linewidth=symbol_size,
-             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
+             markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='g')
     if len(case_y) == 3:
         plt.plot(xs[0], case_y[2], "^g", linewidth=symbol_size,
-                 markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='k')
+                 markersize=marker_size, markeredgewidth=marker_width, markeredgecolor='g')
 
     texts = []
     if len(case_y) == 3:
@@ -798,21 +848,21 @@ def plot_inflow(xs, ys, name='defaultName', folder_name="figures", xlim=[0, 1], 
     plt.xlim(xlim[0], xlim[1])
     plt.legend(loc="upper right", fontsize=font_size)
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
-    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".pdf"))
     plt.close()
     return 0
 
 
 def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, folder_name="figures", linetypes=None,
               show_fig=False, xlim=None, ylim=None, xlabel=None, ylabel=None, legend_pos="upper right",
-              black_first=False):
+              black_first=False, font_size=20):
     """
     Expected shape for x in xs : (nx,)
                        y in ys : (1,nx)
     """
     plt.clf()
-    plt.figure(figsize=(11.5, 4.7), dpi=400)
+    plt.figure(figsize=(11.5, 4.7), dpi=500)
     if not linetypes:
         linetypes = ['-', '--', '-.', ':', ':', '.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', 's', 'p', '*',
                      'h',
@@ -828,7 +878,7 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
         colors = ['k', 'r', 'g', 'b']
     symbol_size = 4
     marker_size = 8
-    marker_width = 0.5
+    marker_width = 0.1
     if len(xs) == 1:
         x = xs[0]
         i = 0
@@ -836,10 +886,10 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             if lineType in ['.', ',', 'o', 'v', '^', '<', '>']:
                 if colors[i] == 'k':
                     plt.plot(x, y, 'w' + lineType, linewidth=symbol_size, markersize=marker_size,
-                             markeredgewidth=marker_width, markeredgecolor='k')
+                             markeredgewidth=marker_width, markeredgecolor='w')
                 else:
                     plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size, markersize=marker_size,
-                             markeredgewidth=marker_width, markeredgecolor='k')
+                             markeredgewidth=marker_width, markeredgecolor=colors[i])
             else:
                 plt.plot(x, y, colors[i] + lineType, linewidth=symbol_size)
             i += 1
@@ -871,7 +921,7 @@ def plot_wide(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
         plt.ylabel(ylabel, fontsize=font_size)
     # plt.title(title, fontsize=14)
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
-    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".png"))
+    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
+    print("Figure successfully saved to file: " + str(folder_name + "/" + name + ".pdf"))
     plt.close()
     return 0

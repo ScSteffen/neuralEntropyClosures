@@ -7,7 +7,7 @@ Date 22.10.2021
 
 import numpy as np
 import pandas as pd
-from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, plot_1dv4, load_data, scatter_plot_2d_N2, \
+from src.utils import plot_flowfield, load_solution, plot_1d, plot_1dv2, beautify_img, load_data, scatter_plot_2d_N2, \
     scatter_plot_2d, plot_inflow, plot_wide, plot_1dv2_thic
 import seaborn as sns
 from scipy.spatial import ConvexHull
@@ -17,6 +17,8 @@ import matplotlib
 
 def main():
     print("---------- Start Result Illustration Suite ------------")
+
+    print_checkerboard()
 
     print_1D_inflow()
 
@@ -38,10 +40,27 @@ def main():
 
     # ---- periodic M1 with fine grid -----
 
-    # print_error_test_case("periodic")
-    # print_error_test_case("inflow M1")
+    print_error_test_case("periodic")
+    print_error_test_case("inflow M1")
 
     return True
+
+
+def print_checkerboard():
+    fontsize = 20
+
+    name = "checkerboard_M1"
+    img_path = "paper_data/paper1/checkerboard/img_files/" + name + ".png"
+    beautify_img(load_name=img_path, folder_name="paper_data/paper1/illustration/checkerboard", name=name,
+                 xlabel="", ylabel="", cbar_ticks=[1e-4, 1e-3, 1e-2, 1e-1, 1], cbar_log=True,
+                 font_size=fontsize, img_size=[0, 7, 0, 7])
+
+    name = "checkerboard_M1_ICNN"
+    img_path = "paper_data/paper1/checkerboard/img_files/" + name + ".png"
+    beautify_img(load_name=img_path, folder_name="paper_data/paper1/illustration/checkerboard", name=name,
+                 xlabel="", ylabel="", cbar_ticks=[1e-4, 1e-3, 1e-2, 1e-1, 1], cbar_log=True,
+                 font_size=fontsize, img_size=[0, 7, 0, 7])
+    return 0
 
 
 def print_1D_inflow():
@@ -151,7 +170,7 @@ def print_synthetic_tests():
 
     xticks = [-1, -0.5, 0, 0.5, 1]
     fontsize = 26
-    data_jump = 7
+    data_jump = 13
     plot_1dv2_thic([data_mk11[::data_jump, 0]],
                    [u_mk11[::data_jump], u_mk15[::data_jump]],
                    labels=["ICNN", "IMNN"], name="rel_err_u_1D_M1_synthetic",
@@ -275,19 +294,22 @@ def print_periodic_test_case():
     font_size = 18
     marker_size = 5
     xticks = [0, 2, 4, 6, 8, 10]
-    plot_1dv2_thic([time], [err_u_mk11.reshape((err_u_mk11.shape[0], 1)), err_u_mk15.reshape((err_u_mk11.shape[0], 1))],
+    data_jump = 1
+
+    plot_1dv2_thic([time[::data_jump]], [err_u_mk11.reshape((err_u_mk11.shape[0], 1))[::data_jump],
+                                         err_u_mk15.reshape((err_u_mk11.shape[0], 1))[::data_jump]],
                    labels=["ICNN", "IMNN"], name="rel_err_u_2D_M1_over_time", xticks=xticks,
                    folder_name="paper_data/paper1/illustration/2D_M1", linetypes=['-o', '-^'], xlim=[0, time[-1]],
                    ylim=[1e-4, 1e-1], xlabel=r'$t$', font_size=font_size, marker_size=marker_size,
                    ylabel=r"$e_{\overline{\mathbf{u}},\rm{rel}} $", log=True)
-    plot_1dv2_thic([time],
-                   [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1)), err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))],
+    plot_1dv2_thic([time[::data_jump]], [err_alpha_mk11.reshape((err_u_mk11.shape[0], 1))[::data_jump],
+                                         err_alpha_mk15.reshape((err_u_mk11.shape[0], 1))[::data_jump]],
                    labels=["ICNN", "IMNN"], name="rel_err_alpha_2D_M1_over_time", xticks=xticks,
                    folder_name="paper_data/paper1/illustration/2D_M1", font_size=font_size, marker_size=marker_size,
                    linetypes=['-o', '-^'], xlim=[0, time[-1]], ylim=[1e-3, 1e-1], xlabel=r'$t$',
                    ylabel=r"$e_{(\mathbf{\alpha}_{\overline{\mathbf{u}}})_\#,\rm{rel}}$",
                    log=True)
-    data_jump = 1
+    data_jump = 2
 
     plot_wide([time[::data_jump]], [h_ref[::data_jump], h_mk11[::data_jump], h_mk15[::data_jump]],
               labels=["reference", "ICNN", "IMNN"],
