@@ -1457,7 +1457,7 @@ def print_single_xs(name, newton_name, ticks, legend_pos, y_lim):
     marker_size = 6
     marker_width = 0.5
     data_jump = 1  # 18
-    font_size = 34
+    font_size = 28
 
     # line1 = plt.plot(radius_analytic[::data_jump], df_analytic["analytic radiation flux density"][::data_jump] / 2,
     #                 colors[0],
@@ -1479,7 +1479,7 @@ def print_single_xs(name, newton_name, ticks, legend_pos, y_lim):
     plt.xlim([-1, 1])
     plt.ylim(y_lim)
     plt.legend([line4[0], line2[0], line3[0]], ["Newton", "vertical", "diagonal"], loc=legend_pos,
-               fontsize=int(0.7 * font_size))
+               fontsize=int(0.6 * font_size))
     plt.xlabel(r"$x$", fontsize=font_size)
     plt.ylabel(r"$u_0$", fontsize=font_size)
     plt.xticks([-1.0, -0.5, 0.0, 0.5, 1.0], fontsize=int(0.7 * font_size))
