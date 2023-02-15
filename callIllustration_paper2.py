@@ -39,13 +39,13 @@ def main():
     # print_comp_efficiency_memory()
 
     # 4) Print cross-sections
-    print_cross_sections()
+    # print_cross_sections()
 
     # 5) Print method errors
-    print_method_errors()
+    # print_method_errors()
 
     # 6) Get regularization errors
-    test_regularization_error()
+    # test_regularization_error()
 
     # 7) Print moment reconstructions
     print_realizable_set_new_condition()
@@ -136,14 +136,14 @@ def print_realizable_set_by_gamma():
         scatter_plot_2d(x_in=u[:, 1:], z_in=h, lim_x=lim_x, lim_y=lim_y, lim_z=lim_z, title=r"$h$ over $\mathcal{R}^r$",
                         label_x=r"$\overline{u}_1$", label_y=r"$\overline{u}_2$",
                         folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_u", show_fig=False,
-                        log=False, color_map=0, marker_size=marker_size, axis_formatter=True, font_size=26,
+                        log=False, color_map=0, marker_size=marker_size, axis_formatter=True, font_size=28,
                         xticks=xticks_u, yticks=yticks_u)
         scatter_plot_2d(x_in=alpha[:, 1:], z_in=h, lim_x=(-alpha_bound, alpha_bound), lim_y=(-alpha_bound, alpha_bound),
                         lim_z=lim_z, title=r"$h$ over $\alpha^r$",
                         label_x=r"$\alpha_{\overline{\mathbf{u}},1}^\gamma$",
                         label_y=r"$\alpha_{\overline{\mathbf{u}},2}^\gamma$",
                         folder_name=save_folder, name="M2_1D_uniform_g" + str(i) + "_alpha", show_fig=False,
-                        log=False, color_map=0, marker_size=marker_size, font_size=26, xticks=xticks_a, yticks=xticks_a)
+                        log=False, color_map=0, marker_size=marker_size, font_size=28, xticks=xticks_a, yticks=xticks_a)
 
     return 0
 

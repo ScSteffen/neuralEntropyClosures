@@ -427,7 +427,7 @@ def scatter_plot_2d(x_in: np.ndarray, z_in: np.ndarray, lim_x: tuple = (-1, 1), 
         plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.1f}'))  # 1 decimal places
 
     plt.tight_layout()
-    plt.savefig(folder_name + "/" + name + ".pdf", dpi=500)
+    plt.savefig(folder_name + "/" + name + ".png", dpi=500)
     plt.close(fig)
     print("Saved image at: " + folder_name + "/" + name + ".pdf")
     return 0
