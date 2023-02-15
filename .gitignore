@@ -17,6 +17,7 @@ python/legacyCode/models/*
 *.png
 *.pb
 *.zip
+*.pdf
 
 # images
 *.png

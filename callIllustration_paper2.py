@@ -15,7 +15,7 @@ import matplotlib
 # matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
 import seaborn as sns
 import tensorflow as tf
-from src.utils import plot_1d, plot_1dv2, scatter_plot_2d, load_data
+from src.utils import plot_1d, plot_1dv2, scatter_plot_2d, load_data, beautify_img
 from src.networks.configmodel import init_neural_closure
 from src.math import EntropyTools
 
@@ -26,15 +26,17 @@ from scipy.spatial import ConvexHull
 def main():
     print("---------- Start Result Illustration Suite ------------")
 
+    # 0) beautify images
+    # print_hohlraum_img()
     # 1) Training performance
-    print_training_performance()
-    print_training_performance_stats()
+    # print_training_performance()
+    # print_training_performance_stats()
 
     # 2) Tests for realizable set
-    test_on_realizable_set_m2()
+    # test_on_realizable_set_m2()
 
     # 3) Print memory-computational cost study
-    print_comp_efficiency_memory()
+    # print_comp_efficiency_memory()
 
     # 4) Print cross-sections
     print_cross_sections()
@@ -43,7 +45,7 @@ def main():
     print_method_errors()
 
     # 6) Get regularization errors
-    # test_regularization_error()
+    test_regularization_error()
 
     # 7) Print moment reconstructions
     print_realizable_set_new_condition()
@@ -51,6 +53,52 @@ def main():
     print_realizable_set_by_gamma()
 
     return True
+
+
+def print_hohlraum_img():
+    fontsize = 20
+
+    base_path = "paper_data/paper2/hohlraum/img_files/"
+    save_path = "paper_data/paper2/illustrations/hohlraum/flow_fields"
+
+    names = ["hohlraum_S50", "hohlraum_S50", "hohlraum_N2_g1", "hohlraum_N2_g1_r", "hohlraum_N3_g1", "hohlraum_N4_g1",
+             "hohlraum_P9",
+             "hohlraum_S40"]
+    names_err = ["hohlraum_M3_g3_Newton_diff", "hohlraum_N2_g1_diff", "hohlraum_N2_g1_r_diff", "hohlraum_N3_g1_diff",
+                 "hohlraum_N4_g1_diff", "hohlraum_P9_diff", "hohlraum_S40_diff"]
+
+    for name in names:
+        img_path = base_path + name + ".png"
+        beautify_img(load_name=img_path, folder_name=save_path, name=name, c_map="RdGy",
+                     xlabel="", ylabel="", cbar_ticks=[0, 0.2, 0.4, 0.6], cbar_log=False,
+                     font_size=fontsize, img_size=[0, 1, 0, 1])
+
+    for name in names_err:
+        img_path = base_path + name + ".png"
+        beautify_img(load_name=img_path, folder_name=save_path, name=name,
+                     xlabel="", ylabel="", cbar_ticks=[1e-4, 1e-3, 1e-2, 1e-1], cbar_log=True,
+                     font_size=fontsize, img_size=[0, 1, 0, 1])
+
+    # without cbar
+    names = ["hohlraum_M2_g3_neural_vs_Newton", "hohlraum_M2_g3_Newton_diff", "hohlraum_M3_g3_neural_vs_Newton",
+             "hohlraum_N2_g0", "hohlraum_N2_g3", "hohlraum_N2_g2",
+             "hohlraum_N2_g0_diff", "hohlraum_N2_g3_diff", "hohlraum_N2_g2_diff",
+             "hohlraum_N2_g0_r", "hohlraum_N2_g3_r", "hohlraum_N2_g2_r",
+             "hohlraum_N2_g0_r_diff", "hohlraum_N2_g3_r_diff", "hohlraum_N2_g2_r_diff",
+             "hohlraum_N3_g0", "hohlraum_N3_g3", "hohlraum_N3_g2",
+             "hohlraum_N3_g0_diff", "hohlraum_N3_g3_diff", "hohlraum_N3_g2_diff",
+             "hohlraum_N4_g0", "hohlraum_N4_g3", "hohlraum_N4_g2",
+             "hohlraum_N4_g0_diff", "hohlraum_N4_g3_diff", "hohlraum_N4_g2_diff",
+             "hohlraum_P3", "hohlraum_P5", "hohlraum_P7",
+             "hohlraum_P3_diff", "hohlraum_P5_diff", "hohlraum_P7_diff",
+             "hohlraum_S10", "hohlraum_S20", "hohlraum_S30",
+             "hohlraum_S10_diff", "hohlraum_S20_diff", "hohlraum_S30_diff"]
+    for name in names:
+        img_path = base_path + name + ".png"
+        beautify_img(load_name=img_path, folder_name=save_path, name=name, xlabel="", ylabel="", cbar_ticks=None,
+                     cbar_log=False, font_size=fontsize, img_size=[0, 1, 0, 1])
+
+    return 0
 
 
 def print_realizable_set_by_gamma():
@@ -178,7 +226,7 @@ def print_entropies():
     ax.set_aspect(abs((x_right - x_left) / (y_low - y_high)) * ratio)
     plt.tight_layout()
 
-    plt.savefig("paper_data/paper2/illustrations/realizable_set/entropy_gammas" + ".png", dpi=500)
+    plt.savefig("paper_data/paper2/illustrations/realizable_set/entropy_gammas" + ".pdf", dpi=500)
     plt.close()
     plt.clf()
 
@@ -401,9 +449,9 @@ def print_realizable_set_new_condition():
 
     plt.tight_layout()
     # plt.show()
-    plt.savefig("paper_data/paper2/illustrations/realizable_set/nc_realizable_set_gammas" + ".png", dpi=500)
+    plt.savefig("paper_data/paper2/illustrations/realizable_set/nc_realizable_set_gammas" + ".pdf", dpi=500)
     print("Figure successfully saved to file: " + str(
-        "paper_data/paper2/illustrations/realizable_set/nc_realizable_set_gammas" + ".png"))
+        "paper_data/paper2/illustrations/realizable_set/nc_realizable_set_gammas" + ".pdf"))
     plt.close()
     plt.clf()
 
@@ -1409,7 +1457,7 @@ def print_single_xs(name, newton_name, ticks, legend_pos, y_lim):
     marker_size = 6
     marker_width = 0.5
     data_jump = 1  # 18
-    font_size = 26
+    font_size = 34
 
     # line1 = plt.plot(radius_analytic[::data_jump], df_analytic["analytic radiation flux density"][::data_jump] / 2,
     #                 colors[0],
@@ -1431,13 +1479,13 @@ def print_single_xs(name, newton_name, ticks, legend_pos, y_lim):
     plt.xlim([-1, 1])
     plt.ylim(y_lim)
     plt.legend([line4[0], line2[0], line3[0]], ["Newton", "vertical", "diagonal"], loc=legend_pos,
-               fontsize=int(0.6 * font_size))
+               fontsize=int(0.7 * font_size))
     plt.xlabel(r"$x$", fontsize=font_size)
     plt.ylabel(r"$u_0$", fontsize=font_size)
     plt.xticks([-1.0, -0.5, 0.0, 0.5, 1.0], fontsize=int(0.7 * font_size))
     plt.yticks(ticks, fontsize=int(0.7 * font_size))
     plt.tight_layout()
-    plt.savefig(save_name + "xs_" + name + ".png", dpi=500)
+    plt.savefig(save_name + "xs_" + name + ".pdf", dpi=500)
     plt.clf()
 
 
@@ -1472,7 +1520,7 @@ def print_comp_efficiency_memory():
     plt.xlabel("system size")
     plt.ylabel("time [s]")
     # plt.show()
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/methods.png", dpi=500)
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/methods.pdf", dpi=500)
 
     return 0
 
@@ -1515,16 +1563,16 @@ def print_method_errors():
     indices_ref = [0, 1, 2, 13, 16, 18, 19, 20, 21, 23, 24, 25, 26, 27]
 
     # a) sysSize over errror
-    font_size = 22
+    font_size = 26
     plt.clf()
     sns.set_theme()
     sns.set_style("ticks")
     texts = []
     for i in indices_ref:
         if i in [2, 13, 16]:
-            label1 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='green', edgecolors='black')
+            label1 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='green', edgecolors='green')
         else:
-            label2 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='red', edgecolors='black')
+            label2 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='red', edgecolors='red')
         texts.append(plt.text(sys_size[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
@@ -1536,7 +1584,7 @@ def print_method_errors():
     plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
 
     adjust_text(texts, only_move={'texts': 'y'})
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.png", dpi=500, bbox_inches="tight")
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.pdf", dpi=500, bbox_inches="tight")
     plt.clf()
 
     # b) timing over errror
@@ -1544,9 +1592,9 @@ def print_method_errors():
     sns.set_style("ticks")
     for i in indices_ref:
         if i in [2, 13, 16]:
-            label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='black')
+            label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='green')
         else:
-            label2 = plt.scatter(timing[i], errors[i], s=40, facecolors='red', edgecolors='black')
+            label2 = plt.scatter(timing[i], errors[i], s=40, facecolors='red', edgecolors='red')
         texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
@@ -1557,7 +1605,7 @@ def print_method_errors():
     plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
     plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
     adjust_text(texts, only_move={'texts': 'y'})
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.png", dpi=500, bbox_inches="tight")
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.pdf", dpi=500, bbox_inches="tight")
     plt.clf()
 
     # c) sys size vs timing
@@ -1567,9 +1615,9 @@ def print_method_errors():
 
     for i in indices_ref:
         if i in [2, 13, 16]:
-            label1 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='green', edgecolors='black')
+            label1 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='green', edgecolors='green')
         else:
-            label2 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='red', edgecolors='black')
+            label2 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='red', edgecolors='red')
         texts.append(plt.text(sys_size[i], timing[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
@@ -1582,7 +1630,7 @@ def print_method_errors():
 
     adjust_text(texts, only_move={'texts': 'y'})
 
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.png", dpi=500, bbox_inches="tight")
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_timing.pdf", dpi=500, bbox_inches="tight")
     plt.clf()
 
     # d) plot only neural network errors
@@ -1610,7 +1658,7 @@ def print_method_errors():
     ax.legend((rects1[0], rects4[0], rects3[0], rects2[0]),
               (r'$\gamma=0$', r'$\gamma=0.001$', r'$\gamma=0.01$', r'$\gamma=0.1$'))
 
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/neural_error_bars.png", dpi=500, bbox_inches="tight")
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/neural_error_bars.pdf", dpi=500, bbox_inches="tight")
     plt.clf()
 
     return 0
