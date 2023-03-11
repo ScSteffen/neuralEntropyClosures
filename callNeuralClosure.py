@@ -58,7 +58,8 @@ def initModelCpp(input):
 ### function definitions ###
 def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: str = "testFolder",
                loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
-               input_decorrelation: bool = False, scale_active: bool = True, gamma_lvl: int = 0):
+               input_decorrelation: bool = False, scale_active: bool = True, gamma_lvl: int = 0,
+               basis: str = "monomial"):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -70,7 +71,7 @@ def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int
                                              folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
                                              nw_width=width, normalized=normalized,
                                              input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                             gamma_lvl=gamma_lvl)
+                                             gamma_lvl=gamma_lvl, basis=basis)
 
     return 0
 
@@ -166,6 +167,8 @@ def main():
     parser.add_option("-y", "--gammalevel", dest="gamma_level", default=0,
                       help="gamma for regularized entropy closure:\n 0= non regularized:\n 1 = 1e-1\n 2 = 1e-2\n 3 = "
                            "1e-3", metavar="GAMMA")
+    parser.add_option("-z", "--basis", dest="basis", default="monomial",
+                      help="moment basis", metavar="BASIS")
 
     (options, args) = parser.parse_args()
     options.objective = int(options.objective)
@@ -208,7 +211,7 @@ def main():
     init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatial_dimension,
                folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
                width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput,
-               scale_active=options.scaledOutput, gamma_lvl=options.gamma_level)
+               scale_active=options.scaledOutput, gamma_lvl=options.gamma_level, basis=options.basis)
 
     # --- load model data before creating model (important for data scaling)
     if options.training == 1:

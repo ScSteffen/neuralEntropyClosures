@@ -27,17 +27,17 @@ class MK11Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
-                 gamma_lvl: int = 0):
+                 gamma_lvl: int = 0, basis: str = "monomial"):
         if save_folder == "":
             custom_folder_name = "MK11_N" + \
-                str(polynomial_degree) + "_D" + str(spatial_dimension)
+                                 str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
         super(MK11Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                          gamma_lvl=gamma_lvl)
+                                          gamma_lvl=gamma_lvl, basis=basis)
 
     def create_model(self) -> bool:
         # Weight initializer
@@ -73,8 +73,8 @@ class MK11Network(BaseNetwork):
                                                   kernel_regularizer=None,
                                                   use_bias=True, bias_initializer='zeros',
                                                   name='layer_' +
-                                                  str(layer_idx) +
-                                                  'nn_component'
+                                                       str(layer_idx) +
+                                                       'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x = layers.Dense(units=layer_dim, activation=None,
@@ -101,8 +101,8 @@ class MK11Network(BaseNetwork):
                                                      use_bias=True,
                                                      bias_initializer='zeros',
                                                      name='layer_' +
-                                                     str(layer_idx) +
-                                                     'nn_component'
+                                                          str(layer_idx) +
+                                                          'nn_component'
                                                      )(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None,
@@ -110,8 +110,8 @@ class MK11Network(BaseNetwork):
                                                   kernel_regularizer=None,
                                                   use_bias=False,
                                                   name='layer_' +
-                                                  str(layer_idx) +
-                                                  'dense_component'
+                                                       str(layer_idx) +
+                                                       'dense_component'
                                                   )(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
@@ -143,7 +143,7 @@ class MK11Network(BaseNetwork):
             hidden = convex_layer(
                 hidden, input_, layer_idx=idx, layer_dim=self.model_width)
             # hidden = layers.BatchNormalization()(hidden)
-        #hidden = convex_layer(
+        # hidden = convex_layer(
         #    hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
         pre_output = convex_output_layer(
             hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
@@ -152,7 +152,7 @@ class MK11Network(BaseNetwork):
 
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[
-                                 pre_output], name="Icnn_closure")
+            pre_output], name="Icnn_closure")
         print("The core model overview")
         core_model.summary()
         print("The sobolev wrapped model overview")
@@ -161,7 +161,7 @@ class MK11Network(BaseNetwork):
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
                              scaler_min=self.scaler_min, scale_active=self.scale_active,
-                             gamma=self.regularization_gamma, name="sobolev_icnn_wrapper")
+                             gamma=self.regularization_gamma, name="sobolev_icnn_wrapper", basis=self.basis)
         # build graph
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
@@ -180,9 +180,10 @@ class MK11Network(BaseNetwork):
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(
             ), 'output_2': tf.keras.losses.MeanSquaredError(),
-            'output_3': tf.keras.losses.MeanSquaredError()},
+                'output_3': tf.keras.losses.MeanSquaredError()},
             loss_weights={
-                'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
+                'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},
+            # , 'output_4': self.lossWeights[3]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
         # model.summary()
@@ -227,7 +228,7 @@ class MK11Network(BaseNetwork):
         """
         u_reduced = u_complete[:, 1:]  # chop of u_0
         [h_predicted, alpha_predicted, u_0_predicted,
-            tmp] = self.model(u_reduced)
+         tmp] = self.model(u_reduced)
         alpha_complete_predicted = self.model.reconstruct_alpha(
             alpha_predicted)
         u_complete_reconstructed = self.model.reconstruct_u(
@@ -254,7 +255,7 @@ class MK11Network(BaseNetwork):
         u_downscaled = self.model.scale_u(
             u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
         [u_complete_reconstructed, alpha_complete_predicted,
-            h_predicted] = self.call_network(u_downscaled)
+         h_predicted] = self.call_network(u_downscaled)
         u_rescaled = self.model.scale_u(
             u_complete_reconstructed, u_non_normal[:, 0])  # upscaling
         alpha_rescaled = self.model.scale_alpha(
@@ -289,7 +290,7 @@ class MK11Network(BaseNetwork):
         if legacy_mode:
             if self.poly_degree > 1:
                 [h_predicted, alpha_predicted,
-                    u_predicted] = self.model_legacy(u_reduced)
+                 u_predicted] = self.model_legacy(u_reduced)
             else:
                 [h_predicted, alpha_predicted] = self.model_legacy(u_reduced)
         else:

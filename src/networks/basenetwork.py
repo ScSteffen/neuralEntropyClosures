@@ -51,10 +51,11 @@ class BaseNetwork:
                             3: [0, 0, 0, 1]}  # hash table for loss combination
     # hash table for input dimension depending on polyDegree
     input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
+    input_dim_dict_3D_sh: dict = {1: 4, 2: 9}  # , 3: 10, 4: 15, 5: 21}  # change numbers
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
-                 scale_active: bool, gamma_lvl: int):
+                 scale_active: bool, gamma_lvl: int, basis: str = "monomial"):
         if gamma_lvl == 0:
             self.regularization_gamma = 0.0
         else:
@@ -74,6 +75,7 @@ class BaseNetwork:
         self.history: list = []
         self.scaler_max = 1.0  # default is no scaling
         self.scaler_min = 0.0  # default is no scaling
+        self.basis = basis
         # --- Determine loss combination ---
         if loss_combination < 4:
             self.loss_weights = self.loss_comp_dict[loss_combination]
@@ -82,18 +84,22 @@ class BaseNetwork:
             exit(1)
 
         # --- Determine inputDim by MaxDegree ---
-        if spatial_dimension == 1:
-            self.input_dim = polynomial_degree + 1
-        elif spatial_dimension == 2:
-            if self.poly_degree > 5:
-                print(
-                    "Polynomial degeree higher than 5 not supported atm")
-                exit(1)
-            self.input_dim = self.input_dim_dict_2D[self.poly_degree]
-        else:
-            raise ValueError(
-                "Saptial dimension other than 1 or 2 not supported atm")
-
+        if self.basis == "monomial":
+            if spatial_dimension == 1:
+                self.input_dim = polynomial_degree + 1
+            elif spatial_dimension == 2:
+                if self.poly_degree > 5:
+                    print(
+                        "Polynomial degeree higher than 5 not supported atm")
+                    exit(1)
+                self.input_dim = self.input_dim_dict_2D[self.poly_degree]
+            else:
+                raise ValueError("Saptial dimension other than 1 or 2 not supported atm")
+        elif self.basis == "spherical_harmonics":
+            if spatial_dimension == 3:
+                self.input_dim = self.input_dim_dict_3D_sh[self.poly_degree]
+            else:
+                raise ValueError("Saptial dimension other than 1 or 2 not supported atm")
         self.csvInputDim = self.input_dim  # only for reading csv data
 
         if self.normalized:
@@ -288,7 +294,7 @@ class BaseNetwork:
         while path.isfile(logName + '.csv'):
             count += 1
             logName = self.folder_name + \
-                '/historyLogs/history_' + str(count).zfill(3) + '_'
+                      '/historyLogs/history_' + str(count).zfill(3) + '_'
 
         logFile = logName + '.csv'
         # create logger callback
@@ -332,9 +338,9 @@ class BaseNetwork:
             print("Model does not exists at this path: " + used_file_name)
             exit(1)
         model = tf.keras.models.load_model(used_file_name, custom_objects={
-                                           "CustomModel": self.model})
+            "CustomModel": self.model})
         self.model.load_weights(used_file_name)
-        #self.model = model
+        # self.model = model
         print("Model loaded from file ")
         return 0
 
@@ -363,12 +369,24 @@ class BaseNetwork:
         """
         self.training_data = []
 
-        # Create trainingdata filename"
-        filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
-            self.spatial_dim) + "D"
-        if normalized_data:
+        if self.basis == "monomial":
+            # Create trainingdata filename"
             filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
-                self.spatial_dim) + "D_normal"
+                self.spatial_dim) + "D"
+            if normalized_data:
+                filename = "data/" + str(self.spatial_dim) + "D/Monomial_M" + str(self.poly_degree) + "_" + str(
+                    self.spatial_dim) + "D_normal"
+        elif self.basis == "spherical_harmonics":
+            # Create trainingdata filename"
+            filename = "data/" + str(self.spatial_dim) + "D/SphericalHarmonics_M" + str(self.poly_degree) + "_" + str(
+                self.spatial_dim) + "D"
+            if normalized_data:
+                filename = "data/" + str(self.spatial_dim) + "D/SphericalHarmonics_M" + str(
+                    self.poly_degree) + "_" + str(
+                    self.spatial_dim) + "D_normal"
+        else:
+            raise ValueError("Not supported basis: " + self.basis)
+
         # add sampling information
         if sampling == 1:
             filename = filename + "_alpha"
@@ -456,10 +474,11 @@ class BaseNetwork:
                 self.scaler_min = float(scaler.data_min_)
             # scale to [0,1]
             self.training_data[2] = (
-                self.training_data[2] - self.scaler_min) / (self.scaler_max - self.scaler_min)
+                                            self.training_data[2] - self.scaler_min) / (
+                                            self.scaler_max - self.scaler_min)
             # scale correspondingly
             self.training_data[1] = self.training_data[1] / \
-                (self.scaler_max - self.scaler_min)
+                                    (self.scaler_max - self.scaler_min)
             print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
                 self.scaler_min))
             print("New h_min= " + str(self.training_data[2].min()) + ". New h_max= " + str(
@@ -549,7 +568,7 @@ class BaseNetwork:
             utils.plot_1d([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
                           'test', log=False)
             utils.plot_1d([u_test[:, 1]], [h_pred, h_test], [
-                          'h pred', 'h'], 'h_over_u', log=False)
+                'h pred', 'h'], 'h_over_u', log=False)
             utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
                           'alpha1_over_u1',
                           log=False)
@@ -576,7 +595,7 @@ class BaseNetwork:
 
         # normalize data
         [u_pred_scaled, alpha_pred_scaled,
-            h_pred_scaled] = self.call_scaled(u_test)
+         h_pred_scaled] = self.call_scaled(u_test)
 
         # create the loss functions
         def pointwise_diff(true_samples, pred_samples):

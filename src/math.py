@@ -8,6 +8,7 @@ from numpy.polynomial.legendre import leggauss
 import numpy as np
 import tensorflow as tf
 import scipy.optimize as opt
+import scipy
 
 
 class EntropyTools:
@@ -404,6 +405,46 @@ def qGaussLegendre2D(Qorder):
     return [pts, weights]
 
 
+def qGaussLegendre3D(Qorder):
+    """
+       order: order of quadrature, uses all quadpts... inefficient
+       returns: [pts, weights] : quadrature points and weights, dim(pts) = nq x 2
+    """
+
+    def computequadpoints(order):
+        """Quadrature points for GaussLegendre quadrature. Read from file."""
+        mu, _ = leggauss(order)
+        phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
+        xyz = np.zeros((2 * order * order, 3))
+        count = 0
+        for i in range(int(order)):
+            for j in range(2 * order):
+                mui = mu[i]
+                phij = phi[j]
+                xyz[count, 0] = np.sqrt(1 - mui ** 2) * np.cos(phij)
+                xyz[count, 1] = np.sqrt(1 - mui ** 2) * np.sin(phij)
+                xyz[count, 2] = mui
+                count += 1
+
+        return xyz, mu, phi
+
+    def computequadweights(order):
+        """Quadrature weights for GaussLegendre quadrature. Read from file."""
+        _, leggaussweights = leggauss(order)
+        w = np.zeros(2 * order * order)
+        count = 0
+        for i in range(int(order)):
+            for j in range(2 * order):
+                w[count] = 2 * np.pi / order * leggaussweights[i]
+                count += 1
+        return w
+
+    pts, mu, phi = computequadpoints(Qorder)
+    weights = computequadweights(Qorder)
+
+    return [pts, weights, mu, phi]
+
+
 def integrate(integrand, weights):
     """
     params: weights = quadweights vector (at quadpoints) (dim = nq)
@@ -556,3 +597,28 @@ def getCurrDegreeSize(currDegree, spatialDim):
     """
     return np.math.factorial(currDegree + spatialDim - 1) / (
             np.math.factorial(currDegree) * np.math.factorial(spatialDim - 1))
+
+
+# --- spherical harmonics
+def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
+    # assemble spherical harmonics
+    n_system = 2 * degree + degree ** 2 + 1
+    sh_basis = np.zeros((n_system, len(mu) * len(phi)))
+    idx_sys = 0
+    for l in range(degree + 1):
+        for k in range(-l, l + 1):
+            idx_quad = 0
+            for mui in mu:
+                for phij in phi:
+                    Yvals = scipy.special.sph_harm(abs(k), l, phij, np.arccos(mui))
+                    if k < 0:
+                        Yvals = np.sqrt(2) * (-1) ** k * Yvals.imag
+                    elif k > 0:
+                        Yvals = np.sqrt(2) * (-1) ** k * Yvals.real
+                    elif k == 0:
+                        Yvals = Yvals.real
+                    sh_basis[idx_sys, idx_quad] = Yvals
+                    idx_quad += 1
+            idx_sys += 1
+
+    return sh_basis

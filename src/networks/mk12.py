@@ -18,17 +18,17 @@ class MK12Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
-                 gamma_lvl: int = 0):
+                 gamma_lvl: int = 0, basis: str = "monomial"):
         if save_folder == "":
             custom_folder_name = "MK12_N" + \
-                str(polynomial_degree) + "_D" + str(spatial_dimension)
+                                 str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
         super(MK12Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                          gamma_lvl=gamma_lvl)
+                                          gamma_lvl=gamma_lvl, basis=basis)
 
     def create_model(self) -> bool:
 
@@ -45,14 +45,14 @@ class MK12Network(BaseNetwork):
         def residual_block(x: tf.Tensor, layer_dim: int = 10, layer_idx: int = 0) -> tf.Tensor:
             # ResNet architecture by https://arxiv.org/abs/1603.05027
             # 1) BN that normalizes each feature individually (axis=-1)
-            #y = keras.layers.BatchNormalization()(x)
+            # y = keras.layers.BatchNormalization()(x)
             y = keras.activations.softplus(x)  # 2) activation
             # 3) layer without activation
             y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                              bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(y)
             # 4) BN that normalizes each feature individually (axis=-1)
-            #y = keras.layers.BatchNormalization()(y)
+            # y = keras.layers.BatchNormalization()(y)
             # y = keras.activations.softplus(y)  # 5) activation
             # 6) layer
             # y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
@@ -89,7 +89,7 @@ class MK12Network(BaseNetwork):
                                kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[
-                                 output_], name="ResNet_entropy_closure")
+            output_], name="ResNet_entropy_closure")
 
         print("The core model overview")
         core_model.summary()
@@ -99,7 +99,7 @@ class MK12Network(BaseNetwork):
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
                              scaler_min=self.scaler_min, scale_active=self.scale_active,
-                             gamma=self.regularization_gamma, name="sobolev_resnet_wrapper")
+                             gamma=self.regularization_gamma, name="sobolev_resnet_wrapper", basis=self.basis)
 
         # build graph
         batch_size: int = 3  # dummy entry
@@ -120,16 +120,16 @@ class MK12Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        #u_in = self.training_data[0][:10]
-        #alpha_in = self.training_data[1][:10]
+        # u_in = self.training_data[0][:10]
+        # alpha_in = self.training_data[1][:10]
         ##h_in = self.training_data[2][:10]
         ## alpha_test = [[-0.391], [-0.2248], [1.9629]]
         ##u_test = [[-0.39], [-0.2248], [1.962]]
-        #[h, alpha, u] = self.model(alpha_in)
+        # [h, alpha, u] = self.model(alpha_in)
         # print(u_in)
         # print(u)
         # print(alpha_in)
-        #print(alpha[:, 1:])
+        # print(alpha[:, 1:])
         # print(self.model.moment_basis.shape)
         # exit(0)
         x_data = self.training_data[0]
