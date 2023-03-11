@@ -40,23 +40,9 @@ class MK11Network(BaseNetwork):
                                           gamma_lvl=gamma_lvl, basis=basis)
 
     def create_model(self) -> bool:
-        # Weight initializer
-        # 1. This is a modified Kaiming inititalization with a first-order taylor expansion of the
-        # softplus activation function (see S. Kumar "On Weight Initialization in
-        # Deep Neural Networks").
-        # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
-        # input_stddev: float = np.sqrt(
-        #    (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        # input_stddev: float = np.sqrt(
-        # (1 / 1.1) * (1 / self.input_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        # input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
+
         input_initializer = tf.keras.initializers.LecunNormal()
-        # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
 
-        # keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
-        # Weight initializer (uniform bounded)
-
-        # Weight regularizer
         l2_regularizer_nn = tf.keras.regularizers.L1L2(
             l2=0.0001)  # L1 + L2 penalties
         l1l2_regularizer = tf.keras.regularizers.L1L2(
@@ -142,13 +128,8 @@ class MK11Network(BaseNetwork):
         for idx in range(0, self.model_depth):
             hidden = convex_layer(
                 hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-            # hidden = layers.BatchNormalization()(hidden)
-        # hidden = convex_layer(
-        #    hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
         pre_output = convex_output_layer(
             hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
-        # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
-        # output_ = tf.add(tf.math.scalar_mul((h_max_tensor - h_min_tensor), pre_output), h_max_tensor)
 
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[
