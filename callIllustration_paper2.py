@@ -27,7 +27,9 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 0) beautify images
-    # print_hohlraum_img()
+    print_hohlraum_img_rect()
+  
+    print_hohlraum_img()
     # 1) Training performance
     # print_training_performance()
     # print_training_performance_stats()
@@ -53,6 +55,51 @@ def main():
     print_realizable_set_by_gamma()
 
     return True
+
+
+def print_hohlraum_img_rect():
+    fontsize = 20
+
+    base_path = "paper_data/paper2/hohlraum_rectangular/img_files/"
+    save_path = "paper_data/paper2/illustrations/hohlraum_rectangular/flow_fields"
+
+    names = ["hohlraum_S61", "hohlraum_S61",
+             "hohlraum_mono_ICNN_M2_g1", "hohlraum_mono_ICNN_M2_g1_rot", "hohlraum_mono_ICNN_M3_g1",
+             "hohlraum_mono_ICNN_M4_g1", "hohlraum_P9", "hohlraum_S41"]
+    names_err = ["d_hohlraum_mono_ICNN_M2_g1", "d_hohlraum_mono_ICNN_M2_g1_rot", "d_hohlraum_mono_ICNN_M3_g1",
+                 "d_hohlraum_mono_ICNN_M4_g1", "d_hohlraum_P9", "d_hohlraum_S41"]
+
+    for name in names:
+        img_path = base_path + name + ".png"
+        beautify_img(load_name=img_path, folder_name=save_path, name=name, c_map="RdGy",
+                     xlabel="", ylabel="", cbar_ticks=[0, 0.2, 0.4, 0.6], cbar_log=False,
+                     font_size=fontsize, img_size=[0, 1, 0, 1])
+
+    for name in names_err:
+        img_path = base_path + name + ".png"
+        beautify_img(load_name=img_path, folder_name=save_path, name=name,
+                     xlabel="", ylabel="", cbar_ticks=[1e-3, 1e-2, 1e-1], cbar_log=True,
+                     font_size=fontsize, img_size=[0, 1, 0, 1])
+
+    # without cbar
+    names = ["hohlraum_S11", "hohlraum_S21", "hohlraum_S31",
+             "hohlraum_mono_ICNN_M2_g0", "hohlraum_mono_ICNN_M2_g3", "hohlraum_mono_ICNN_M2_g2",
+             "hohlraum_mono_ICNN_M2_g0_rot", "hohlraum_mono_ICNN_M2_g3_rot", "hohlraum_mono_ICNN_M2_g2_rot",
+             "hohlraum_mono_ICNN_M3_g0", "hohlraum_mono_ICNN_M3_g3", "hohlraum_mono_ICNN_M3_g2",
+             "hohlraum_mono_ICNN_M4_g0", "hohlraum_mono_ICNN_M4_g3", "hohlraum_mono_ICNN_M4_g2",
+             "hohlraum_P3", "hohlraum_P5", "hohlraum_P7",
+             "d_hohlraum_S11", "d_hohlraum_S21", "d_hohlraum_S31",
+             "d_hohlraum_mono_ICNN_M2_g0", "d_hohlraum_mono_ICNN_M2_g3", "d_hohlraum_mono_ICNN_M2_g2",
+             "d_hohlraum_mono_ICNN_M2_g0_rot", "d_hohlraum_mono_ICNN_M2_g3_rot", "d_hohlraum_mono_ICNN_M2_g2_rot",
+             "d_hohlraum_mono_ICNN_M3_g0", "d_hohlraum_mono_ICNN_M3_g3", "d_hohlraum_mono_ICNN_M3_g2",
+             "d_hohlraum_mono_ICNN_M4_g0", "d_hohlraum_mono_ICNN_M4_g3", "d_hohlraum_mono_ICNN_M4_g2",
+             "d_hohlraum_P3", "d_hohlraum_P5", "d_hohlraum_P7"]
+    for name in names:
+        img_path = base_path + name + ".png"
+        beautify_img(load_name=img_path, folder_name=save_path, name=name, xlabel="", ylabel="", cbar_ticks=None,
+                     cbar_log=False, font_size=fontsize, img_size=[0, 1, 0, 1])
+
+    return 0
 
 
 def print_hohlraum_img():
