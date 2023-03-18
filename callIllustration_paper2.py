@@ -27,7 +27,7 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 0) beautify images
-    # print_hohlraum_img()
+    print_hohlraum_img()
     # 1) Training performance
     # print_training_performance()
     # print_training_performance_stats()
@@ -42,7 +42,7 @@ def main():
     # print_cross_sections()
 
     # 5) Print method errors
-    # print_method_errors()
+    print_method_errors()
 
     # 6) Get regularization errors
     # test_regularization_error()
@@ -1570,10 +1570,11 @@ def print_method_errors():
     texts = []
     for i in indices_ref:
         if i in [2, 13, 16]:
-            label1 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='green', edgecolors='green')
+            print("h")
+            # label1 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='green', edgecolors='green')
         else:
             label2 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='red', edgecolors='red')
-        texts.append(plt.text(sys_size[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
+            texts.append(plt.text(sys_size[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
@@ -1581,7 +1582,7 @@ def print_method_errors():
     plt.yticks(fontsize=int(font_size * 0.7))
     plt.xlabel("system size", fontsize=font_size)
     plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
-    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
+    # plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
 
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.pdf", dpi=500, bbox_inches="tight")
@@ -1592,10 +1593,11 @@ def print_method_errors():
     sns.set_style("ticks")
     for i in indices_ref:
         if i in [2, 13, 16]:
-            label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='green')
+            print("h")
+            # label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='green')
         else:
             label2 = plt.scatter(timing[i], errors[i], s=40, facecolors='red', edgecolors='red')
-        texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
+            texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
@@ -1603,7 +1605,7 @@ def print_method_errors():
     plt.yticks(fontsize=int(font_size * 0.7))
     plt.xlabel("time [s]", fontsize=font_size)
     plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
-    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
+    # plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.pdf", dpi=500, bbox_inches="tight")
     plt.clf()
@@ -1615,10 +1617,11 @@ def print_method_errors():
 
     for i in indices_ref:
         if i in [2, 13, 16]:
-            label1 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='green', edgecolors='green')
+            print("h")
+            # label1 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='green', edgecolors='green')
         else:
             label2 = plt.scatter(sys_size[i], timing[i], s=40, facecolors='red', edgecolors='red')
-        texts.append(plt.text(sys_size[i], timing[i], names[i], fontsize=int(font_size * 0.7)))
+            texts.append(plt.text(sys_size[i], timing[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
@@ -1626,7 +1629,7 @@ def print_method_errors():
     plt.yticks(fontsize=int(font_size * 0.7))
     plt.xlabel("system size", fontsize=font_size)
     plt.ylabel("time [s]", fontsize=font_size)
-    plt.legend([label1, label2], ["ours", "reference"], fontsize=int(font_size * 0.7))
+    # plt.legend([label1, label2], ["ours", "reference"], fontsize=int(font_size * 0.7))
 
     adjust_text(texts, only_move={'texts': 'y'})
 

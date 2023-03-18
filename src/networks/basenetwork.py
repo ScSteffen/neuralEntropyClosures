@@ -210,7 +210,8 @@ class BaseNetwork:
                 step_size = initial_lr * np.power(10, (-epoch / drop_rate))
                 return step_size
 
-            LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
+            # LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
+            LR = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_acc', factor=.01, patience=3, min_lr=1e-5)
             HW = HaltWhenCallback('val_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
@@ -287,8 +288,7 @@ class BaseNetwork:
         count = 1
         while path.isfile(logName + '.csv'):
             count += 1
-            logName = self.folder_name + \
-                '/historyLogs/history_' + str(count).zfill(3) + '_'
+            logName = self.folder_name + '/historyLogs/history_' + str(count).zfill(3) + '_'
 
         logFile = logName + '.csv'
         # create logger callback
@@ -332,9 +332,9 @@ class BaseNetwork:
             print("Model does not exists at this path: " + used_file_name)
             exit(1)
         model = tf.keras.models.load_model(used_file_name, custom_objects={
-                                           "CustomModel": self.model})
+            "CustomModel": self.model})
         self.model.load_weights(used_file_name)
-        #self.model = model
+        # self.model = model
         print("Model loaded from file ")
         return 0
 
@@ -455,11 +455,9 @@ class BaseNetwork:
                 self.scaler_max = float(scaler.data_max_)
                 self.scaler_min = float(scaler.data_min_)
             # scale to [0,1]
-            self.training_data[2] = (
-                self.training_data[2] - self.scaler_min) / (self.scaler_max - self.scaler_min)
+            self.training_data[2] = (self.training_data[2] - self.scaler_min) / (self.scaler_max - self.scaler_min)
             # scale correspondingly
-            self.training_data[1] = self.training_data[1] / \
-                (self.scaler_max - self.scaler_min)
+            self.training_data[1] = self.training_data[1] / (self.scaler_max - self.scaler_min)
             print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
                 self.scaler_min))
             print("New h_min= " + str(self.training_data[2].min()) + ". New h_max= " + str(
@@ -548,14 +546,11 @@ class BaseNetwork:
             np.linspace(0, 1, 10)
             utils.plot_1d([np.linspace(0, 1, 10)], [np.linspace(0, 1, 10), 2 * np.linspace(0, 1, 10)], ['t1', 't2'],
                           'test', log=False)
-            utils.plot_1d([u_test[:, 1]], [h_pred, h_test], [
-                          'h pred', 'h'], 'h_over_u', log=False)
+            utils.plot_1d([u_test[:, 1]], [h_pred, h_test], ['h pred', 'h'], 'h_over_u', log=False)
             utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 1], alpha_test[:, 1]], ['alpha1 pred', 'alpha1 true'],
-                          'alpha1_over_u1',
-                          log=False)
+                          'alpha1_over_u1', log=False)
             utils.plot_1d([u_test[:, 1]], [alpha_pred[:, 0], alpha_test[:, 0]], ['alpha0 pred', 'alpha0 true'],
-                          'alpha0_over_u1',
-                          log=False)
+                          'alpha0_over_u1', log=False)
             utils.plot_1d([u_test[:, 1]], [u_pred[:, 0], u_test[:, 0]], ['u0 pred', 'u0 true'], 'u0_over_u1',
                           log=False)
             utils.plot_1d([u_test[:, 1]], [u_pred[:, 1], u_test[:, 1]], ['u1 pred', 'u1 true'], 'u1_over_u1',
@@ -576,7 +571,7 @@ class BaseNetwork:
 
         # normalize data
         [u_pred_scaled, alpha_pred_scaled,
-            h_pred_scaled] = self.call_scaled(u_test)
+         h_pred_scaled] = self.call_scaled(u_test)
 
         # create the loss functions
         def pointwise_diff(true_samples, pred_samples):
@@ -586,8 +581,7 @@ class BaseNetwork:
                    predSamples, dim = (ns,N)
             returns: mse(trueSamples-predSamples) dim = (ns,)
             """
-            loss_val = tf.keras.losses.mean_squared_error(
-                true_samples, pred_samples)
+            loss_val = tf.keras.losses.mean_squared_error(true_samples, pred_samples)
             return loss_val
 
         # compute errors
