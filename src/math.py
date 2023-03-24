@@ -29,6 +29,7 @@ class EntropyTools:
 
     # @brief: Regularization Parameter for regularized entropy. =0 means non regularized
     regularization_gamma: tf.Tensor
+    regularization_gamma_np: float
     # @brief: tensor of the form [0,gamma,gamma,...]
     regularization_gamma_vector: tf.Tensor
 
@@ -44,29 +45,23 @@ class EntropyTools:
         quad_order = 100
         if spatial_dimension == 1:
             self.nq = quad_order
-            [quad_pts, quad_weights] = qGaussLegendre1D(
-                quad_order)  # order = nq
-            m_basis = computeMonomialBasis1D(
-                quad_pts, self.poly_degree)  # dims = (N x nq)
+            [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
+            m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
         if spatial_dimension == 2:
-            [quad_pts, quad_weights] = qGaussLegendre2D(
-                quad_order)  # dims = nq
+            [quad_pts, quad_weights] = qGaussLegendre2D(quad_order)  # dims = nq
             self.nq = quad_weights.size  # is not 10 * polyDegree
-            m_basis = computeMonomialBasis2D(
-                quad_pts, self.poly_degree)  # dims = (N x nq)
+            m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
 
-        self.quadPts = tf.constant(quad_pts, shape=(
-            self.spatial_dimension, self.nq), dtype=tf.float64)
-        self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq),
-                                       dtype=tf.float64)
+        self.quadPts = tf.constant(quad_pts, shape=(self.spatial_dimension, self.nq), dtype=tf.float64)
+        self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)
 
         self.input_dim = m_basis.shape[0]
-        self.momentBasis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
-                                       dtype=tf.float64)
+        self.momentBasis = tf.constant(m_basis, shape=(self.input_dim, self.nq), dtype=tf.float64)
+        self.regularization_gamma_np = gamma
         self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
         gamma_vec = gamma * np.ones(shape=(1, self.input_dim))
-        self.regularization_gamma_vector = tf.constant(
-            gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
+        gamma_vec[0, 0] = 0.0  # partial regularization
+        self.regularization_gamma_vector = tf.constant(gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
 
     def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -84,8 +79,7 @@ class EntropyTools:
         tmp = tf.math.exp(tf.tensordot(
             alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
         # ln(<tmp>)
-        alpha_0 = - \
-            tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))
+        alpha_0 = - tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
     def reconstruct_u(self, alpha: tf.Tensor) -> tf.Tensor:
@@ -259,12 +253,12 @@ class EntropyTools:
         """
         # Currently only for maxwell Boltzmann entropy
         # compute negative entropy functional
-        f_quad = np.exp(np.tensordot(
-            alpha, self.opti_m, axes=([0], [0])))  # alpha*m
+        f_quad = np.exp(np.tensordot(alpha, self.opti_m, axes=([0], [0])))  # exp( alpha*m)
         t1 = np.tensordot(f_quad, self.opti_w, axes=([0], [1]))  # f*w
         t2 = np.inner(alpha, self.opti_u)
 
-        return t1 - t2
+        t3 = self.regularization_gamma_np / 2.0 * np.inner(alpha[1:], alpha[1:])
+        return t1 - t2 + t3
 
     def opti_entropy_prime(self, alpha: np.ndarray) -> np.ndarray:
         """
@@ -288,7 +282,9 @@ class EntropyTools:
         t2 = np.tensordot(tmp, self.opti_m[:, :], axes=(
             [1], [1]))  # f * w * momentBasis
         dim = t2.shape[1]
-        return np.reshape(t2 - self.opti_u, (dim,))
+        t3 = self.regularization_gamma_np * alpha
+        t3[0] = 0.0
+        return np.reshape(t2 - self.opti_u + t3, (dim,))
 
     def opti_entropy_prime2(self, alpha: np.ndarray) -> np.ndarray:
         """
@@ -310,11 +306,13 @@ class EntropyTools:
         tmp = np.multiply(f_quad, self.opti_w)  # f*w
 
         # mm = np.zeros(shape=(self.nq, self.inputDim, self.inputDim))
-        t2 = 0
+        t2 = np.zeros((self.input_dim, self.input_dim))
         for i in range(self.nq):
             t = np.tensordot(self.opti_m[:, i], self.opti_m[:, i], axes=0)
             t2 += t * tmp[0, i]
-        return t2
+        t3 = self.regularization_gamma_np * np.identity((self.input_dim, self.input_dim))
+        t3[0, 0] = 0
+        return t2 + t3
 
     def KL_divergence(self, alpha_true: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
