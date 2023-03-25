@@ -67,11 +67,11 @@ class EntropyModel(tf.keras.Model, ABC):
             self.nq = quad_weights.size  # is not 20 * polyDegree
             m_basis = math.computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
         elif spatial_dimension == 3 and self.basis == "spherical_harmonics":
-            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre3D(2)  # dims = nq
+            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre3D(6 * polynomial_degree)  # dims = nq
             self.nq = quad_weights.size  # is not 20 * polyDegree
             m_basis = math.compute_spherical_harmonics(mu, phi, self.poly_degree)
-            np.set_printoptions(precision=2)
-
+            # np.set_printoptions(precision=2)
+            # print(quad_weights)
             # print(mu)
             # print(phi)
             # print(m_basis)
@@ -83,8 +83,7 @@ class EntropyModel(tf.keras.Model, ABC):
 
         self.quad_pts = tf.constant(quad_pts, shape=(
             self.nq, spatial_dimension), dtype=tf.float64)  # dims = (ds x nq)
-        self.quad_weights = tf.constant(quad_weights, shape=(
-            1, self.nq), dtype=tf.float64)  # dims=(batchSIze x N x nq)
+        self.quad_weights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)  # dims=(batchSIze x N x nq)
         self.input_dim = m_basis.shape[0]
         self.moment_basis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
                                         dtype=tf.float64)  # dims=(batchSIze x N x nq)
@@ -106,10 +105,8 @@ class EntropyModel(tf.keras.Model, ABC):
             if self.scale_active:
                 print("Scaled reconstruction of u and h enabled")
                 # scale to [scaler_min, scaler_max]
-                t1 = tf.add(
-                    tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
-                t2 = tf.math.scalar_mul(
-                    self.derivative_scale_factor, t1)  # scale
+                t1 = tf.add(tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
+                t2 = tf.math.scalar_mul(self.derivative_scale_factor, t1)  # scale
                 alpha64 = tf.add(t2, self.derivative_scaler_min)  # shift
             else:
                 print("Reconstruction of u and h enabled")

@@ -46,18 +46,12 @@ class MK12Network(BaseNetwork):
             # ResNet architecture by https://arxiv.org/abs/1603.05027
             # 1) BN that normalizes each feature individually (axis=-1)
             # y = keras.layers.BatchNormalization()(x)
-            y = keras.activations.softplus(x)  # 2) activation
+            y = keras.activations.selu(x)  # 2) activation
             # 3) layer without activation
             y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                              bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_0")(y)
-            # 4) BN that normalizes each feature individually (axis=-1)
-            # y = keras.layers.BatchNormalization()(y)
-            # y = keras.activations.softplus(y)  # 5) activation
-            # 6) layer
-            # y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
-            #                 bias_initializer=initializer, kernel_regularizer=l2_regularizer,
-            #                 bias_regularizer=l2_regularizer, name="block_" + str(layer_idx) + "_layer_1")(y)
+
             # 7) add skip connection
             out = keras.layers.Add()([x, y])
             return out
@@ -65,10 +59,8 @@ class MK12Network(BaseNetwork):
         ### build the core network with icnn closure architecture ###
         input_ = keras.Input(shape=(self.input_dim,))
         if self.input_decorrelation and self.input_dim > 1:
-            hidden = MeanShiftLayer(
-                input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
-            hidden = DecorrelationLayer(
-                input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             hidden = layers.Dense(self.model_width, activation=None, kernel_initializer=initializer,
                                   use_bias=True, bias_initializer=initializer, kernel_regularizer=l2_regularizer,
                                   bias_regularizer=l2_regularizer, name="layer_input")(hidden)
@@ -79,12 +71,8 @@ class MK12Network(BaseNetwork):
 
         # build resnet blocks
         for idx in range(0, self.model_depth):
-            hidden = residual_block(
-                hidden, layer_dim=self.model_width, layer_idx=idx)
-        # if self.scale_active:
-        #    output_ = layers.Dense(1, activation="relu", kernel_initializer=initializer, name="dense_output",
-        #                           kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)
-        # else:
+            hidden = residual_block(hidden, layer_dim=self.model_width, layer_idx=idx)
+
         output_ = layers.Dense(1, activation=None, kernel_initializer=initializer, name="dense_output",
                                kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
         # Create the core model
@@ -132,6 +120,7 @@ class MK12Network(BaseNetwork):
         # print(alpha[:, 1:])
         # print(self.model.moment_basis.shape)
         # exit(0)
+
         x_data = self.training_data[0]
         y_data = [self.training_data[2], self.training_data[1],
                   self.training_data[0]]  # , self.trainingData[1]]
