@@ -100,6 +100,9 @@ class BaseNetwork:
                 self.input_dim = self.input_dim_dict_3D_sh[self.poly_degree]
             else:
                 raise ValueError("Saptial dimension other than 1 or 2 not supported atm")
+        else:
+            raise ValueError("Basis >" + str(self.basis) + "< not supported")
+
         self.csvInputDim = self.input_dim  # only for reading csv data
 
         if self.normalized:

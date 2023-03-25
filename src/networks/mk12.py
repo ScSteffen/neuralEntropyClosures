@@ -46,7 +46,7 @@ class MK12Network(BaseNetwork):
             # ResNet architecture by https://arxiv.org/abs/1603.05027
             # 1) BN that normalizes each feature individually (axis=-1)
             # y = keras.layers.BatchNormalization()(x)
-            y = keras.activations.selu(x)  # 2) activation
+            y = keras.activations.elu(x)  # 2) activation
             # 3) layer without activation
             y = layers.Dense(layer_dim, activation=None, kernel_initializer=initializer,
                              bias_initializer=initializer, kernel_regularizer=l2_regularizer,

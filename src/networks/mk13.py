@@ -58,15 +58,15 @@ class MK13Network(BaseNetwork):
                                                   name='layer_' + str(layer_idx) + 'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x = layers.Dense(units=layer_dim, activation=None, kernel_initializer=initializer,
-                                          kernel_regularizer=l1l2_regularizer, use_bias=False,
-                                          name='layer_' + str(layer_idx) + 'dense_component')(nw_input_x)
+            # weighted_sum_x = layers.Dense(units=layer_dim, activation=None, kernel_initializer=initializer,
+            #                              kernel_regularizer=l1l2_regularizer, use_bias=False,
+            #                              name='layer_' + str(layer_idx) + 'dense_component')(nw_input_x)
             # Wz+Wx+b + x
-            intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
-                [weighted_sum_x, weighted_non_neg_sum_z])
+            # intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
+            #    [weighted_sum_x, weighted_non_neg_sum_z])
 
             # activation
-            out = tf.keras.activations.elu(intermediate_sum)
+            out = tf.keras.activations.elu(weighted_non_neg_sum_z)
             out = layers.Add()([out, layer_input_z])
             return out
 
@@ -83,11 +83,13 @@ class MK13Network(BaseNetwork):
                                                      bias_initializer='zeros', name='layer_' + str(layer_idx) +
                                                                                     'nn_component')(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
-                                                  kernel_regularizer=l1l2_regularizer, use_bias=False,
-                                                  name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
+            # weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
+            #                                      kernel_regularizer=l1l2_regularizer, use_bias=False,
+            #                                      name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
-            out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
+            # out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
+            out = layers.Add()([weighted_nn_sum_z, layer_input_z])
+
             if self.scale_active:  # if output is scaled, use relu.
                 out = tf.keras.activations.relu(out)
             return out
