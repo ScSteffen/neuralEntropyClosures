@@ -67,9 +67,16 @@ class EntropyModel(tf.keras.Model, ABC):
             self.nq = quad_weights.size  # is not 20 * polyDegree
             m_basis = math.computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
         elif spatial_dimension == 3 and self.basis == "spherical_harmonics":
-            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre3D(6 * polynomial_degree)  # dims = nq
+            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre3D(2)  # dims = nq
             self.nq = quad_weights.size  # is not 20 * polyDegree
             m_basis = math.compute_spherical_harmonics(mu, phi, self.poly_degree)
+            np.set_printoptions(precision=2)
+
+            # print(mu)
+            # print(phi)
+            # print(m_basis)
+
+            # print(m_basis.transpose())
         else:
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
@@ -86,7 +93,7 @@ class EntropyModel(tf.keras.Model, ABC):
         self.regularization_gamma_vector = tf.constant(
             gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
 
-    def call(self, x: Tensor, training=False) -> list:
+    def call(self, x: Tensor, training=False, **kwargs) -> list:
         """
         Defines the sobolev execution (does not return 0th order moment)
         input: x = [u_1,u_2,...,u_N]
@@ -297,7 +304,7 @@ class SobolevModel(EntropyModel):
         print("Model output alpha and h will be scaled by factor " +
               str(self.derivative_scale_factor.numpy()))
 
-    def call(self, x: Tensor, training=False) -> list:
+    def call(self, x: Tensor, training=False, **kwargs) -> list:
         """
         Defines the sobolev execution (does not return 0th order moment)
         input: x = [u_1,u_2,...,u_N]

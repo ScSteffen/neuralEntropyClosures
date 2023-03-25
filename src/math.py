@@ -415,16 +415,20 @@ def qGaussLegendre3D(Qorder):
         phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
         xyz = np.zeros((2 * order * order, 3))
         count = 0
+        mu_arr = np.zeros((2 * order * order,))
+        phi_arr = np.zeros((2 * order * order,))
+
         for i in range(int(order)):
             for j in range(2 * order):
-                mui = mu[i]
-                phij = phi[j]
-                xyz[count, 0] = np.sqrt(1 - mui ** 2) * np.cos(phij)
-                xyz[count, 1] = np.sqrt(1 - mui ** 2) * np.sin(phij)
-                xyz[count, 2] = mui
+                mu_arr[count] = mu[i]
+                phi_arr[count] = phi[j]
+
+                xyz[count, 0] = np.sqrt(1 - mu[i] ** 2) * np.cos(phi[j])
+                xyz[count, 1] = np.sqrt(1 - mu[i] ** 2) * np.sin(phi[j])
+                xyz[count, 2] = mu[i]
                 count += 1
 
-        return xyz, mu, phi
+        return xyz, mu_arr, phi_arr
 
     def computequadweights(order):
         """Quadrature weights for GaussLegendre quadrature. Read from file."""
@@ -601,22 +605,21 @@ def getCurrDegreeSize(currDegree, spatialDim):
 def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
     # assemble spherical harmonics
     n_system = 2 * degree + degree ** 2 + 1
-    sh_basis = np.zeros((n_system, len(mu) * len(phi)))
+    sh_basis = np.zeros((n_system, len(mu)))
     idx_sys = 0
     for l in range(degree + 1):
         for k in range(-l, l + 1):
             idx_quad = 0
-            for mui in mu:
-                for phij in phi:
-                    Yvals = scipy.special.sph_harm(abs(k), l, phij, np.arccos(mui))
-                    if k < 0:
-                        Yvals = np.sqrt(2) * (-1) ** k * Yvals.imag
-                    elif k > 0:
-                        Yvals = np.sqrt(2) * (-1) ** k * Yvals.real
-                    elif k == 0:
-                        Yvals = Yvals.real
-                    sh_basis[idx_sys, idx_quad] = Yvals
-                    idx_quad += 1
+            for mui, phij in zip(mu, phi):
+                Yvals = scipy.special.sph_harm(abs(k), l, phij, np.arccos(mui))
+                if k < 0:
+                    Yvals = - np.sqrt(2) * (-1) ** k * Yvals.imag
+                elif k > 0:
+                    Yvals = - np.sqrt(2) * (-1) ** k * Yvals.real
+                elif k == 0:
+                    Yvals = Yvals.real
+                sh_basis[idx_sys, idx_quad] = Yvals
+                idx_quad += 1
             idx_sys += 1
 
     return sh_basis
