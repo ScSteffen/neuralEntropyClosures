@@ -90,8 +90,8 @@ class MK13Network(BaseNetwork):
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
             out = layers.Add()([out, layer_input_z])
 
-            # if self.scale_active:  # if output is scaled, use relu.
-            #    out = tf.keras.activations.relu(out)
+            if self.scale_active:  # if output is scaled, use relu.
+                out = tf.keras.activations.relu(out)
             return out
 
             ### build the core network with icnn closure architecture ###
