@@ -43,10 +43,8 @@ class MK11Network(BaseNetwork):
 
         input_initializer = tf.keras.initializers.LecunNormal()
 
-        l2_regularizer_nn = tf.keras.regularizers.L1L2(
-            l2=0.0001)  # L1 + L2 penalties
-        l1l2_regularizer = tf.keras.regularizers.L1L2(
-            l1=0.0001, l2=0.0001)  # L1 + L2 penalties
+        l2_regularizer_nn = tf.keras.regularizers.L1L2(l2=0.0001)  # L1 + L2 penalties
+        l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
             initializer = tf.keras.initializers.RandomUniform(
@@ -56,7 +54,7 @@ class MK11Network(BaseNetwork):
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(units=layer_dim, activation=None, kernel_constraint=NonNeg(),
                                                   kernel_initializer=initializerNonNeg,
-                                                  kernel_regularizer=None,
+                                                  kernel_regularizer=l2_regularizer_nn,
                                                   use_bias=True, bias_initializer='zeros',
                                                   name='layer_' +
                                                        str(layer_idx) +
@@ -65,7 +63,7 @@ class MK11Network(BaseNetwork):
             # Weighted sum of network input
             weighted_sum_x = layers.Dense(units=layer_dim, activation=None,
                                           kernel_initializer=initializer,
-                                          kernel_regularizer=None,
+                                          kernel_regularizer=l2_regularizer_nn,
                                           use_bias=False, name='layer_' + str(layer_idx) + 'dense_component'
                                           )(nw_input_x)
             # Wz+Wx+b
@@ -83,7 +81,7 @@ class MK11Network(BaseNetwork):
 
             weighted_nn_sum_z: Tensor = layers.Dense(1, activation=None, kernel_constraint=NonNeg(),
                                                      kernel_initializer=initializerNonNeg,
-                                                     kernel_regularizer=None,
+                                                     kernel_regularizer=l2_regularizer_nn,
                                                      use_bias=True,
                                                      bias_initializer='zeros',
                                                      name='layer_' +
@@ -93,7 +91,7 @@ class MK11Network(BaseNetwork):
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None,
                                                   kernel_initializer=initializer,
-                                                  kernel_regularizer=None,
+                                                  kernel_regularizer=l2_regularizer_nn,
                                                   use_bias=False,
                                                   name='layer_' +
                                                        str(layer_idx) +
@@ -109,10 +107,8 @@ class MK11Network(BaseNetwork):
 
         input_ = keras.Input(shape=(self.input_dim,))
         if self.input_decorrelation:  # input data decorellation and shift
-            hidden = MeanShiftLayer(
-                input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
-            hidden = DecorrelationLayer(
-                input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
                                   kernel_regularizer=None, use_bias=True,
@@ -147,15 +143,6 @@ class MK11Network(BaseNetwork):
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
 
-        # test
-        # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
-        # a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
-        # a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
-        # a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
-
-        # print(tf.keras.losses.MeanSquaredError()(a3, a2))
-        # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
-        # print(self.custom_mse(a2, a3))
         print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
             self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
         model.compile(
@@ -164,14 +151,8 @@ class MK11Network(BaseNetwork):
                 'output_3': tf.keras.losses.MeanSquaredError()},
             loss_weights={
                 'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},
-            # , 'output_4': self.lossWeights[3]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
-        # model.summary()
-
-        # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
-        # show_layer_names = True, rankdir = 'TB', expand_nested = True)
-        # print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
         self.model = model
         return True
 
