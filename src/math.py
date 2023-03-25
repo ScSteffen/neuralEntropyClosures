@@ -437,7 +437,7 @@ def qGaussLegendre3D(Qorder):
         count = 0
         for i in range(int(order)):
             for j in range(2 * order):
-                w[count] = 2 * np.pi / order * leggaussweights[i]
+                w[count] = np.pi / order * leggaussweights[i]
                 count += 1
         return w
 
