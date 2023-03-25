@@ -52,7 +52,7 @@ class MK11Network(BaseNetwork):
             initializerNonNeg = tf.keras.initializers.RandomUniform(
                 minval=0, maxval=0.5, seed=None)
             # Weighted sum of previous layers output plus bias
-            weighted_non_neg_sum_z = layers.Dense(units=layer_dim, activation=None, kernel_constraint=NonNeg(),
+            weighted_non_neg_sum_z = layers.Dense(units=layer_dim, activation=None,  # kernel_constraint=NonNeg(),
                                                   kernel_initializer=initializerNonNeg,
                                                   kernel_regularizer=l2_regularizer_nn,
                                                   use_bias=True, bias_initializer='zeros',
@@ -74,29 +74,20 @@ class MK11Network(BaseNetwork):
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
-            initializer = tf.keras.initializers.RandomUniform(
-                minval=-0.5, maxval=0.5, seed=None)
-            initializerNonNeg = tf.keras.initializers.RandomUniform(
-                minval=0, maxval=0.5, seed=None)
+            initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
+            initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
 
-            weighted_nn_sum_z: Tensor = layers.Dense(1, activation=None, kernel_constraint=NonNeg(),
+            weighted_nn_sum_z: Tensor = layers.Dense(1, activation=None,  # kernel_constraint=NonNeg(),
                                                      kernel_initializer=initializerNonNeg,
                                                      kernel_regularizer=l2_regularizer_nn,
-                                                     use_bias=True,
-                                                     bias_initializer='zeros',
-                                                     name='layer_' +
-                                                          str(layer_idx) +
-                                                          'nn_component'
-                                                     )(layer_input_z)
+                                                     use_bias=True, bias_initializer='zeros',
+                                                     name='layer_' + str(layer_idx) + 'nn_component')(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None,
                                                   kernel_initializer=initializer,
                                                   kernel_regularizer=l2_regularizer_nn,
                                                   use_bias=False,
-                                                  name='layer_' +
-                                                       str(layer_idx) +
-                                                       'dense_component'
-                                                  )(net_input_x)
+                                                  name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
             if self.scale_active:  # if output is scaled, use relu.
