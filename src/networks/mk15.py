@@ -121,6 +121,11 @@ class MK15Network(BaseNetwork):
         Calls training depending on the MK model
         '''
 
+        # u_in = self.training_data[0]
+        # alpha_in = self.training_data[1]
+        # h_in = self.training_data[2]
+        # [alpha, alpha, u_out, h] = self.model(u_in)
+
         # u_tf = tf.constant(self.training_data[0][:50, :])
         # alpha_tf = tf.constant(self.training_data[1][:50, :])
         # h_tf = tf.constant(self.training_data[2][:50, :])
