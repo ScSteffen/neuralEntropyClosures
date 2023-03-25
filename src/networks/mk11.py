@@ -90,24 +90,25 @@ class MK11Network(BaseNetwork):
         ### build the core network with icnn closure architecture ###
 
         input_ = keras.Input(shape=(self.input_dim,))
+        x = input_
         if self.input_decorrelation:  # input data decorellation and shift
             hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
-            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            x = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=input_initializer,
                                   kernel_regularizer=None, use_bias=True,
                                   bias_initializer=input_initializer,
-                                  bias_regularizer=None, name="layer_-1_input")(hidden)
+                                  bias_regularizer=None, name="layer_-1_input")(x)
         else:
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=input_initializer,
                                   kernel_regularizer=None, use_bias=True,
                                   bias_initializer=input_initializer,
-                                  bias_regularizer=None, name="layer_-1_input")(input_)
+                                  bias_regularizer=None, name="layer_-1_input")(x)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
-            hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-        pre_output = convex_output_layer(hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
+            hidden = convex_layer(hidden, x, layer_idx=idx, layer_dim=self.model_width)
+        pre_output = convex_output_layer(hidden, x, layer_idx=self.model_depth + 2)  # outputlayer
 
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[
