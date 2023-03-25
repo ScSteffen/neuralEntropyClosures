@@ -36,8 +36,7 @@ class MK12Network(BaseNetwork):
         initializer = keras.initializers.LecunNormal()
 
         # Weight regularizer
-        l2_regularizer = tf.keras.regularizers.L2(
-            l2=0.0001)  # L1 + L2 penalties
+        l2_regularizer = tf.keras.regularizers.L2(l2=0.0001)  # L1 + L2 penalties
 
         ### build the core network ###
 

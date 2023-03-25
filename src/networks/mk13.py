@@ -53,13 +53,13 @@ class MK13Network(BaseNetwork):
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(units=layer_dim, activation=None, kernel_constraint=NonNeg(),
                                                   kernel_initializer=initializerNonNeg,
-                                                  kernel_regularizer=l1l2_regularizer, use_bias=True,
+                                                  kernel_regularizer=l2_regularizer_nn, use_bias=True,
                                                   bias_initializer='zeros',
                                                   name='layer_' + str(layer_idx) + 'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x = layers.Dense(units=layer_dim, activation=None, kernel_initializer=initializer,
-                                          kernel_regularizer=l1l2_regularizer, use_bias=False,
+                                          kernel_regularizer=l2_regularizer_nn, use_bias=False,
                                           name='layer_' + str(layer_idx) + 'dense_component')(nw_input_x)
             # Wz+Wx+b + x
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
@@ -79,12 +79,12 @@ class MK13Network(BaseNetwork):
 
             weighted_nn_sum_z: Tensor = layers.Dense(1, activation=None, kernel_constraint=NonNeg(),
                                                      kernel_initializer=initializerNonNeg,
-                                                     kernel_regularizer=l1l2_regularizer, use_bias=True,
+                                                     kernel_regularizer=l2_regularizer_nn, use_bias=True,
                                                      bias_initializer='zeros', name='layer_' + str(layer_idx) +
                                                                                     'nn_component')(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
-                                                  kernel_regularizer=l1l2_regularizer, use_bias=False,
+                                                  kernel_regularizer=l2_regularizer_nn, use_bias=False,
                                                   name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
