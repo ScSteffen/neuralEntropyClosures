@@ -43,8 +43,8 @@ def init_neural_closure(network_mk: int = 1, poly_degree: int = 0, spatial_dim: 
     if nw_width < 1:
         ValueError("Model width must be bigger than 0.")
         exit(1)
-    if nw_depth < 1:
-        ValueError("Model depth must be bigger than 0.")
+    if nw_depth < 0:
+        ValueError("Model depth must be bigger than -1.")
         exit(1)
 
     msg = "Chosen Model: MK " + str(network_mk) + ", Degree " + str(poly_degree) + ", Basis " + basis
