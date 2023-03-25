@@ -90,8 +90,8 @@ class MK13Network(BaseNetwork):
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
             out = layers.Add()([out, layer_input_z])
 
-            if self.scale_active:  # if output is scaled, use relu.
-                out = tf.keras.activations.relu(out)
+            # if self.scale_active:  # if output is scaled, use relu.
+            #    out = tf.keras.activations.relu(out)
             return out
 
             ### build the core network with icnn closure architecture ###
@@ -134,31 +134,15 @@ class MK13Network(BaseNetwork):
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
 
-        # test
-        # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
-        # a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
-        # a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
-        # a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
-
-        # print(tf.keras.losses.MeanSquaredError()(a3, a2))
-        # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
-        # print(self.custom_mse(a2, a3))
         print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
             self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(
-            ), 'output_2': tf.keras.losses.MeanSquaredError(),
-                'output_3': tf.keras.losses.MeanSquaredError()},
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
+                  'output_3': tf.keras.losses.MeanSquaredError()},
             loss_weights={
                 'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},
-            # , 'output_4': self.lossWeights[3]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
-        # model.summary()
-
-        # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
-        # show_layer_names = True, rankdir = 'TB', expand_nested = True)
-        # print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
         self.model = model
         return True
 
