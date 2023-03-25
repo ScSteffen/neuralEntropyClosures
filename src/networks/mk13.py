@@ -113,14 +113,11 @@ class MK13Network(BaseNetwork):
                                   bias_regularizer=None, name="layer_-1_input")(input_)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
-            hidden = convex_layer(
-                hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-
+            hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
         pre_output = convex_output_layer(hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
 
         # Create the core model
-        core_model = keras.Model(inputs=[input_], outputs=[
-            pre_output], name="ResNetIcnn_closure")
+        core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="ResNetIcnn_closure")
         print("The core model overview")
         core_model.summary()
         print("The sobolev wrapped model overview")
