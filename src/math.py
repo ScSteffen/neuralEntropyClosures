@@ -613,9 +613,9 @@ def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) ->
             for mui, phij in zip(mu, phi):
                 Yvals = scipy.special.sph_harm(abs(k), l, phij, np.arccos(mui))
                 if k < 0:
-                    Yvals = - np.sqrt(2) * (-1) ** k * Yvals.imag
+                    Yvals = np.sqrt(2) * Yvals.imag  # * (-1) ** (k + 1)
                 elif k > 0:
-                    Yvals = - np.sqrt(2) * (-1) ** k * Yvals.real
+                    Yvals = np.sqrt(2) * Yvals.real  # * (-1) ** (k + 1)
                 elif k == 0:
                     Yvals = Yvals.real
                 sh_basis[idx_sys, idx_quad] = Yvals

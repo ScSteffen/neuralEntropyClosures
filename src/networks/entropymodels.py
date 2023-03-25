@@ -75,7 +75,6 @@ class EntropyModel(tf.keras.Model, ABC):
             # print(mu)
             # print(phi)
             # print(m_basis)
-
             # print(m_basis.transpose())
         else:
             print("spatial dimension not yet supported for sobolev wrapper")
