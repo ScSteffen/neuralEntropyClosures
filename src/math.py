@@ -610,10 +610,15 @@ def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) ->
     for i in range(len(mu)):
         sh_basis[0, i] = np.sqrt(1 / (4 * np.pi))
         if degree > 0:
-            sh_basis[1, i] = -np.sqrt(3 / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
-            sh_basis[2, i] = np.sqrt(3 / (4 * np.pi)) * mu[i]
-            sh_basis[3, i] = -np.sqrt(3 / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
-        # if degree>1:
+            sh_basis[1, i] = -np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+            sh_basis[2, i] = np.sqrt(3. / (4 * np.pi)) * mu[i]
+            sh_basis[3, i] = -np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+        if degree > 1:
+            sh_basis[4, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.sin(2 * phi[i])
+            sh_basis[5, i] = -1 * np.sqrt(15. / (4. * np.pi)) * mu[i] * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+            sh_basis[6, i] = np.sqrt(5. / (16. * np.pi)) * (3 * mu[i] * mu[i] - 1)
+            sh_basis[7, i] = -1 * np.sqrt(15. / (4. * np.pi)) * mu[i] * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+            sh_basis[8, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.cos(2 * phi[i])
 
     return sh_basis
 
