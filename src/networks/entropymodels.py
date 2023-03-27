@@ -324,7 +324,7 @@ class SobolevModel(EntropyModel):
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
             # cutoff the 0th order moment, since it is 1 by construction
-            return [h, alpha, u_complete[:, 1:]]  # u_complete[:, 1:]]
+            return [h, alpha, u_complete[:, 1:]]
         print("Reconstruction of u disabled. Output 3 is meaningless")
         return [h, alpha, alpha]
 

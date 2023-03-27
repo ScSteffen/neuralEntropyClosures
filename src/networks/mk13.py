@@ -97,8 +97,10 @@ class MK13Network(BaseNetwork):
             ### build the core network with icnn closure architecture ###
 
         input_ = keras.Input(shape=(self.input_dim,))
+        x = input_
+
         if self.input_decorrelation:  # input data decorellation and shift
-            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(x)
             hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=input_initializer,
@@ -110,11 +112,11 @@ class MK13Network(BaseNetwork):
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=input_initializer,
                                   kernel_regularizer=l1l2_regularizer, use_bias=True,
                                   bias_initializer=input_initializer,
-                                  bias_regularizer=None, name="layer_-1_input")(input_)
+                                  bias_regularizer=None, name="layer_-1_input")(x)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
-            hidden = convex_layer(hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-        pre_output = convex_output_layer(hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
+            hidden = convex_layer(hidden, x, layer_idx=idx, layer_dim=self.model_width)
+        pre_output = convex_output_layer(hidden, x, layer_idx=self.model_depth + 2)  # outputlayer
 
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="ResNetIcnn_closure")
@@ -154,7 +156,7 @@ class MK13Network(BaseNetwork):
         # [h, alpha, u] = self.model(self.training_data[1][:100])
 
         x_data = self.training_data[0]
-        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
+        y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # h, alpha, u
         self.history = self.model.fit(x=x_data, y=y_data, validation_split=val_split, epochs=epoch_size,
                                       batch_size=batch_size, verbose=verbosity_mode, callbacks=callback_list,
                                       shuffle=True)

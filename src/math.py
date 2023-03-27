@@ -606,6 +606,22 @@ def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) ->
     # assemble spherical harmonics
     n_system = 2 * degree + degree ** 2 + 1
     sh_basis = np.zeros((n_system, len(mu)))
+
+    for i in range(len(mu)):
+        sh_basis[0, i] = np.sqrt(1 / (4 * np.pi))
+        if degree > 0:
+            sh_basis[1, i] = -np.sqrt(3 / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+            sh_basis[2, i] = np.sqrt(3 / (4 * np.pi)) * mu[i]
+            sh_basis[3, i] = -np.sqrt(3 / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+        # if degree>1:
+
+    return sh_basis
+
+
+def compute_spherical_harmonics_general(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
+    # assemble spherical harmonics
+    n_system = 2 * degree + degree ** 2 + 1
+    sh_basis = np.zeros((n_system, len(mu)))
     idx_sys = 0
     for l in range(degree + 1):
         for k in range(-l, l + 1):
