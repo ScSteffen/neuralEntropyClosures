@@ -375,8 +375,12 @@ def qGaussLegendre2D(Qorder):
         phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
         xy = np.zeros((order * order, 2))
         count = 0
+        mu_arr = np.zeros((order * order,))
+        phi_arr = np.zeros((order * order,))
         for i in range(int(order / 2)):
             for j in range(2 * order):
+                mu_arr[count] = mu[i]
+                phi_arr[count] = phi[j]
                 mui = mu[i]
                 phij = phi[j]
                 xy[count, 0] = np.sqrt(1 - mui ** 2) * np.cos(phij)
@@ -384,7 +388,7 @@ def qGaussLegendre2D(Qorder):
                 # xyz[count, 2] = mui
                 count += 1
 
-        return xy
+        return xy, mu_arr, phi_arr
 
     def computequadweights(order):
         """Quadrature weights for GaussLegendre quadrature. Read from file."""
@@ -397,10 +401,10 @@ def qGaussLegendre2D(Qorder):
                 count += 1
         return w
 
-    pts = computequadpoints(Qorder)
+    pts, mu, phi = computequadpoints(Qorder)
     weights = computequadweights(Qorder)
 
-    return [pts, weights]
+    return [pts, weights, mu, phi]
 
 
 def qGaussLegendre3D(Qorder):
@@ -619,6 +623,29 @@ def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) ->
             sh_basis[6, i] = np.sqrt(5. / (16. * np.pi)) * (3 * mu[i] * mu[i] - 1)
             sh_basis[7, i] = -1 * np.sqrt(15. / (4. * np.pi)) * mu[i] * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
             sh_basis[8, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.cos(2 * phi[i])
+
+    return sh_basis
+
+
+def compute_spherical_harmonics_2D(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
+    # assemble spherical harmonics
+    n_system = 3
+    if degree > 1:
+        print("Error: Spherical harmonics 2D of degree higher than 1 not yet configured")
+        exit(1)
+    sh_basis = np.zeros((n_system, len(mu)))
+
+    for i in range(len(mu)):
+        sh_basis[0, i] = 2 * np.sqrt(1 / (4 * np.pi))
+        if degree > 0:
+            sh_basis[1, i] = -2 * np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+            sh_basis[2, i] = -2 * np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+        # if degree > 1:
+        #    sh_basis[4, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.sin(2 * phi[i])
+        #    sh_basis[5, i] = -1 * np.sqrt(15. / (4. * np.pi)) * mu[i] * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+        #    sh_basis[6, i] = np.sqrt(5. / (16. * np.pi)) * (3 * mu[i] * mu[i] - 1)
+        #    sh_basis[7, i] = -1 * np.sqrt(15. / (4. * np.pi)) * mu[i] * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+        #    sh_basis[8, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.cos(2 * phi[i])
 
     return sh_basis
 

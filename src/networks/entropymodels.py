@@ -63,13 +63,18 @@ class EntropyModel(tf.keras.Model, ABC):
             m_basis = math.computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
             self.nq = quad_weights.size  # = 20 * polyDegree
         elif spatial_dimension == 2 and self.basis == "monomial":
-            [quad_pts, quad_weights] = math.qGaussLegendre2D(6 * polynomial_degree)  # dims = nq
+            [quad_pts, quad_weights, _, _] = math.qGaussLegendre2D(6 * polynomial_degree)  # dims = nq
             self.nq = quad_weights.size  # is not 20 * polyDegree
             m_basis = math.computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
         elif spatial_dimension == 3 and self.basis == "spherical_harmonics":
             [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre3D(6 * polynomial_degree)  # dims = nq
             self.nq = quad_weights.size  # is not 20 * polyDegree
             m_basis = math.compute_spherical_harmonics(mu, phi, self.poly_degree)
+        elif spatial_dimension == 2 and self.basis == "spherical_harmonics":
+            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre2D(6 * polynomial_degree)  # dims = nq
+            self.nq = quad_weights.size  # is not 20 * polyDegree
+            # print(sum(quad_weights))
+            m_basis = math.compute_spherical_harmonics_2D(mu, phi, self.poly_degree)
             # np.set_printoptions(precision=2)
             # print(quad_weights)
             # print(mu)
@@ -316,8 +321,7 @@ class SobolevModel(EntropyModel):
         if self.enable_recons_u:
             if self.scale_active:
                 print("Scaled reconstruction of u enabled")
-                alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(
-                    alpha, dtype=tf.float64, name=None))
+                alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
             else:
                 print("Reconstruction of u enabled")
                 alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)

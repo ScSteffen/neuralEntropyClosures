@@ -147,12 +147,12 @@ class MK11Network(BaseNetwork):
         # u_in = self.training_data[0]
         # alpha_in = self.training_data[1]
         # [h, alpha, u_out] = self.model(alpha_in)
-        # alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
-        # u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
-        # u_in = self.training_data[0][:100]
-        # alpha_in = self.training_data[1][:100]
-        # h_in = self.training_data[2][:100]
-        # [h, alpha, u] = self.model(self.training_data[1][:100])
+        ## alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
+        ## u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
+        # u_in = self.training_data[0][:2]
+        # alpha_in = self.training_data[1][:2]
+        # h_in = self.training_data[2][:2]
+        # [h, alpha, u] = self.model(alpha_in)
 
         x_data = self.training_data[0]
         y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
