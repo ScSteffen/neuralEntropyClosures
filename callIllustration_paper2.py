@@ -27,9 +27,9 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 0) beautify images
-    print_hohlraum_img_rect()
-  
-    print_hohlraum_img()
+    # print_hohlraum_img_rect()
+
+    # print_hohlraum_img()
     # 1) Training performance
     # print_training_performance()
     # print_training_performance_stats()
@@ -50,11 +50,66 @@ def main():
     # test_regularization_error()
 
     # 7) Print moment reconstructions
-    print_realizable_set_new_condition()
-    print_entropies()
-    print_realizable_set_by_gamma()
+    # print_realizable_set_new_condition()
+    # print_entropies()
+    # print_realizable_set_by_gamma()
 
+    # 8) rotated Linesource M1 2D monomial cross-sections
+    print_linesource_m1_2d_mono_cross_sections()
     return True
+
+
+def print_linesource_m1_2d_mono_cross_sections():
+    folder_name = "paper_data/paper2/linesource_neural_rotations/structured_grid/monomial_g"
+    save_folder = "paper_data/paper2/illustrations/linesource_neural_rotations"
+
+    font_size = 20
+    data_jump = 15
+
+    y_lims = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    y_lims_alpha = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    sym_size = 2.5
+    mark_size = 4
+    for i in range(0, 4):
+        filename = str(i) + "/diag1.csv"
+        filename2 = str(i) + "/diag2.csv"
+
+        ds_diag1 = pd.read_csv(folder_name + filename)
+        ds_diag2 = pd.read_csv(folder_name + filename2)
+        x_data = ds_diag1["arc_length"].to_numpy()
+        npts = len(x_data)
+        x_data_formatted = np.linspace(-1, 1, 1001)
+        # plot moments
+        plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
+                   x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
+                  [ds_diag1["u_0^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag1["u_1^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag2["u_0^0"].to_numpy().reshape((npts, 1))[::data_jump],
+                   -ds_diag2["u_1^1"].to_numpy().reshape((npts, 1))[::data_jump]],
+                  name='linesource_m1_2d_mono_xs_u_g' + str(i),
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size,
+                  labels=[r"diag 1: $u_0$", r"diag 2: $u_{1} $", r"diag 1: $u_0$", r"diag 2: $-u_{1}$"],
+                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x_2$",
+                  ylabel=r"$u_0$", ylim=y_lims[i], legend_pos="lower right")
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
+                   x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
+                  [ds_diag1["alpha_0^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag1["alpha_1^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag2["alpha_0^0"].to_numpy().reshape((npts, 1))[::data_jump],
+                   -ds_diag2["alpha_1^1"].to_numpy().reshape((npts, 1))[::data_jump]],
+                  name='linesource_m1_2d_mono_xs_alpha_0_g' + str(i),
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size,
+                  labels=[r"diag 1: $\alpha^p_{\mathbf{u},0}$", r"diag 2: $\alpha^p_{\mathbf{u},1} $",
+                          r"diag 1: $\alpha^p_{\mathbf{u},0}$", r"diag 2: $-\alpha^p_{\mathbf{u},1}$"],
+                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x_2$",
+                  ylabel=r"$u_0$", legend_pos="upper left")  # ylim=y_lims[i],
+
+    exit(1)
+
+    return 0
 
 
 def print_hohlraum_img_rect():
