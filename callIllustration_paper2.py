@@ -63,6 +63,7 @@ def print_linesource_m1_2d_mono_cross_sections():
     folder_name = "paper_data/paper2/linesource_neural_rotations/structured_grid/monomial_g"
     save_folder = "paper_data/paper2/illustrations/linesource_neural_rotations"
 
+    folder_name_reference = "paper_data/paper2/linesource_neural_rotations/structured_grid/baseline/monomial_g"
     font_size = 20
     data_jump = 15
 
@@ -76,10 +77,21 @@ def print_linesource_m1_2d_mono_cross_sections():
 
         ds_diag1 = pd.read_csv(folder_name + filename)
         ds_diag2 = pd.read_csv(folder_name + filename2)
+        ds_diag_newton = pd.read_csv(folder_name + ds_diag1)
         x_data = ds_diag1["arc_length"].to_numpy()
         npts = len(x_data)
         x_data_formatted = np.linspace(-1, 1, 1001)
         # plot moments
+        plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1))[::data_jump]],
+                  [ds_diag_newton["u_0^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag1["u_0^0"].to_numpy().reshape((npts, 1))[::data_jump]],
+                  name='linesource_m1_2d_reference_xs_u_g' + str(i),
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size,
+                  labels=[r"Newton $u_0$", r"ICNN $u_{0}$"],
+                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+                  ylabel=r"$u_0$", ylim=y_lims[i], legend_pos="lower right")
+
         plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
                    x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
                   [ds_diag1["u_0^0"].to_numpy().reshape((npts, 1)),
@@ -89,9 +101,9 @@ def print_linesource_m1_2d_mono_cross_sections():
                   name='linesource_m1_2d_mono_xs_u_g' + str(i),
                   log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
                   marker_size=mark_size,
-                  labels=[r"diag 1: $u_0$", r"diag 2: $u_{1} $", r"diag 1: $u_0$", r"diag 2: $-u_{1}$"],
-                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x_2$",
-                  ylabel=r"$u_0$", ylim=y_lims[i], legend_pos="lower right")
+                  labels=[r"xs 1 $u_0$", r"diag 2 $u_{1} $", r"xs 1 $u_0$", r"diag 2 $-u_{1}$"],
+                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+                  ylabel=r"$\mathbf{u}$", ylim=y_lims[i], legend_pos="lower right")
 
         plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
                    x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
@@ -102,10 +114,10 @@ def print_linesource_m1_2d_mono_cross_sections():
                   name='linesource_m1_2d_mono_xs_alpha_0_g' + str(i),
                   log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
                   marker_size=mark_size,
-                  labels=[r"diag 1: $\alpha^p_{\mathbf{u},0}$", r"diag 2: $\alpha^p_{\mathbf{u},1} $",
-                          r"diag 1: $\alpha^p_{\mathbf{u},0}$", r"diag 2: $-\alpha^p_{\mathbf{u},1}$"],
-                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x_2$",
-                  ylabel=r"$u_0$", legend_pos="upper left")  # ylim=y_lims[i],
+                  labels=[r"xs 1 $\alpha^p_{\mathbf{u},0}$", r"xs 2 $\alpha^p_{\mathbf{u},1} $",
+                          r"xs 1 $\alpha^p_{\mathbf{u},0}$", r"xs 2 $-\alpha^p_{\mathbf{u},1}$"],
+                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+                  ylabel=r"$\mathbf{alpha}_{\mathbf{u}}^p$", legend_pos="upper left")  # ylim=y_lims[i],
 
     exit(1)
 
