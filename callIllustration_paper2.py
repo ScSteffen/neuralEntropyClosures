@@ -6,21 +6,20 @@ Date 5.4.2022
 """
 
 import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib
-
 # matplotlib.rc('text', usetex=True)
 # matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
 import seaborn as sns
 import tensorflow as tf
-from src.utils import plot_1d, plot_1dv2, scatter_plot_2d, load_data, beautify_img
-from src.networks.configmodel import init_neural_closure
-from src.math import EntropyTools
-
 from adjustText import adjust_text
 from scipy.spatial import ConvexHull
+
+from src.math import EntropyTools
+from src.networks.configmodel import init_neural_closure
+from src.utils import plot_1dv2, scatter_plot_2d, load_data, beautify_img
 
 
 def main():
@@ -60,10 +59,11 @@ def main():
 
 
 def print_linesource_m1_2d_mono_cross_sections():
+    folder_name_reference = "paper_data/paper2/linesource_neural_rotations/structured_grid/baseline/monomial_g"
+
     folder_name = "paper_data/paper2/linesource_neural_rotations/structured_grid/monomial_g"
     save_folder = "paper_data/paper2/illustrations/linesource_neural_rotations"
 
-    folder_name_reference = "paper_data/paper2/linesource_neural_rotations/structured_grid/baseline/monomial_g"
     font_size = 20
     data_jump = 15
 
@@ -77,20 +77,31 @@ def print_linesource_m1_2d_mono_cross_sections():
 
         ds_diag1 = pd.read_csv(folder_name + filename)
         ds_diag2 = pd.read_csv(folder_name + filename2)
-        ds_diag_newton = pd.read_csv(folder_name + ds_diag1)
+        ds_diag_newton = pd.read_csv(folder_name_reference + filename)
         x_data = ds_diag1["arc_length"].to_numpy()
         npts = len(x_data)
         x_data_formatted = np.linspace(-1, 1, 1001)
         # plot moments
-        plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1))[::data_jump]],
+        plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1))],
                   [ds_diag_newton["u_0^0"].to_numpy().reshape((npts, 1)),
-                   ds_diag1["u_0^0"].to_numpy().reshape((npts, 1))[::data_jump]],
+                   ds_diag1["u_0^0"].to_numpy().reshape((npts, 1))],
                   name='linesource_m1_2d_reference_xs_u_g' + str(i),
                   log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
                   marker_size=mark_size,
                   labels=[r"Newton $u_0$", r"ICNN $u_{0}$"],
                   linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
                   ylabel=r"$u_0$", ylim=y_lims[i], legend_pos="lower right")
+
+        norm_err = np.linalg.norm(
+            ds_diag_newton["u_0^0"].to_numpy().reshape((npts, 1)) - ds_diag1["u_0^0"].to_numpy().reshape((npts, 1)),
+            axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err.reshape((npts, 1))],
+                  name='linesource_m1_2d_err_xs_u_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size,
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), ylim=(1e-9, 1e-1), xlabel=r"$x$",
+                  ylabel=r"$||u_0-u_0^p||_2$")
 
         plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
                    x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
