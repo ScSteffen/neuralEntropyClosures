@@ -55,8 +55,8 @@ def main():
 
     # 8) rotated Linesource M1 2D monomial cross-sections
     # print_regularized_methods()
-    print_m2_xs()
-    # print_linesource_m1_2d_mono_cross_sections()
+    # print_m2_xs()
+    print_linesource_m1_2d_mono_cross_sections()
     # print_linsource_normal_vs_non_normal_xs()
     return True
 
@@ -334,6 +334,30 @@ def print_linesource_m1_2d_mono_cross_sections():
                   marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
                   linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
                   ylabel=r"$||\mathbf{u}-R\mathbf{u}^*||_2$")
+
+        u_Ru = np.stack([np.flip(ds_diag1["u_0^0"].to_numpy()) - ds_diag2["u_0^0"].to_numpy(),
+                         np.flip(ds_diag1["u_1^0"].to_numpy()) - ds_diag2["u_1^1"].to_numpy(),
+                         np.flip(ds_diag1["u_1^1"].to_numpy()) + ds_diag2["u_1^0"].to_numpy()], axis=1)
+        norm_err_u = np.linalg.norm(u_Ru, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_u.reshape((npts, 1))],
+                  name='linesource_m1_2d_u_vs_Ru_270_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
+                  ylabel=r"$||\mathbf{u}-R270\mathbf{u}^*||_2$")
+
+        u_Ru = np.stack([ds_diag1["u_0^0"].to_numpy() - ds_diag2["u_0^0"].to_numpy(),
+                         ds_diag1["u_1^0"].to_numpy() - ds_diag2["u_1^0"].to_numpy(),
+                         ds_diag1["u_1^1"].to_numpy() + ds_diag2["u_1^1"].to_numpy()], axis=1)
+        norm_err_u = np.linalg.norm(u_Ru, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_u.reshape((npts, 1))],
+                  name='linesource_m1_2d_u_vs_Su_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
+                  ylabel=r"$||\mathbf{u}-S\mathbf{u}^*||_2$")
 
         plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
                    x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
