@@ -54,8 +54,214 @@ def main():
     # print_realizable_set_by_gamma()
 
     # 8) rotated Linesource M1 2D monomial cross-sections
-    print_linesource_m1_2d_mono_cross_sections()
+    # print_regularized_methods()
+    print_m2_xs()
+    # print_linesource_m1_2d_mono_cross_sections()
+    # print_linsource_normal_vs_non_normal_xs()
     return True
+
+
+def print_m2_xs():
+    folder_name = "paper_data/paper2/linesource_neural_rotations/structured_grid/M2"
+
+    save_folder = "paper_data/paper2/illustrations/linesource_neural_rotations/m2"
+
+    font_size = 20
+    data_jump = 15
+
+    y_lims = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    y_lims_u0 = [(-0.05, 2.3), (-0.05, 7), (-0.05, 6), (-0.05, 3.5)]
+    y_lims_alpha = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    sym_size = 2.5
+    mark_size = 4
+
+    full_reg = []
+    part_reg_nn = []
+    part_reg_n = []
+
+    filename = "/diag1.csv"
+
+    # ds_diag_1 = pd.read_csv(folder_name + "/newton_g0_diag1.csv")
+    # ds_diag_2 = pd.read_csv(folder_name + "/newton_g0_diag2.csv")
+    ds_diag_1 = pd.read_csv(folder_name + "/g0_diag1.csv")
+    ds_diag_2 = pd.read_csv(folder_name + "/g0_diag2.csv")
+
+    x_data = ds_diag_1["arc_length"].to_numpy()
+    npts = len(x_data)
+    x_data_formatted = np.linspace(-1, 1, 1001)
+    names = ["u_0^0", "u_1^0", "u_1^1", "u_2^0", "u_2^1", "u_2^2"]
+    names2 = ["u_0^0", "u_1^1", "u_1^0", "u_2^2", "u_2^1", "u_2^0"]
+    names_alpha = ["alpha_0^0", "alpha_1^0", "alpha_1^1", "alpha_2^0", "alpha_2^1", "alpha_2^2"]
+    names_alpha = ["alpha_0^0", "alpha_1^1", "alpha_1^0", "alpha_2^2", "alpha_2^1", "alpha_2^0"]
+    for i in range(0, 6):
+        data1 = ds_diag_1[names[i]].to_numpy().reshape((npts, 1))
+        data2 = ds_diag_2[names2[i]].to_numpy().reshape((npts, 1))
+        if i == 1 or i == 4:
+            data2 = -1 * data2
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))],
+                  [data1, data2],
+                  name='linesource_m2_2d_xs_' + names[i],
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1.0, - 0.5, 0.0, 0.5, 1],
+                  # labels=["Scaled, part reg.", "Non-scaled, part reg.", "Non-scaled, full reg."],
+                  linetypes=["-", "--"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+                  ylabel=names[i])  # , ylim=y_lims_u0[i])  # , legend_pos="upper center")
+
+        norm_err = np.linalg.norm(data1 - data2, axis=1)
+
+        # plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err.reshape((npts, 1))],
+        #          name='linesource_m2_2d_xs_err_' + names[i],
+        #          log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+        #          marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+        #          linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+        #          ylabel=r"err")
+
+        data1 = ds_diag_1[names_alpha[i]].to_numpy().reshape((npts, 1))
+        data2 = ds_diag_2[names_alpha[i]].to_numpy().reshape((npts, 1))
+        if i == 1 or i == 4:
+            data2 = -1 * data2
+        plot_1dv2([x_data_formatted.reshape((npts, 1))],
+                  [data1, data2],
+                  name='linesource_m2_2d_xs_' + names_alpha[i],
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[0.0, 0.5, 1],
+                  # labels=["Scaled, part reg.", "Non-scaled, part reg.", "Non-scaled, full reg."],
+                  linetypes=["-", "--", "-."], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+                  ylabel=names_alpha[i])  # , ylim=y_lims_u0[i])  # , legend_pos="upper center")
+
+        norm_err = np.linalg.norm(data1 - data2, axis=1)
+
+        # plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err.reshape((npts, 1))],
+        #          name='linesource_m2_2d_xs_err_alpha' + names[i],
+        #          log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+        #          marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+        #          linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+        #          ylabel=r"err")
+
+    u_Ru = np.stack([ds_diag_1["u_0^0"].to_numpy() - ds_diag_2["u_0^0"].to_numpy(),
+                     ds_diag_1["u_1^0"].to_numpy() + ds_diag_2["u_1^1"].to_numpy(),
+                     ds_diag_1["u_1^1"].to_numpy() - ds_diag_2["u_1^0"].to_numpy(),
+                     ds_diag_1["u_2^0"].to_numpy() - ds_diag_2["u_2^2"].to_numpy(),
+                     ds_diag_1["u_2^1"].to_numpy() + ds_diag_2["u_2^1"].to_numpy(),
+                     ds_diag_1["u_2^2"].to_numpy() - ds_diag_2["u_2^0"].to_numpy(), ], axis=1)
+    norm_err_u = np.linalg.norm(u_Ru, axis=1)
+    plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_u.reshape((npts, 1))],
+              name='linesource_m2_2d_u_vs_Ru_xs_g0',
+              log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+              marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+              linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
+              ylabel=r"$||\mathbf{u}-R\mathbf{u}^*||_2$")
+
+    alpha_Ralpha = np.stack([ds_diag_1["alpha_0^0"].to_numpy() - ds_diag_2["alpha_0^0"].to_numpy(),
+                             ds_diag_1["alpha_1^0"].to_numpy() + ds_diag_2["alpha_1^1"].to_numpy(),
+                             ds_diag_1["alpha_1^1"].to_numpy() - ds_diag_2["alpha_1^0"].to_numpy(),
+                             ds_diag_1["alpha_2^0"].to_numpy() - ds_diag_2["alpha_2^2"].to_numpy(),
+                             ds_diag_1["alpha_2^1"].to_numpy() + ds_diag_2["alpha_2^1"].to_numpy(),
+                             ds_diag_1["alpha_2^2"].to_numpy() - ds_diag_2["alpha_2^0"].to_numpy(), ], axis=1)
+    norm_err_alpha = np.linalg.norm(alpha_Ralpha, axis=1)
+
+    plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_alpha.reshape((npts, 1))],
+              name='linesource_m2_2d_alpha_vs_Ralpha_xs_g0',
+              log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+              marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+              # labels=[r"$\alpha_0$", r"$\alpha_{1,v_x} $", r"$\alpha_{1,v_y}$"],
+              linetypes=["-", ], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-1),
+              ylabel=r"$||\mathbf{\alpha}_\mathbf{u}^p-R\mathbf{\alpha}_{\mathbf{u}^*}^{p}||_2$")
+    return 0
+
+
+def print_regularized_methods():
+    folder_name_normalized = "paper_data/paper2/linesource_neural_rotations/structured_grid/baseline/monomial_g"
+    folder_name_non_normalized = "paper_data/paper2/linesource_neural_rotations/structured_grid/baseline/non_scaled/"
+
+    save_folder = "paper_data/paper2/illustrations/linesource_neural_rotations"
+
+    font_size = 20
+    data_jump = 15
+
+    y_lims = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    y_lims_u0 = [(-0.05, 2.3), (-0.05, 7), (-0.05, 6), (-0.05, 3.5)]
+    y_lims_alpha = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    sym_size = 2.5
+    mark_size = 4
+
+    full_reg = []
+    part_reg_nn = []
+    part_reg_n = []
+
+    for i in range(0, 4):
+        filename = str(i) + "/diag1.csv"
+        filename2 = "linesource_M1_part_reg_g" + str(i) + ".csv"
+        filename3 = "linesource_M1_full_reg_g" + str(i) + ".csv"
+        ds_diag_normalized_part_reg = pd.read_csv(folder_name_normalized + filename)
+        ds_diag_non_normalized_part_reg = pd.read_csv(folder_name_non_normalized + filename2)
+        ds_diag_non_normalized_full_reg = pd.read_csv(folder_name_non_normalized + filename3)
+
+        x_data = ds_diag_normalized_part_reg["arc_length"].to_numpy()[500:]
+        npts = len(x_data)
+        x_data_formatted = np.linspace(0, 1, 501)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))],
+                  [ds_diag_normalized_part_reg["u_0^0"].to_numpy()[500:].reshape((npts, 1)),
+                   ds_diag_non_normalized_part_reg["u_0^0"].to_numpy()[500:].reshape((npts, 1)),
+                   ds_diag_non_normalized_full_reg["u_0^0"].to_numpy()[500:].reshape((npts, 1))],
+                  name='linesource_m1_2d_xs_reg_methods' + str(i),
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[0.0, 0.5, 1],
+                  labels=["Scaled, part reg.", "Non-scaled, part reg.", "Non-scaled, full reg."],
+                  linetypes=["-", "--", "-."], show_fig=False, xlim=(0, 1), xlabel=r"$x$",
+                  ylabel=r"$u_0$", ylim=y_lims_u0[i])  # , legend_pos="upper center")
+
+    return 0
+
+
+def print_linsource_normal_vs_non_normal_xs():
+    folder_name_normalized = "paper_data/paper2/linesource_neural_rotations/structured_grid/baseline/monomial_g"
+    folder_name_non_normalized = "paper_data/paper2/linesource_neural_rotations/structured_grid/baseline/non_scaled/"
+
+    save_folder = "paper_data/paper2/illustrations/linesource_neural_rotations"
+
+    font_size = 28
+    data_jump = 15
+
+    y_lims = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    y_lims_u0 = [(-0.05, 2.3), (-0.05, 7), (-0.05, 6), (-0.05, 3.5)]
+    y_lims_alpha = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    sym_size = 2.5
+    mark_size = 4
+    for i in range(0, 4):
+        filename = str(i) + "/diag1.csv"
+        filename2 = "linesource_M1_part_reg_g" + str(i) + ".csv"
+        ds_diag_normalized = pd.read_csv(folder_name_normalized + filename)
+        ds_diag_non_normalized = pd.read_csv(folder_name_non_normalized + filename2)
+
+        x_data = ds_diag_normalized["arc_length"].to_numpy()
+        npts = len(x_data)
+        x_data_formatted = np.linspace(-1, 1, 1001)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1))],
+                  [ds_diag_normalized["u_0^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag_non_normalized["u_0^0"].to_numpy().reshape((npts, 1))],
+                  name='linesource_m1_2d_xs_non_norm_vs_norm' + str(i),
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  labels=[r"Scaled $u_0$", r"Non-Scaled $u_{0}$"],
+                  linetypes=["-", "--"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+                  ylabel=r"$u_0$", ylim=y_lims_u0[i], legend_pos="upper center")
+
+        norm_err = np.linalg.norm(
+            ds_diag_normalized["u_0^0"].to_numpy().reshape((npts, 1)) - ds_diag_non_normalized[
+                "u_0^0"].to_numpy().reshape((npts, 1)),
+            axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err.reshape((npts, 1))],
+                  name='linesource_m1_2d_xs_err_non_norm_vs_norm' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), ylim=(1e-9, 1e-1), xlabel=r"$x$",
+                  ylabel=r"$||u_0-u_{0,non-scaled}||_2$")
+    return 0
 
 
 def print_linesource_m1_2d_mono_cross_sections():
@@ -113,9 +319,21 @@ def print_linesource_m1_2d_mono_cross_sections():
                   name='linesource_m1_2d_mono_xs_u_g' + str(i),
                   log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
                   marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
-                  labels=[r"xs 1 $u_0$", r"diag 2 $u_{1} $", r"xs 1 $u_0$", r"diag 2 $-u_{1}$"],
+                  labels=[r"$u_0$", r"$u_{1} $", r"$R\tilde{u}_0$", r"$R\tilde{u}_1$"],
                   linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
                   ylabel=r"$\mathbf{u}$", ylim=y_lims[i], legend_pos="lower right")
+
+        u_Ru = np.stack([ds_diag1["u_0^0"].to_numpy() - ds_diag2["u_0^0"].to_numpy(),
+                         ds_diag1["u_1^0"].to_numpy() + ds_diag2["u_1^1"].to_numpy(),
+                         ds_diag1["u_1^1"].to_numpy() - ds_diag2["u_1^0"].to_numpy()], axis=1)
+        norm_err_u = np.linalg.norm(u_Ru, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_u.reshape((npts, 1))],
+                  name='linesource_m1_2d_u_vs_Ru_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
+                  ylabel=r"$||\mathbf{u}-R\mathbf{u}^*||_2$")
 
         plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
                    x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
@@ -126,10 +344,23 @@ def print_linesource_m1_2d_mono_cross_sections():
                   name='linesource_m1_2d_mono_xs_alpha_0_g' + str(i),
                   log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
                   marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
-                  labels=[r"xs 1 $\alpha^p_{\mathbf{u},0}$", r"xs 2 $\alpha^p_{\mathbf{u},1} $",
-                          r"xs 1 $\alpha^p_{\mathbf{u},0}$", r"xs 2 $-\alpha^p_{\mathbf{u},1}$"],
+                  labels=[r"$\alpha^p_{\mathbf{u},0}$", r"$\alpha^p_{\mathbf{u},1} $",
+                          r"$R\alpha^p_{\mathbf{u}^*,0}$", r"$R\alpha^p_{\mathbf{u}^*,1}$"],
                   linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
                   ylabel=r"$\mathbf{\alpha}_{\mathbf{u}}^p$", legend_pos="upper left")  # ylim=y_lims[i],
+
+        alpha_Ralpha = np.stack([ds_diag1["alpha_0^0"].to_numpy() - ds_diag2["alpha_0^0"].to_numpy(),
+                                 ds_diag1["alpha_1^0"].to_numpy() + ds_diag2["alpha_1^1"].to_numpy(),
+                                 ds_diag1["alpha_1^1"].to_numpy() - ds_diag2["alpha_1^0"].to_numpy()], axis=1)
+        norm_err_alpha = np.linalg.norm(alpha_Ralpha, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_alpha.reshape((npts, 1))],
+                  name='linesource_m1_2d_alpha_vs_Ralpha_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  # labels=[r"$\alpha_0$", r"$\alpha_{1,v_x} $", r"$\alpha_{1,v_y}$"],
+                  linetypes=["-", ], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-1),
+                  ylabel=r"$||\mathbf{\alpha}_\mathbf{u}^p-R\mathbf{\alpha}_{\mathbf{u}^*}^{p}||_2$")
 
     exit(1)
 

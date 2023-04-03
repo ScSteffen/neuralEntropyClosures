@@ -267,7 +267,7 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             i += 1
         if labels:
             if legend_pos:
-                plt.legend(labels, loc=legend_pos, fontsize=int(0.5 * font_size))
+                plt.legend(labels, loc=legend_pos, fontsize=int(0.75 * font_size))
             else:
                 plt.legend(labels, fontsize=int(0.5 * font_size))
 
@@ -279,7 +279,7 @@ def plot_1dv2(xs, ys, labels=None, name='defaultName', log=True, loglog=False, f
             plt.plot(x, y, color + lineType, linewidth=symbol_size, markersize=marker_size)
         if labels:
             if legend_pos:
-                plt.legend(labels, loc=legend_pos, fontsize=int(0.5 * font_size))
+                plt.legend(labels, loc=legend_pos, fontsize=int(0.75 * font_size))
             else:
                 plt.legend(labels, fontsize=int(0.5 * font_size))
     if log:
