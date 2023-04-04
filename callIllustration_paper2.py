@@ -56,9 +56,155 @@ def main():
     # 8) rotated Linesource M1 2D monomial cross-sections
     # print_regularized_methods()
     # print_m2_xs()
+    print_m1_rot_correction()
     print_linesource_m1_2d_mono_cross_sections()
     # print_linsource_normal_vs_non_normal_xs()
-    return True
+    return 0
+
+
+def print_m1_rot_correction():
+    folder_name = "paper_data/paper2/linesource_neural_rotations/structured_grid/rotation_correction/"
+    save_folder = "paper_data/paper2/illustrations/linesource_neural_rotations"
+
+    font_size = 28
+    data_jump = 15
+
+    y_lims = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    y_lims_u0 = [(-0.05, 2.3), (-0.05, 7), (-0.05, 6), (-0.05, 3.5)]
+    y_lims_alpha = [(-1.8, 2.3), (-4.5, 7), (-4.5, 6), (-2.5, 3.5)]
+    sym_size = 2.5
+    mark_size = 4
+
+    for i in range(0, 4):
+        filename = "g" + str(i) + "_diag1.csv"
+        filename2 = "g" + str(i) + "_diag2.csv"
+
+        ds_diag1 = pd.read_csv(folder_name + filename)
+        ds_diag2 = pd.read_csv(folder_name + filename2)
+        x_data = ds_diag1["arc_length"].to_numpy()
+        npts = len(x_data)
+        x_data_formatted = np.linspace(-1, 1, 1001)
+
+        x1 = np.asarray([ds_diag1["Points:0"].to_numpy(), ds_diag1["Points:1"].to_numpy()])
+        x2 = np.asarray([ds_diag2["Points:0"].to_numpy(), ds_diag2["Points:1"].to_numpy()])
+        t1 = np.asarray([ds_diag1["u_1^0"].to_numpy(), ds_diag1["u_1^1"].to_numpy()])
+        t2 = np.asarray([ds_diag2["u_1^0"].to_numpy(), ds_diag2["u_1^1"].to_numpy()])
+        # u_1^0 u_1^1
+        u_star2 = t1[:, 501:].T
+        u_ = np.flip(t1[:, :500].T, axis=0)
+
+        u_star = t2[:, 501:].T
+        # t3 = t2[:, :500].T
+        u_star3 = np.flip(t2[:, :500].T, axis=0)
+
+        S_ustar = np.asarray([u_[:, 0], -u_[:, 1]]).T  # mirror u on u_star
+        S_ustar2 = np.asarray([-u_[:, 0], -u_[:, 1]]).T  # mirror u on u_star2
+        S_ustar3 = np.asarray([-u_[:, 0], u_[:, 1]]).T  # mirror u on u_star3
+
+        e1 = np.linalg.norm(u_star - S_ustar, axis=1)
+        e2 = np.linalg.norm(u_star2 - S_ustar2, axis=1)
+        e3 = np.linalg.norm(u_star3 - S_ustar3, axis=1)
+
+        R_ustar = np.asarray([u_[:, 1], - u_[:, 0]]).T  # rotate u on u_star
+        R_ustar2 = np.asarray([-u_[:, 0], -u_[:, 1]]).T  # rotate u on u_star2
+        R_ustar3 = np.asarray([-u_[:, 1], u_[:, 0]]).T  # rotate u on u_star3
+
+        Re1 = np.linalg.norm(u_star - R_ustar, axis=1)
+        Re2 = np.linalg.norm(u_star2 - R_ustar2, axis=1)
+        Re3 = np.linalg.norm(u_star3 - R_ustar3, axis=1)
+        # plt.plot(u_)
+        # plt.plot(R_ustar)
+        # plt.plot(R_ustar2)
+        # plt.plot(R_ustar3)
+        # plt.show()
+        fig, axs = plt.subplots(2, 2, )
+        axs[0, 0].plot(e1)
+        axs[0, 0].plot(e2, "--")
+        axs[0, 0].plot(e3, "-.")
+        axs[0, 0].legend(["Se1", "Se2", "Se3"])
+
+        axs[1, 0].plot(u_)
+        axs[1, 0].plot(u_star, "--")
+        # axs[1, 0].plot(S_ustar2)
+        # axs[1, 0].plot(S_ustar3)
+        axs[1, 0].legend(["u_x", "u_y", "u^*_x", "u^*_y"], loc="lower right")
+
+        axs[0, 1].plot(Re1)
+        axs[0, 1].plot(Re2)
+        axs[0, 1].plot(Re3)
+        axs[0, 1].legend(["Re1", "Re2", "Re3"])
+
+        axs[1, 1].plot(u_)
+        axs[1, 1].plot(R_ustar)
+        # axs[1, 1].plot(R_ustar2)
+        # axs[1, 1].plot(R_ustar3)
+        axs[1, 1].legend(["u", "R1", "R2", "R3"], loc="lower right")
+        plt.show()
+
+        u_Ru = np.stack([ds_diag1["u_0^0"].to_numpy() - ds_diag2["u_0^0"].to_numpy(),
+                         ds_diag1["u_1^0"].to_numpy() + ds_diag2["u_1^1"].to_numpy(),
+                         ds_diag1["u_1^1"].to_numpy() - ds_diag2["u_1^0"].to_numpy()], axis=1)
+        norm_err_u = np.linalg.norm(u_Ru, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_u.reshape((npts, 1))],
+                  name='linesource_m1_2d_u_vs_Ru_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
+                  ylabel=r"$||\mathbf{u}-R\mathbf{u}^*||_2$")
+
+        u_Ru = np.stack([np.flip(ds_diag1["u_0^0"].to_numpy()) - ds_diag2["u_0^0"].to_numpy(),
+                         np.flip(ds_diag1["u_1^0"].to_numpy()) - ds_diag2["u_1^1"].to_numpy(),
+                         np.flip(ds_diag1["u_1^1"].to_numpy()) + ds_diag2["u_1^0"].to_numpy()], axis=1)
+        norm_err_u = np.linalg.norm(u_Ru, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_u.reshape((npts, 1))],
+                  name='linesource_m1_2d_u_vs_Ru_270_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
+                  ylabel=r"$||\mathbf{u}-R270\mathbf{u}^*||_2$")
+
+        u_Ru = np.stack([ds_diag1["u_0^0"].to_numpy() - ds_diag2["u_0^0"].to_numpy(),
+                         ds_diag1["u_1^0"].to_numpy() - ds_diag2["u_1^0"].to_numpy(),
+                         ds_diag1["u_1^1"].to_numpy() + ds_diag2["u_1^1"].to_numpy()], axis=1)
+        norm_err_u = np.linalg.norm(u_Ru, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_u.reshape((npts, 1))],
+                  name='linesource_m1_2d_u_vs_Su_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  linetypes=["-"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-2),
+                  ylabel=r"$||\mathbf{u}-S\mathbf{u}^*||_2$")
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1)), x_data_formatted.reshape((npts, 1)),
+                   x_data_formatted.reshape((npts, 1))[::data_jump], x_data_formatted.reshape((npts, 1))[::data_jump]],
+                  [ds_diag1["alpha_0^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag1["alpha_1^0"].to_numpy().reshape((npts, 1)),
+                   ds_diag2["alpha_0^0"].to_numpy().reshape((npts, 1))[::data_jump],
+                   -ds_diag2["alpha_1^1"].to_numpy().reshape((npts, 1))[::data_jump]],
+                  name='linesource_m1_2d_mono_xs_alpha_0_g' + str(i),
+                  log=False, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  labels=[r"$\alpha^p_{\mathbf{u},0}$", r"$\alpha^p_{\mathbf{u},1} $",
+                          r"$R\alpha^p_{\mathbf{u}^*,0}$", r"$R\alpha^p_{\mathbf{u}^*,1}$"],
+                  linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
+                  ylabel=r"$\mathbf{\alpha}_{\mathbf{u}}^p$", legend_pos="upper left")  # ylim=y_lims[i],
+
+        alpha_Ralpha = np.stack([ds_diag1["alpha_0^0"].to_numpy() - ds_diag2["alpha_0^0"].to_numpy(),
+                                 ds_diag1["alpha_1^0"].to_numpy() + ds_diag2["alpha_1^1"].to_numpy(),
+                                 ds_diag1["alpha_1^1"].to_numpy() - ds_diag2["alpha_1^0"].to_numpy()], axis=1)
+        norm_err_alpha = np.linalg.norm(alpha_Ralpha, axis=1)
+
+        plot_1dv2([x_data_formatted.reshape((npts, 1))], [norm_err_alpha.reshape((npts, 1))],
+                  name='linesource_m1_2d_alpha_vs_Ralpha_xs_g' + str(i),
+                  log=True, loglog=False, folder_name=save_folder, font_size=font_size, symbol_size=sym_size,
+                  marker_size=mark_size, xticks=[-1, -0.5, 0.0, 0.5, 1],
+                  # labels=[r"$\alpha_0$", r"$\alpha_{1,v_x} $", r"$\alpha_{1,v_y}$"],
+                  linetypes=["-", ], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",  # ylim=(1e-10, 1e-1),
+                  ylabel=r"$||\mathbf{\alpha}_\mathbf{u}^p-R\mathbf{\alpha}_{\mathbf{u}^*}^{p}||_2$")
+
+    return 0
 
 
 def print_m2_xs():
@@ -322,6 +468,87 @@ def print_linesource_m1_2d_mono_cross_sections():
                   labels=[r"$u_0$", r"$u_{1} $", r"$R\tilde{u}_0$", r"$R\tilde{u}_1$"],
                   linetypes=["-", "--", "o", "^"], show_fig=False, xlim=(-1, 1), xlabel=r"$x$",
                   ylabel=r"$\mathbf{u}$", ylim=y_lims[i], legend_pos="lower right")
+
+        """
+        u_split1 = ds_diag2["u_1^0"].to_numpy()[:500]
+        u_split2 = -np.flip(ds_diag2["u_1^0"].to_numpy()[501:])
+        x = np.linspace(0, 1, 500)
+        # plt.plot(x, np.abs(u_split1 - u_split2))
+        # plt.show()
+
+        u_split1 = ds_diag2["u_1^1"].to_numpy()[:500]
+        u_split2 = -np.flip(ds_diag2["u_1^1"].to_numpy()[501:])
+        x = np.linspace(0, 1, 500)
+        # plt.plot(x, np.abs(u_split1 - u_split2))
+        # plt.show()
+
+        u_ = np.asarray([ds_diag1["u_1^0"].to_numpy(), ds_diag1["u_1^1"].to_numpy()])
+        u_star = np.asarray([np.flip(ds_diag2["u_1^0"].to_numpy()), np.flip(ds_diag2["u_1^1"].to_numpy())])
+
+        # u_split2 = -np.flip(ds_diag2["u_1^0": "u_1^1"].to_numpy()[0:500])
+        x = np.linspace(0, 1, 1001)
+        e1 = u_[0, :] + u_star[0, :]
+        e2 = u_[1, :] - u_star[1, :]
+        plt.plot(x, np.abs(e1))
+        plt.plot(x, np.abs(e2))
+
+        plt.show()
+        """
+        x1 = np.flip(np.asarray([ds_diag1["Points:0"].to_numpy(), ds_diag1["Points:1"].to_numpy()]))
+        x2 = np.flip(np.asarray([ds_diag2["Points:0"].to_numpy(), ds_diag2["Points:1"].to_numpy()]), axis=1)
+        t1 = np.asarray([ds_diag1["u_1^0"].to_numpy(), ds_diag1["u_1^1"].to_numpy()])
+        t2 = np.flip(np.asarray([ds_diag2["u_1^0"].to_numpy(), ds_diag2["u_1^1"].to_numpy()]), axis=1)
+        # u_1^0 u_1^1
+        u_star2 = t1[:, 501:].T
+        u_ = np.flip(t1[:, :500].T, axis=0)
+
+        u_star = t2[:, 501:].T
+        # t3 = t2[:, :500].T
+        u_star3 = np.flip(t2[:, :500].T, axis=0)
+
+        S_ustar = np.asarray([u_[:, 0], -u_[:, 1]]).T  # mirror u on u_star
+        S_ustar2 = np.asarray([-u_[:, 0], -u_[:, 1]]).T  # mirror u on u_star2
+        S_ustar3 = np.asarray([-u_[:, 0], u_[:, 1]]).T  # mirror u on u_star3
+
+        e1 = np.linalg.norm(u_star - S_ustar, axis=1)
+        e2 = np.linalg.norm(u_star2 - S_ustar2, axis=1)
+        e3 = np.linalg.norm(u_star3 - S_ustar3, axis=1)
+
+        R_ustar = np.asarray([u_[:, 1], - u_[:, 0]]).T  # rotate u on u_star
+        R_ustar2 = np.asarray([-u_[:, 0], -u_[:, 1]]).T  # rotate u on u_star2
+        R_ustar3 = np.asarray([-u_[:, 1], u_[:, 0]]).T  # rotate u on u_star3
+
+        Re1 = np.linalg.norm(u_star - R_ustar, axis=1)
+        Re2 = np.linalg.norm(u_star2 - R_ustar2, axis=1)
+        Re3 = np.linalg.norm(u_star3 - R_ustar3, axis=1)
+        # plt.plot(u_)
+        # plt.plot(R_ustar)
+        # plt.plot(R_ustar2)
+        # plt.plot(R_ustar3)
+        # plt.show()
+        fig, axs = plt.subplots(2, 2, )
+        axs[0, 0].plot(e1)
+        axs[0, 0].plot(e2, "--")
+        axs[0, 0].plot(e3, "-.")
+        axs[0, 0].legend(["Se1", "Se2", "Se3"])
+
+        axs[1, 0].plot(u_)
+        axs[1, 0].plot(u_star, "--")
+        # axs[1, 0].plot(S_ustar2)
+        # axs[1, 0].plot(S_ustar3)
+        axs[1, 0].legend(["u_x", "u_y", "u^*_x", "u^*_y"], loc="lower right")
+
+        axs[0, 1].plot(Re1)
+        axs[0, 1].plot(Re2)
+        axs[0, 1].plot(Re3)
+        axs[0, 1].legend(["Re1", "Re2", "Re3"])
+
+        axs[1, 1].plot(u_)
+        axs[1, 1].plot(R_ustar)
+        # axs[1, 1].plot(R_ustar2)
+        # axs[1, 1].plot(R_ustar3)
+        axs[1, 1].legend(["u", "R1", "R2", "R3"], loc="lower right")
+        plt.show()
 
         u_Ru = np.stack([ds_diag1["u_0^0"].to_numpy() - ds_diag2["u_0^0"].to_numpy(),
                          ds_diag1["u_1^0"].to_numpy() + ds_diag2["u_1^1"].to_numpy(),
