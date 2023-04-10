@@ -4,11 +4,11 @@ Author:  Steffen Schotthöfer
 Date: 16.03.21
 """
 
-from numpy.polynomial.legendre import leggauss
 import numpy as np
-import tensorflow as tf
-import scipy.optimize as opt
 import scipy
+import scipy.optimize as opt
+import tensorflow as tf
+from numpy.polynomial.legendre import leggauss
 
 
 class EntropyTools:
@@ -48,7 +48,7 @@ class EntropyTools:
             [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
             m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
         if spatial_dimension == 2:
-            [quad_pts, quad_weights] = qGaussLegendre2D(quad_order)  # dims = nq
+            [quad_pts, quad_weights, _, _] = qGaussLegendre2D(quad_order)  # dims = nq
             self.nq = quad_weights.size  # is not 10 * polyDegree
             m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
 
