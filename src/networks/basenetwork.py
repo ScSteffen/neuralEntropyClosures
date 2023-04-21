@@ -51,7 +51,8 @@ class BaseNetwork:
                             3: [0, 0, 0, 1]}  # hash table for loss combination
     # hash table for input dimension depending on polyDegree
     input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
-    input_dim_dict_3D_sh: dict = {1: 4, 2: 9, 3: 16}  # , 4: 15, 5: 21}  # change numbers
+    input_dim_dict_3D_sh: dict = {1: 4, 2: 9, 3: 16}
+    input_dim_dict_2D_sh: dict = {1: 3}
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
@@ -98,8 +99,10 @@ class BaseNetwork:
         elif self.basis == "spherical_harmonics":
             if spatial_dimension == 3:
                 self.input_dim = self.input_dim_dict_3D_sh[self.poly_degree]
+            elif spatial_dimension == 2:
+                self.input_dim = self.input_dim_dict_2D_sh[self.poly_degree]
             else:
-                raise ValueError("Saptial dimension other than 1 or 2 not supported atm")
+                raise ValueError("Saptial dimension other than 2 or 3 not supported atm")
         else:
             raise ValueError("Basis >" + str(self.basis) + "< not supported")
 
