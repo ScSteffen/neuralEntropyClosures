@@ -64,8 +64,11 @@ class MK11Network(BaseNetwork):
             # Wz+Wx+b
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
+
             # activation
-            out = tf.keras.activations.softplus(intermediate_sum) - tf.Variable(shape=[layer_dim],dtype=tf.float32,trainable=True)
+            out = tf.keras.activations.softplus(intermediate_sum) - \
+                  tf.Variable(shape=[layer_dim], dtype=tf.float32, trainable=True, initial_value=tf.ones(
+                      shape=[layer_dim]))
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
@@ -95,7 +98,7 @@ class MK11Network(BaseNetwork):
             hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
             x = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
 
-        v = tf.concat([x,-x],axis=1)
+        v = tf.concat([x, -x], axis=1)
         # First Layer is a std dense layer
         hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=input_initializer,
                               kernel_regularizer=None, use_bias=True,
