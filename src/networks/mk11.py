@@ -65,7 +65,7 @@ class MK11Network(BaseNetwork):
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
             # activation
-            out = tf.keras.activations.softplus(intermediate_sum)
+            out = tf.keras.activations.softplus(intermediate_sum) - tf.Variable(shape=[layer_dim],dtype=tf.float32,trainable=True)
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
