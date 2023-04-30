@@ -27,7 +27,7 @@ def main():
     print("---------- Start Result Illustration Suite ------------")
 
     # 0) beautify images
-    # print_hohlraum_img_rect()
+    print_hohlraum_img_rect()
 
     # print_hohlraum_img()
     # 1) Training performance
@@ -55,7 +55,7 @@ def main():
     # print_realizable_set_by_gamma()
 
     # 8) rotated Linesource M1 2D monomial cross-sections
-    print_linesource_m1_2d_mono_cross_sections()
+    # print_linesource_m1_2d_mono_cross_sections()
     return True
 
 
@@ -136,6 +136,7 @@ def print_hohlraum_img_rect():
     names_err = ["d_hohlraum_mono_ICNN_M2_g1", "d_hohlraum_mono_ICNN_M2_g1_rot", "d_hohlraum_mono_ICNN_M3_g1",
                  "d_hohlraum_mono_ICNN_M4_g1", "d_hohlraum_P9", "d_hohlraum_S41"]
 
+    """
     for name in names:
         img_path = base_path + name + ".png"
         beautify_img(load_name=img_path, folder_name=save_path, name=name, c_map="RdGy",
@@ -147,14 +148,14 @@ def print_hohlraum_img_rect():
         beautify_img(load_name=img_path, folder_name=save_path, name=name,
                      xlabel="", ylabel="", cbar_ticks=[1e-3, 1e-2, 1e-1], cbar_log=True,
                      font_size=fontsize, img_size=[0, 1, 0, 1])
-
+    """
     # without cbar
-    names = ["hohlraum_S11", "hohlraum_S21", "hohlraum_S31",
+    names = ["hohlraum_S11", "hohlraum_S11", "hohlraum_S21", "hohlraum_S31", "hohlraum_S61",
              "hohlraum_mono_ICNN_M2_g0", "hohlraum_mono_ICNN_M2_g3", "hohlraum_mono_ICNN_M2_g2",
              "hohlraum_mono_ICNN_M2_g0_rot", "hohlraum_mono_ICNN_M2_g3_rot", "hohlraum_mono_ICNN_M2_g2_rot",
              "hohlraum_mono_ICNN_M3_g0", "hohlraum_mono_ICNN_M3_g3", "hohlraum_mono_ICNN_M3_g2",
              "hohlraum_mono_ICNN_M4_g0", "hohlraum_mono_ICNN_M4_g3", "hohlraum_mono_ICNN_M4_g2",
-             "hohlraum_P3", "hohlraum_P5", "hohlraum_P7",
+             "hohlraum_P3", "hohlraum_P5", "hohlraum_P7", "hohlraum_P9",
              "d_hohlraum_S11", "d_hohlraum_S21", "d_hohlraum_S31",
              "d_hohlraum_mono_ICNN_M2_g0", "d_hohlraum_mono_ICNN_M2_g3", "d_hohlraum_mono_ICNN_M2_g2",
              "d_hohlraum_mono_ICNN_M2_g0_rot", "d_hohlraum_mono_ICNN_M2_g3_rot", "d_hohlraum_mono_ICNN_M2_g2_rot",
@@ -1640,10 +1641,10 @@ def print_comp_efficiency_memory():
 
 
 def print_method_errors():
-    df = pd.read_csv("paper_data/paper2/hohlraum/errors/method_errors_relative.csv", delimiter=";")
+    df = pd.read_csv("paper_data/paper2/hohlraum/errors/method_errors_relative.csv", delimiter=",")
 
-    names = [r"M$_2^{\gamma_3}$",
-             r"M$_3^{\gamma_3}$",
+    names = [r"M$_2$",  # ^{\gamma_3}
+             r"M$_3$",  # ^{\gamma_3}
              r"NM$_2$",
              r"NM$_2^{\gamma_1}$",
              r"NM$_2^{\gamma_2}$",
@@ -1683,7 +1684,9 @@ def print_method_errors():
     sns.set_style("ticks")
     texts = []
     for i in indices_ref:
-        if i in [2, 13, 16]:
+        if i in [0, 1]:
+            label3 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='blue', edgecolors='blue')
+        elif i in [2, 13, 16]:
             label1 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='green', edgecolors='green')
         else:
             label2 = plt.scatter(sys_size[i], errors[i], s=40, facecolors='red', edgecolors='red')
@@ -1695,7 +1698,8 @@ def print_method_errors():
     plt.yticks(fontsize=int(font_size * 0.7))
     plt.xlabel("system size", fontsize=font_size)
     plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
-    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
+    plt.legend([label1, label3, label2], [r"Network M$_N$", r"M$_N$", "other"], loc="lower left",
+               fontsize=int(font_size * 0.7))
 
     adjust_text(texts, only_move={'texts': 'y'})
     plt.savefig("paper_data/paper2/illustrations/hohlraum/sys_size_vs_error.pdf", dpi=500, bbox_inches="tight")
@@ -1705,11 +1709,17 @@ def print_method_errors():
     sns.set_theme()
     sns.set_style("ticks")
     for i in indices_ref:
-        if i in [2, 13, 16]:
+
+        if i in [0, 1]:
+            label3 = plt.scatter(timing[i], errors[i], s=40, facecolors='blue', edgecolors='blue')
+            texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
+        elif i in [2, 13, 16]:
+            # print("ok")
             label1 = plt.scatter(timing[i], errors[i], s=40, facecolors='green', edgecolors='green')
+            texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
         else:
             label2 = plt.scatter(timing[i], errors[i], s=40, facecolors='red', edgecolors='red')
-        texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
+            texts.append(plt.text(timing[i], errors[i], names[i], fontsize=int(font_size * 0.7)))
 
     plt.xscale("log")
     plt.yscale("log")
@@ -1717,9 +1727,10 @@ def print_method_errors():
     plt.yticks(fontsize=int(font_size * 0.7))
     plt.xlabel("time [s]", fontsize=font_size)
     plt.ylabel(r'$e_{\rm{rel},u_0}$', fontsize=font_size)
-    plt.legend([label1, label2], ["ours", "reference"], loc="lower left", fontsize=int(font_size * 0.7))
+    plt.legend([label3, label2], [r"M$_N$", "other"], loc="lower left",
+               fontsize=int(font_size * 0.7))
     adjust_text(texts, only_move={'texts': 'y'})
-    plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error.pdf", dpi=500, bbox_inches="tight")
+    plt.savefig("paper_data/paper2/illustrations/hohlraum/timing_vs_error_1.pdf", dpi=500, bbox_inches="tight")
     plt.clf()
 
     # c) sys size vs timing
