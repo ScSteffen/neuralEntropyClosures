@@ -75,8 +75,7 @@ class MK12Network(BaseNetwork):
         output_ = layers.Dense(1, activation=None, kernel_initializer=initializer, name="dense_output",
                                kernel_regularizer=l2_regularizer, bias_initializer='zeros')(hidden)  # outputlayer
         # Create the core model
-        core_model = keras.Model(inputs=[input_], outputs=[
-            output_], name="ResNet_entropy_closure")
+        core_model = keras.Model(inputs=[input_], outputs=[output_], name="ResNet_entropy_closure")
 
         print("The core model overview")
         core_model.summary()
