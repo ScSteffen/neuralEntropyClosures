@@ -41,25 +41,23 @@ class MK13Network(BaseNetwork):
 
     def create_model(self) -> bool:
 
-        input_initializer = tf.keras.initializers.LecunNormal()
+        initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
+        initializer_non_neg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.1, seed=None)
 
-        # Weight regularizer
-        l2_regularizer_nn = tf.keras.regularizers.L1L2(l2=0.0001)  # L1 + L2 penalties
-        l1l2_regularizer = tf.keras.regularizers.L1L2(l1=0.0001, l2=0.0001)  # L1 + L2 penalties
+        weight_regularizer = tf.keras.regularizers.L1L2(l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
-            initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
-            initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.1, seed=None)
+
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(units=layer_dim, activation=None, kernel_constraint=NonNeg(),
-                                                  kernel_initializer=initializerNonNeg,
-                                                  kernel_regularizer=l2_regularizer_nn, use_bias=True,
-                                                  bias_initializer='zeros',
+                                                  kernel_initializer=initializer_non_neg,
+                                                  kernel_regularizer=weight_regularizer, use_bias=True,
+                                                  bias_initializer=initializer,
                                                   name='layer_' + str(layer_idx) + 'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x = layers.Dense(units=layer_dim, activation=None, kernel_initializer=initializer,
-                                          kernel_regularizer=l2_regularizer_nn, use_bias=False,
+                                          kernel_regularizer=weight_regularizer, use_bias=False,
                                           name='layer_' + str(layer_idx) + 'dense_component')(nw_input_x)
             # Wz+Wx+b + x
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
@@ -72,19 +70,14 @@ class MK13Network(BaseNetwork):
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
 
-            initializer = tf.keras.initializers.RandomUniform(
-                minval=-0.5, maxval=0.5, seed=None)
-            initializerNonNeg = tf.keras.initializers.RandomUniform(
-                minval=0, maxval=0.1, seed=None)
-
             weighted_nn_sum_z: Tensor = layers.Dense(1, activation=None, kernel_constraint=NonNeg(),
-                                                     kernel_initializer=initializerNonNeg,
-                                                     kernel_regularizer=l2_regularizer_nn, use_bias=True,
-                                                     bias_initializer='zeros', name='layer_' + str(layer_idx) +
-                                                                                    'nn_component')(layer_input_z)
+                                                     kernel_initializer=initializer_non_neg,
+                                                     kernel_regularizer=weight_regularizer, use_bias=True,
+                                                     bias_initializer=initializer, name='layer_' + str(layer_idx) +
+                                                                                        'nn_component')(layer_input_z)
             # Weighted sum of network input
             weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
-                                                  kernel_regularizer=l2_regularizer_nn, use_bias=False,
+                                                  kernel_regularizer=weight_regularizer, use_bias=False,
                                                   name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
@@ -103,15 +96,15 @@ class MK13Network(BaseNetwork):
             hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(x)
             hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
             # First Layer is a std dense layer
-            hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=input_initializer,
-                                  kernel_regularizer=l1l2_regularizer, use_bias=True,
-                                  bias_initializer=input_initializer,
+            hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
+                                  kernel_regularizer=weight_regularizer, use_bias=True,
+                                  bias_initializer=initializer,
                                   bias_regularizer=None, name="layer_-1_input")(hidden)
         else:
             # First Layer is a std dense layer
-            hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=input_initializer,
-                                  kernel_regularizer=l1l2_regularizer, use_bias=True,
-                                  bias_initializer=input_initializer,
+            hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
+                                  kernel_regularizer=weight_regularizer, use_bias=True,
+                                  bias_initializer=initializer,
                                   bias_regularizer=None, name="layer_-1_input")(x)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
