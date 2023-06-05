@@ -38,7 +38,7 @@ def main():
     # test_on_realizable_set_m2()
 
     # 3) Print memory-computational cost study
-    # print_comp_efficiency_memory()
+    print_comp_efficiency_memory()
 
     # 4) Print cross-sections
     # print_cross_sections()
