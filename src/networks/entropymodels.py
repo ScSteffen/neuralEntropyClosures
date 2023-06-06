@@ -71,7 +71,7 @@ class EntropyModel(tf.keras.Model, ABC):
             self.nq = quad_weights.size  # is not 20 * polyDegree
             m_basis = math.compute_spherical_harmonics(mu, phi, self.poly_degree)
         elif spatial_dimension == 2 and self.basis == "spherical_harmonics":
-            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre2D(6 * polynomial_degree)  # dims = nq
+            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre2D(6 * polynomial_degree)  # dims = nq #
             self.nq = quad_weights.size  # is not 20 * polyDegree
             # print(sum(quad_weights))
             m_basis = math.compute_spherical_harmonics_2D(mu, phi, self.poly_degree)

@@ -364,6 +364,10 @@ def qGaussLegendre2D(Qorder):
 
     def computequadpoints(order):
         """Quadrature points for GaussLegendre quadrature. Read from file."""
+        """
+        mu in  [-1,0]
+        phi in [0,2*pi]
+        """
         mu, _ = leggauss(order)
         phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
         xy = np.zeros((order * order, 2))
@@ -619,26 +623,43 @@ def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) ->
 
 
 def compute_spherical_harmonics_2D(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
-    # Tested against KiT-RT for degree 0-2 at 6th June 2023
+    # Tested against KiT-RT for degree 0-4 at 6th June 2023
     # assemble spherical harmonics
     input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
 
     n_system = input_dim_dict_2D[degree]
-    if degree > 2:
-        print("Error: Spherical harmonics 2D of degree higher than 1 not yet configured")
-        exit(1)
-    sh_basis = np.zeros((n_system, len(mu)))
+    sh_basis_scipy = np.zeros((n_system, len(mu)))
+
+    # sh_basis = np.zeros((n_system, len(mu)))
+    # for i in range(len(mu)):
+    #    sh_basis[0, i] = np.sqrt(1 / (4 * np.pi))
+    #    if degree > 0:
+    #        sh_basis[1, i] = - np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+    #        sh_basis[2, i] = - np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+    #    if degree > 1:
+    #        sh_basis[3, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.sin(2 * phi[i])
+    #        sh_basis[4, i] = np.sqrt(5. / (16. * np.pi)) * (3 * mu[i] * mu[i] - 1)
+    #        sh_basis[5, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.cos(2 * phi[i])
 
     for i in range(len(mu)):
-        sh_basis[0, i] = np.sqrt(1 / (4 * np.pi))
-        if degree > 0:
-            sh_basis[1, i] = - np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
-            sh_basis[2, i] = - np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
-        if degree > 1:
-            sh_basis[3, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.sin(2 * phi[i])
-            sh_basis[4, i] = np.sqrt(5. / (16. * np.pi)) * (3 * mu[i] * mu[i] - 1)
-            sh_basis[5, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.cos(2 * phi[i])
-    return sh_basis
+        count = 0
+        for l in range(0, degree + 1):
+            for k in range(-l, l + 1):
+                if (k + l) % 2 == 0:
+                    if k < 0:
+                        Y = scipy.special.sph_harm(np.abs(k), l, phi[i], np.arccos(mu[i]), out=None)
+                        Y = np.sqrt(2) * (-1) ** (k + l) * Y.imag
+                    if k > 0:
+                        Y = scipy.special.sph_harm(k, l, phi[i], np.arccos(mu[i]), out=None)
+                        Y = np.sqrt(2) * (-1) ** (k + l) * Y.real
+                    if k == 0:
+                        Y = scipy.special.sph_harm(k, l, phi[i], np.arccos(mu[i]), out=None)
+                        Y = Y.real
+
+                    sh_basis_scipy[count, i] = Y
+                    count += 1
+    # test against python implementation
+    return sh_basis_scipy
 
 
 def compute_spherical_harmonics_general(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
