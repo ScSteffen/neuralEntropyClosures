@@ -4,10 +4,11 @@ Author:  Steffen Schotthöfer
 Date: 16.03.21
 """
 
-from numpy.polynomial.legendre import leggauss
 import numpy as np
-import tensorflow as tf
+import scipy
 import scipy.optimize as opt
+import tensorflow as tf
+from numpy.polynomial.legendre import leggauss
 
 
 class EntropyTools:
@@ -28,6 +29,7 @@ class EntropyTools:
 
     # @brief: Regularization Parameter for regularized entropy. =0 means non regularized
     regularization_gamma: tf.Tensor
+    regularization_gamma_np: float
     # @brief: tensor of the form [0,gamma,gamma,...]
     regularization_gamma_vector: tf.Tensor
 
@@ -43,29 +45,23 @@ class EntropyTools:
         quad_order = 100
         if spatial_dimension == 1:
             self.nq = quad_order
-            [quad_pts, quad_weights] = qGaussLegendre1D(
-                quad_order)  # order = nq
-            m_basis = computeMonomialBasis1D(
-                quad_pts, self.poly_degree)  # dims = (N x nq)
+            [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
+            m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
         if spatial_dimension == 2:
-            [quad_pts, quad_weights] = qGaussLegendre2D(
-                quad_order)  # dims = nq
+            [quad_pts, quad_weights, _, _] = qGaussLegendre2D(quad_order)  # dims = nq
             self.nq = quad_weights.size  # is not 10 * polyDegree
-            m_basis = computeMonomialBasis2D(
-                quad_pts, self.poly_degree)  # dims = (N x nq)
+            m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
 
-        self.quadPts = tf.constant(quad_pts, shape=(
-            self.spatial_dimension, self.nq), dtype=tf.float64)
-        self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq),
-                                       dtype=tf.float64)
+        self.quadPts = tf.constant(quad_pts, shape=(self.spatial_dimension, self.nq), dtype=tf.float64)
+        self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)
 
         self.input_dim = m_basis.shape[0]
-        self.momentBasis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
-                                       dtype=tf.float64)
+        self.momentBasis = tf.constant(m_basis, shape=(self.input_dim, self.nq), dtype=tf.float64)
+        self.regularization_gamma_np = gamma
         self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
         gamma_vec = gamma * np.ones(shape=(1, self.input_dim))
-        self.regularization_gamma_vector = tf.constant(
-            gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
+        gamma_vec[0, 0] = 0.0  # partial regularization
+        self.regularization_gamma_vector = tf.constant(gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
 
     def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -80,11 +76,9 @@ class EntropyTools:
                w    , dims = nq
         returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
         """
-        tmp = tf.math.exp(tf.tensordot(
-            alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        tmp = tf.math.exp(tf.tensordot(alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
         # ln(<tmp>)
-        alpha_0 = - \
-            tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))
+        alpha_0 = - tf.math.log(tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
     def reconstruct_u(self, alpha: tf.Tensor) -> tf.Tensor:
@@ -101,8 +95,7 @@ class EntropyTools:
         returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
         """
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(
-            alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         # f * w * momentBasis
         return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1])) + tf.math.multiply(
@@ -140,12 +133,10 @@ class EntropyTools:
         returns h = alpha*u - <eta_*(alpha*m)>
         """
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(
-            alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
         # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
-        tmp2 = tf.math.reduce_sum(tf.math.multiply(
-            alpha, u), axis=1, keepdims=True)
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         # 0.5*gamma*alpha_r*alpha_r
         entropy_pt3 = 0.5 * self.regularization_gamma * tf.math.reduce_sum(tf.math.multiply(alpha[:, 1:], alpha[:, 1:]),
                                                                            axis=1, keepdims=True)
@@ -171,8 +162,7 @@ class EntropyTools:
             alpha_orig, self.momentBasis, axes=([1], [0])))  # alpha*m
         tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
         # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
-        tmp2 = tf.math.reduce_sum(tf.math.multiply(
-            alpha, u), axis=1, keepdims=True)
+        tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
         # 0.5*gamma*alpha_r*alpha_r
         entropy_pt3 = 0.5 * self.regularization_gamma * tf.math.reduce_sum(tf.math.multiply(alpha[:, 1:], alpha[:, 1:]),
                                                                            axis=1, keepdims=True)
@@ -258,12 +248,12 @@ class EntropyTools:
         """
         # Currently only for maxwell Boltzmann entropy
         # compute negative entropy functional
-        f_quad = np.exp(np.tensordot(
-            alpha, self.opti_m, axes=([0], [0])))  # alpha*m
+        f_quad = np.exp(np.tensordot(alpha, self.opti_m, axes=([0], [0])))  # exp( alpha*m)
         t1 = np.tensordot(f_quad, self.opti_w, axes=([0], [1]))  # f*w
         t2 = np.inner(alpha, self.opti_u)
 
-        return t1 - t2
+        t3 = self.regularization_gamma_np / 2.0 * np.inner(alpha[1:], alpha[1:])
+        return t1 - t2 + t3
 
     def opti_entropy_prime(self, alpha: np.ndarray) -> np.ndarray:
         """
@@ -284,10 +274,11 @@ class EntropyTools:
         f_quad = np.exp(np.tensordot(
             alpha, self.opti_m, axes=([0], [0])))  # alpha*m
         tmp = np.multiply(f_quad, self.opti_w)  # f*w
-        t2 = np.tensordot(tmp, self.opti_m[:, :], axes=(
-            [1], [1]))  # f * w * momentBasis
+        t2 = np.tensordot(tmp, self.opti_m[:, :], axes=([1], [1]))  # f * w * momentBasis
         dim = t2.shape[1]
-        return np.reshape(t2 - self.opti_u, (dim,))
+        t3 = self.regularization_gamma_np * alpha
+        t3[0] = 0.0
+        return np.reshape(t2 - self.opti_u + t3, (dim,))
 
     def opti_entropy_prime2(self, alpha: np.ndarray) -> np.ndarray:
         """
@@ -309,11 +300,13 @@ class EntropyTools:
         tmp = np.multiply(f_quad, self.opti_w)  # f*w
 
         # mm = np.zeros(shape=(self.nq, self.inputDim, self.inputDim))
-        t2 = 0
+        t2 = np.zeros((self.input_dim, self.input_dim))
         for i in range(self.nq):
             t = np.tensordot(self.opti_m[:, i], self.opti_m[:, i], axes=0)
             t2 += t * tmp[0, i]
-        return t2
+        t3 = self.regularization_gamma_np * np.identity((self.input_dim, self.input_dim))
+        t3[0, 0] = 0
+        return t2 + t3
 
     def KL_divergence(self, alpha_true: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -326,8 +319,7 @@ class EntropyTools:
 
         diff = alpha_true - alpha
 
-        t1 = tf.math.exp(tf.tensordot(
-            alpha_true, self.momentBasis, axes=([1], [0])))
+        t1 = tf.math.exp(tf.tensordot(alpha_true, self.momentBasis, axes=([1], [0])))
         t2 = tf.tensordot(diff, self.momentBasis, axes=([1], [0]))
         integrand = tf.math.multiply(t1, t2)
 
@@ -372,12 +364,20 @@ def qGaussLegendre2D(Qorder):
 
     def computequadpoints(order):
         """Quadrature points for GaussLegendre quadrature. Read from file."""
+        """
+        mu in  [-1,0]
+        phi in [0,2*pi]
+        """
         mu, _ = leggauss(order)
         phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
         xy = np.zeros((order * order, 2))
         count = 0
+        mu_arr = np.zeros((order * order,))
+        phi_arr = np.zeros((order * order,))
         for i in range(int(order / 2)):
             for j in range(2 * order):
+                mu_arr[count] = mu[i]
+                phi_arr[count] = phi[j]
                 mui = mu[i]
                 phij = phi[j]
                 xy[count, 0] = np.sqrt(1 - mui ** 2) * np.cos(phij)
@@ -385,7 +385,7 @@ def qGaussLegendre2D(Qorder):
                 # xyz[count, 2] = mui
                 count += 1
 
-        return xy
+        return xy, mu_arr, phi_arr
 
     def computequadweights(order):
         """Quadrature weights for GaussLegendre quadrature. Read from file."""
@@ -398,10 +398,54 @@ def qGaussLegendre2D(Qorder):
                 count += 1
         return w
 
-    pts = computequadpoints(Qorder)
+    pts, mu, phi = computequadpoints(Qorder)
     weights = computequadweights(Qorder)
 
-    return [pts, weights]
+    return [pts, weights, mu, phi]
+
+
+def qGaussLegendre3D(Qorder):
+    """
+       order: order of quadrature, uses all quadpts... inefficient
+       returns: [pts, weights] : quadrature points and weights, dim(pts) = nq x 2
+    """
+
+    def computequadpoints(order):
+        """Quadrature points for GaussLegendre quadrature. Read from file."""
+        mu, _ = leggauss(order)
+        phi = [np.pi * (k + 1 / 2) / order for k in range(2 * order)]
+        xyz = np.zeros((2 * order * order, 3))
+        count = 0
+        mu_arr = np.zeros((2 * order * order,))
+        phi_arr = np.zeros((2 * order * order,))
+
+        for i in range(int(order)):
+            for j in range(2 * order):
+                mu_arr[count] = mu[i]
+                phi_arr[count] = phi[j]
+
+                xyz[count, 0] = np.sqrt(1 - mu[i] ** 2) * np.cos(phi[j])
+                xyz[count, 1] = np.sqrt(1 - mu[i] ** 2) * np.sin(phi[j])
+                xyz[count, 2] = mu[i]
+                count += 1
+
+        return xyz, mu_arr, phi_arr
+
+    def computequadweights(order):
+        """Quadrature weights for GaussLegendre quadrature. Read from file."""
+        _, leggaussweights = leggauss(order)
+        w = np.zeros(2 * order * order)
+        count = 0
+        for i in range(int(order)):
+            for j in range(2 * order):
+                w[count] = np.pi / order * leggaussweights[i]
+                count += 1
+        return w
+
+    pts, mu, phi = computequadpoints(Qorder)
+    weights = computequadweights(Qorder)
+
+    return [pts, weights, mu, phi]
 
 
 def integrate(integrand, weights):
@@ -498,8 +542,7 @@ def computeMonomialBasis1D(quadPts, polyDegree):
 
     for idx_quad in range(0, nq):
         for idx_degree in range(0, polyDegree + 1):
-            monomialBasis[idx_degree, idx_quad] = np.power(
-                quadPts[idx_quad], idx_degree)
+            monomialBasis[idx_degree, idx_quad] = np.power(quadPts[idx_quad], idx_degree)
     return monomialBasis
 
 
@@ -527,8 +570,7 @@ def computeMonomialBasis2D(quadPts, polyDegree):
         for idx_degree in range(0, polyDegree + 1):
             for a in range(0, idx_degree + 1):
                 b = idx_degree - a
-                monomialBasis[idx_vector, idx_quad] = np.power(
-                    omega_x, a) * np.power(omega_y, b)
+                monomialBasis[idx_vector, idx_quad] = np.power(omega_x, a) * np.power(omega_y, b)
                 idx_vector += 1
 
     return monomialBasis
@@ -556,3 +598,88 @@ def getCurrDegreeSize(currDegree, spatialDim):
     """
     return np.math.factorial(currDegree + spatialDim - 1) / (
             np.math.factorial(currDegree) * np.math.factorial(spatialDim - 1))
+
+
+# --- spherical harmonics
+def compute_spherical_harmonics(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
+    # assemble spherical harmonics
+    n_system = 2 * degree + degree ** 2 + 1
+    sh_basis = np.zeros((n_system, len(mu)))
+
+    for i in range(len(mu)):
+        sh_basis[0, i] = np.sqrt(1 / (4 * np.pi))
+        if degree > 0:
+            sh_basis[1, i] = -np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+            sh_basis[2, i] = np.sqrt(3. / (4 * np.pi)) * mu[i]
+            sh_basis[3, i] = -np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+        if degree > 1:
+            sh_basis[4, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.sin(2 * phi[i])
+            sh_basis[5, i] = -1 * np.sqrt(15. / (4. * np.pi)) * mu[i] * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+            sh_basis[6, i] = np.sqrt(5. / (16. * np.pi)) * (3 * mu[i] * mu[i] - 1)
+            sh_basis[7, i] = -1 * np.sqrt(15. / (4. * np.pi)) * mu[i] * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+            sh_basis[8, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.cos(2 * phi[i])
+
+    return sh_basis
+
+
+def compute_spherical_harmonics_2D(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
+    # Tested against KiT-RT for degree 0-4 at 6th June 2023
+    # assemble spherical harmonics
+    input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
+
+    n_system = input_dim_dict_2D[degree]
+    sh_basis_scipy = np.zeros((n_system, len(mu)))
+
+    # sh_basis = np.zeros((n_system, len(mu)))
+    # for i in range(len(mu)):
+    #    sh_basis[0, i] = np.sqrt(1 / (4 * np.pi))
+    #    if degree > 0:
+    #        sh_basis[1, i] = - np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.sin(phi[i])
+    #        sh_basis[2, i] = - np.sqrt(3. / (4 * np.pi)) * np.sqrt(1 - mu[i] * mu[i]) * np.cos(phi[i])
+    #    if degree > 1:
+    #        sh_basis[3, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.sin(2 * phi[i])
+    #        sh_basis[4, i] = np.sqrt(5. / (16. * np.pi)) * (3 * mu[i] * mu[i] - 1)
+    #        sh_basis[5, i] = np.sqrt(15. / (16. * np.pi)) * (1 - mu[i] * mu[i]) * np.cos(2 * phi[i])
+
+    for i in range(len(mu)):
+        count = 0
+        for l in range(0, degree + 1):
+            for k in range(-l, l + 1):
+                if (k + l) % 2 == 0:
+                    if k < 0:
+                        Y = scipy.special.sph_harm(np.abs(k), l, phi[i], np.arccos(mu[i]), out=None)
+                        Y = np.sqrt(2) * (-1) ** (k + l) * Y.imag
+                    if k > 0:
+                        Y = scipy.special.sph_harm(k, l, phi[i], np.arccos(mu[i]), out=None)
+                        Y = np.sqrt(2) * (-1) ** (k + l) * Y.real
+                    if k == 0:
+                        Y = scipy.special.sph_harm(k, l, phi[i], np.arccos(mu[i]), out=None)
+                        Y = Y.real
+
+                    sh_basis_scipy[count, i] = Y
+                    count += 1
+    # test against python implementation
+    return sh_basis_scipy
+
+
+def compute_spherical_harmonics_general(mu: np.ndarray, phi: np.ndarray, degree: int) -> np.ndarray:
+    # assemble spherical harmonics
+    n_system = 2 * degree + degree ** 2 + 1
+    sh_basis = np.zeros((n_system, len(mu)))
+    idx_sys = 0
+    for l in range(degree + 1):
+        for k in range(-l, l + 1):
+            idx_quad = 0
+            for mui, phij in zip(mu, phi):
+                Yvals = scipy.special.sph_harm(abs(k), l, phij, np.arccos(mui))
+                if k < 0:
+                    Yvals = np.sqrt(2) * Yvals.imag  # * (-1) ** (k + 1)
+                elif k > 0:
+                    Yvals = np.sqrt(2) * Yvals.real  # * (-1) ** (k + 1)
+                elif k == 0:
+                    Yvals = Yvals.real
+                sh_basis[idx_sys, idx_quad] = Yvals
+                idx_quad += 1
+            idx_sys += 1
+
+    return sh_basis

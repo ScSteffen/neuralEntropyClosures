@@ -27,132 +27,90 @@ class MK11Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
-                 gamma_lvl: int = 0):
+                 gamma_lvl: int = 0, basis: str = "monomial"):
         if save_folder == "":
             custom_folder_name = "MK11_N" + \
-                str(polynomial_degree) + "_D" + str(spatial_dimension)
+                                 str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
             custom_folder_name = save_folder
         super(MK11Network, self).__init__(normalized=normalized, polynomial_degree=polynomial_degree,
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                          gamma_lvl=gamma_lvl)
+                                          gamma_lvl=gamma_lvl, basis=basis)
 
     def create_model(self) -> bool:
-        # Weight initializer
-        # 1. This is a modified Kaiming inititalization with a first-order taylor expansion of the
-        # softplus activation function (see S. Kumar "On Weight Initialization in
-        # Deep Neural Networks").
-        # Extra factor of (1/1.1) added inside sqrt to suppress inf for 1 dimensional inputs
-        # input_stddev: float = np.sqrt(
-        #    (1 / 1.1) * (1 / self.inputDim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        # input_stddev: float = np.sqrt(
-        # (1 / 1.1) * (1 / self.input_dim) * (1 / ((1 / 2) ** 2)) * (1 / (1 + np.log(2) ** 2)))
-        # input_initializer = keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
-        input_initializer = tf.keras.initializers.LecunNormal()
-        # initializerNonNeg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.5, seed=None)
 
-        # keras.initializers.RandomNormal(mean=0., stddev=input_stddev)
-        # Weight initializer (uniform bounded)
+        initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
+        initializer_non_neg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.1, seed=None)
 
-        # Weight regularizer
-        l2_regularizer_nn = tf.keras.regularizers.L1L2(
-            l2=0.0001)  # L1 + L2 penalties
-        l1l2_regularizer = tf.keras.regularizers.L1L2(
-            l1=0.0001, l2=0.0001)  # L1 + L2 penalties
+        weight_regularizer = tf.keras.regularizers.L1L2(l2=0.0001)  # L1 + L2 penalties
 
         def convex_layer(layer_input_z: Tensor, nw_input_x: Tensor, layer_idx: int = 0, layer_dim: int = 10) -> Tensor:
-            initializer = tf.keras.initializers.RandomUniform(
-                minval=-0.5, maxval=0.5, seed=None)
-            initializerNonNeg = tf.keras.initializers.RandomUniform(
-                minval=0, maxval=0.5, seed=None)
+
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(units=layer_dim, activation=None, kernel_constraint=NonNeg(),
-                                                  kernel_initializer=initializerNonNeg,
-                                                  kernel_regularizer=None,
-                                                  use_bias=True, bias_initializer='zeros',
-                                                  name='layer_' +
-                                                  str(layer_idx) +
-                                                  'nn_component'
+                                                  kernel_initializer=initializer_non_neg,
+                                                  kernel_regularizer=weight_regularizer, use_bias=True,
+                                                  bias_initializer=initializer,
+                                                  name='layer_' + str(layer_idx) + 'nn_component'
                                                   )(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x = layers.Dense(units=layer_dim, activation=None,
-                                          kernel_initializer=initializer,
-                                          kernel_regularizer=None,
-                                          use_bias=False, name='layer_' + str(layer_idx) + 'dense_component'
-                                          )(nw_input_x)
-            # Wz+Wx+b
+            weighted_sum_x = layers.Dense(units=layer_dim, activation=None, kernel_initializer=initializer,
+                                          kernel_regularizer=weight_regularizer, use_bias=False,
+                                          name='layer_' + str(layer_idx) + 'dense_component')(nw_input_x)
+            # Wz+Wx+b + x
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
+
             # activation
-            out = tf.keras.activations.softplus(intermediate_sum)
+            out = tf.keras.activations.elu(intermediate_sum)
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
-            initializer = tf.keras.initializers.RandomUniform(
-                minval=-0.5, maxval=0.5, seed=None)
-            initializerNonNeg = tf.keras.initializers.RandomUniform(
-                minval=0, maxval=0.5, seed=None)
 
             weighted_nn_sum_z: Tensor = layers.Dense(1, activation=None, kernel_constraint=NonNeg(),
-                                                     kernel_initializer=initializerNonNeg,
-                                                     kernel_regularizer=None,
-                                                     use_bias=True,
-                                                     bias_initializer='zeros',
-                                                     name='layer_' +
-                                                     str(layer_idx) +
-                                                     'nn_component'
-                                                     )(layer_input_z)
+                                                     kernel_initializer=initializer_non_neg,
+                                                     kernel_regularizer=weight_regularizer, use_bias=True,
+                                                     bias_initializer=initializer, name='layer_' + str(layer_idx) +
+                                                                                        'nn_component')(layer_input_z)
             # Weighted sum of network input
-            weighted_sum_x: Tensor = layers.Dense(1, activation=None,
-                                                  kernel_initializer=initializer,
-                                                  kernel_regularizer=None,
-                                                  use_bias=False,
-                                                  name='layer_' +
-                                                  str(layer_idx) +
-                                                  'dense_component'
-                                                  )(net_input_x)
+            weighted_sum_x: Tensor = layers.Dense(1, activation=None, kernel_initializer=initializer,
+                                                  kernel_regularizer=weight_regularizer, use_bias=False,
+                                                  name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
+
             if self.scale_active:  # if output is scaled, use relu.
                 out = tf.keras.activations.relu(out)
             return out
 
-        ### build the core network with icnn closure architecture ###
+            ### build the core network with icnn closure architecture ###
 
         input_ = keras.Input(shape=(self.input_dim,))
+
         if self.input_decorrelation:  # input data decorellation and shift
-            hidden = MeanShiftLayer(
-                input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
-            hidden = DecorrelationLayer(
-                input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
+            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            x = hidden
             # First Layer is a std dense layer
-            hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
-                                  kernel_regularizer=None, use_bias=True,
-                                  bias_initializer=input_initializer,
+            hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
+                                  kernel_regularizer=weight_regularizer, use_bias=True,
+                                  bias_initializer=initializer,
                                   bias_regularizer=None, name="layer_-1_input")(hidden)
         else:
+            x = input_
             # First Layer is a std dense layer
-            hidden = layers.Dense(self.model_width, activation="softplus", kernel_initializer=input_initializer,
-                                  kernel_regularizer=None, use_bias=True,
-                                  bias_initializer=input_initializer,
-                                  bias_regularizer=None, name="layer_-1_input")(input_)
+            hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
+                                  kernel_regularizer=weight_regularizer, use_bias=True,
+                                  bias_initializer=initializer, bias_regularizer=None, name="layer_-1_input")(x)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
-            hidden = convex_layer(
-                hidden, input_, layer_idx=idx, layer_dim=self.model_width)
-            # hidden = layers.BatchNormalization()(hidden)
-        #hidden = convex_layer(
-        #    hidden, input_, layer_idx=self.model_depth + 1, layer_dim=int(self.model_width / 2))
-        pre_output = convex_output_layer(
-            hidden, input_, layer_idx=self.model_depth + 2)  # outputlayer
-        # scale ouput to range  (0,1) h = h_old*(h_max-h_min)+h_min
-        # output_ = tf.add(tf.math.scalar_mul((h_max_tensor - h_min_tensor), pre_output), h_max_tensor)
+            hidden = convex_layer(hidden, x, layer_idx=idx, layer_dim=self.model_width)
+        pre_output = convex_output_layer(hidden, x, layer_idx=self.model_depth + 2)  # outputlayer
 
         # Create the core model
-        core_model = keras.Model(inputs=[input_], outputs=[
-                                 pre_output], name="Icnn_closure")
+        core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="Icnn_closure")
         print("The core model overview")
         core_model.summary()
         print("The sobolev wrapped model overview")
@@ -161,35 +119,20 @@ class MK11Network(BaseNetwork):
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
                              scaler_min=self.scaler_min, scale_active=self.scale_active,
-                             gamma=self.regularization_gamma, name="sobolev_icnn_wrapper")
+                             gamma=self.regularization_gamma, name="sobolev_icnn_wrapper", basis=self.basis)
         # build graph
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
 
-        # test
-        # a1 = tf.constant([[1], [2.5], [2]], shape=(3, 1), dtype=tf.float32)
-        # a0 = tf.constant([[2], [1.5], [3]], shape=(3, 1), dtype=tf.float32)
-        # a2 = tf.constant([[0, 0.5], [0, 1.5], [1, 2.5]], shape=(3, 2), dtype=tf.float32)
-        # a3 = tf.constant([[0, 1.5], [0, 2.5], [1, 3.5]], shape=(3, 2), dtype=tf.float32)
-
-        # print(tf.keras.losses.MeanSquaredError()(a3, a2))
-        # print(self.KL_divergence_loss(model.momentBasis, model.quadWeights)(a1, a0))
-        # print(self.custom_mse(a2, a3))
         print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
             self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
         model.compile(
-            loss={'output_1': tf.keras.losses.MeanSquaredError(
-            ), 'output_2': tf.keras.losses.MeanSquaredError(),
-            'output_3': tf.keras.losses.MeanSquaredError()},
+            loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
+                  'output_3': tf.keras.losses.MeanSquaredError()},
             loss_weights={
-                'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},  # , 'output_4': self.lossWeights[3]},
+                'output_1': self.loss_weights[0], 'output_2': self.loss_weights[1], 'output_3': self.loss_weights[2]},
             optimizer=self.optimizer, metrics=['mean_absolute_error', 'mean_squared_error'])
 
-        # model.summary()
-
-        # tf.keras.utils.plot_model(model, to_file=self.filename + '/modelOverview', show_shapes=True,
-        # show_layer_names = True, rankdir = 'TB', expand_nested = True)
-        # print("Weight data type:" + str(np.unique([w.dtype for w in model.get_weights()])))
         self.model = model
         return True
 
@@ -198,10 +141,15 @@ class MK11Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
-        # u_in = self.training_data[0][:100]
-        # alpha_in = self.training_data[1][:100]
-        # h_in = self.training_data[2][:100]
-        # [h, alpha, u] = self.model(self.training_data[1][:100])
+        # u_in = self.training_data[0]
+        # alpha_in = self.training_data[1]
+        # [h, alpha, u_out] = self.model(u_in)
+        ## alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
+        ## u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
+        # u_in = self.training_data[0][:2]
+        # alpha_in = self.training_data[1][:2]
+        # h_in = self.training_data[2][:2]
+        # [h, alpha, u] = self.model(alpha_in)
 
         x_data = self.training_data[0]
         y_data = [self.training_data[2], self.training_data[1], self.training_data[0]]  # , self.trainingData[1]]
@@ -227,7 +175,7 @@ class MK11Network(BaseNetwork):
         """
         u_reduced = u_complete[:, 1:]  # chop of u_0
         [h_predicted, alpha_predicted, u_0_predicted,
-            tmp] = self.model(u_reduced)
+         tmp] = self.model(u_reduced)
         alpha_complete_predicted = self.model.reconstruct_alpha(
             alpha_predicted)
         u_complete_reconstructed = self.model.reconstruct_u(
@@ -254,7 +202,7 @@ class MK11Network(BaseNetwork):
         u_downscaled = self.model.scale_u(
             u_non_normal, tf.math.reciprocal(u_non_normal[:, 0]))  # downscaling
         [u_complete_reconstructed, alpha_complete_predicted,
-            h_predicted] = self.call_network(u_downscaled)
+         h_predicted] = self.call_network(u_downscaled)
         u_rescaled = self.model.scale_u(
             u_complete_reconstructed, u_non_normal[:, 0])  # upscaling
         alpha_rescaled = self.model.scale_alpha(
@@ -289,7 +237,7 @@ class MK11Network(BaseNetwork):
         if legacy_mode:
             if self.poly_degree > 1:
                 [h_predicted, alpha_predicted,
-                    u_predicted] = self.model_legacy(u_reduced)
+                 u_predicted] = self.model_legacy(u_reduced)
             else:
                 [h_predicted, alpha_predicted] = self.model_legacy(u_reduced)
         else:

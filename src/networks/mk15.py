@@ -27,7 +27,7 @@ class MK15Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
-                 gamma_lvl: int = 0):
+                 gamma_lvl: int = 0, basis="monomial"):
         if save_folder == "":
             custom_folder_name = "MK15_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
         else:
@@ -36,7 +36,7 @@ class MK15Network(BaseNetwork):
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                          gamma_lvl=gamma_lvl)
+                                          gamma_lvl=gamma_lvl, basis=basis)
 
     def create_model(self) -> bool:
 
@@ -98,7 +98,7 @@ class MK15Network(BaseNetwork):
         model = EntropyModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
                              scaler_min=self.scaler_min, scale_active=self.scale_active, name="entropy_wrapper",
-                             gamma=self.regularization_gamma)
+                             gamma=self.regularization_gamma, basis=self.basis)
 
         batch_size = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
@@ -120,6 +120,11 @@ class MK15Network(BaseNetwork):
         '''
         Calls training depending on the MK model
         '''
+
+        # u_in = self.training_data[0]
+        # alpha_in = self.training_data[1]
+        # h_in = self.training_data[2]
+        # [alpha, alpha, u_out, h] = self.model(u_in)
 
         # u_tf = tf.constant(self.training_data[0][:50, :])
         # alpha_tf = tf.constant(self.training_data[1][:50, :])

@@ -38,7 +38,8 @@ class EntropyModel(tf.keras.Model, ABC):
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
-                 scale_active: bool = True, subclass=False, gamma: float = 0.0, **opts):
+                 scale_active: bool = True, subclass: bool = False, gamma: float = 0.0, basis: str = "monomial",
+                 **opts):
         super(EntropyModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.core_model = core_model  # must be a compiled tensorflow model
@@ -51,31 +52,44 @@ class EntropyModel(tf.keras.Model, ABC):
         self.derivative_scale_factor = tf.constant(
             (scaler_max - scaler_min) * 0.5, dtype=tf.float64)
         self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
+        self.basis = basis
         print("Model uses regularization with parameter gamma = " + str(gamma))
 
         if not subclass:
             print("Model output alpha will be scaled by factor " +
                   str(self.derivative_scale_factor.numpy()))
-        if spatial_dimension == 1:
-            [quad_pts, quad_weights] = math.qGaussLegendre1D(
-                6 * polynomial_degree)  # dims = nq
-            m_basis = math.computeMonomialBasis1D(
-                quad_pts, self.poly_degree)  # dims = (N x nq)
+        if spatial_dimension == 1 and self.basis == "monomial":
+            [quad_pts, quad_weights] = math.qGaussLegendre1D(6 * polynomial_degree)  # dims = nq
+            m_basis = math.computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
             self.nq = quad_weights.size  # = 20 * polyDegree
-        elif spatial_dimension == 2:
-            [quad_pts, quad_weights] = math.qGaussLegendre2D(
-                6 * polynomial_degree)  # dims = nq
+        elif spatial_dimension == 2 and self.basis == "monomial":
+            [quad_pts, quad_weights, _, _] = math.qGaussLegendre2D(6 * polynomial_degree)  # dims = nq
             self.nq = quad_weights.size  # is not 20 * polyDegree
-            m_basis = math.computeMonomialBasis2D(
-                quad_pts, self.poly_degree)  # dims = (N x nq)
+            m_basis = math.computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
+        elif spatial_dimension == 3 and self.basis == "spherical_harmonics":
+            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre3D(6 * polynomial_degree)  # dims = nq
+            self.nq = quad_weights.size  # is not 20 * polyDegree
+            m_basis = math.compute_spherical_harmonics(mu, phi, self.poly_degree)
+        elif spatial_dimension == 2 and self.basis == "spherical_harmonics":
+            [quad_pts, quad_weights, mu, phi] = math.qGaussLegendre2D(6 * polynomial_degree)  # dims = nq #
+            self.nq = quad_weights.size  # is not 20 * polyDegree
+            # print(sum(quad_weights))
+            m_basis = math.compute_spherical_harmonics_2D(mu, phi, self.poly_degree)
+            np.set_printoptions(precision=2)
+            # print(quad_weights)  # weights ok
+            # print(np.sum(quad_weights))  # sumweights ok
+            # print("----")
+            # print(mu)
+            # print(phi)
+            # print(m_basis)
+            # print(m_basis.transpose()) # basis ok
         else:
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
 
         self.quad_pts = tf.constant(quad_pts, shape=(
             self.nq, spatial_dimension), dtype=tf.float64)  # dims = (ds x nq)
-        self.quad_weights = tf.constant(quad_weights, shape=(
-            1, self.nq), dtype=tf.float64)  # dims=(batchSIze x N x nq)
+        self.quad_weights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)  # dims=(batchSIze x N x nq)
         self.input_dim = m_basis.shape[0]
         self.moment_basis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
                                         dtype=tf.float64)  # dims=(batchSIze x N x nq)
@@ -84,7 +98,7 @@ class EntropyModel(tf.keras.Model, ABC):
         self.regularization_gamma_vector = tf.constant(
             gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
 
-    def call(self, x: Tensor, training=False) -> list:
+    def call(self, x: Tensor, training=False, **kwargs) -> list:
         """
         Defines the sobolev execution (does not return 0th order moment)
         input: x = [u_1,u_2,...,u_N]
@@ -97,10 +111,8 @@ class EntropyModel(tf.keras.Model, ABC):
             if self.scale_active:
                 print("Scaled reconstruction of u and h enabled")
                 # scale to [scaler_min, scaler_max]
-                t1 = tf.add(
-                    tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
-                t2 = tf.math.scalar_mul(
-                    self.derivative_scale_factor, t1)  # scale
+                t1 = tf.add(tf.cast(alpha, dtype=tf.float64, name=None), 1)  # shift
+                t2 = tf.math.scalar_mul(self.derivative_scale_factor, t1)  # scale
                 alpha64 = tf.add(t2, self.derivative_scaler_min)  # shift
             else:
                 print("Reconstruction of u and h enabled")
@@ -162,18 +174,19 @@ class EntropyModel(tf.keras.Model, ABC):
         """
         # Check the predicted alphas for +/- infinity or nan - raise error if found
         checked_alpha = tf.debugging.check_numerics(alpha,
-                                                    message='input tensor checking error at alpha = ' +
-                                                    str(alpha),
+                                                    message='input tensor checking error at alpha = ' + str(alpha),
                                                     name='checked')
         # Clip the predicted alphas below the tf.exp overflow threshold
         clipped_alpha = tf.clip_by_value(
             checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
 
-        tmp = tf.math.exp(tf.tensordot(
-            clipped_alpha, self.moment_basis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        tmp = tf.math.exp(tf.tensordot(clipped_alpha, self.moment_basis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+
         # ln(<tmp>)
-        alpha_0 = - \
-            tf.math.log(tf.tensordot(tmp, self.quad_weights, axes=([1], [1])))
+
+        alpha_0 = - (tf.math.log(self.moment_basis[0, 0]) + tf.math.log(
+            tf.tensordot(tmp, self.quad_weights, axes=([1], [1])))) / self.moment_basis[0, 0]
+
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
     def reconstruct_u(self, alpha):
@@ -284,17 +297,17 @@ class SobolevModel(EntropyModel):
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
-                 scale_active: bool = True, gamma: float = 0.0, **opts):
+                 scale_active: bool = True, gamma: float = 0.0, basis: str = "monomial", **opts):
         super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
                                            spatial_dimension=spatial_dimension, reconstruct_u=reconstruct_u,
                                            scaler_min=scaler_min, scaler_max=scaler_max, scale_active=scale_active,
-                                           subclass=True, gamma=gamma)
+                                           subclass=True, gamma=gamma, basis=basis)
         self.derivative_scale_factor = tf.constant(
             scaler_max - scaler_min, dtype=tf.float64)
         print("Model output alpha and h will be scaled by factor " +
               str(self.derivative_scale_factor.numpy()))
 
-    def call(self, x: Tensor, training=False) -> list:
+    def call(self, x: Tensor, training=False, **kwargs) -> list:
         """
         Defines the sobolev execution (does not return 0th order moment)
         input: x = [u_1,u_2,...,u_N]
@@ -310,19 +323,17 @@ class SobolevModel(EntropyModel):
         if self.enable_recons_u:
             if self.scale_active:
                 print("Scaled reconstruction of u enabled")
-                alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(
-                    alpha, dtype=tf.float64, name=None))
+                alpha64 = tf.math.scalar_mul(self.derivative_scale_factor, tf.cast(alpha, dtype=tf.float64, name=None))
             else:
                 print("Reconstruction of u enabled")
                 alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
-            #cutoff the 0th order moment, since it is 1 by construction
-            return [h, alpha, u_complete[:, 1:]]# u_complete[:, 1:]]
+            # cutoff the 0th order moment, since it is 1 by construction
+            return [h, alpha, u_complete[:, 1:]]
         print("Reconstruction of u disabled. Output 3 is meaningless")
         return [h, alpha, alpha]
 
-        
     def call_derivative(self, x, training=False):
         with tf.GradientTape() as grad_tape:
             grad_tape.watch(x)
