@@ -75,12 +75,14 @@ class EntropyModel(tf.keras.Model, ABC):
             self.nq = quad_weights.size  # is not 20 * polyDegree
             # print(sum(quad_weights))
             m_basis = math.compute_spherical_harmonics_2D(mu, phi, self.poly_degree)
-            # np.set_printoptions(precision=2)
-            # print(quad_weights)
+            np.set_printoptions(precision=2)
+            # print(quad_weights)  # weights ok
+            # print(np.sum(quad_weights))  # sumweights ok
+            # print("----")
             # print(mu)
             # print(phi)
             # print(m_basis)
-            # print(m_basis.transpose())
+            # print(m_basis.transpose()) # basis ok
         else:
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
