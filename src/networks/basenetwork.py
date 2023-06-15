@@ -53,6 +53,7 @@ class BaseNetwork:
     input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
     input_dim_dict_3D_sh: dict = {1: 4, 2: 9, 3: 16}
     input_dim_dict_2D_sh: dict = input_dim_dict_2D
+    input_dim_dict_1D_sh: dict = {1: 2}
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
@@ -101,6 +102,8 @@ class BaseNetwork:
                 self.input_dim = self.input_dim_dict_3D_sh[self.poly_degree]
             elif spatial_dimension == 2:
                 self.input_dim = self.input_dim_dict_2D_sh[self.poly_degree]
+            elif spatial_dimension == 1:
+                self.input_dim = self.input_dim_dict_1D_sh[self.poly_degree]
             else:
                 raise ValueError("Saptial dimension other than 2 or 3 not supported atm")
         else:
