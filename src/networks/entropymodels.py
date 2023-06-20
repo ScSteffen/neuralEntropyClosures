@@ -39,7 +39,7 @@ class EntropyModel(tf.keras.Model, ABC):
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
                  scale_active: bool = True, subclass: bool = False, gamma: float = 0.0, basis: str = "monomial",
-                 **opts):
+                 rotated=False, **opts):
         super(EntropyModel, self).__init__()
         # Member is only the model we want to wrap with sobolev execution
         self.core_model = core_model  # must be a compiled tensorflow model
@@ -53,6 +53,7 @@ class EntropyModel(tf.keras.Model, ABC):
             (scaler_max - scaler_min) * 0.5, dtype=tf.float64)
         self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
         self.basis = basis
+        self.rotated = rotated
         print("Model uses regularization with parameter gamma = " + str(gamma))
 
         if not subclass:
@@ -297,11 +298,11 @@ class SobolevModel(EntropyModel):
 
     def __init__(self, core_model: tf.keras.Model, polynomial_degree: int = 1, spatial_dimension: int = 1,
                  reconstruct_u: bool = False, scaler_min: float = 0.0, scaler_max: float = 1.0,
-                 scale_active: bool = True, gamma: float = 0.0, basis: str = "monomial", **opts):
+                 scale_active: bool = True, gamma: float = 0.0, basis: str = "monomial", rotated=False, **opts):
         super(SobolevModel, self).__init__(core_model=core_model, polynomial_degree=polynomial_degree,
                                            spatial_dimension=spatial_dimension, reconstruct_u=reconstruct_u,
                                            scaler_min=scaler_min, scaler_max=scaler_max, scale_active=scale_active,
-                                           subclass=True, gamma=gamma, basis=basis)
+                                           subclass=True, gamma=gamma, basis=basis, rotated=rotated)
         self.derivative_scale_factor = tf.constant(
             scaler_max - scaler_min, dtype=tf.float64)
         print("Model output alpha and h will be scaled by factor " +
@@ -318,7 +319,11 @@ class SobolevModel(EntropyModel):
         with tf.GradientTape() as grad_tape:
             grad_tape.watch(x)
             h = self.core_model(x)
-        alpha = grad_tape.gradient(h, x)
+
+        if self.rotated:
+            alpha = tf.concat([grad_tape.gradient(h, x), tf.zeros(1, )], axis=1)
+        else:
+            alpha = grad_tape.gradient(h, x)
 
         if self.enable_recons_u:
             if self.scale_active:

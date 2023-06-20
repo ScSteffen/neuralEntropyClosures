@@ -115,12 +115,10 @@ class BaseNetwork:
             self.input_dim = self.input_dim - 1
 
         self.mean_u = np.zeros(shape=(self.input_dim,), dtype=float)
-        self.cov_u = np.zeros(
-            shape=(self.input_dim, self.input_dim), dtype=float)
-        self.cov_ev = np.zeros(
-            shape=(self.input_dim, self.input_dim), dtype=float)
+        self.cov_u = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
+        self.cov_ev = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
 
-    def create_model(self) -> bool:
+    def create_model(self, rotated=False) -> bool:
         pass
 
     def call_network(self, u_complete) -> list:
@@ -323,7 +321,7 @@ class BaseNetwork:
         #    json.dump(self.model.history.history, file)
         return 0
 
-    def load_model(self, file_name=None):
+    def load_model(self, file_name=None, rotated=False):
 
         used_file_name = self.folder_name
         if file_name != None:
@@ -340,7 +338,7 @@ class BaseNetwork:
                 scaling_data = row
         self.scaler_min = float(scaling_data[0])
         self.scaler_max = float(scaling_data[1])
-        self.create_model()
+        self.create_model(rotated=rotated)
         used_file_name = used_file_name + '/best_model/'
 
         if not path.exists(used_file_name):
@@ -364,7 +362,8 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False, train_mode: bool = False, gamma_level: int = 0) -> bool:
+                           normalized_data: bool = False, train_mode: bool = False, gamma_level: int = 0,
+                           rotated=False) -> bool:
         """
         Loads the training data
         params: shuffle_mode = shuffle loaded Data  (yes,no)
@@ -404,7 +403,11 @@ class BaseNetwork:
         # add regularization information
         if gamma_level > 0:
             filename = filename + "_gamma" + str(gamma_level)
-
+        # add rotation informtaion
+        if rotated:
+            filename = filename + "_rot"
+            self.input_dim = self.input_dim - 1
+            self.csvInputDim = self.csvInputDim - 1
         filename = filename + ".csv"
 
         print("Loading Data from location: " + filename)

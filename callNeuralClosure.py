@@ -153,6 +153,7 @@ def main():
                       metavar="OBJECTIVE")
     parser.add_option("-p", "--processingmode", dest="processingmode", default=1,
                       help="gpu mode (1). cpu mode (0) ", metavar="PROCESSINGMODE")
+    parser.add_option("-r", "--rotated", dest="rotated", default=0)
     parser.add_option("-s", "--spatialDimension", dest="spatialDimension", default=3,
                       help="spatial dimension of closure", metavar="SPATIALDIM")
     parser.add_option("-t", "--training", dest="training", default=1,
@@ -189,6 +190,7 @@ def main():
     options.networkwidth = int(options.networkwidth)
     options.networkdepth = int(options.networkdepth)
     options.gamma_level = int(options.gamma_level)
+    options.rotated = bool(int(options.rotated))
 
     # --- End Option Parsing ---
 
@@ -220,10 +222,10 @@ def main():
         utils.write_config_file(options, neuralClosureModel)
         neuralClosureModel.load_training_data(shuffle_mode=True, sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized, train_mode=True,
-                                              gamma_level=options.gamma_level)
+                                              gamma_level=options.gamma_level, rotated=options.rotated)
     # create model after loading training data to get correct scaling in
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
-        neuralClosureModel.load_model()  # also creates model
+        neuralClosureModel.load_model(rotated=options.rotated)  # also creates model
         # preprocess training data. Compute scalings
         neuralClosureModel.training_data_preprocessing(scaled_output=options.scaledOutput,
                                                        model_loaded=options.loadmodel)
@@ -232,7 +234,7 @@ def main():
         # preprocess training data. Compute scalings
         neuralClosureModel.training_data_preprocessing(scaled_output=options.scaledOutput,
                                                        model_loaded=options.loadmodel)
-        neuralClosureModel.create_model()
+        neuralClosureModel.create_model(rotated=options.rotated)
     # neuralClosureModel.model.summary()
 
     if options.training == 1:
