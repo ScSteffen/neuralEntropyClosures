@@ -60,7 +60,7 @@ def initModelCpp(input):
 def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: str = "testFolder",
                loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
                input_decorrelation: bool = False, scale_active: bool = True, gamma_lvl: int = 0,
-               basis: str = "monomial"):
+               basis: str = "monomial", rotated=False):
     '''
     modelNumber : Defines the used network model, i.e. MK1, MK2...
     maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
@@ -72,7 +72,7 @@ def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int
                                              folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
                                              nw_width=width, normalized=normalized,
                                              input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                             gamma_lvl=gamma_lvl, basis=basis)
+                                             gamma_lvl=gamma_lvl, basis=basis, rotated=rotated)
 
     return 0
 
@@ -214,7 +214,8 @@ def main():
     init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatial_dimension,
                folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
                width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput,
-               scale_active=options.scaledOutput, gamma_lvl=options.gamma_level, basis=options.basis)
+               scale_active=options.scaledOutput, gamma_lvl=options.gamma_level, basis=options.basis,
+               rotated=options.rotated)
 
     # --- load model data before creating model (important for data scaling)
     if options.training == 1:
@@ -249,16 +250,17 @@ def main():
     elif options.training == 2:
         print("Analysis mode entered.")
         print("Evaluate Model on normalized data...")
-        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=True,
-                                              scaled_output=options.scaledOutput, train_mode=False,
-                                              gamma_level=options.gamma_level)
+        neuralClosureModel.load_training_data(shuffle_mode=False, sampling=options.sampling,
+                                              normalized_data=neuralClosureModel.normalized, train_mode=True,
+                                              gamma_level=options.gamma_level, rotated=options.rotated)
         [u, alpha, h] = neuralClosureModel.get_training_data()
         neuralClosureModel.evaluate_model_normalized(u, alpha, h)
-        print("Evaluate Model on non-normalized data...")
-        neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=False,
-                                              train_mode=False, gamma_level=options.gamma_level)
-        [u, alpha, h] = neuralClosureModel.get_training_data()
-        neuralClosureModel.evaluate_model(u, alpha, h)
+
+        print("Evaluated Model")
+        # neuralClosureModel.load_training_data(shuffle_mode=False, load_all=True, normalized_data=False,
+        #                                      train_mode=False, gamma_level=options.gamma_level)
+        # [u, alpha, h] = neuralClosureModel.get_training_data()
+        # neuralClosureModel.evaluate_model(u, alpha, h)
     elif options.training == 3:
         print(
             "Re-Save mode entered.")  # if training was not finished, models are not safed to .pb. this can be done here

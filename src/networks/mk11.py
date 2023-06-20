@@ -26,7 +26,7 @@ class MK11Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
-                 gamma_lvl: int = 0, basis: str = "monomial"):
+                 gamma_lvl: int = 0, basis: str = "monomial", rotated=False):
         if save_folder == "":
             custom_folder_name = "MK11_N" + \
                                  str(polynomial_degree) + "_D" + str(spatial_dimension)
@@ -36,7 +36,7 @@ class MK11Network(BaseNetwork):
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                          gamma_lvl=gamma_lvl, basis=basis)
+                                          gamma_lvl=gamma_lvl, basis=basis, rotated=rotated)
 
     def create_model(self, rotated=False) -> bool:
 
@@ -167,7 +167,7 @@ class MK11Network(BaseNetwork):
     def select_training_data(self):
         return [True, True, True]
 
-    def call_network(self, u_complete):
+    def call_network(self, u_reduced):
         """
         brief: Only works for maxwell Boltzmann entropy so far.
         nS = batchSize
@@ -179,13 +179,17 @@ class MK11Network(BaseNetwork):
                  u_complete_reconstructed, dim = (nS x N)
                  h_predicted, dim = (nS x 1)
         """
-        u_reduced = u_complete[:, 1:]  # chop of u_0
-        [h_predicted, alpha_predicted, u_0_predicted,
-         tmp] = self.model(u_reduced)
-        alpha_complete_predicted = self.model.reconstruct_alpha(
-            alpha_predicted)
-        u_complete_reconstructed = self.model.reconstruct_u(
-            alpha_complete_predicted)
+        # u_reduced = u_complete[:, 1:]  # chop of u_0
+
+        [h_predicted, alpha_predicted, u_predicted] = self.model(u_reduced)
+
+        if self.rotated:
+            alpha = tf.reshape(alpha_predicted, shape=(tf.shape(alpha_predicted).numpy()[0], 1), name=None)
+            alpha_predicted = tf.concat([alpha, tf.math.scalar_mul(0.0, alpha)], axis=1)
+
+        alpha64 = tf.cast(alpha_predicted, dtype=tf.float64, name=None)
+        alpha_complete_predicted = self.model.reconstruct_alpha(alpha64)
+        u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
 
         return [u_complete_reconstructed, alpha_complete_predicted, h_predicted]
 

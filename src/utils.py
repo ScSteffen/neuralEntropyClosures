@@ -4,18 +4,19 @@ Date: 15.03.2021
 Author: Steffen Schotthöfer
 '''
 
-import numpy as np
-import time
-import pandas as pd
-import tensorflow as tf
-import matplotlib.pyplot as plt
-from matplotlib import colors
-from matplotlib import cm
-import seaborn as sns
 import os
-from pathlib import Path
-import git
+import time
 from datetime import date
+from pathlib import Path
+
+import git
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import tensorflow as tf
+from matplotlib import cm
+from matplotlib import colors
 
 
 # plt.style.use("kitish")
@@ -401,7 +402,9 @@ def write_config_file(options, neural_closure_model):
     runScript = runScript + "--training=" + str(options.training) + " \\\n"
     runScript = runScript + "--verbosity=" + str(options.verbosity) + " \\\n"
     runScript = runScript + "--networkwidth=" + str(options.networkwidth) + " \\\n"
-    runScript = runScript + "--networkdepth=" + str(options.networkdepth)
+    runScript = runScript + "--networkdepth=" + str(options.networkdepth) + " \\\n"
+    runScript = runScript + "--basis=" + str(options.basis) + " \\\n"
+    runScript = runScript + "--rotated=" + str(int(options.rotated))
 
     # Getting filename
     rsFile = neural_closure_model.folder_name + '/runScript_001_'

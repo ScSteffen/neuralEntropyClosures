@@ -56,9 +56,11 @@ class BaseNetwork:
     input_dim_dict_2D_sh: dict = input_dim_dict_2D
     input_dim_dict_1D_sh: dict = {1: 2}
 
+    rotated: bool
+
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
-                 scale_active: bool, gamma_lvl: int, basis: str = "monomial"):
+                 scale_active: bool, gamma_lvl: int, basis: str = "monomial", rotated=False):
         if gamma_lvl == 0:
             self.regularization_gamma = 0.0
         else:
@@ -79,6 +81,7 @@ class BaseNetwork:
         self.scaler_max = 1.0  # default is no scaling
         self.scaler_min = 0.0  # default is no scaling
         self.basis = basis
+        self.rotated = rotated
         # --- Determine loss combination ---
         if loss_combination < 4:
             self.loss_weights = self.loss_comp_dict[loss_combination]
@@ -110,6 +113,8 @@ class BaseNetwork:
         else:
             raise ValueError("Basis >" + str(self.basis) + "< not supported")
 
+        if rotated:
+            self.input_dim -= 1
         self.csvInputDim = self.input_dim  # only for reading csv data
 
         if self.normalized:
@@ -345,10 +350,8 @@ class BaseNetwork:
         if not path.exists(used_file_name):
             print("Model does not exists at this path: " + used_file_name)
             exit(1)
-        model = tf.keras.models.load_model(used_file_name, custom_objects={
-            "CustomModel": self.model})
+        model = tf.keras.models.load_model(used_file_name, custom_objects={"CustomModel": self.model})
         self.model.load_weights(used_file_name)
-        # self.model = model
         print("Model loaded from file ")
         return 0
 
@@ -407,8 +410,8 @@ class BaseNetwork:
         # add rotation informtaion
         if rotated:
             filename = filename + "_rot"
-            self.input_dim = self.input_dim - 1
-            self.csvInputDim = self.csvInputDim - 1
+            # self.input_dim = self.input_dim - 1
+            # self.csvInputDim = self.csvInputDim - 1
         filename = filename + ".csv"
 
         print("Loading Data from location: " + filename)
@@ -517,10 +520,7 @@ class BaseNetwork:
                h_test, dim(nS,1)
         return: True, if run successfully. Prints several plots and pictures to file.
         """
-        # i_max = 100000
-        # u_test = u_test[:i_max, :]
-        # alpha_test = alpha_test[:i_max, :]
-        # h_test = h_test[:i_max, :]
+
         [u_pred, alpha_pred, h_pred] = self.call_network(u_test)
 
         # alpha = self.call_network(u_test)
@@ -538,8 +538,10 @@ class BaseNetwork:
             return loss_val
 
         diff_h = pointwise_diff(h_test, h_pred)
-        diff_alpha = pointwise_diff(alpha_test, alpha_pred)
-        diff_u = pointwise_diff(u_test, u_pred)
+        tmp = tf.reshape(alpha_pred[:, 1], shape=(tf.shape(alpha_pred[:, 2]).numpy()[0], 1), name=None)
+        diff_alpha = pointwise_diff(alpha_test, tmp)
+        tmp = tf.reshape(u_pred[:, 1], shape=(tf.shape(u_pred[:, 2]).numpy()[0], 1), name=None)
+        diff_u = pointwise_diff(u_test, tmp)
 
         with open(self.folder_name + "/test_results.csv", 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
@@ -551,9 +553,8 @@ class BaseNetwork:
             writer.writerow(row_list + ["u", "alpha", "h"])
 
             for idx in range(len(diff_h.numpy())):
-                r = np.concatenate(
-                    (u_test[idx], alpha_test[idx], diff_u[idx].numpy().reshape((1,)),
-                     diff_alpha[idx].numpy().reshape((1,)), diff_h[idx].numpy().reshape((1,))))
+                r = np.concatenate((u_test[idx], alpha_test[idx], diff_u[idx].numpy().reshape((1,)),
+                                    diff_alpha[idx].numpy().reshape((1,)), diff_h[idx].numpy().reshape((1,))))
                 writer.writerow(r)
 
         # only for M_2 1D closure
