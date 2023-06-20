@@ -83,21 +83,22 @@ class EntropyModel(tf.keras.Model, ABC):
             # print(mu)
             # print(phi)
             # print(m_basis)
-            # print(m_basis.transpose()) # basis ok
+            # print(m_basis.transpose())  # basis ok
         else:
             print("spatial dimension not yet supported for sobolev wrapper")
             exit()
 
-        self.quad_pts = tf.constant(quad_pts, shape=(
-            self.nq, spatial_dimension), dtype=tf.float64)  # dims = (ds x nq)
+        # if self.rotated:
+        #    m_basis = np.delete(m_basis, 2, axis=0)  # delete m1_y component from basis
+
+        self.quad_pts = tf.constant(quad_pts, shape=(self.nq, spatial_dimension), dtype=tf.float64)  # dims = (ds x nq)
         self.quad_weights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)  # dims=(batchSIze x N x nq)
         self.input_dim = m_basis.shape[0]
         self.moment_basis = tf.constant(m_basis, shape=(self.input_dim, self.nq),
                                         dtype=tf.float64)  # dims=(batchSIze x N x nq)
         gamma_vec = gamma * np.ones(shape=(1, self.input_dim))
         gamma_vec[0, 0] = 0.0
-        self.regularization_gamma_vector = tf.constant(
-            gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
+        self.regularization_gamma_vector = tf.constant(gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
 
     def call(self, x: Tensor, training=False, **kwargs) -> list:
         """
@@ -203,20 +204,15 @@ class EntropyModel(tf.keras.Model, ABC):
         returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
         """
         # Check the predicted alphas for +/- infinity or nan - raise error if found
-        checked_alpha = tf.debugging.check_numerics(
-            alpha, message='input tensor checking error', name='checked')
+        checked_alpha = tf.debugging.check_numerics(alpha, message='input tensor checking error', name='checked')
         # Clip the predicted alphas below the tf.exp overflow threshold
-        clipped_alpha = tf.clip_by_value(
-            checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
+        clipped_alpha = tf.clip_by_value(checked_alpha, clip_value_min=-50, clip_value_max=50, name='checkedandclipped')
 
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(
-            clipped_alpha, self.moment_basis, axes=([1], [0])))  # exp(alpha*m)
+        f_quad = tf.math.exp(tf.tensordot(clipped_alpha, self.moment_basis, axes=([1], [0])))  # exp(alpha*m)
         tmp = tf.math.multiply(f_quad, self.quad_weights)  # f*w
-        u_rec = tf.tensordot(tmp, self.moment_basis[:, :], axes=(
-            [1], [1]))  # f * w * momentBasis
-        alpha_regularization = tf.math.multiply(
-            self.regularization_gamma_vector, alpha)
+        u_rec = tf.tensordot(tmp, self.moment_basis[:, :], axes=([1], [1]))  # f * w * momentBasis
+        alpha_regularization = tf.math.multiply(self.regularization_gamma_vector, alpha)
         return u_rec + alpha_regularization  # add regularization
 
     @staticmethod
@@ -321,7 +317,7 @@ class SobolevModel(EntropyModel):
             h = self.core_model(x)
 
         if self.rotated:
-            alpha = tf.concat([grad_tape.gradient(h, x), tf.zeros(1, )], axis=1)
+            alpha = tf.concat([grad_tape.gradient(h, x), tf.math.scalar_mul(0.0, x)], axis=1)
         else:
             alpha = grad_tape.gradient(h, x)
 
@@ -334,9 +330,13 @@ class SobolevModel(EntropyModel):
                 alpha64 = tf.cast(alpha, dtype=tf.float64, name=None)
             alpha_complete = self.reconstruct_alpha(alpha64)
             u_complete = self.reconstruct_u(alpha_complete)
+            if self.rotated:  # only viable for m1!
+                return [h, alpha[:, 0], u_complete[:, 1]]
             # cutoff the 0th order moment, since it is 1 by construction
-            return [h, alpha, u_complete[:, 1:]]
+            return [h, alpha, u_complete[:, 1:]]  # [:, 1:]
         print("Reconstruction of u disabled. Output 3 is meaningless")
+        if self.rotated:
+            return [h, alpha[:, 0], alpha[:, 0]]
         return [h, alpha, alpha]
 
     def call_derivative(self, x, training=False):

@@ -7,19 +7,20 @@ Version: 0.0
 Date 29.10.2020
 '''
 
+import os
+import statistics
+import time
+from optparse import OptionParser
+
+import matplotlib.pyplot as plt
+import numpy as np
+# python modules
+import tensorflow as tf
+
+from src import utils
 ### imports ###
 # internal modules
 from src.networks.configmodel import init_neural_closure
-from src import utils
-
-# python modules
-import tensorflow as tf
-import os
-from optparse import OptionParser
-import time
-import statistics
-import numpy as np
-import matplotlib.pyplot as plt
 
 
 ### global variable ###
@@ -220,7 +221,7 @@ def main():
         # create training Data
         # Save options and runscript to file (only for training)
         utils.write_config_file(options, neuralClosureModel)
-        neuralClosureModel.load_training_data(shuffle_mode=True, sampling=options.sampling,
+        neuralClosureModel.load_training_data(shuffle_mode=False, sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized, train_mode=True,
                                               gamma_level=options.gamma_level, rotated=options.rotated)
     # create model after loading training data to get correct scaling in

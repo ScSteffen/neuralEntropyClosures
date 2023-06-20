@@ -6,16 +6,15 @@ Version: 1.0
 Date 09.04.2021
 '''
 
-import numpy as np
 import tensorflow as tf
+from tensorflow import Tensor
 from tensorflow import keras as keras
 from tensorflow.keras import layers
 from tensorflow.keras.constraints import NonNeg
-from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.entropymodels import SobolevModel
 from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
+from src.networks.entropymodels import SobolevModel
 
 
 class MK11Network(BaseNetwork):
@@ -144,9 +143,15 @@ class MK11Network(BaseNetwork):
         '''
         # u_in = self.training_data[0]
         # alpha_in = self.training_data[1]
-        # [h, alpha, u_out] = self.model(u_in)
-        ## alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
-        ## u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
+        # [h, alpha_out, u_out] = self.model(alpha_in)
+        #
+        # print(alpha_in[:10, :])
+        # print(alpha_out.numpy()[:10, :])
+        # print("---")
+        # print(u_in[:10, :])
+        # print(u_out.numpy()[:10, :])
+        # alpha_complete_predicted = self.model.reconstruct_alpha(alpha_predicted)
+        # u_complete_reconstructed = self.model.reconstruct_u(alpha_complete_predicted)
         # u_in = self.training_data[0][:2]
         # alpha_in = self.training_data[1][:2]
         # h_in = self.training_data[2][:2]
