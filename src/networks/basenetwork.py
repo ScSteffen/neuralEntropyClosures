@@ -113,8 +113,11 @@ class BaseNetwork:
         else:
             raise ValueError("Basis >" + str(self.basis) + "< not supported")
 
-        if rotated:
+        if rotated and self.poly_degree == 1:
             self.input_dim -= 1
+        else:
+            self.rotated = False  # only change architecture for m1
+
         self.csvInputDim = self.input_dim  # only for reading csv data
 
         if self.normalized:
@@ -328,7 +331,8 @@ class BaseNetwork:
         return 0
 
     def load_model(self, file_name=None, rotated=False):
-
+        if rotated and self.poly_degree != 1:
+            rotated = False
         used_file_name = self.folder_name
         if file_name != None:
             used_file_name = file_name
