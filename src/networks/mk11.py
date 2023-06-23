@@ -126,6 +126,7 @@ class MK11Network(BaseNetwork):
 
         print("Compile model with loss weights " + str(self.loss_weights[0]) + "|" + str(
             self.loss_weights[1]) + "|" + str(self.loss_weights[2]))
+        print("Model input dimension is: " + str(self.input_dim))
         model.compile(
             loss={'output_1': tf.keras.losses.MeanSquaredError(), 'output_2': tf.keras.losses.MeanSquaredError(),
                   'output_3': tf.keras.losses.MeanSquaredError()},
