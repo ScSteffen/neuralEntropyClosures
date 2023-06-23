@@ -227,7 +227,7 @@ class BaseNetwork:
             # We only use this at the moment
             initial_lr = float(0.01)
             drop_rate = (epoch_count / 3)
-            stop_tol = 1e-7
+            stop_tol = 4e-6
             mt_patience = int(epoch_count / 10)
             min_delta = stop_tol / 10
 
@@ -247,7 +247,7 @@ class BaseNetwork:
             # TODO LR SCHEDULER
             LR = LearningRateSchedulerWithWarmup(
                 warmup_epochs=5, lr_schedule=step_decay)
-            HW = HaltWhenCallback('val_loss', stop_tol)
+            HW = HaltWhenCallback('val_output_3_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
             csv_logger, tensorboard_logger = self.create_csv_logger_cb()
