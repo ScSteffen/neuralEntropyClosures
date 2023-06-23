@@ -218,7 +218,7 @@ class BaseNetwork:
 
             self.concat_history_files()
 
-        elif curriculum == 1:  # learning rate scheduler
+        elif curriculum >= 1:  # learning rate scheduler
             print("Training with learning rate scheduler with warmup of 5 epochs")
             # We only use this at the moment
             initial_lr = float(0.1)

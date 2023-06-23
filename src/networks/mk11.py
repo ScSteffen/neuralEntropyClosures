@@ -62,6 +62,8 @@ class MK11Network(BaseNetwork):
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
 
+            # Batch normalization
+            intermediate_sum = layers.BatchNormalization()(intermediate_sum)
             # activation
             out = tf.keras.activations.elu(intermediate_sum)
             return out
@@ -79,6 +81,9 @@ class MK11Network(BaseNetwork):
                                                   name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
+
+            # Batch normalization
+            intermediate_sum = layers.BatchNormalization()(intermediate_sum)
 
             if self.scale_active:  # if output is scaled, use relu.
                 out = tf.keras.activations.relu(out)
