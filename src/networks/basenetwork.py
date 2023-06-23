@@ -100,7 +100,8 @@ class BaseNetwork:
                     exit(1)
                 self.input_dim = self.input_dim_dict_2D[self.poly_degree]
             else:
-                raise ValueError("Saptial dimension other than 1 or 2 not supported atm")
+                raise ValueError(
+                    "Saptial dimension other than 1 or 2 not supported atm")
         elif self.basis == "spherical_harmonics":
             if spatial_dimension == 3:
                 self.input_dim = self.input_dim_dict_3D_sh[self.poly_degree]
@@ -109,7 +110,8 @@ class BaseNetwork:
             elif spatial_dimension == 1:
                 self.input_dim = self.input_dim_dict_1D_sh[self.poly_degree]
             else:
-                raise ValueError("Saptial dimension other than 2 or 3 not supported atm")
+                raise ValueError(
+                    "Saptial dimension other than 2 or 3 not supported atm")
         else:
             raise ValueError("Basis >" + str(self.basis) + "< not supported")
 
@@ -124,8 +126,10 @@ class BaseNetwork:
             self.input_dim = self.input_dim - 1
 
         self.mean_u = np.zeros(shape=(self.input_dim,), dtype=float)
-        self.cov_u = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
-        self.cov_ev = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
+        self.cov_u = np.zeros(
+            shape=(self.input_dim, self.input_dim), dtype=float)
+        self.cov_ev = np.zeros(
+            shape=(self.input_dim, self.input_dim), dtype=float)
 
     def create_model(self) -> bool:
         pass
@@ -221,7 +225,7 @@ class BaseNetwork:
         elif curriculum == 1:  # learning rate scheduler
             print("Training with learning rate scheduler with warmup of 5 epochs")
             # We only use this at the moment
-            initial_lr = float(0.1)
+            initial_lr = float(0.01)
             drop_rate = (epoch_count / 3)
             stop_tol = 1e-7
             mt_patience = int(epoch_count / 10)
@@ -232,7 +236,7 @@ class BaseNetwork:
                 # step_size = initial_lr * np.power(10, (-epoch / drop_rate))
                 # return step_size
                 # Initial learning rate
-                end_lr = 0.0001  # Final learning rate
+                end_lr = 0.00005  # Final learning rate
                 total_epochs = min(100, epoch_count)  # Total number of epochs
 
                 if epoch < total_epochs:
@@ -241,7 +245,8 @@ class BaseNetwork:
                     return end_lr
 
             # TODO LR SCHEDULER
-            LR = LearningRateSchedulerWithWarmup(warmup_epochs=5, lr_schedule=step_decay)
+            LR = LearningRateSchedulerWithWarmup(
+                warmup_epochs=5, lr_schedule=step_decay)
             HW = HaltWhenCallback('val_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
@@ -319,7 +324,7 @@ class BaseNetwork:
         while path.isfile(logName + '.csv'):
             count += 1
             logName = self.folder_name + \
-                      '/historyLogs/history_' + str(count).zfill(3) + '_'
+                '/historyLogs/history_' + str(count).zfill(3) + '_'
 
         logFile = logName + '.csv'
         # create logger callback
@@ -363,7 +368,8 @@ class BaseNetwork:
         if not path.exists(used_file_name):
             print("Model does not exists at this path: " + used_file_name)
             exit(1)
-        model = tf.keras.models.load_model(used_file_name, custom_objects={"CustomModel": self.model})
+        model = tf.keras.models.load_model(used_file_name, custom_objects={
+                                           "CustomModel": self.model})
         self.model.load_weights(used_file_name)
         print("Model loaded from file ")
         return 0
@@ -503,11 +509,11 @@ class BaseNetwork:
                 self.scaler_min = float(scaler.data_min_)
             # scale to [0,1]
             self.training_data[2] = (
-                                            self.training_data[2] - self.scaler_min) / (
-                                            self.scaler_max - self.scaler_min)
+                self.training_data[2] - self.scaler_min) / (
+                self.scaler_max - self.scaler_min)
             # scale correspondingly
             self.training_data[1] = self.training_data[1] / \
-                                    (self.scaler_max - self.scaler_min)
+                (self.scaler_max - self.scaler_min)
             print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
                 self.scaler_min))
             print("New h_min= " + str(self.training_data[2].min()) + ". New h_max= " + str(
@@ -551,9 +557,11 @@ class BaseNetwork:
             return loss_val
 
         diff_h = pointwise_diff(h_test, h_pred)
-        tmp = tf.reshape(alpha_pred[:, 1], shape=(tf.shape(alpha_pred[:, 2]).numpy()[0], 1), name=None)
+        tmp = tf.reshape(alpha_pred[:, 1], shape=(
+            tf.shape(alpha_pred[:, 2]).numpy()[0], 1), name=None)
         diff_alpha = pointwise_diff(alpha_test, tmp)
-        tmp = tf.reshape(u_pred[:, 1], shape=(tf.shape(u_pred[:, 2]).numpy()[0], 1), name=None)
+        tmp = tf.reshape(u_pred[:, 1], shape=(
+            tf.shape(u_pred[:, 2]).numpy()[0], 1), name=None)
         diff_u = pointwise_diff(u_test, tmp)
 
         with open(self.folder_name + "/test_results.csv", 'w', newline='') as csvfile:
