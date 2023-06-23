@@ -83,7 +83,7 @@ class MK11Network(BaseNetwork):
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
 
             # Batch normalization
-            intermediate_sum = layers.BatchNormalization()(out)
+            out = layers.BatchNormalization()(out)
 
             if self.scale_active:  # if output is scaled, use relu.
                 out = tf.keras.activations.relu(out)
