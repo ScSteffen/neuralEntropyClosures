@@ -236,7 +236,7 @@ def main():
         # preprocess training data. Compute scalings
         neuralClosureModel.training_data_preprocessing(scaled_output=options.scaledOutput,
                                                        model_loaded=options.loadmodel)
-        neuralClosureModel.create_model(rotated=options.rotated)
+        neuralClosureModel.create_model()
     # neuralClosureModel.model.summary()
 
     if options.training == 1:

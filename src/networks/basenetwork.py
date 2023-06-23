@@ -127,7 +127,7 @@ class BaseNetwork:
         self.cov_u = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
         self.cov_ev = np.zeros(shape=(self.input_dim, self.input_dim), dtype=float)
 
-    def create_model(self, rotated=False) -> bool:
+    def create_model(self) -> bool:
         pass
 
     def call_network(self, u_complete) -> list:
@@ -232,6 +232,7 @@ class BaseNetwork:
                 step_size = initial_lr * np.power(10, (-epoch / drop_rate))
                 return step_size
 
+            # TODO LR SCHEDULER
             LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
             HW = HaltWhenCallback('val_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',

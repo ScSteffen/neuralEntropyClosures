@@ -38,7 +38,7 @@ class MK11Network(BaseNetwork):
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
                                           gamma_lvl=gamma_lvl, basis=basis, rotated=rotated)
 
-    def create_model(self, rotated=False) -> bool:
+    def create_model(self) -> bool:
 
         initializer = tf.keras.initializers.RandomUniform(minval=-0.5, maxval=0.5, seed=None)
         initializer_non_neg = tf.keras.initializers.RandomUniform(minval=0, maxval=0.1, seed=None)
@@ -119,7 +119,7 @@ class MK11Network(BaseNetwork):
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
                              scaler_min=self.scaler_min, scale_active=self.scale_active,
                              gamma=self.regularization_gamma, name="sobolev_icnn_wrapper", basis=self.basis,
-                             rotated=rotated)
+                             rotated=self.rotated)
         # build graph
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
