@@ -44,10 +44,12 @@ def initModelCpp(input):
     maxDegree_N = input[1]
 
     # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
-    folderName = "neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber)
+    folderName = "neuralClosure_M" + \
+        str(maxDegree_N) + "_MK" + str(modelNumber)
 
     global neuralClosureModel
-    neuralClosureModel = init_neural_closure(modelNumber, maxDegree_N, folderName)
+    neuralClosureModel = init_neural_closure(
+        modelNumber, maxDegree_N, folderName)
     neuralClosureModel.load_model()
     neuralClosureModel.model.summary()
     print("|")
@@ -89,7 +91,8 @@ def call_network(input):
     with tf.GradientTape() as tape:
         # training=True is only needed if there are layers with different
         # behavior during training versus inference (e.g. Dropout).
-        predictions = neuralClosureModel.model(x_model, training=False)  # same as neuralClosureModel.model.predict(x)
+        # same as neuralClosureModel.model.predict(x)
+        predictions = neuralClosureModel.model(x_model, training=False)
 
     gradients = tape.gradient(predictions, x_model)
 
@@ -104,7 +107,8 @@ def call_network_batchwise(network_input):
     with tf.GradientTape() as tape:
         # training=True is only needed if there are layers with different
         # behavior during training versus inference (e.g. Dropout).
-        predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
+        predictions = neuralClosureModel.model(
+            x_model, training=False)  # same as model.predict(x)
 
     # Compute the gradients
     gradients = tape.gradient(predictions, x_model)
@@ -227,7 +231,7 @@ def main():
                                               gamma_level=options.gamma_level, rotated=options.rotated)
     # create model after loading training data to get correct scaling in
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
-        neuralClosureModel.load_model(rotated=options.rotated)  # also creates model
+        neuralClosureModel.load_model()  # also creates model
         # preprocess training data. Compute scalings
         neuralClosureModel.training_data_preprocessing(scaled_output=options.scaledOutput,
                                                        model_loaded=options.loadmodel)
@@ -295,7 +299,8 @@ def main():
             end = time.perf_counter()
             totduration += end - start
             durations.append(end - start)
-            print("Model executed. Elapsed time: " + str(end - start) + " in iteration " + str(i) + ".")
+            print("Model executed. Elapsed time: " +
+                  str(end - start) + " in iteration " + str(i) + ".")
         avg = totduration / 100
         print("Average duration: " + str(avg) + " seconds")
         stddev = statistics.stdev(durations)
@@ -310,7 +315,8 @@ def main():
             tn = t.numpy().flatten()
             layer_list.append(tn)
             print(layer.shape)
-            print("max weight:  " + str(np.max(tn)) + " min weight: " + str(np.min(tn)))
+            print("max weight:  " + str(np.max(tn)) +
+                  " min weight: " + str(np.min(tn)))
             # hist, bin_edges = np.histogram(tn, bins=10, density=True)
             plt.hist(tn, density=True)  # arguments are passed to np.histogram
             name = layer.name
@@ -342,7 +348,8 @@ def main():
             tn = t.numpy().flatten()
             layer_list.append(tn)
             print(layer.shape)
-            print("max weight:  " + str(np.max(tn)) + " min weight: " + str(np.min(tn)))
+            print("max weight:  " + str(np.max(tn)) +
+                  " min weight: " + str(np.min(tn)))
             # hist, bin_edges = np.histogram(tn, bins=10, density=True)
             plt.hist(tn, density=True)  # arguments are passed to np.histogram
             name = layer.name

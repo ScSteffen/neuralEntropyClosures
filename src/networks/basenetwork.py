@@ -225,7 +225,7 @@ class BaseNetwork:
         elif curriculum >= 1:  # learning rate scheduler
             print("Training with learning rate scheduler with warmup of 5 epochs")
             # We only use this at the moment
-            initial_lr = float(0.01)
+            initial_lr = float(0.005)
             drop_rate = (epoch_count / 3)
             stop_tol = 4e-6
             mt_patience = int(epoch_count / 10)
@@ -487,9 +487,16 @@ class BaseNetwork:
             else:
                 self.cov_ev = self.cov_u  # 1D case
             print(
-                "Shifting the data accordingly if network architecture is MK11,MK12 or MK15...")
+                "Shifting the data accordingly if network architecture is MK11, MK12, MK13 or MK15...")
         else:
             print("Warning: Mean of training data moments was not computed")
+
+        print("Entropy statistics: Max: " + str(np.max(h_ndarray)) +
+              " Min: " + str(np.min(h_ndarray)))
+        print("Langrange multiplier statistics: Max: " + str(np.max(np.linalg.norm(alpha_ndarray, axis=1))) +
+              " Min: " + str(np.min(np.linalg.norm(alpha_ndarray, axis=1))))
+        print("Moment statistics: Max: " + str(np.max(np.linalg.norm(u_ndarray, axis=1))) +
+              " Min: " + str(np.min(np.linalg.norm(u_ndarray, axis=1))))
         return True
 
     def training_data_preprocessing(self, scaled_output: bool = False, model_loaded: bool = False) -> bool:
