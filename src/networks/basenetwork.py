@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 # intern modules
 from src import utils
-from src.networks.customcallbacks import HaltWhenCallback, LossAndErrorPrintingCallback
+from src.networks.customcallbacks import HaltWhenCallback, LossAndErrorPrintingCallback, LearningRateSchedulerWithWarmup
 
 
 ### class definitions ###
@@ -221,7 +221,7 @@ class BaseNetwork:
         elif curriculum == 1:  # learning rate scheduler
             print("Training with learning rate scheduler")
             # We only use this at the moment
-            initial_lr = float(1e-3)
+            initial_lr = float(0.1)
             drop_rate = (epoch_count / 3)
             stop_tol = 1e-7
             mt_patience = int(epoch_count / 10)
@@ -233,7 +233,7 @@ class BaseNetwork:
                 return step_size
 
             # TODO LR SCHEDULER
-            LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
+            LR = LearningRateSchedulerWithWarmup(warmup_epochs=5, lr_schedule=step_decay)
             HW = HaltWhenCallback('val_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
@@ -241,10 +241,10 @@ class BaseNetwork:
 
             if verbosity == 1:
                 callbackList = [mc_best, csv_logger,
-                                tensorboard_logger, HW]  # , ES]  # LR,
+                                tensorboard_logger, HW, LR]  # , ES]  # LR,
             else:
                 callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, tensorboard_logger,
-                                HW]  # , ES]  # LR,
+                                HW, LR]  # , ES]  # LR,
 
             # start Training
             self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
