@@ -229,8 +229,16 @@ class BaseNetwork:
 
             # specific callbacks
             def step_decay(epoch):
-                step_size = initial_lr * np.power(10, (-epoch / drop_rate))
-                return step_size
+                # step_size = initial_lr * np.power(10, (-epoch / drop_rate))
+                # return step_size
+                # Initial learning rate
+                end_lr = 0.0001  # Final learning rate
+                total_epochs = min(100, epoch_count)  # Total number of epochs
+
+                if epoch < total_epochs:
+                    return initial_lr - (epoch / total_epochs) * (initial_lr - end_lr)
+                else:
+                    return end_lr
 
             # TODO LR SCHEDULER
             LR = LearningRateSchedulerWithWarmup(warmup_epochs=5, lr_schedule=step_decay)

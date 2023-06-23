@@ -58,3 +58,4 @@ class LearningRateSchedulerWithWarmup(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
         logs['lr'] = tf.keras.backend.get_value(self.model.optimizer.lr)
+        print("Current learning rate: " + str(tf.keras.backend.get_value(self.model.optimizer.lr)))
