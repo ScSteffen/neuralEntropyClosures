@@ -66,6 +66,7 @@ class MK11Network(BaseNetwork):
             intermediate_sum = layers.BatchNormalization()(intermediate_sum)
             # activation
             out = tf.keras.activations.elu(intermediate_sum)
+            
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
