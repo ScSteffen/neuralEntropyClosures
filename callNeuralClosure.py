@@ -45,7 +45,7 @@ def initModelCpp(input):
 
     # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
     folderName = "neuralClosure_M" + \
-        str(maxDegree_N) + "_MK" + str(modelNumber)
+                 str(maxDegree_N) + "_MK" + str(modelNumber)
 
     global neuralClosureModel
     neuralClosureModel = init_neural_closure(
@@ -175,6 +175,8 @@ def main():
                            "1e-3", metavar="GAMMA")
     parser.add_option("-z", "--basis", dest="basis", default="monomial",
                       help="moment basis", metavar="BASIS")
+    parser.add_option("--max_alpha_norm", dest="max_alpha_norm", default=20,
+                      help="max_alpha_norm", metavar="ALPHANORM")
 
     (options, args) = parser.parse_args()
     options.objective = int(options.objective)
@@ -196,7 +198,7 @@ def main():
     options.networkdepth = int(options.networkdepth)
     options.gamma_level = int(options.gamma_level)
     options.rotated = bool(int(options.rotated))
-
+    options.max_alpha_norm = float(options.max_alpha_norm)
     # --- End Option Parsing ---
 
     # witch to CPU mode, if wished
@@ -228,7 +230,8 @@ def main():
         utils.write_config_file(options, neuralClosureModel)
         neuralClosureModel.load_training_data(shuffle_mode=False, sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized, train_mode=True,
-                                              gamma_level=options.gamma_level, rotated=options.rotated)
+                                              gamma_level=options.gamma_level, rotated=options.rotated,
+                                              max_alpha_norm=options.max_alpha_norm)
     # create model after loading training data to get correct scaling in
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
         neuralClosureModel.load_model()  # also creates model

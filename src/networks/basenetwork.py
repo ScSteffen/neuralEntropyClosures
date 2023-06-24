@@ -384,7 +384,7 @@ class BaseNetwork:
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
                            normalized_data: bool = False, train_mode: bool = False, gamma_level: int = 0,
-                           rotated=False) -> bool:
+                           rotated=False, max_alpha_norm=20) -> bool:
         """
         Loads the training data
         params: shuffle_mode = shuffle loaded Data  (yes,no)
@@ -444,23 +444,45 @@ class BaseNetwork:
         # selected_cols = [True, False, True]
 
         start = time.perf_counter()
+        df = pd.read_csv(filename, usecols=[i for i in u_cols])
+        u_ndarray = df.to_numpy()
+        df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
+        alpha_ndarray = df.to_numpy()
+        df = pd.read_csv(filename, usecols=[i for i in h_col])
+        h_ndarray = df.to_numpy()
+
+        end = time.perf_counter()
+        print("Data loaded. Elapsed time: " + str(end - start))
+
+        print("Delete all training data entries, where norm(alpha)>=" + str(max_alpha_norm))
+
+        alpha_norm = np.linalg.norm(alpha_ndarray, axis=1)
+        # Find indices where alpha_norm is below the threshold
+        indices = np.where(alpha_norm < max_alpha_norm)[0]
+        u_ndarray = u_ndarray[indices, :]
+        alpha_ndarray = alpha_ndarray[indices, :]
+        h_ndarray = h_ndarray[indices, :]
+
+        print("Remaining entries:" + str(len(indices)))
+        print("Entropy statistics: \nMax: " + str(np.max(h_ndarray)) +
+              " \nMin: " + str(np.min(h_ndarray)))
+        print("Langrange multiplier statistics: \nMax: " + str(
+            alpha_ndarray[np.argmax(np.linalg.norm(alpha_ndarray, axis=1))]) +
+              " \nMin: " + str(alpha_ndarray[np.argmin(np.linalg.norm(alpha_ndarray, axis=1))]))
+        print("Moment statistics: \nMax: " + str(u_ndarray[np.argmax(np.linalg.norm(u_ndarray, axis=1))]) +
+              " \nMin: " + str(u_ndarray[np.argmin(np.linalg.norm(u_ndarray, axis=1))]))
+        # select data
         if selected_cols[0]:
-            df = pd.read_csv(filename, usecols=[i for i in u_cols])
-            u_ndarray = df.to_numpy()
             if normalized_data and not load_all:
                 # ignore first col of u
                 u_ndarray = u_ndarray[:, 1:]
             self.training_data.append(u_ndarray)
         if selected_cols[1]:
-            df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
-            alpha_ndarray = df.to_numpy()
             if normalized_data and not load_all:
                 # ignore first col of alpha
                 alpha_ndarray = alpha_ndarray[:, 1:]
             self.training_data.append(alpha_ndarray)
         if selected_cols[2]:
-            df = pd.read_csv(filename, usecols=[i for i in h_col])
-            h_ndarray = df.to_numpy()
             self.training_data.append(h_ndarray)
 
         # shuffle data
@@ -470,8 +492,6 @@ class BaseNetwork:
             for idx in range(len(self.training_data)):
                 self.training_data[idx] = self.training_data[idx][indices]
 
-        end = time.perf_counter()
-        print("Data loaded. Elapsed time: " + str(end - start))
         if selected_cols[0] and self.input_decorrelation:
             print("Computing input data statistics")
             self.mean_u = np.mean(u_ndarray, axis=0)
@@ -488,14 +508,6 @@ class BaseNetwork:
                 "Shifting the data accordingly if network architecture is MK11, MK12, MK13 or MK15...")
         else:
             print("Warning: Mean of training data moments was not computed")
-
-        print("Entropy statistics: Max: " + str(np.max(h_ndarray)) +
-              " Min: " + str(np.min(h_ndarray)))
-        print("Langrange multiplier statistics: Max: " + str(
-            alpha_ndarray[np.argmax(np.linalg.norm(alpha_ndarray, axis=1))]) +
-              " Min: " + str(alpha_ndarray[np.argmin(np.linalg.norm(alpha_ndarray, axis=1))]))
-        print("Moment statistics: Max: " + str(u_ndarray[np.argmax(np.linalg.norm(u_ndarray, axis=1))]) +
-              " Min: " + str(u_ndarray[np.argmin(np.linalg.norm(u_ndarray, axis=1))]))
         return True
 
     def training_data_preprocessing(self, scaled_output: bool = False, model_loaded: bool = False) -> bool:
