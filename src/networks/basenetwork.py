@@ -344,9 +344,7 @@ class BaseNetwork:
         #    json.dump(self.model.history.history, file)
         return 0
 
-    def load_model(self, file_name=None, rotated=False):
-        if rotated and self.poly_degree != 1:
-            rotated = False
+    def load_model(self, file_name=None):
         used_file_name = self.folder_name
         if file_name != None:
             used_file_name = file_name
