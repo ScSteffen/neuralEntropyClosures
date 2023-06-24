@@ -457,13 +457,15 @@ class BaseNetwork:
         print("Delete all training data entries, where norm(alpha)>=" + str(max_alpha_norm))
 
         alpha_norm = np.linalg.norm(alpha_ndarray, axis=1)
+        orig_len = len(alpha_norm)
+
         # Find indices where alpha_norm is below the threshold
         indices = np.where(alpha_norm < max_alpha_norm)[0]
         u_ndarray = u_ndarray[indices, :]
         alpha_ndarray = alpha_ndarray[indices, :]
         h_ndarray = h_ndarray[indices, :]
 
-        print("Remaining entries:" + str(len(indices)))
+        print("Remaining entries:" + str(len(indices)) + " of  " + str(orig_len))
         print("Entropy statistics: \nMax: " + str(np.max(h_ndarray)) +
               " \nMin: " + str(np.min(h_ndarray)))
         print("Langrange multiplier statistics: \nMax: " + str(
