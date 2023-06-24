@@ -225,7 +225,7 @@ class BaseNetwork:
         elif curriculum >= 1:  # learning rate scheduler
             print("Training with learning rate scheduler with warmup of 5 epochs")
             # We only use this at the moment
-            initial_lr = float(0.005)
+            initial_lr = float(0.01)
             drop_rate = (epoch_count / 3)
             stop_tol = 4e-6
             mt_patience = int(epoch_count / 10)
@@ -236,8 +236,8 @@ class BaseNetwork:
                 # step_size = initial_lr * np.power(10, (-epoch / drop_rate))
                 # return step_size
                 # Initial learning rate
-                end_lr = 0.00005  # Final learning rate
-                total_epochs = min(100, epoch_count)  # Total number of epochs
+                end_lr = 0.0001  # Final learning rate
+                total_epochs = min(600, epoch_count)  # Total number of epochs
 
                 if epoch < total_epochs:
                     return initial_lr - (epoch / total_epochs) * (initial_lr - end_lr)
@@ -324,7 +324,7 @@ class BaseNetwork:
         while path.isfile(logName + '.csv'):
             count += 1
             logName = self.folder_name + \
-                '/historyLogs/history_' + str(count).zfill(3) + '_'
+                      '/historyLogs/history_' + str(count).zfill(3) + '_'
 
         logFile = logName + '.csv'
         # create logger callback
@@ -360,14 +360,14 @@ class BaseNetwork:
                 scaling_data = row
         self.scaler_min = float(scaling_data[0])
         self.scaler_max = float(scaling_data[1])
-        self.create_model(rotated=rotated)
+        self.create_model()
         used_file_name = used_file_name + '/best_model/'
 
         if not path.exists(used_file_name):
             print("Model does not exists at this path: " + used_file_name)
             exit(1)
         model = tf.keras.models.load_model(used_file_name, custom_objects={
-                                           "CustomModel": self.model})
+            "CustomModel": self.model})
         self.model.load_weights(used_file_name)
         print("Model loaded from file ")
         return 0
@@ -514,11 +514,11 @@ class BaseNetwork:
                 self.scaler_min = float(scaler.data_min_)
             # scale to [0,1]
             self.training_data[2] = (
-                self.training_data[2] - self.scaler_min) / (
-                self.scaler_max - self.scaler_min)
+                                            self.training_data[2] - self.scaler_min) / (
+                                            self.scaler_max - self.scaler_min)
             # scale correspondingly
             self.training_data[1] = self.training_data[1] / \
-                (self.scaler_max - self.scaler_min)
+                                    (self.scaler_max - self.scaler_min)
             print("Output of network has internal scaling with h_max=" + str(self.scaler_max) + " and h_min=" + str(
                 self.scaler_min))
             print("New h_min= " + str(self.training_data[2].min()) + ". New h_max= " + str(

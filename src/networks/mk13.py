@@ -6,16 +6,15 @@ Version: 1.0
 Date 30.03.2022
 '''
 
-import numpy as np
 import tensorflow as tf
+from tensorflow import Tensor
 from tensorflow import keras as keras
 from tensorflow.keras import layers
 from tensorflow.keras.constraints import NonNeg
-from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.entropymodels import SobolevModel
 from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
+from src.networks.entropymodels import SobolevModel
 
 
 class MK13Network(BaseNetwork):
@@ -63,9 +62,14 @@ class MK13Network(BaseNetwork):
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
 
+            # Batch normalization
+            intermediate_sum = layers.BatchNormalization()(intermediate_sum)
             # activation
             out = tf.keras.activations.elu(intermediate_sum)
-            out = layers.Add()([out, layer_input_z])
+
+            # Resnet bridge
+            out: Tensor = layers.Add()([out, layer_input_z])
+
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
@@ -81,31 +85,37 @@ class MK13Network(BaseNetwork):
                                                   name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
-            out = layers.Add()([out, layer_input_z])
+
+            # Batch normalization
+            out = layers.BatchNormalization()(out)
 
             if self.scale_active:  # if output is scaled, use relu.
                 out = tf.keras.activations.relu(out)
+
+            # Resnet bridge
+            out: Tensor = layers.Add()([out, layer_input_z])
+
             return out
 
             ### build the core network with icnn closure architecture ###
 
         input_ = keras.Input(shape=(self.input_dim,))
-        x = input_
 
         if self.input_decorrelation:  # input data decorellation and shift
-            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(x)
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
             hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            x = hidden
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
                                   kernel_regularizer=weight_regularizer, use_bias=True,
                                   bias_initializer=initializer,
                                   bias_regularizer=None, name="layer_-1_input")(hidden)
         else:
+            x = input_
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
                                   kernel_regularizer=weight_regularizer, use_bias=True,
-                                  bias_initializer=initializer,
-                                  bias_regularizer=None, name="layer_-1_input")(x)
+                                  bias_initializer=initializer, bias_regularizer=None, name="layer_-1_input")(x)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, x, layer_idx=idx, layer_dim=self.model_width)
