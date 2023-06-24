@@ -66,7 +66,7 @@ class MK11Network(BaseNetwork):
             intermediate_sum = layers.BatchNormalization()(intermediate_sum)
             # activation
             out = tf.keras.activations.elu(intermediate_sum)
-            
+
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
@@ -117,7 +117,7 @@ class MK11Network(BaseNetwork):
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="Icnn_closure")
         print("The core model overview")
-        core_model.summary()
+        # core_model.summary()
         print("The sobolev wrapped model overview")
 
         # build sobolev wrapper

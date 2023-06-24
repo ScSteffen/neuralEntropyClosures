@@ -124,7 +124,7 @@ class MK13Network(BaseNetwork):
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="ResNetIcnn_closure")
         print("The core model overview")
-        core_model.summary()
+        # core_model.summary()
         print("The sobolev wrapped model overview")
 
         # build sobolev wrapper

@@ -493,10 +493,11 @@ class BaseNetwork:
 
         print("Entropy statistics: Max: " + str(np.max(h_ndarray)) +
               " Min: " + str(np.min(h_ndarray)))
-        print("Langrange multiplier statistics: Max: " + str(np.max(np.linalg.norm(alpha_ndarray, axis=1))) +
-              " Min: " + str(np.min(np.linalg.norm(alpha_ndarray, axis=1))))
-        print("Moment statistics: Max: " + str(np.max(np.linalg.norm(u_ndarray, axis=1))) +
-              " Min: " + str(np.min(np.linalg.norm(u_ndarray, axis=1))))
+        print("Langrange multiplier statistics: Max: " + str(
+            alpha_ndarray[np.argmax(np.linalg.norm(alpha_ndarray, axis=1))]) +
+              " Min: " + str(alpha_ndarray[np.argmin(np.linalg.norm(alpha_ndarray, axis=1))]))
+        print("Moment statistics: Max: " + str(u_ndarray[np.argmax(np.linalg.norm(u_ndarray, axis=1))]) +
+              " Min: " + str(u_ndarray[np.argmin(np.linalg.norm(u_ndarray, axis=1))]))
         return True
 
     def training_data_preprocessing(self, scaled_output: bool = False, model_loaded: bool = False) -> bool:
