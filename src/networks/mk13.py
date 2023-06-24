@@ -26,7 +26,7 @@ class MK13Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
-                 gamma_lvl: int = 0, basis: str = "monomial"):
+                 gamma_lvl: int = 0, basis: str = "monomial", rotated: bool = False):
         if save_folder == "":
             custom_folder_name = "MK13_N" + \
                                  str(polynomial_degree) + "_D" + str(spatial_dimension)
@@ -36,7 +36,7 @@ class MK13Network(BaseNetwork):
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                          gamma_lvl=gamma_lvl, basis=basis)
+                                          gamma_lvl=gamma_lvl, basis=basis, rotated=rotated)
 
     def create_model(self) -> bool:
 
