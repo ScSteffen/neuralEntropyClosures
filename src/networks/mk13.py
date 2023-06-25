@@ -93,7 +93,7 @@ class MK13Network(BaseNetwork):
                 out = tf.keras.activations.relu(out)
 
             # Resnet bridge
-            out: Tensor = layers.Add()([out, layer_input_z])
+            # out: Tensor = layers.Add()([out, layer_input_z])
 
             return out
 
