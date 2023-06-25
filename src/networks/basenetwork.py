@@ -48,7 +48,7 @@ class BaseNetwork:
     input_decorrelation: bool  # flag to turn on decorrelation of input variables
     # regularization parameter for regularized entropy closures
     regularization_gamma: float
-    loss_comp_dict: dict = {0: [1, 0, 0, 0], 1: [1, 1, 0, 0], 2: [1, 1, 1, 0],
+    loss_comp_dict: dict = {0: [1, 0, 0, 0], 1: [1, 1, 0, 0], 2: [1, 1, 10, 0],
                             3: [0, 0, 0, 1]}  # hash table for loss combination
     # hash table for input dimension depending on polyDegree
     input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
