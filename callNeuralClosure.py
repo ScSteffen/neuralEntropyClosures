@@ -7,117 +7,17 @@ Version: 0.0
 Date 29.10.2020
 '''
 
-### imports ###
-# internal modules
-from src.networks.configmodel import init_neural_closure
-from src import utils
-
-# python modules
-import tensorflow as tf
 import os
-from optparse import OptionParser
-import time
 import statistics
-import numpy as np
+import time
+from optparse import OptionParser
+
 import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
 
-
-### global variable ###
-
-# neuralClosureModel = 0  # bm.initNeuralClosure(0,0)
-
-
-### function definitions ###
-def initModelCpp(input):
-    '''
-    input: string array consisting of [modelNumber,maxDegree_N, folderName]
-    modelNumber : Defines the used network model, i.e. MK1, MK2...
-    maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
-    folderName: Path to the folder containing the neural network model
-    '''
-
-    print("|-------------------- Tensorflow initialization Log ------------------")
-    print("|")
-
-    modelNumber = input[0]
-    maxDegree_N = input[1]
-
-    # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
-    folderName = "neuralClosure_M" + str(maxDegree_N) + "_MK" + str(modelNumber)
-
-    global neuralClosureModel
-    neuralClosureModel = init_neural_closure(modelNumber, maxDegree_N, folderName)
-    neuralClosureModel.load_model()
-    neuralClosureModel.model.summary()
-    print("|")
-    print("| Tensorflow neural closure initialized.")
-    print("|")
-    return 0
-
-
-### function definitions ###
-def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: str = "testFolder",
-               loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
-               input_decorrelation: bool = False, scale_active: bool = True, gamma_lvl: int = 0,
-               basis: str = "monomial"):
-    '''
-    modelNumber : Defines the used network model, i.e. MK1, MK2...
-    maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
-    '''
-
-    global neuralClosureModel
-    neuralClosureModel = init_neural_closure(network_mk=network_mk, poly_degree=polynomial_degree,
-                                             spatial_dim=spatial_dim,
-                                             folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
-                                             nw_width=width, normalized=normalized,
-                                             input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                             gamma_lvl=gamma_lvl, basis=basis)
-
-    return 0
-
-
-def call_network(input):
-    '''
-    # Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
-    # Output: Gradient of the network wrt input
-    '''
-    # predictions = neuralClosureModel.model.predict(input)
-
-    x_model = tf.Variable(input)
-
-    with tf.GradientTape() as tape:
-        # training=True is only needed if there are layers with different
-        # behavior during training versus inference (e.g. Dropout).
-        predictions = neuralClosureModel.model(x_model, training=False)  # same as neuralClosureModel.model.predict(x)
-
-    gradients = tape.gradient(predictions, x_model)
-
-    return gradients
-
-
-def call_network_batchwise(network_input):
-    # Transform npArray to tfEagerTensor
-    x_model = tf.Variable(network_input)
-
-    # Compute Autodiff tape
-    with tf.GradientTape() as tape:
-        # training=True is only needed if there are layers with different
-        # behavior during training versus inference (e.g. Dropout).
-        predictions = neuralClosureModel.model(x_model, training=False)  # same as model.predict(x)
-
-    # Compute the gradients
-    gradients = tape.gradient(predictions, x_model)
-
-    # ---- Convert gradients from eagerTensor to numpy array and then to flattened c array ----
-
-    # Note: Use inputNetwork as array, since a newly generated npArray seems to cause a Segfault in cpp
-    (dimCell, dimBase) = network_input.shape
-
-    for i in range(0, dimCell):
-        for j in range(0, dimBase):
-            network_input[i, j] = gradients[i, j]
-
-    return network_input
+from src import utils
+from src.networks.configmodel import init_neural_closure
 
 
 def main():
@@ -153,6 +53,7 @@ def main():
                       metavar="OBJECTIVE")
     parser.add_option("-p", "--processingmode", dest="processingmode", default=1,
                       help="gpu mode (1). cpu mode (0) ", metavar="PROCESSINGMODE")
+    parser.add_option("-r", "--rotated", dest="rotated", default=0)
     parser.add_option("-s", "--spatialDimension", dest="spatialDimension", default=3,
                       help="spatial dimension of closure", metavar="SPATIALDIM")
     parser.add_option("-t", "--training", dest="training", default=1,
@@ -169,6 +70,8 @@ def main():
                            "1e-3", metavar="GAMMA")
     parser.add_option("-z", "--basis", dest="basis", default="monomial",
                       help="moment basis", metavar="BASIS")
+    parser.add_option("--max_alpha_norm", dest="max_alpha_norm", default=20,
+                      help="max_alpha_norm", metavar="ALPHANORM")
 
     (options, args) = parser.parse_args()
     options.objective = int(options.objective)
@@ -189,12 +92,12 @@ def main():
     options.networkwidth = int(options.networkwidth)
     options.networkdepth = int(options.networkdepth)
     options.gamma_level = int(options.gamma_level)
-
+    options.rotated = bool(int(options.rotated))
+    options.max_alpha_norm = float(options.max_alpha_norm)
     # --- End Option Parsing ---
 
     # witch to CPU mode, if wished
     if options.processingmode == 0:
-        # Set CPU as available physical device
         # Set CPU as available physical device
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
         if tf.test.gpu_device_name():
@@ -208,10 +111,14 @@ def main():
     os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
     # --- initialize model framework
     print("Initialize model")
-    init_model(network_mk=options.model, polynomial_degree=options.degree, spatial_dim=options.spatial_dimension,
-               folder_name=options.folder, normalized=options.normalized, loss_combination=options.objective,
-               width=options.networkwidth, depth=options.networkdepth, input_decorrelation=options.decorrInput,
-               scale_active=options.scaledOutput, gamma_lvl=options.gamma_level, basis=options.basis)
+    neuralClosureModel = init_neural_closure(network_mk=options.model, poly_degree=options.degree,
+                                             spatial_dim=options.spatial_dimension,
+                                             folder_name=options.folder, normalized=options.normalized,
+                                             loss_combination=options.objective,
+                                             nw_width=options.networkwidth, nw_depth=options.networkdepth,
+                                             input_decorrelation=options.decorrInput,
+                                             scale_active=options.scaledOutput, gamma_lvl=options.gamma_level,
+                                             basis=options.basis, rotated=options.rotated)
 
     # --- load model data before creating model (important for data scaling)
     if options.training == 1:
@@ -220,7 +127,7 @@ def main():
         utils.write_config_file(options, neuralClosureModel)
         neuralClosureModel.load_training_data(shuffle_mode=True, sampling=options.sampling,
                                               normalized_data=neuralClosureModel.normalized, train_mode=True,
-                                              gamma_level=options.gamma_level)
+                                              gamma_level=options.gamma_level, max_alpha_norm=options.max_alpha_norm)
     # create model after loading training data to get correct scaling in
     if options.loadmodel == 1 or options.training == 0 or options.training == 2 or options.training == 5:
         neuralClosureModel.load_model()  # also creates model

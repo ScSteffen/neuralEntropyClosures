@@ -5,14 +5,15 @@ Version: 0.0
 Date 29.10.2020
 '''
 
+import csv
+import time
+from os import path, makedirs, walk
+
+import numpy as np
+import pandas as pd
 ### imports ###
 # python modules
 import tensorflow as tf
-import numpy as np
-import pandas as pd
-from os import path, makedirs, walk
-import csv
-import time
 from sklearn.preprocessing import MinMaxScaler
 
 # intern modules
@@ -53,10 +54,11 @@ class BaseNetwork:
     input_dim_dict_2D: dict = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
     input_dim_dict_3D_sh: dict = {1: 4, 2: 9, 3: 16}
     input_dim_dict_2D_sh: dict = input_dim_dict_2D
+    rotated: bool
 
     def __init__(self, normalized: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str, input_decorrelation: bool,
-                 scale_active: bool, gamma_lvl: int, basis: str = "monomial"):
+                 scale_active: bool, gamma_lvl: int, basis: str = "monomial", rotated=False):
         if gamma_lvl == 0:
             self.regularization_gamma = 0.0
         else:
@@ -77,6 +79,8 @@ class BaseNetwork:
         self.scaler_max = 1.0  # default is no scaling
         self.scaler_min = 0.0  # default is no scaling
         self.basis = basis
+        self.rotated = rotated
+
         # --- Determine loss combination ---
         if loss_combination < 4:
             self.loss_weights = self.loss_comp_dict[loss_combination]
@@ -105,6 +109,11 @@ class BaseNetwork:
                 raise ValueError("Saptial dimension other than 2 or 3 not supported atm")
         else:
             raise ValueError("Basis >" + str(self.basis) + "< not supported")
+
+        if self.rotated and self.poly_degree == 1:
+            self.input_dim -= 1
+        else:
+            self.rotated = False  # only change architecture for m1
 
         self.csvInputDim = self.input_dim  # only for reading csv data
 
@@ -361,7 +370,8 @@ class BaseNetwork:
         return True
 
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
-                           normalized_data: bool = False, train_mode: bool = False, gamma_level: int = 0) -> bool:
+                           normalized_data: bool = False, train_mode: bool = False, gamma_level: int = 0,
+                           rotated=False, max_alpha_norm=20) -> bool:
         """
         Loads the training data
         params: shuffle_mode = shuffle loaded Data  (yes,no)
@@ -401,7 +411,11 @@ class BaseNetwork:
         # add regularization information
         if gamma_level > 0:
             filename = filename + "_gamma" + str(gamma_level)
-
+        # add rotation informtaion
+        if rotated:
+            filename = filename + "_rot"
+            # self.input_dim = self.input_dim - 1
+            # self.csvInputDim = self.csvInputDim - 1
         filename = filename + ".csv"
 
         print("Loading Data from location: " + filename)
@@ -417,23 +431,47 @@ class BaseNetwork:
         # selected_cols = [True, False, True]
 
         start = time.perf_counter()
+        df = pd.read_csv(filename, usecols=[i for i in u_cols])
+        u_ndarray = df.to_numpy()
+        df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
+        alpha_ndarray = df.to_numpy()
+        df = pd.read_csv(filename, usecols=[i for i in h_col])
+        h_ndarray = df.to_numpy()
+
+        end = time.perf_counter()
+        print("Data loaded. Elapsed time: " + str(end - start))
+
+        print("Delete all training data entries, where norm(alpha)>=" + str(max_alpha_norm))
+
+        alpha_norm = np.linalg.norm(alpha_ndarray, axis=1)
+        orig_len = len(alpha_norm)
+
+        # Find indices where alpha_norm is below the threshold
+        indices = np.where(alpha_norm < max_alpha_norm)[0]
+        u_ndarray = u_ndarray[indices, :]
+        alpha_ndarray = alpha_ndarray[indices, :]
+        h_ndarray = h_ndarray[indices, :]
+
+        print("Remaining entries: " + str(len(indices)) + " of  " + str(orig_len))
+        print("Entropy statistics: \nMax: " + str(np.max(h_ndarray)) +
+              " \nMin: " + str(np.min(h_ndarray)))
+        print("Langrange multiplier statistics: \nMax: " + str(
+            alpha_ndarray[np.argmax(np.linalg.norm(alpha_ndarray, axis=1))]) +
+              " \nMin: " + str(alpha_ndarray[np.argmin(np.linalg.norm(alpha_ndarray, axis=1))]))
+        print("Moment statistics: \nMax: " + str(u_ndarray[np.argmax(np.linalg.norm(u_ndarray, axis=1))]) +
+              " \nMin: " + str(u_ndarray[np.argmin(np.linalg.norm(u_ndarray, axis=1))]))
+        # select data
         if selected_cols[0]:
-            df = pd.read_csv(filename, usecols=[i for i in u_cols])
-            u_ndarray = df.to_numpy()
             if normalized_data and not load_all:
                 # ignore first col of u
                 u_ndarray = u_ndarray[:, 1:]
             self.training_data.append(u_ndarray)
         if selected_cols[1]:
-            df = pd.read_csv(filename, usecols=[i for i in alpha_cols])
-            alpha_ndarray = df.to_numpy()
             if normalized_data and not load_all:
                 # ignore first col of alpha
                 alpha_ndarray = alpha_ndarray[:, 1:]
             self.training_data.append(alpha_ndarray)
         if selected_cols[2]:
-            df = pd.read_csv(filename, usecols=[i for i in h_col])
-            h_ndarray = df.to_numpy()
             self.training_data.append(h_ndarray)
 
         # shuffle data
@@ -443,8 +481,6 @@ class BaseNetwork:
             for idx in range(len(self.training_data)):
                 self.training_data[idx] = self.training_data[idx][indices]
 
-        end = time.perf_counter()
-        print("Data loaded. Elapsed time: " + str(end - start))
         if selected_cols[0] and self.input_decorrelation:
             print("Computing input data statistics")
             self.mean_u = np.mean(u_ndarray, axis=0)
@@ -458,7 +494,7 @@ class BaseNetwork:
             else:
                 self.cov_ev = self.cov_u  # 1D case
             print(
-                "Shifting the data accordingly if network architecture is MK11,MK12 or MK15...")
+                "Shifting the data accordingly if network architecture is MK11, MK12, MK13 or MK15...")
         else:
             print("Warning: Mean of training data moments was not computed")
         return True
