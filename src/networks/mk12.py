@@ -85,7 +85,8 @@ class MK12Network(BaseNetwork):
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
                              scaler_min=self.scaler_min, scale_active=self.scale_active,
-                             gamma=self.regularization_gamma, name="sobolev_resnet_wrapper", basis=self.basis)
+                             gamma=self.regularization_gamma, name="sobolev_resnet_wrapper", basis=self.basis,
+                             rotated=self.rotated)
 
         # build graph
         batch_size: int = 3  # dummy entry

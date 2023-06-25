@@ -68,7 +68,7 @@ class MK13Network(BaseNetwork):
             # activation
             out = tf.keras.activations.elu(intermediate_sum)
             # relu
-            intermediate_sum = layers.Add()([out, layer_input_z])
+            out = layers.Add()([out, layer_input_z])
             return out
 
         def convex_output_layer(layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0) -> Tensor:
