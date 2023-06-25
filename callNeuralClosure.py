@@ -23,41 +23,6 @@ from src import utils
 from src.networks.configmodel import init_neural_closure
 
 
-### global variable ###
-
-# neuralClosureModel = 0  # bm.initNeuralClosure(0,0)
-
-
-### function definitions ###
-def initModelCpp(input):
-    '''
-    input: string array consisting of [modelNumber,maxDegree_N, folderName]
-    modelNumber : Defines the used network model, i.e. MK1, MK2...
-    maxDegree_N : Defines the maximal Degree of the moment basis, i.e. the "N" of "M_N"
-    folderName: Path to the folder containing the neural network model
-    '''
-
-    print("|-------------------- Tensorflow initialization Log ------------------")
-    print("|")
-
-    modelNumber = input[0]
-    maxDegree_N = input[1]
-
-    # --- Transcribe the modelNumber and MaxDegree to the correct model folder --- #
-    folderName = "neuralClosure_M" + \
-                 str(maxDegree_N) + "_MK" + str(modelNumber)
-
-    global neuralClosureModel
-    neuralClosureModel = init_neural_closure(
-        modelNumber, maxDegree_N, folderName)
-    neuralClosureModel.load_model()
-    neuralClosureModel.model.summary()
-    print("|")
-    print("| Tensorflow neural closure initialized.")
-    print("|")
-    return 0
-
-
 ### function definitions ###
 def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int = 3, folder_name: str = "testFolder",
                loss_combination: int = 0, width: int = 10, depth: int = 5, normalized: bool = False,
@@ -70,59 +35,13 @@ def init_model(network_mk: int = 1, polynomial_degree: int = 0, spatial_dim: int
 
     global neuralClosureModel
     neuralClosureModel = init_neural_closure(network_mk=network_mk, poly_degree=polynomial_degree,
-                                             spatial_dim=spatial_dim,
-                                             folder_name=folder_name, loss_combination=loss_combination, nw_depth=depth,
+                                             spatial_dim=spatial_dim, folder_name=folder_name,
+                                             loss_combination=loss_combination, nw_depth=depth,
                                              nw_width=width, normalized=normalized,
                                              input_decorrelation=input_decorrelation, scale_active=scale_active,
                                              gamma_lvl=gamma_lvl, basis=basis, rotated=rotated)
 
     return 0
-
-
-def call_network(input):
-    '''
-    # Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
-    # Output: Gradient of the network wrt input
-    '''
-    # predictions = neuralClosureModel.model.predict(input)
-
-    x_model = tf.Variable(input)
-
-    with tf.GradientTape() as tape:
-        # training=True is only needed if there are layers with different
-        # behavior during training versus inference (e.g. Dropout).
-        # same as neuralClosureModel.model.predict(x)
-        predictions = neuralClosureModel.model(x_model, training=False)
-
-    gradients = tape.gradient(predictions, x_model)
-
-    return gradients
-
-
-def call_network_batchwise(network_input):
-    # Transform npArray to tfEagerTensor
-    x_model = tf.Variable(network_input)
-
-    # Compute Autodiff tape
-    with tf.GradientTape() as tape:
-        # training=True is only needed if there are layers with different
-        # behavior during training versus inference (e.g. Dropout).
-        predictions = neuralClosureModel.model(
-            x_model, training=False)  # same as model.predict(x)
-
-    # Compute the gradients
-    gradients = tape.gradient(predictions, x_model)
-
-    # ---- Convert gradients from eagerTensor to numpy array and then to flattened c array ----
-
-    # Note: Use inputNetwork as array, since a newly generated npArray seems to cause a Segfault in cpp
-    (dimCell, dimBase) = network_input.shape
-
-    for i in range(0, dimCell):
-        for j in range(0, dimBase):
-            network_input[i, j] = gradients[i, j]
-
-    return network_input
 
 
 def main():
