@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 # intern modules
 from src import utils
-from src.networks.customcallbacks import HaltWhenCallback, LossAndErrorPrintingCallback
+from src.networks.customcallbacks import HaltWhenCallback, LossAndErrorPrintingCallback, LearningRateSchedulerWithWarmup
 
 
 ### class definitions ###
@@ -217,22 +217,31 @@ class BaseNetwork:
 
             self.concat_history_files()
 
-        elif curriculum == 1:  # learning rate scheduler
+        elif curriculum >= 1:  # learning rate scheduler
             print("Training with learning rate scheduler")
             # We only use this at the moment
-            initial_lr = float(1e-3)
+            initial_lr = float(5e-3)
             drop_rate = (epoch_count / 3)
-            stop_tol = 1e-7
+            stop_tol = 4e-6
             mt_patience = int(epoch_count / 10)
             min_delta = stop_tol / 10
 
             # specific callbacks
             def step_decay(epoch):
-                step_size = initial_lr * np.power(10, (-epoch / drop_rate))
-                return step_size
+                # step_size = initial_lr * np.power(10, (-epoch / drop_rate))
+                # return step_size
+                # Initial learning rate
+                end_lr = 0.0001  # Final learning rate
+                total_epochs = min(600, epoch_count)  # Total number of epochs
 
-            LR = tf.keras.callbacks.LearningRateScheduler(step_decay)
-            HW = HaltWhenCallback('val_loss', stop_tol)
+                if epoch < total_epochs:
+                    return initial_lr - (epoch / total_epochs) * (initial_lr - end_lr)
+                else:
+                    return end_lr
+
+            # TODO LR SCHEDULER
+            LR = LearningRateSchedulerWithWarmup(warmup_epochs=5, lr_schedule=step_decay)
+            HW = HaltWhenCallback('val_output_3_loss', stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min',
                                                   verbose=1, patience=mt_patience, min_delta=min_delta)
             csv_logger, tensorboard_logger = self.create_csv_logger_cb()
