@@ -220,7 +220,7 @@ class BaseNetwork:
         elif curriculum >= 1:  # learning rate scheduler
             print("Training with learning rate scheduler")
             # We only use this at the moment
-            initial_lr = float(2e-3)
+            initial_lr = float(1e-3)
             drop_rate = (epoch_count / 3)
             stop_tol = 4e-6
             mt_patience = int(epoch_count / 10)

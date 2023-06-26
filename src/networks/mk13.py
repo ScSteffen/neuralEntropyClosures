@@ -63,7 +63,7 @@ class MK13Network(BaseNetwork):
                 [weighted_sum_x, weighted_non_neg_sum_z])
 
             # Batch normalization
-            intermediate_sum = layers.BatchNormalization()(intermediate_sum)
+            # intermediate_sum = layers.BatchNormalization()(intermediate_sum)
 
             # activation
             out = tf.keras.activations.elu(intermediate_sum)
@@ -116,7 +116,7 @@ class MK13Network(BaseNetwork):
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="ResNetIcnn_closure")
         print("The core model overview")
-        core_model.summary()
+        # core_model.summary()
         print("The sobolev wrapped model overview")
 
         # build sobolev wrapper
