@@ -220,7 +220,7 @@ class BaseNetwork:
         elif curriculum >= 1:  # learning rate scheduler
             print("Training with learning rate scheduler")
             # We only use this at the moment
-            initial_lr = float(5e-3)
+            initial_lr = float(2e-3)
             drop_rate = (epoch_count / 3)
             stop_tol = 4e-6
             mt_patience = int(epoch_count / 10)
@@ -381,6 +381,7 @@ class BaseNetwork:
     def load_training_data(self, shuffle_mode: bool = False, sampling: int = 0, load_all: bool = False,
                            normalized_data: bool = False, train_mode: bool = False, gamma_level: int = 0,
                            rotated=False, max_alpha_norm=20) -> bool:
+
         """
         Loads the training data
         params: shuffle_mode = shuffle loaded Data  (yes,no)
@@ -392,6 +393,8 @@ class BaseNetwork:
 
         return: True, if loading successful
         """
+        np.set_printoptions(precision=2)
+
         self.training_data = []
 
         if self.basis == "monomial":
