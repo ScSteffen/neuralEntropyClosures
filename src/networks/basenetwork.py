@@ -220,7 +220,9 @@ class BaseNetwork:
         elif curriculum >= 1:  # learning rate scheduler
             print("Training with learning rate scheduler")
             # We only use this at the moment
-            initial_lr = float(1e-3)
+            initial_lr = float(2e-3)
+            end_lr = float(8e-5)  # Final learning rate
+
             drop_rate = (epoch_count / 3)
             stop_tol = 4e-6
             mt_patience = int(epoch_count / 10)
@@ -231,7 +233,6 @@ class BaseNetwork:
                 # step_size = initial_lr * np.power(10, (-epoch / drop_rate))
                 # return step_size
                 # Initial learning rate
-                end_lr = 0.0001  # Final learning rate
                 total_epochs = min(600, epoch_count)  # Total number of epochs
 
                 if epoch < total_epochs:
@@ -248,10 +249,10 @@ class BaseNetwork:
 
             if verbosity == 1:
                 callbackList = [mc_best, csv_logger,
-                                tensorboard_logger, HW]  # , ES]  # LR,
+                                tensorboard_logger, HW, LR]  # , ES]  # LR,
             else:
                 callbackList = [mc_best, LossAndErrorPrintingCallback(), csv_logger, tensorboard_logger,
-                                HW]  # , ES]  # LR,
+                                HW, LR]  # , ES]  # LR,
 
             # start Training
             self.history = self.call_training(val_split=val_split, epoch_size=epoch_count, batch_size=batch_size,
