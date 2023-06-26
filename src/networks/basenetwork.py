@@ -456,11 +456,11 @@ class BaseNetwork:
 
         print("Delete all training data entries, where norm(alpha)>=" + str(max_alpha_norm))
 
-        alpha_norm = np.linalg.norm(alpha_ndarray, axis=1)
+        alpha_norm = np.linalg.norm(alpha_ndarray[:, 1:], axis=1)
         orig_len = len(alpha_norm)
 
         # Find indices where alpha_norm is below the threshold
-        indices = np.where(alpha_norm < max_alpha_norm)[0]
+        indices = np.where(alpha_norm / self.input_dim < max_alpha_norm)[0]
         u_ndarray = u_ndarray[indices, :]
         alpha_ndarray = alpha_ndarray[indices, :]
         h_ndarray = h_ndarray[indices, :]
