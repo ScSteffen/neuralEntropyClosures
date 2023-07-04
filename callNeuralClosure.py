@@ -171,7 +171,7 @@ def main():
         dest="gamma_level",
         default=0,
         help="gamma for regularized entropy closure:\n 0= non regularized:\n 1 = 1e-1\n 2 = 1e-2\n 3 = "
-        "1e-3",
+             "1e-3",
         metavar="GAMMA",
     )
     parser.add_option(
@@ -259,10 +259,10 @@ def main():
         )
     # create model after loading training data to get correct scaling in
     if (
-        options.loadmodel == 1
-        or options.training == 0
-        or options.training == 2
-        or options.training == 5
+            options.loadmodel == 1
+            or options.training == 0
+            or options.training == 2
+            or options.training == 5
     ):
         neuralClosureModel.load_model()  # also creates model
         # preprocess training data. Compute scalings
@@ -281,7 +281,7 @@ def main():
     if options.training == 1:
         # train model
         neuralClosureModel.config_start_training(
-            val_split=0.00,
+            val_split=0.1,
             epoch_count=options.epoch,
             curriculum=options.curriculum,
             batch_size=options.batch,

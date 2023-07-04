@@ -11,7 +11,6 @@ from os import path, makedirs, walk
 
 import numpy as np
 import pandas as pd
-
 ### imports ###
 # python modules
 import tensorflow as tf
@@ -66,19 +65,19 @@ class BaseNetwork:
     rotated: bool
 
     def __init__(
-        self,
-        normalized: bool,
-        polynomial_degree: int,
-        spatial_dimension: int,
-        width: int,
-        depth: int,
-        loss_combination: int,
-        save_folder: str,
-        input_decorrelation: bool,
-        scale_active: bool,
-        gamma_lvl: int,
-        basis: str = "monomial",
-        rotated=False,
+            self,
+            normalized: bool,
+            polynomial_degree: int,
+            spatial_dimension: int,
+            width: int,
+            depth: int,
+            loss_combination: int,
+            save_folder: str,
+            input_decorrelation: bool,
+            scale_active: bool,
+            gamma_lvl: int,
+            basis: str = "monomial",
+            rotated=False,
     ):
         if gamma_lvl == 0:
             self.regularization_gamma = 0.0
@@ -185,13 +184,13 @@ class BaseNetwork:
         return self.call_scaled(u_non_normal)
 
     def config_start_training(
-        self,
-        val_split: float = 0.1,
-        epoch_count: int = 2,
-        curriculum: int = 1,
-        batch_size: int = 500,
-        verbosity: int = 1,
-        processing_mode: int = 0,
+            self,
+            val_split: float = 0.1,
+            epoch_count: int = 2,
+            curriculum: int = 1,
+            batch_size: int = 500,
+            verbosity: int = 1,
+            processing_mode: int = 0,
     ):
         """
         Method to train network
@@ -263,7 +262,7 @@ class BaseNetwork:
             end_lr = float(8e-5)  # Final learning rate
 
             drop_rate = epoch_count / 3
-            stop_tol = 4e-6
+            stop_tol = 7e-5
             mt_patience = int(epoch_count / 10)
             min_delta = stop_tol / 10
 
@@ -283,7 +282,7 @@ class BaseNetwork:
             LR = LearningRateSchedulerWithWarmup(
                 warmup_epochs=5, lr_schedule=step_decay
             )
-            HW = HaltWhenCallback("output_3_loss", stop_tol)
+            HW = HaltWhenCallback("val_output_3_loss", stop_tol)
             ES = tf.keras.callbacks.EarlyStopping(
                 monitor="output_3_loss",
                 mode="min",
@@ -324,12 +323,12 @@ class BaseNetwork:
         return self.history
 
     def call_training(
-        self,
-        val_split: float = 0.1,
-        epoch_size: int = 2,
-        batch_size: int = 128,
-        verbosity_mode: int = 1,
-        callback_list: list = [],
+            self,
+            val_split: float = 0.1,
+            epoch_size: int = 2,
+            batch_size: int = 128,
+            verbosity_mode: int = 1,
+            callback_list: list = [],
     ) -> list:
         """
         Calls training depending on the MK model
@@ -395,7 +394,7 @@ class BaseNetwork:
         while path.isfile(logName + ".csv"):
             count += 1
             logName = (
-                self.folder_name + "/historyLogs/history_" + str(count).zfill(3) + "_"
+                    self.folder_name + "/historyLogs/history_" + str(count).zfill(3) + "_"
             )
 
         logFile = logName + ".csv"
@@ -458,15 +457,15 @@ class BaseNetwork:
         return True
 
     def load_training_data(
-        self,
-        shuffle_mode: bool = False,
-        sampling: int = 0,
-        load_all: bool = False,
-        normalized_data: bool = False,
-        train_mode: bool = False,
-        gamma_level: int = 0,
-        rotated=False,
-        max_alpha_norm=20,
+            self,
+            shuffle_mode: bool = False,
+            sampling: int = 0,
+            load_all: bool = False,
+            normalized_data: bool = False,
+            train_mode: bool = False,
+            gamma_level: int = 0,
+            rotated=False,
+            max_alpha_norm=20,
     ) -> bool:
         """
         Loads the training data
@@ -486,44 +485,44 @@ class BaseNetwork:
         if self.basis == "monomial":
             # Create trainingdata filename"
             filename = (
-                "data/"
-                + str(self.spatial_dim)
-                + "D/Monomial_M"
-                + str(self.poly_degree)
-                + "_"
-                + str(self.spatial_dim)
-                + "D"
-            )
-            if normalized_data:
-                filename = (
                     "data/"
                     + str(self.spatial_dim)
                     + "D/Monomial_M"
                     + str(self.poly_degree)
                     + "_"
                     + str(self.spatial_dim)
-                    + "D_normal"
+                    + "D"
+            )
+            if normalized_data:
+                filename = (
+                        "data/"
+                        + str(self.spatial_dim)
+                        + "D/Monomial_M"
+                        + str(self.poly_degree)
+                        + "_"
+                        + str(self.spatial_dim)
+                        + "D_normal"
                 )
         elif self.basis == "spherical_harmonics":
             # Create trainingdata filename"
             filename = (
-                "data/"
-                + str(self.spatial_dim)
-                + "D/SphericalHarmonics_M"
-                + str(self.poly_degree)
-                + "_"
-                + str(self.spatial_dim)
-                + "D"
-            )
-            if normalized_data:
-                filename = (
                     "data/"
                     + str(self.spatial_dim)
                     + "D/SphericalHarmonics_M"
                     + str(self.poly_degree)
                     + "_"
                     + str(self.spatial_dim)
-                    + "D_normal"
+                    + "D"
+            )
+            if normalized_data:
+                filename = (
+                        "data/"
+                        + str(self.spatial_dim)
+                        + "D/SphericalHarmonics_M"
+                        + str(self.poly_degree)
+                        + "_"
+                        + str(self.spatial_dim)
+                        + "D_normal"
                 )
         else:
             raise ValueError("Not supported basis: " + self.basis)
@@ -639,7 +638,7 @@ class BaseNetwork:
         return True
 
     def training_data_preprocessing(
-        self, scaled_output: bool = False, model_loaded: bool = False
+            self, scaled_output: bool = False, model_loaded: bool = False
     ) -> bool:
         """
         Performs a scaling on the output data (h) and scales alpha correspondingly. Sets a scale factor for the
@@ -657,11 +656,11 @@ class BaseNetwork:
                 self.scaler_min = float(scaler.data_min_)
             # scale to [0,1]
             self.training_data[2] = (self.training_data[2] - self.scaler_min) / (
-                self.scaler_max - self.scaler_min
+                    self.scaler_max - self.scaler_min
             )
             # scale correspondingly
             self.training_data[1] = self.training_data[1] / (
-                self.scaler_max - self.scaler_min
+                    self.scaler_max - self.scaler_min
             )
             print(
                 "Output of network has internal scaling with h_max="
