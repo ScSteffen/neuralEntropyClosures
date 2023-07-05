@@ -68,7 +68,7 @@ class MK11Network(BaseNetwork):
             minval=0, maxval=0.1, seed=None
         )
 
-        weight_regularizer = tf.keras.regularizers.L1L2(l2=0.0001)  # L1 + L2 penalties
+        weight_regularizer = tf.keras.regularizers.L1L2(l2=5e-6, l1=5e-6)  # L1 + L2 penalties
 
         def convex_layer(
                 layer_input_z: Tensor,
