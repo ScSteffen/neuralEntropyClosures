@@ -6,16 +6,15 @@ Version: 1.0
 Date 30.03.2022
 '''
 
-import numpy as np
 import tensorflow as tf
+from tensorflow import Tensor
 from tensorflow import keras as keras
 from tensorflow.keras import layers
 from tensorflow.keras.constraints import NonNeg
-from tensorflow import Tensor
 
 from src.networks.basenetwork import BaseNetwork
-from src.networks.entropymodels import SobolevModel
 from src.networks.customlayers import MeanShiftLayer, DecorrelationLayer
+from src.networks.entropymodels import SobolevModel
 
 
 class MK13Network(BaseNetwork):
@@ -27,7 +26,7 @@ class MK13Network(BaseNetwork):
 
     def __init__(self, normalized: bool, input_decorrelation: bool, polynomial_degree: int, spatial_dimension: int,
                  width: int, depth: int, loss_combination: int, save_folder: str = "", scale_active: bool = True,
-                 gamma_lvl: int = 0, basis: str = "monomial"):
+                 gamma_lvl: int = 0, basis: str = "monomial", rotated=False):
         if save_folder == "":
             custom_folder_name = "MK13_N" + \
                                  str(polynomial_degree) + "_D" + str(spatial_dimension)
@@ -37,7 +36,7 @@ class MK13Network(BaseNetwork):
                                           spatial_dimension=spatial_dimension, width=width, depth=depth,
                                           loss_combination=loss_combination, save_folder=custom_folder_name,
                                           input_decorrelation=input_decorrelation, scale_active=scale_active,
-                                          gamma_lvl=gamma_lvl, basis=basis)
+                                          gamma_lvl=gamma_lvl, basis=basis, rotated=rotated)
 
     def create_model(self) -> bool:
 
@@ -63,8 +62,12 @@ class MK13Network(BaseNetwork):
             intermediate_sum = layers.Add(name='add_component_' + str(layer_idx))(
                 [weighted_sum_x, weighted_non_neg_sum_z])
 
+            # Batch normalization
+            # intermediate_sum = layers.BatchNormalization()(intermediate_sum)
+
             # activation
             out = tf.keras.activations.elu(intermediate_sum)
+            # relu
             out = layers.Add()([out, layer_input_z])
             return out
 
@@ -81,7 +84,6 @@ class MK13Network(BaseNetwork):
                                                   name='layer_' + str(layer_idx) + 'dense_component')(net_input_x)
             # Wz+Wx+b
             out: Tensor = layers.Add()([weighted_sum_x, weighted_nn_sum_z])
-            out = layers.Add()([out, layer_input_z])
 
             if self.scale_active:  # if output is scaled, use relu.
                 out = tf.keras.activations.relu(out)
@@ -90,22 +92,22 @@ class MK13Network(BaseNetwork):
             ### build the core network with icnn closure architecture ###
 
         input_ = keras.Input(shape=(self.input_dim,))
-        x = input_
 
         if self.input_decorrelation:  # input data decorellation and shift
-            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(x)
+            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
             hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            x = hidden
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
                                   kernel_regularizer=weight_regularizer, use_bias=True,
                                   bias_initializer=initializer,
                                   bias_regularizer=None, name="layer_-1_input")(hidden)
         else:
+            x = input_
             # First Layer is a std dense layer
             hidden = layers.Dense(self.model_width, activation="elu", kernel_initializer=initializer,
                                   kernel_regularizer=weight_regularizer, use_bias=True,
-                                  bias_initializer=initializer,
-                                  bias_regularizer=None, name="layer_-1_input")(x)
+                                  bias_initializer=initializer, bias_regularizer=None, name="layer_-1_input")(x)
         # other layers are convexLayers
         for idx in range(0, self.model_depth):
             hidden = convex_layer(hidden, x, layer_idx=idx, layer_dim=self.model_width)
@@ -114,14 +116,15 @@ class MK13Network(BaseNetwork):
         # Create the core model
         core_model = keras.Model(inputs=[input_], outputs=[pre_output], name="ResNetIcnn_closure")
         print("The core model overview")
-        core_model.summary()
+        # core_model.summary()
         print("The sobolev wrapped model overview")
 
         # build sobolev wrapper
         model = SobolevModel(core_model, polynomial_degree=self.poly_degree, spatial_dimension=self.spatial_dim,
                              reconstruct_u=bool(self.loss_weights[2]), scaler_max=self.scaler_max,
                              scaler_min=self.scaler_min, scale_active=self.scale_active,
-                             gamma=self.regularization_gamma, name="sobolev_resnet_icnn_wrapper", basis=self.basis)
+                             gamma=self.regularization_gamma, name="sobolev_resnet_icnn_wrapper", basis=self.basis,
+                             rotated=self.rotated)
         # build graph
         batch_size: int = 3  # dummy entry
         model.build(input_shape=(batch_size, self.input_dim))
