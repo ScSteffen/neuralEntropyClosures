@@ -39,3 +39,23 @@ class HaltWhenCallback(tf.keras.callbacks.Callback):
                 self.model.stop_training = True
         else:
             pass
+
+
+class LearningRateSchedulerWithWarmup(tf.keras.callbacks.Callback):
+    def __init__(self, warmup_epochs, lr_schedule):
+        super(LearningRateSchedulerWithWarmup, self).__init__()
+        self.warmup_epochs = warmup_epochs
+        self.lr_schedule = lr_schedule
+
+    def on_epoch_begin(self, epoch, logs=None):
+        if epoch < self.warmup_epochs:
+            lr = (epoch + 1) / self.warmup_epochs * self.lr_schedule(epoch)
+            tf.keras.backend.set_value(self.model.optimizer.lr, lr)
+        else:
+            lr = self.lr_schedule(epoch)
+            tf.keras.backend.set_value(self.model.optimizer.lr, lr)
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        logs['lr'] = tf.keras.backend.get_value(self.model.optimizer.lr)
+        print("Current learning rate: " + str(tf.keras.backend.get_value(self.model.optimizer.lr)))
