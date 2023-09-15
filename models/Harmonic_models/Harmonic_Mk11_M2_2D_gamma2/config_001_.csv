@@ -1,0 +1,20 @@
+date;2023-06-23
+git_version;c20f6d7143027288ab861a992413342b64b714e9
+sampling;2
+batch;32
+curriculum;1
+degree;2
+epoch;20
+folder;Harmonic_Mk11_M2_2D_gamma2
+loadModel;0
+model;11
+normalized moments;True
+decorrelate inputs;True
+scaled outputs;False
+objective;0
+processingmode;1
+spatial Dimension;2
+verbosity;2
+training;1
+network width;350
+network depth;3

@@ -33,7 +33,7 @@ class EntropyTools:
     # @brief: tensor of the form [0,gamma,gamma,...]
     regularization_gamma_vector: tf.Tensor
 
-    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0) -> object:
+    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0, basis ="monomial") -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
@@ -43,15 +43,34 @@ class EntropyTools:
         self.poly_degree = polynomial_degree
         self.spatial_dimension = spatial_dimension
         quad_order = 100
-        if spatial_dimension == 1:
+        if spatial_dimension == 1 and basis=="monomial":
             self.nq = quad_order
             [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
             m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
-        if spatial_dimension == 2:
+        if spatial_dimension == 2 and basis=="monomial":
             [quad_pts, quad_weights, _, _] = qGaussLegendre2D(quad_order)  # dims = nq
             self.nq = quad_weights.size  # is not 10 * polyDegree
             m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
-
+        elif spatial_dimension == 3 and basis == "spherical_harmonics":
+            [quad_pts, quad_weights, mu, phi] = qGaussLegendre3D(6 * polynomial_degree)  # dims = nq
+            self.nq = quad_weights.size  # is not 20 * polyDegree
+            m_basis = compute_spherical_harmonics(mu, phi, self.poly_degree)
+        elif spatial_dimension == 2 and basis == "spherical_harmonics":
+            [quad_pts, quad_weights, mu, phi] = qGaussLegendre2D(6 * polynomial_degree)  # dims = nq #
+            self.nq = quad_weights.size  # is not 20 * polyDegree
+            # print(sum(quad_weights))
+            m_basis = compute_spherical_harmonics_2D(mu, phi, self.poly_degree)
+            #np.set_printoptions(precision=2)
+            # print(quad_weights)  # weights ok
+            # print(np.sum(quad_weights))  # sumweights ok
+            # print("----")
+            # print(mu)
+            # print(phi)
+            # print(m_basis)
+            # print(m_basis.transpose())  # basis ok
+        else:
+            print("spatial dimension not yet supported for sobolev wrapper")
+            exit()
         self.quadPts = tf.constant(quad_pts, shape=(self.spatial_dimension, self.nq), dtype=tf.float64)
         self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)
 
@@ -217,12 +236,12 @@ class EntropyTools:
         input: u = dims (1,N)
            start =  start_valu of alpha
         """
-        dim = u.numpy().shape[1]
-        self.opti_u = np.reshape(u.numpy(), (dim,))
+        dim = u.shape[0]
+        self.opti_u = np.copy(u) # np.reshape(u, (dim,))
         self.opti_m = self.momentBasis.numpy()
         self.opti_w = self.quadWeights.numpy()
 
-        opti_start = np.reshape(start.numpy(), (dim,))
+        opti_start =np.copy(u) # np.reshape(start, (dim,))
 
         opt_result = opt.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
                                   hess=self.opti_entropy_prime2, tol=1e-6)
