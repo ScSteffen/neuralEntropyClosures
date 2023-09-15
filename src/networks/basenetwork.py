@@ -432,17 +432,19 @@ class BaseNetwork:
                 scaling_data = row
         self.scaler_min = float(scaling_data[0])
         self.scaler_max = float(scaling_data[1])
-        self.create_model()
+        #self.create_model()
         used_file_name = used_file_name + "/best_model/"
 
         if not path.exists(used_file_name):
             print("Model does not exists at this path: " + used_file_name)
             exit(1)
-        model = tf.keras.models.load_model(
-            used_file_name, custom_objects={"CustomModel": self.model}
-        )
-        self.model.load_weights(used_file_name)
+        #model = tf.keras.models.load_model(
+        #    used_file_name, custom_objects={"CustomModel": self.model}
+        #)
+        #self.model.load_weights(used_file_name)
         # self.model = model
+        self.model= tf.saved_model.load(    used_file_name)
+
         print("Model loaded from file ")
         return 0
 
