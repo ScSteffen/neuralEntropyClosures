@@ -22,7 +22,7 @@ class EntropyTools:
     input_dim: int
     quadPts: tf.Tensor  # dims = (1 x nq)
     quadWeights: tf.Tensor  # dims = (1 x nq)
-    momentBasis: tf.Tensor  # dims = (batchSIze x N x nq)
+    moment_basis_tf: tf.Tensor  # dims = (batchSIze x N x nq)
     opti_u: np.ndarray
     opti_m: np.ndarray
     opti_w: np.ndarray
@@ -33,7 +33,7 @@ class EntropyTools:
     # @brief: tensor of the form [0,gamma,gamma,...]
     regularization_gamma_vector: tf.Tensor
 
-    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0, basis ="monomial") -> object:
+    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0, basis="monomial") -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
@@ -43,11 +43,11 @@ class EntropyTools:
         self.poly_degree = polynomial_degree
         self.spatial_dimension = spatial_dimension
         quad_order = 100
-        if spatial_dimension == 1 and basis=="monomial":
+        if spatial_dimension == 1 and basis == "monomial":
             self.nq = quad_order
             [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
             m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
-        if spatial_dimension == 2 and basis=="monomial":
+        if spatial_dimension == 2 and basis == "monomial":
             [quad_pts, quad_weights, _, _] = qGaussLegendre2D(quad_order)  # dims = nq
             self.nq = quad_weights.size  # is not 10 * polyDegree
             m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
@@ -60,7 +60,7 @@ class EntropyTools:
             self.nq = quad_weights.size  # is not 20 * polyDegree
             # print(sum(quad_weights))
             m_basis = compute_spherical_harmonics_2D(mu, phi, self.poly_degree)
-            #np.set_printoptions(precision=2)
+            # np.set_printoptions(precision=2)
             # print(quad_weights)  # weights ok
             # print(np.sum(quad_weights))  # sumweights ok
             # print("----")
@@ -75,12 +75,21 @@ class EntropyTools:
         self.quadWeights = tf.constant(quad_weights, shape=(1, self.nq), dtype=tf.float64)
 
         self.input_dim = m_basis.shape[0]
-        self.momentBasis = tf.constant(m_basis, shape=(self.input_dim, self.nq), dtype=tf.float64)
+        self.moment_basis_tf = tf.constant(m_basis, shape=(self.input_dim, self.nq), dtype=tf.float64)
+        self.moment_basis_np = m_basis
+        self.moment_basis_orig = tf.constant(m_basis, shape=(self.input_dim, self.nq), dtype=tf.float64)
+
         self.regularization_gamma_np = gamma
         self.regularization_gamma = tf.constant(gamma, dtype=tf.float64)
         gamma_vec = gamma * np.ones(shape=(1, self.input_dim))
         gamma_vec[0, 0] = 0.0  # partial regularization
         self.regularization_gamma_vector = tf.constant(gamma_vec, dtype=tf.float64, shape=(1, self.input_dim))
+
+    def rotate_basis(self, rot_mat):
+        self.moment_basis_tf = rot_mat @ self.moment_basis_tf
+
+    def reset_basis(self):
+        self.moment_basis_tf = np.copy(self.moment_basis_orig)
 
     def reconstruct_alpha(self, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -95,10 +104,10 @@ class EntropyTools:
                w    , dims = nq
         returns alpha_complete = [alpha_0,alpha], dim = (nS x N), where alpha_0 = - ln(<exp(alpha*m)>)
         """
-        tmp = tf.math.exp(tf.tensordot(alpha, self.momentBasis[1:, :], axes=([1], [0])))  # tmp = alpha * m
+        tmp = tf.math.exp(tf.tensordot(alpha, self.moment_basis_tf[1:, :], axes=([1], [0])))  # tmp = alpha * m
         # ln(<tmp>)
-        alpha_0 = - (tf.math.log(self.momentBasis[0, 0]) + tf.math.log(
-            tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))) / self.momentBasis[0, 0]
+        alpha_0 = - (tf.math.log(self.moment_basis_tf[0, 0]) + tf.math.log(
+            tf.tensordot(tmp, self.quadWeights, axes=([1], [1])))) / self.moment_basis_tf[0, 0]
         return tf.concat([alpha_0, alpha], axis=1)  # concat [alpha_0,alpha]
 
     def reconstruct_u(self, alpha: tf.Tensor) -> tf.Tensor:
@@ -115,10 +124,10 @@ class EntropyTools:
         returns u = <m*eta_*'(alpha*m)>, dim = (nS x N)
         """
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.moment_basis_tf, axes=([1], [0])))  # alpha*m
         tmp = tf.math.multiply(f_quad, self.quadWeights)  # f*w
         # f * w * momentBasis
-        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1])) + tf.math.multiply(
+        return tf.tensordot(tmp, self.moment_basis_tf[:, :], axes=([1], [1])) + tf.math.multiply(
             self.regularization_gamma_vector, alpha)
 
     def compute_u(self, f: tf.Tensor) -> tf.Tensor:
@@ -135,7 +144,7 @@ class EntropyTools:
                 """
         tmp = tf.math.multiply(f, self.quadWeights)  # f*w
         # f * w * momentBasis
-        return tf.tensordot(tmp, self.momentBasis[:, :], axes=([1], [1]))
+        return tf.tensordot(tmp, self.moment_basis_tf[:, :], axes=([1], [1]))
 
     def compute_h(self, u: tf.Tensor, alpha: tf.Tensor) -> tf.Tensor:
         """
@@ -153,7 +162,7 @@ class EntropyTools:
         returns h = alpha*u - <eta_*(alpha*m)>
         """
         # Currently only for maxwell Boltzmann entropy
-        f_quad = tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))  # alpha*m
+        f_quad = tf.math.exp(tf.tensordot(alpha, self.moment_basis_tf, axes=([1], [0])))  # alpha*m
         tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
         # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
@@ -179,7 +188,7 @@ class EntropyTools:
         """
         # Currently only for maxwell Boltzmann entropy
         f_quad = tf.math.exp(tf.tensordot(
-            alpha_orig, self.momentBasis, axes=([1], [0])))  # alpha*m
+            alpha_orig, self.moment_basis_tf, axes=([1], [0])))  # alpha*m
         tmp = tf.tensordot(f_quad, self.quadWeights, axes=([1], [1]))  # f*w
         # tmp2 = tf.tensordot(alpha, u, axes=([1], [1]))
         tmp2 = tf.math.reduce_sum(tf.math.multiply(alpha, u), axis=1, keepdims=True)
@@ -231,25 +240,25 @@ class EntropyTools:
         """
         return tf.constant(vector, shape=vector.shape, dtype=tf.float32)
 
-    def minimize_entropy(self, u: tf.Tensor, start: tf.Tensor) -> tf.Tensor:
+    def minimize_entropy(self, u: tf.Tensor) -> tf.Tensor:
         """
         brief: computes the minimal entropy at u
         input: u = dims (1,N)
            start =  start_valu of alpha
         """
         dim = u.shape[0]
-        self.opti_u = np.copy(u) # np.reshape(u, (dim,))
-        self.opti_m = self.momentBasis.numpy()
+        self.opti_u = np.copy(u)  # np.reshape(u, (dim,))
+        self.opti_m = self.moment_basis_tf
         self.opti_w = self.quadWeights.numpy()
 
-        opti_start =np.copy(u) # np.reshape(start, (dim,))
+        opti_start = np.copy(u)  # np.reshape(start, (dim,))
 
         opt_result = opt.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
                                   hess=self.opti_entropy_prime2, tol=1e-6)
 
         if not opt_result.success:
             exit("Optimization unsuccessfull!")
-        return tf.constant(opt_result.x, dtype=tf.float32, shape=(1, dim))
+        return tf.constant(opt_result.x, dtype=tf.float32, shape=(1, dim)), opt_result.x
 
     def opti_entropy(self, alpha: np.ndarray) -> np.ndarray:
         """
@@ -339,8 +348,8 @@ class EntropyTools:
 
         diff = alpha_true - alpha
 
-        t1 = tf.math.exp(tf.tensordot(alpha_true, self.momentBasis, axes=([1], [0])))
-        t2 = tf.tensordot(diff, self.momentBasis, axes=([1], [0]))
+        t1 = tf.math.exp(tf.tensordot(alpha_true, self.moment_basis_tf, axes=([1], [0])))
+        t2 = tf.tensordot(diff, self.moment_basis_tf, axes=([1], [0]))
         integrand = tf.math.multiply(t1, t2)
 
         res = tf.tensordot(integrand, self.quadWeights, axes=([1], [1]))
@@ -352,7 +361,7 @@ class EntropyTools:
                 input: alpha , dim = (ns, N+1)
                 output: kinetic density, dim  = ns x nq
         """
-        return tf.math.exp(tf.tensordot(alpha, self.momentBasis, axes=([1], [0])))
+        return tf.math.exp(tf.tensordot(alpha, self.moment_basis_tf, axes=([1], [0])))
 
     def compute_maxwellian(self):
         """
@@ -414,7 +423,7 @@ def qGaussLegendre2D(Qorder):
         count = 0
         for i in range(int(order / 2)):
             for j in range(2 * order):
-                w[count] = 0.5 * np.pi / order * leggaussweights[i]
+                w[count] = 2 * np.pi / order * leggaussweights[i]
                 count += 1
         return w
 
@@ -665,6 +674,7 @@ def compute_spherical_harmonics_2D(mu: np.ndarray, phi: np.ndarray, degree: int)
         count = 0
         for l in range(0, degree + 1):
             for k in range(-l, l + 1):
+
                 if (k + l) % 2 == 0:
                     if k < 0:
                         Y = scipy.special.sph_harm(np.abs(k), l, phi[i], np.arccos(mu[i]), out=None)
@@ -678,7 +688,10 @@ def compute_spherical_harmonics_2D(mu: np.ndarray, phi: np.ndarray, degree: int)
 
                     sh_basis_scipy[count, i] = Y
                     count += 1
-    # test against python implementation
+
+        # sh_basis_scipy[0, i] = np.sqrt(1 / (2 * np.pi))
+
+        # test against python implementation
     return sh_basis_scipy
 
 
@@ -703,3 +716,40 @@ def compute_spherical_harmonics_general(mu: np.ndarray, phi: np.ndarray, degree:
             idx_sys += 1
 
     return sh_basis
+
+
+def create_sh_rotator(u_1_in) -> np.ndarray:
+    theta = np.arctan2(u_1_in[0], u_1_in[1]) - np.pi / 2.0;
+    c = np.cos(theta)
+    s = np.sin(theta)
+
+    G = np.zeros((3, 3))
+    G[0, 0] = 1
+    G[1, 1] = c
+    G[2, 2] = c
+    G[1, 2] = -s
+    G[2, 1] = s
+    return G
+
+
+def create_sh_rotator_2D(u_1_in) -> np.ndarray:
+    theta = np.arctan2(u_1_in[0], u_1_in[1]) - np.pi / 2.0;
+    c = np.cos(theta)
+    s = np.sin(theta)
+    c2 = np.cos(2 * theta)
+    s2 = np.sin(2 * theta)
+
+    G = np.zeros((6, 6))
+    G[0, 0] = 1
+    G[1, 1] = c
+    G[2, 2] = c
+    G[1, 2] = -s
+    G[2, 1] = s
+
+    G[3, 3] = c2
+    G[4, 4] = 1.0
+    G[5, 5] = c2
+    G[3, 5] = s2
+    G[5, 3] = -s2
+    # print(G)
+    return G[1:, 1:], G
