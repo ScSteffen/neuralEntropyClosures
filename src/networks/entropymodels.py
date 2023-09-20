@@ -79,6 +79,8 @@ class EntropyModel(tf.keras.Model, ABC):
             np.set_printoptions(precision=2)
             # print(quad_weights)  # weights ok
             # print(np.sum(quad_weights))  # sumweights ok
+            # res = np.einsum("kj,lj, j->kl", m_basis, m_basis, quad_weights)
+            # print(res)
             # print("----")
             # print(mu)
             # print(phi)

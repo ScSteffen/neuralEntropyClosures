@@ -33,7 +33,7 @@ class EntropyTools:
     # @brief: tensor of the form [0,gamma,gamma,...]
     regularization_gamma_vector: tf.Tensor
 
-    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0, basis ="monomial") -> object:
+    def __init__(self, polynomial_degree=1, spatial_dimension=1, gamma=0, basis="monomial") -> object:
         """
         Class to compute the 1D entropy closure up to degree N
         input: N  = degree of polynomial basis
@@ -43,11 +43,11 @@ class EntropyTools:
         self.poly_degree = polynomial_degree
         self.spatial_dimension = spatial_dimension
         quad_order = 100
-        if spatial_dimension == 1 and basis=="monomial":
+        if spatial_dimension == 1 and basis == "monomial":
             self.nq = quad_order
             [quad_pts, quad_weights] = qGaussLegendre1D(quad_order)  # order = nq
             m_basis = computeMonomialBasis1D(quad_pts, self.poly_degree)  # dims = (N x nq)
-        if spatial_dimension == 2 and basis=="monomial":
+        if spatial_dimension == 2 and basis == "monomial":
             [quad_pts, quad_weights, _, _] = qGaussLegendre2D(quad_order)  # dims = nq
             self.nq = quad_weights.size  # is not 10 * polyDegree
             m_basis = computeMonomialBasis2D(quad_pts, self.poly_degree)  # dims = (N x nq)
@@ -60,7 +60,7 @@ class EntropyTools:
             self.nq = quad_weights.size  # is not 20 * polyDegree
             # print(sum(quad_weights))
             m_basis = compute_spherical_harmonics_2D(mu, phi, self.poly_degree)
-            #np.set_printoptions(precision=2)
+            # np.set_printoptions(precision=2)
             # print(quad_weights)  # weights ok
             # print(np.sum(quad_weights))  # sumweights ok
             # print("----")
@@ -237,11 +237,11 @@ class EntropyTools:
            start =  start_valu of alpha
         """
         dim = u.shape[0]
-        self.opti_u = np.copy(u) # np.reshape(u, (dim,))
+        self.opti_u = np.copy(u)  # np.reshape(u, (dim,))
         self.opti_m = self.momentBasis.numpy()
         self.opti_w = self.quadWeights.numpy()
 
-        opti_start =np.copy(u) # np.reshape(start, (dim,))
+        opti_start = np.copy(u)  # np.reshape(start, (dim,))
 
         opt_result = opt.minimize(fun=self.opti_entropy, x0=opti_start, jac=self.opti_entropy_prime,
                                   hess=self.opti_entropy_prime2, tol=1e-6)
@@ -413,7 +413,7 @@ def qGaussLegendre2D(Qorder):
         count = 0
         for i in range(int(order / 2)):
             for j in range(2 * order):
-                w[count] = 0.5 * np.pi / order * leggaussweights[i]
+                w[count] = 2 * np.pi / order * leggaussweights[i]
                 count += 1
         return w
 
