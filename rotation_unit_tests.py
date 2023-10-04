@@ -11,12 +11,112 @@ import matplotlib.pyplot as plt
 def main():
     np.set_printoptions(precision=4)
 
-    test_ml_closure()
+    # test_ml_closure()
+    # test_numerical_closure()
+    # check_single_moment()
+    # test_gradient_inequality()
+    test_gradient_inequality2()
+    # test_rotation_idempotence()
+    return 0
+
+
+def test_gradient_inequality2():
+    degree = 2
+    et = EntropyTools(polynomial_degree=degree, spatial_dimension=2, gamma=0.0, basis="spherical_harmonics")
+
+    # sample normalized moment on the line
+    w_b = np.asarray([1, 0.5, 0.2, 0.5, 0.0, 0.5])
+    _, M_b = create_sh_rotator_2D(w_b[1:3])
+    z = M_b @ w_b
+    w_a = -0.2 * np.ones(6)
+    w_a[0] = 1
+
+    w_ab = M_b @ w_a
+
+    alpha_w_b = et.minimize_entropy(w_b, w_b)
+    h_w_b = et.compute_h_dual(w_b, alpha_w_b)
+    alpha_z = et.minimize_entropy(z, z)
+    h_z = et.compute_h_dual(z, alpha_z)
+    err_1 = np.linalg.norm(h_w_b - h_z)
+
+    alpha_w_a = et.minimize_entropy(w_a, w_a)
+    h_w_a = et.compute_h_dual(w_a, alpha_w_a)
+    alpha_ab = et.minimize_entropy(w_ab, w_ab)
+    h_w_ab = et.compute_h_dual(w_ab, alpha_ab)
+    err_2 = np.linalg.norm(h_w_ab - h_w_a)
+
+    # test convexity
+    rhs1 = h_w_b + np.inner(alpha_w_b, w_a - w_b)
+    rhs2 = h_z + np.inner(alpha_z, w_ab - z)
+    return 0
+
+
+def test_gradient_inequality():
+    degree = 2
+    et = EntropyTools(polynomial_degree=degree, spatial_dimension=2, gamma=0.0, basis="spherical_harmonics")
+
+    # sample normalized moment on the line
+    u = np.asarray([1, 0.5, 0, 0.5, 0.0, 0.5])
+    # compute entropy gradient, aka lagrange mutliplier alpha
+    alpha = et.minimize_entropy(u=u, alpha_start=u)
+    h_u = et.compute_h_dual(u, alpha)
+    # sample arbitrary moment
+    w_ab = -0.2 * np.ones(6)
+    w_ab[0] = 1
+    alpha_ab = et.minimize_entropy(u=w_ab, alpha_start=u)
+    h_w_ab = et.compute_h_dual(u, alpha)
+    # rotate it
+    _, M = create_sh_rotator_2D(w_ab[1:3])
+    m_w_ab = M @ w_ab
+
+    residual_ab = w_ab - m_w_ab
+    # test gradient inequality
+    res = np.inner(alpha, residual_ab)
+    # test convexity at u
+    res2 = np.inner(u[1:], alpha[1:])
+    # second test for convexity
+    rhs = h_u + np.inner(alpha, u - w_ab)
+    lhs = h_w_ab
+    return 0
+
+
+def test_rotation_idempotence():
+    degree = 2
+    et = EntropyTools(polynomial_degree=degree, spatial_dimension=2, gamma=0.0, basis="spherical_harmonics")
+
+    # sample normalized moment on the line
+    u = np.asarray([1, 0.5, 0.5, 0.5, 0.0, 0.5])
+    _, M_u = create_sh_rotator_2D(u[1:3])
+
+    u_a = np.asarray([1, -0.5, 0.1, 0.2, 0.0, 0.5])  # sample second moment to create a arbitrary rotation
+    _, M_ua = create_sh_rotator_2D(u_a[1:3])
+
+    m_ua_u = M_ua @ u  # rotate original moment
+    _, M_tilde = create_sh_rotator_2D(m_ua_u[1:3])
+
+    # Test image of both rotations
+    u_res1 = M_u @ u
+    u_res2 = M_tilde @ m_ua_u
+
+    residual = np.linalg.norm(u_res1 - u_res2)
+    u_res_test = M_ua @ u_a
+    return 0
+
+
+def check_single_moment():
+    degree = 2
+    et = EntropyTools(polynomial_degree=degree, spatial_dimension=2, gamma=0.0, basis="spherical_harmonics")
+
+    u = np.asarray([1, 0.5, 0, 0.5, 0.0, 0.5])
+    res = et.minimize_entropy(u=u, alpha_start=u)
+
+    u_res = et.reconstruct_u(res)
+    u_res2 = et.reconstruct_u(np.asarray([1, 1., 0, 0.5, 0, 0.5]))
     return 0
 
 
 def test_ml_closure():
-    degree = 2
+    degree = 1
     n_iterpolators = 10
     et = EntropyTools(polynomial_degree=degree, spatial_dimension=2, gamma=0.1, basis="spherical_harmonics")
 
@@ -68,6 +168,7 @@ def test_ml_closure():
         M_R_fulls.append(M_R_full)
         M_Rs.append(M_R)
         u_batch_r[i, :] = M_R @ u_batch[i, :]
+        print(u_batch_r[i, :])
         u_batch_r_m[i, :] = M_R_pm @ u_batch_r[i, :]  # + u_0
         # u_batch_r[i, :]  # += u_0
 

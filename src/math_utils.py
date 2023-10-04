@@ -549,7 +549,7 @@ def create_sh_rotator_1D(u_1_in) -> [np.ndarray, np.ndarray]:
 
 
 def create_sh_rotator_2D(u_1_in) -> [np.ndarray, np.ndarray]:
-    theta = np.arctan2(u_1_in[0], u_1_in[1]) - np.pi / 2.0
+    theta = np.arctan2(u_1_in[1], u_1_in[0])  # - np.pi / 2.0
     c = np.cos(theta)
     s = np.sin(theta)
     c2 = np.cos(2 * theta)
@@ -559,8 +559,8 @@ def create_sh_rotator_2D(u_1_in) -> [np.ndarray, np.ndarray]:
     G[0, 0] = 1
     G[1, 1] = c
     G[2, 2] = c
-    G[1, 2] = -s
-    G[2, 1] = s
+    G[1, 2] = s
+    G[2, 1] = -s
 
     G[3, 3] = c2
     G[4, 4] = 1.0

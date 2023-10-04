@@ -39,15 +39,17 @@ def main():
         minimizer_u = find_minimum_m2(model) * 0
         alpha_size = 5
 
-    max_alpha = 5
-    for i in range(10000):
+    max_alpha = 100
+    num_examples = 1000000
+    for i in range(num_examples):
         alpha1 = np.random.uniform(low=-max_alpha, high=max_alpha, size=(alpha_size,))
         alpha2 = np.random.uniform(low=-max_alpha, high=max_alpha, size=(alpha_size,))
         if degree == 1:
             err_list.append(tester(alpha1, alpha2, et, model, i, minimizer_u))
         else:
             err_list.append(tester2D(alpha1, alpha2, et, model, i, minimizer_u))
-
+        if i % 1000 == 0:
+            print(str(i) + 'of' + str(num_examples))
     c = 0
     for err in err_list:
         for elem in err:
@@ -129,10 +131,11 @@ def tester2D(alpha1: np.ndarray, alpha2: np.ndarray, et2, mk11_m2_2d_g0, count, 
     u_batch = np.zeros(shape=(n_iterpolators, 6))
     for i in range(n_iterpolators):
         l = lambdas[i]
-        u_batch[i, :] = l * u_orig1 + (1 - l) * u_orig2
-
-    h_res, alpha_res, u_rot_batch = rotate_evaluate_M2_network(u_batch, mk11_m2_2d_g0, min_u=minimizer_u)
+        u_batch[i, 1:] = l * alpha1 + (1 - l) * alpha2
+        u_batch[i, 0] = 1.0
+    # h_res, alpha_res, u_rot_batch = rotate_evaluate_M2_network(u_batch, mk11_m2_2d_g0, min_u=minimizer_u)
     # h_res, alpha_res, u_rot_batch, h_res_nr = rotate_compute_M2_network(u_batch, et=et2)
+    h_res, alpha_res, u_rot_batch = rotate_compute_quadratic(u_batch)
     # h_res, alpha_res, u_rot_batch = rotate_evaluate_M2_network_2(u_batch, mk11_m2_2d_g0, et=et2)
 
     errs = []
@@ -201,6 +204,7 @@ def tester2D(alpha1: np.ndarray, alpha2: np.ndarray, et2, mk11_m2_2d_g0, count, 
             plt.clf()
         else:
             errs.append(0)
+
     return errs
 
 
@@ -311,6 +315,24 @@ def rotate_evaluate_M2_network(u_batch: np.ndarray, closure, min_u):
     h_res = (h_pred_mir + h_pred) / 2
 
     return h_res, 0, u_rot_batch
+
+
+def rotate_compute_quadratic(u_batch: np.ndarray):
+    u_rot_batch = np.ones(shape=(u_batch.shape[0], u_batch.shape[1]))
+
+    G_list = []
+    _, G_mirror = create_sh_rotator_2D(np.asarray([-1, 0]))
+    # 2) Rotate all tensors to v_x line in u_1
+    for i in range(u_batch.shape[0]):
+        u_orig_1 = u_batch[i, 1:3]
+        _, G = create_sh_rotator_2D(u_orig_1)
+        G_list.append(G)
+
+        u_rot_batch[i, :] = G @ u_batch[i]
+
+    h_res = 0.5 * np.linalg.norm(u_rot_batch, axis=1) ** 2
+
+    return h_res, u_rot_batch[:, 1:], u_rot_batch[:, 1:]
 
 
 def rotate_compute_M2_network(u_batch: np.ndarray, et):
