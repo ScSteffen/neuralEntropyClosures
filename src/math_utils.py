@@ -569,3 +569,104 @@ def create_sh_rotator_2D(u_1_in) -> [np.ndarray, np.ndarray]:
     G[5, 3] = -s2
     # print(G)
     return G[1:, 1:], G
+
+
+def create_sh_rotator_2D_red(u_1_in) -> [np.ndarray, np.ndarray]:
+    theta = np.arctan2(u_1_in[1], u_1_in[0])  # - np.pi / 2.0
+    c = np.cos(theta)
+    s = np.sin(theta)
+    c2 = np.cos(2 * theta)
+    s2 = np.sin(2 * theta)
+
+    G = np.zeros((6, 6))
+    G[0, 0] = 1
+    G[1, 1] = c
+    G[2, 2] = c
+    G[1, 2] = s
+    G[2, 1] = -s
+
+    G[3, 3] = c2
+    G[4, 4] = 1.0
+    G[5, 5] = c2
+    G[3, 5] = s2
+    G[5, 3] = -s2
+    # print(G)
+    return G[3:, 3:]
+
+
+def create_roation_grad_M2(u) -> [np.ndarray, np.ndarray]:
+    theta = np.arctan2(u[2], u[1])  # - np.pi / 2.0
+    c = np.cos(theta)
+    s = np.sin(theta)
+    c2 = np.cos(2 * theta)
+    s2 = np.sin(2 * theta)
+
+    G = np.zeros((6, 6))
+    nabla_G = np.zeros((6, 6))
+    # not used
+    G[0, 0] = 1
+    G[1, 1] = c
+    G[2, 2] = c
+    G[1, 2] = s
+    G[2, 1] = -s
+
+    G[3, 3] = c2
+    G[4, 4] = 1.0
+    G[5, 5] = c2
+    G[3, 5] = s2
+    G[5, 3] = -s2
+    # used
+    nabla_G[3, 3] = -2 * s2
+    nabla_G[4, 4] = 0.0
+    nabla_G[5, 5] = -2 * s2
+    nabla_G[3, 5] = 2 * c2
+    nabla_G[5, 3] = -2 * c2
+    # print(G)
+    w1_grad_w1 = 1 / np.linalg.norm(u[1:3]) * np.asarray([u[1:3], [0, 0]])  # u[1:3]
+    w1_grad_wn = np.zeros(shape=(2, 3))
+    w1_grad_full = np.reshape(np.concatenate([w1_grad_w1.T, w1_grad_wn.T], axis=0).T, newshape=(2, 5))
+
+    nabla_theta = 1 / np.linalg.norm(u[1:3]) * np.asarray([-u[2], u[1]])
+    tmp = nabla_G[3:, 3:] @ u[3:]
+    wn_grad_w1 = np.outer(tmp, nabla_theta)
+    wn_grad_wn = G[3:, 3:]
+    wn_grad_full = np.concatenate([wn_grad_w1.T, wn_grad_wn.T], axis=0).T
+
+    grad_full = np.concatenate([w1_grad_full, wn_grad_full])
+    return grad_full
+
+
+def create_nabla_w_z_M2(w) -> [np.ndarray, np.ndarray]:
+    theta = np.arctan2(w[1], w[0])
+    c = np.cos(theta)
+    s = np.sin(theta)
+    c2 = np.cos(2 * theta)
+    s2 = np.sin(2 * theta)
+
+    G = np.zeros((4, 5))
+    nabla_G = np.zeros((4, 5))
+
+    G[0, 0] = c
+    G[0, 1] = s
+    # deleted w_2 row
+    G[1, 2] = c2
+    G[2, 3] = 1.0
+    G[3, 4] = c2
+    G[1, 4] = s2
+    G[3, 2] = -s2
+
+    nabla_G[0, 0] = -s
+    nabla_G[0, 1] = c
+    nabla_G[1, 2] = -2 * s2
+    nabla_G[2, 3] = 0.0
+    nabla_G[3, 4] = -2 * s2
+    nabla_G[1, 4] = 2 * c2
+    nabla_G[3, 2] = -2 * c2
+
+    w1_grad_theta = 1 / np.linalg.norm(w[:2]) * np.asarray([-s, c, 0, 0, 0])
+
+    t1 = nabla_G @ w
+    t2 = np.outer(t1, w1_grad_theta)
+    t3 = t2 + G
+
+    return t3, G

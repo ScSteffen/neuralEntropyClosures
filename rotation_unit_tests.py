@@ -1,5 +1,6 @@
 from src.math_utils import EntropyTools
-from src.math_utils import create_sh_rotator_2D, create_sh_rotator_1D
+from src.math_utils import create_sh_rotator_2D, create_sh_rotator_1D, create_roation_grad_M2, \
+    create_sh_rotator_2D_red, create_nabla_w_z_M2
 
 from src.networks.configmodel import init_neural_closure
 
@@ -15,8 +16,286 @@ def main():
     # test_numerical_closure()
     # check_single_moment()
     # test_gradient_inequality()
-    test_gradient_inequality2()
+    # test_gradient_inequality2()
     # test_rotation_idempotence()
+    # test rotation convexity
+    test_multiple_reduced_convexity()
+    # test_multiple_legendre_transform()
+    # test_non_standard_rotation()
+    # test_gradient_offsets()
+    return 0
+
+
+def test_legendre_transform(z_c, z_b):
+    h_s_b = approximate_M2_entropy(z_b)
+    delta_z_b = approximate_M2_entropy_grad(z_b)
+    h_s_b_conj = approximate_M2_entropy_conjugate(delta_z_b)
+
+    rhs = delta_z_b @ z_c - h_s_b_conj
+    if h_s_b < rhs:
+        print('something is wrong')
+        print('z_b: ' + str(z_b))
+        print('z_c: ' + str(z_c))
+        print('h_s_b: ' + str(h_s_b))
+        print('rhs: ' + str(rhs))
+    return 0
+
+
+def test_multiple_legendre_transform():
+    n_test_a = 1
+    n_test_b = 1
+    for i in range(n_test_b):
+        z_b = np.random.uniform(low=-1, high=1, size=(4,))
+        for j in range(n_test_a):
+            z_c = np.random.uniform(low=-1, high=1, size=(4,))
+            test_legendre_transform(z_c, z_b)
+
+        print('i =' + str(i) + ' of ' + str(n_test_b))
+
+    return 0
+
+
+def test_reduced_convexity(w_a, w_b):
+    # create rotation and rotation gradient
+    nabla_w_zb, M_b = create_nabla_w_z_M2(w_b)
+    _, M_a = create_nabla_w_z_M2(w_a)
+
+    lhs = approximate_M2_entropy(M_a @ w_a)
+
+    h_s_b = approximate_M2_entropy(M_b @ w_b)
+    h_s_c = approximate_M2_entropy(nabla_w_zb @ w_a)
+
+    t1 = approximate_M2_entropy_grad(M_b @ w_b)
+    t2 = nabla_w_zb @ w_a
+    t3 = nabla_w_zb @ w_b
+    z_b = M_b @ w_b
+    z_a = M_a @ w_a
+    rhs = approximate_M2_entropy(M_b @ w_b) + approximate_M2_entropy_grad(M_b @ w_b) @ nabla_w_zb @ (w_a - w_b)
+    res = lhs - rhs
+
+    # check for convexity of the function itself (sanity check)
+    sanity = approximate_M2_entropy(z_b) + approximate_M2_entropy_grad(z_b) @ (z_a - z_b) - approximate_M2_entropy(z_a)
+
+    if sanity >= 1e-6:
+        print("something is wrong, subspace function seems to be non convex:")
+        print('z_b: ' + str(z_b))
+        print('z_a: ' + str(z_a))
+        print('h_s_a: ' + str(lhs))
+        print('h_s_b: ' + str(h_s_b))
+        print('inequality value:' + str(sanity))
+        exit(1)
+    # if lhs < h_s_c < h_s_b:
+    #    print("case: lhs < h_s_c <h_s_b")
+    #    print('w_b: ' + str(w_b))
+    #    print('w_a: ' + str(w_a))
+    #    print('h_s_a: ' + str(lhs))
+    #    print('h_s_c: ' + str(h_s_c))
+    #    print('h_s_b: ' + str(h_s_b))
+
+    if res < 0:
+        print("non convex sample detected:")
+        print('w_b: ' + str(w_b))
+        print('w_a: ' + str(w_a))
+        print('z_b: ' + str(z_b))
+        print('z_a: ' + str(z_a))
+        print('z_c: ' + str(nabla_w_zb @ w_a))
+        print('h_s_a: ' + str(lhs))
+        print('h_s_c: ' + str(h_s_c))
+        print('h_s_b: ' + str(h_s_b))
+        print('lhs: ' + str(lhs))
+        print('rhs: ' + str(rhs))
+        print('result: ' + str(res))
+        print('\n\n\n ==============')
+    return 0
+
+
+def test_multiple_reduced_convexity():
+    n_test_a = 1  # 00
+    n_test_b = 1  # 00
+    for i in range(n_test_b):
+        # w_b = np.random.uniform(low=-1, high=1, size=(5,))
+        w_b = np.asarray([1., 1., 0., 0., 1.])
+        for j in range(n_test_a):
+            # w_a = np.random.uniform(low=-1, high=1, size=(5,))
+            w_a = np.asarray([0., 1., 0., 0., 1.])
+
+            test_reduced_convexity(w_a, w_b)
+            # test_jensen(w_a, w_b)
+
+        print('i =' + str(i) + ' of ' + str(n_test_b))
+
+    return 0
+
+
+def test_jensen(w_a, w_b):
+    n_interpolators = 20
+    lambdas = np.linspace(0, 1, n_interpolators)
+
+    z_batch = np.zeros(shape=(n_interpolators, 4))
+    h_batch = np.zeros(shape=(n_interpolators,))
+    for i in range(n_interpolators):
+        l = lambdas[i]
+        w_lambda = l * w_a + (1 - l) * w_b
+        _, M_lambda = create_nabla_w_z_M2(w_lambda)
+        z_lambda = M_lambda @ w_lambda
+        z_batch[i, :] = z_lambda
+        h_batch[i] = approximate_M2_entropy(z_lambda)
+
+    for i in range(n_interpolators):
+        if h_batch[i] > lambdas[i] * h_batch[- 1] + (1 - lambdas[i]) * h_batch[0]:
+            print("Non convex sample detected" + str(i) + "|" + str(i))
+            print("current function value " + str(h_batch[i]))
+            print("left function value " + str(h_batch[0]))
+            print("right function value " + str(h_batch[- 1]))
+            print("lambda value " + str(lambdas[i]))
+            print("rhs value " + str(lambdas[i] * h_batch[- 1] + (1 - lambdas[i]) * h_batch[0]))
+            print("z_a" + str(z_batch[0]))
+            print("z_b" + str(z_batch[-1]))
+            print("----")
+    return 0
+
+
+def approximate_M2_entropy_conjugate(delta):
+    t = 1 / 2 * delta[0, 0] ** 2 + 3 / 4 * delta[0, 1] ** 4 + 5 / 6 * delta[0, 2] ** 6 + 7 / 8 * delta[0, 3] ** 8
+    # t = 1 / 2 * z[0] ** 2 + 1 / 2 * z[1] ** 2 + 1 / 2 * z[2] ** 2 + 1 / 2 * z[3] ** 2
+    return t
+
+
+def approximate_M2_entropy(z):
+    # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 8 * z[3] ** 8
+    # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 4 * z[3] ** 4
+    # t = 1 / 2 * z[0] ** 2 + 1 / 2 * z[1] ** 2 + 1 / 2 * z[2] ** 2 + 1 / 2 * z[3] ** 2
+
+    t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 4 * z[2] ** 4 + 1 / 4 * z[3] ** 4
+    # t = z[0] + z[1] + z[2] + z[3]
+    return t
+
+
+def approximate_M2_entropy_grad(z):
+    # t = np.asarray([z[0], z[1] ** 3, z[2] ** 5, z[3] ** 7])
+    # t = np.asarray([z[0], z[1] ** 3, z[2] ** 5, z[3] ** 3])
+    # t = np.asarray([z[0], z[1], z[2], z[3]])
+    t = np.asarray([z[0] ** 1, z[1] ** 3, z[2] ** 3, z[3] ** 3])
+    # t = np.asarray([1, 1, 1, 1])
+    t1 = np.reshape(t, newshape=(1, 4))
+    return t1
+
+
+def test_gradient_offsets():
+    np.set_printoptions(precision=2)
+
+    max_alpha = 2
+    alpha_size = 5
+    degree = 2
+    et = EntropyTools(polynomial_degree=degree, spatial_dimension=2, gamma=0.1, basis="spherical_harmonics")
+
+    alpha1 = 0.5 * np.ones(alpha_size)
+    alpha = et.reconstruct_alpha(alpha1)
+    u = np.reconstruct
+    u = np.asarray([1, 0.5, 0.5, 0, 0, 0.5])  # [1, 0.5, 0., 0.0, 1., 0.0]
+    u_mom_rot_non_std = np.asarray(
+        [1, 0.5, 0.5, 0.5, 0, 0.5])  # np.asarray([1, 0.5, 0.5, 0, 0, 0.5])  # M_R_non_std @ u
+
+    _, M_R = create_sh_rotator_2D(u[1:3])
+
+    M_R_non_std = np.copy(M_R)
+
+    theta = np.pi
+    M_R_non_std[3:6, 3:6] = np.asarray(
+        [[np.cos(theta), 0, np.sin(theta)], [0, 1, 0], [-1 * np.sin(theta), 0, np.cos(theta)]])  # np.eye(3)
+
+    # Test if the rotation matrices are orthonormal
+    print(M_R)
+    print(M_R_non_std)
+    print(M_R.T @ M_R)
+    print(M_R_non_std.T @ M_R_non_std)
+
+    u_mom_rot = M_R @ u
+    u_mom_rot_non_std = M_R_non_std @ u
+
+    print(u)
+    print(u_mom_rot)
+    print(u_mom_rot_non_std)
+    # et.rotate_basis(M_R.T)
+    # alpha_res = et.minimize_entropy(u=u, alpha_start=alpha)
+    # h = et.compute_h_dual(u=u, alpha=alpha_res)
+    # et.rotate_basis(M_R)
+
+    alpha_res = et.minimize_entropy(u=u, alpha_start=0 * u)
+    h = et.compute_h_dual(u=u, alpha=alpha_res)
+
+    # et.rotate_basis(M_R)
+    alpha_res_rot = et.minimize_entropy(u=u_mom_rot, alpha_start=0 * u_mom_rot)
+    h_rot = et.compute_h_dual(u=u_mom_rot, alpha=alpha_res_rot)
+    # et.rotate_basis(M_R.T)
+
+    # et.rotate_basis(M_R_non_std)
+    alpha_res_rot_nstd = et.minimize_entropy(u=u_mom_rot_non_std, alpha_start=0 * u_mom_rot_non_std)
+    h_rot_nstd = et.compute_h_dual(u=u_mom_rot_non_std, alpha=alpha_res_rot_nstd)
+    # et.rotate_basis(M_R_non_std.T)
+
+    print(h)
+    print(h_rot)
+    print(h_rot_nstd)
+    return 0
+
+
+def test_non_standard_rotation():
+    np.set_printoptions(precision=2)
+
+    max_alpha = 2
+    alpha_size = 5
+    degree = 2
+    et = EntropyTools(polynomial_degree=degree, spatial_dimension=2, gamma=0.1, basis="spherical_harmonics")
+
+    alpha1 = 0.5 * np.ones(alpha_size)
+    alpha = et.reconstruct_alpha(alpha1)
+
+    u = np.asarray([1, 0.5, 0.5, 0, 0, 0.5])  # [1, 0.5, 0., 0.0, 1., 0.0]
+    u_mom_rot_non_std = np.asarray(
+        [1, 0.5, 0.5, 0.5, 0, 0.5])  # np.asarray([1, 0.5, 0.5, 0, 0, 0.5])  # M_R_non_std @ u
+
+    _, M_R = create_sh_rotator_2D(u[1:3])
+
+    M_R_non_std = np.copy(M_R)
+
+    theta = np.pi
+    M_R_non_std[3:6, 3:6] = np.asarray(
+        [[np.cos(theta), 0, np.sin(theta)], [0, 1, 0], [-1 * np.sin(theta), 0, np.cos(theta)]])  # np.eye(3)
+
+    # Test if the rotation matrices are orthonormal
+    print(M_R)
+    print(M_R_non_std)
+    print(M_R.T @ M_R)
+    print(M_R_non_std.T @ M_R_non_std)
+
+    u_mom_rot = M_R @ u
+    u_mom_rot_non_std = M_R_non_std @ u
+
+    print(u)
+    print(u_mom_rot)
+    print(u_mom_rot_non_std)
+    # et.rotate_basis(M_R.T)
+    # alpha_res = et.minimize_entropy(u=u, alpha_start=alpha)
+    # h = et.compute_h_dual(u=u, alpha=alpha_res)
+    # et.rotate_basis(M_R)
+
+    alpha_res = et.minimize_entropy(u=u, alpha_start=0 * u)
+    h = et.compute_h_dual(u=u, alpha=alpha_res)
+
+    # et.rotate_basis(M_R)
+    alpha_res_rot = et.minimize_entropy(u=u_mom_rot, alpha_start=0 * u_mom_rot)
+    h_rot = et.compute_h_dual(u=u_mom_rot, alpha=alpha_res_rot)
+    # et.rotate_basis(M_R.T)
+
+    # et.rotate_basis(M_R_non_std)
+    alpha_res_rot_nstd = et.minimize_entropy(u=u_mom_rot_non_std, alpha_start=0 * u_mom_rot_non_std)
+    h_rot_nstd = et.compute_h_dual(u=u_mom_rot_non_std, alpha=alpha_res_rot_nstd)
+    # et.rotate_basis(M_R_non_std.T)
+
+    print(h)
+    print(h_rot)
+    print(h_rot_nstd)
     return 0
 
 
