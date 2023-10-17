@@ -110,17 +110,17 @@ def test_reduced_convexity(w_a, w_b):
 
 
 def test_multiple_reduced_convexity():
-    n_test_a = 1  # 00
-    n_test_b = 1  # 00
+    n_test_a = 100  # 00
+    n_test_b = 100  # 00
     for i in range(n_test_b):
-        # w_b = np.random.uniform(low=-1, high=1, size=(5,))
-        w_b = np.asarray([1., 1., 0., 0., 1.])
+        w_b = np.random.uniform(low=-1, high=1, size=(5,))
+        # w_b = np.asarray([1., 1., 0., 0., 1.])
         for j in range(n_test_a):
-            # w_a = np.random.uniform(low=-1, high=1, size=(5,))
-            w_a = np.asarray([0., 1., 0., 0., 1.])
+            w_a = np.random.uniform(low=-1, high=1, size=(5,))
+            # w_a = np.asarray([0., 1., 0., 0., 1.])
 
             test_reduced_convexity(w_a, w_b)
-            # test_jensen(w_a, w_b)
+            test_jensen(w_a, w_b)
 
         print('i =' + str(i) + ' of ' + str(n_test_b))
 
@@ -164,9 +164,9 @@ def approximate_M2_entropy_conjugate(delta):
 def approximate_M2_entropy(z):
     # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 8 * z[3] ** 8
     # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 4 * z[3] ** 4
-    # t = 1 / 2 * z[0] ** 2 + 1 / 2 * z[1] ** 2 + 1 / 2 * z[2] ** 2 + 1 / 2 * z[3] ** 2
+    t = 1 / 2 * z[0] ** 2 + 1 / 2 * z[1] ** 2 + 1 / 2 * z[2] ** 2 + 1 / 2 * z[3] ** 2
 
-    t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 4 * z[2] ** 4 + 1 / 4 * z[3] ** 4
+    # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 4 * z[2] ** 4 + 1 / 4 * z[3] ** 4
     # t = z[0] + z[1] + z[2] + z[3]
     return t
 
@@ -174,8 +174,8 @@ def approximate_M2_entropy(z):
 def approximate_M2_entropy_grad(z):
     # t = np.asarray([z[0], z[1] ** 3, z[2] ** 5, z[3] ** 7])
     # t = np.asarray([z[0], z[1] ** 3, z[2] ** 5, z[3] ** 3])
-    # t = np.asarray([z[0], z[1], z[2], z[3]])
-    t = np.asarray([z[0] ** 1, z[1] ** 3, z[2] ** 3, z[3] ** 3])
+    t = np.asarray([z[0], z[1], z[2], z[3]])
+    # t = np.asarray([z[0] ** 1, z[1] ** 3, z[2] ** 3, z[3] ** 3])
     # t = np.asarray([1, 1, 1, 1])
     t1 = np.reshape(t, newshape=(1, 4))
     return t1
