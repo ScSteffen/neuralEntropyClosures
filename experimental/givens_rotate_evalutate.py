@@ -14,9 +14,9 @@ from src.networks.configmodel import init_neural_closure
 
 def main():
     err_list = []
-    for i in range(100):
-        alpha1 = np.random.uniform(low=-10, high=10, size=(1, 5))
-        alpha2 = np.random.uniform(low=-10, high=10, size=(1, 5))
+    for i in range(1000):
+        alpha1 = np.random.uniform(low=-15, high=15, size=(1, 5))
+        alpha2 = np.random.uniform(low=-15, high=15, size=(1, 5))
         err_list.append(tester(alpha1, alpha2))
 
     return 0

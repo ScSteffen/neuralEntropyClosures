@@ -32,13 +32,13 @@ def main():
     # print_comp_efficiency_memory()
 
     # 4) Print cross-sections
-    print_cross_sections()
+    # print_cross_sections()
 
     # 5) Print method errors
     # print_method_errors()
 
     # 6) Print realizable set
-    print_realizable_set_new_condition()
+    # print_realizable_set_new_condition()
     # print_realizable_set()
     # print_entropies()
     return True
