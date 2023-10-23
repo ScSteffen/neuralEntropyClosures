@@ -670,3 +670,39 @@ def create_nabla_w_z_M2(w) -> [np.ndarray, np.ndarray]:
     t3 = t2 + G
 
     return t3, G
+
+
+def create_nabla_w_z_M2_3d(w) -> [np.ndarray, np.ndarray]:
+    theta = np.arctan2(w[1], w[0])
+    c = np.cos(theta)
+    s = np.sin(theta)
+    c2 = np.cos(2 * theta)
+    s2 = np.sin(2 * theta)
+
+    G = np.zeros((4, 5))
+    nabla_G = np.zeros((4, 5))
+
+    G[0, 0] = c
+    G[0, 1] = s
+    # deleted w_2 row
+    G[1, 2] = c2
+    G[2, 3] = 1.0
+    G[3, 4] = c2
+    G[1, 4] = s2
+    G[3, 2] = -s2
+
+    nabla_G[0, 0] = -s
+    nabla_G[0, 1] = c
+    nabla_G[1, 2] = -2 * s2
+    nabla_G[2, 3] = 0.0
+    nabla_G[3, 4] = -2 * s2
+    nabla_G[1, 4] = 2 * c2
+    nabla_G[3, 2] = -2 * c2
+
+    w1_grad_theta = 1 / np.linalg.norm(w[:2]) * np.asarray([-s, c, 0, 0, 0])
+
+    t1 = nabla_G @ w
+    t2 = np.outer(t1, w1_grad_theta)
+    t3 = t2 + G
+
+    return t3, G

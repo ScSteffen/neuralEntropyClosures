@@ -19,10 +19,58 @@ def main():
     # test_gradient_inequality2()
     # test_rotation_idempotence()
     # test rotation convexity
-    test_multiple_reduced_convexity()
+    # test_multiple_reduced_convexity()
+    # test_rotation_reflection_3d()
     # test_multiple_legendre_transform()
     # test_non_standard_rotation()
     # test_gradient_offsets()
+    test_level_sets()
+    return 0
+
+
+def test_level_sets():
+    # create et
+    et = EntropyTools(polynomial_degree=2, spatial_dimension=2, gamma=0.001, basis='spherical_harmonics')
+    # sample moments
+    n_samples = 10
+    sys_size = 6
+    u = np.ones(shape=(2 * n_samples, sys_size))
+    alpha = np.zeros(shape=(2 * n_samples, sys_size))
+    h = np.zeros(shape=(2 * n_samples,))
+    r = 1.0
+    ts = np.linspace(-1, 1, n_samples)
+    for i in range(n_samples):
+        t = ts[i]  # np.random.uniform(low=-1, high=1)
+        u[i, :] = np.asarray([1, 0.5, 0, t, 0, np.sqrt(r ** 2 - t ** 2)])
+        u[i + n_samples, :] = np.asarray([1, 1, 0, t, 0, -np.sqrt(r ** 2 - t ** 2)])
+        print(np.linalg.norm(u[i, :]))
+        print(np.linalg.norm(u[i + n_samples, :]))
+        alpha[i, :] = et.minimize_entropy(u=u[i, :], alpha_start=np.zeros(sys_size))
+        alpha[i + n_samples, :] = et.minimize_entropy(u=u[i + n_samples, :], alpha_start=np.zeros(sys_size))
+        h[i] = et.compute_h_dual(u=u[i, :], alpha=alpha[i, :])
+        h[i + n_samples] = et.compute_h_dual(u=u[i + n_samples, :], alpha=alpha[i + n_samples, :])
+    print(h)
+    plt.figure()
+    plt.plot(u[:, 3], u[:, 5], '*')
+    plt.gca().set_aspect("equal", 'box')
+    plt.tight_layout()
+    plt.show()
+    print('==> No radial symmetry in higher dimensions')
+    return 0
+
+
+def test_rotation_reflection_3d():
+    w_a = np.asarray([1, 1, 1, 0.5, 0.5, 0.5, 0.5, 0.5])
+    w_b = np.asarray([-1, 1, 1, 0.5, 0.5, 0.5, 0.5, 0.5])
+    # create rotation and rotation gradient
+    nabla_w_zb, M_b = create_nabla_w_z_M2(w_b)
+    nabla_w_za, M_a = create_nabla_w_z_M2(w_a)
+
+    t1 = approximate_M2_3d_entropy(M_b @ w_b)
+    t2 = approximate_M2_3d_entropy(M_a @ w_a)
+    g1 = approximate_M2_3d_entropy_grad(M_b @ w_b) @ nabla_w_zb
+    g2 = approximate_M2_3d_entropy_grad(M_a @ w_a) @ nabla_w_za
+    # check for convexity of the function itself (sanity check)
     return 0
 
 
@@ -161,12 +209,33 @@ def approximate_M2_entropy_conjugate(delta):
     return t
 
 
+def approximate_M2_3d_entropy(z):
+    # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 8 * z[3] ** 8
+    # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 4 * z[3] ** 4
+    t = 1 / 2 * z[0] ** 2 + 1 / 2 * z[1] ** 2 + 1 / 2 * z[2] ** 2 + 1 / 2 * z[3] ** 2 + 1 / 2 * z[1] ** 2 + 1 / 2 * z[
+        2] ** 2
+
+    # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 4 * z[2] ** 4 + 1 / 4 * z[3] ** 4
+    # t = z[0] + z[1] + z[2] + z[3]
+    return t
+
+
+def approximate_M2_3d_entropy_grad(z):
+    # t = np.asarray([z[0], z[1] ** 3, z[2] ** 5, z[3] ** 7])
+    # t = np.asarray([z[0], z[1] ** 3, z[2] ** 5, z[3] ** 3])
+    t = z
+    # t = np.asarray([z[0] ** 1, z[1] ** 3, z[2] ** 3, z[3] ** 3])
+    # t = np.asarray([1, 1, 1, 1])
+    t1 = np.reshape(t, newshape=(1, 6))
+    return t1
+
+
 def approximate_M2_entropy(z):
     # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 8 * z[3] ** 8
     # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 6 * z[2] ** 6 + 1 / 4 * z[3] ** 4
     t = 1 / 2 * z[0] ** 2 + 1 / 2 * z[1] ** 2 + 1 / 2 * z[2] ** 2 + 1 / 2 * z[3] ** 2
 
-    # t = 1 / 2 * z[0] ** 2 + 1 / 4 * z[1] ** 4 + 1 / 4 * z[2] ** 4 + 1 / 4 * z[3] ** 4
+    # t = 1 / 2 * z[0] ** 4 + 1 / 4 * z[1] ** 4 + 1 / 4 * z[2] ** 4 + 1 / 4 * z[3] ** 4
     # t = z[0] + z[1] + z[2] + z[3]
     return t
 
