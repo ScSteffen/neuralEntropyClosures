@@ -5,7 +5,7 @@ import numpy as np
 
 
 class MK11Dataset(Dataset):
-    def __init__(self, csv_path: str, alpha_threshold: float = 6.0):
+    def __init__(self, csv_path: str, alpha_threshold: float = 10.0):
         """
         Loads data from CSV and preprocesses to tensors.
         Expects columns: u_0,...,u_5, alpha_0,...,alpha_5, h
