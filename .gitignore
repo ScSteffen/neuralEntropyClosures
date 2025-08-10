@@ -5,6 +5,7 @@ __pycache__/
 # Legacy NN Models
 python/legacyCode/models/*
 *.pth
+torch/models/*
 # pycharm
 .idea/
 
