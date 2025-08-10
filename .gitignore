@@ -4,7 +4,7 @@ __pycache__/
 
 # Legacy NN Models
 python/legacyCode/models/*
-
+*.pth
 # pycharm
 .idea/
 

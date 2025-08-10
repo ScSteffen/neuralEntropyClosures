@@ -25,23 +25,23 @@ class MK11Network(BaseNetwork):
     """
 
     def __init__(
-            self,
-            normalized: bool,
-            input_decorrelation: bool,
-            polynomial_degree: int,
-            spatial_dimension: int,
-            width: int,
-            depth: int,
-            loss_combination: int,
-            save_folder: str = "",
-            scale_active: bool = True,
-            gamma_lvl: int = 0,
-            basis: str = "monomial",
-            rotated=False,
+        self,
+        normalized: bool,
+        input_decorrelation: bool,
+        polynomial_degree: int,
+        spatial_dimension: int,
+        width: int,
+        depth: int,
+        loss_combination: int,
+        save_folder: str = "",
+        scale_active: bool = True,
+        gamma_lvl: int = 0,
+        basis: str = "monomial",
+        rotated=False,
     ):
         if save_folder == "":
             custom_folder_name = (
-                    "MK11_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
+                "MK11_N" + str(polynomial_degree) + "_D" + str(spatial_dimension)
             )
         else:
             custom_folder_name = save_folder
@@ -68,13 +68,15 @@ class MK11Network(BaseNetwork):
             minval=0, maxval=0.1, seed=None
         )
 
-        weight_regularizer = tf.keras.regularizers.L1L2(l2=5e-5, l1=5e-5)  # L1 + L2 penalties
+        weight_regularizer = tf.keras.regularizers.L1L2(
+            l2=5e-5, l1=5e-5
+        )  # L1 + L2 penalties
 
         def convex_layer(
-                layer_input_z: Tensor,
-                nw_input_x: Tensor,
-                layer_idx: int = 0,
-                layer_dim: int = 10,
+            layer_input_z: Tensor,
+            nw_input_x: Tensor,
+            layer_idx: int = 0,
+            layer_dim: int = 10,
         ) -> Tensor:
             # Weighted sum of previous layers output plus bias
             weighted_non_neg_sum_z = layers.Dense(
@@ -109,7 +111,7 @@ class MK11Network(BaseNetwork):
             return out
 
         def convex_output_layer(
-                layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0
+            layer_input_z: Tensor, net_input_x: Tensor, layer_idx: int = 0
         ) -> Tensor:
             weighted_nn_sum_z: Tensor = layers.Dense(
                 1,
@@ -142,8 +144,12 @@ class MK11Network(BaseNetwork):
         input_ = keras.Input(shape=(self.input_dim,))
 
         if self.input_decorrelation:  # input data decorellation and shift
-            hidden = MeanShiftLayer(input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift")(input_)
-            hidden = DecorrelationLayer(input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation")(hidden)
+            hidden = MeanShiftLayer(
+                input_dim=self.input_dim, mean_shift=self.mean_u, name="mean_shift"
+            )(input_)
+            hidden = DecorrelationLayer(
+                input_dim=self.input_dim, ev_cov_mat=self.cov_ev, name="decorrelation"
+            )(hidden)
             x = hidden
             # First Layer is a std dense layer
             hidden = layers.Dense(
@@ -229,12 +235,12 @@ class MK11Network(BaseNetwork):
         return True
 
     def call_training(
-            self,
-            val_split: float = 0.1,
-            epoch_size: int = 2,
-            batch_size: int = 128,
-            verbosity_mode: int = 1,
-            callback_list: list = [],
+        self,
+        val_split: float = 0.1,
+        epoch_size: int = 2,
+        batch_size: int = 128,
+        verbosity_mode: int = 1,
+        callback_list: list = [],
     ) -> list:
         """
         Calls training depending on the MK model
