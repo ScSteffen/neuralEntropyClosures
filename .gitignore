@@ -6,6 +6,8 @@ __pycache__/
 python/legacyCode/models/*
 *.pth
 torch/models/*
+*/venv/*
+*/wandb/*
 # pycharm
 .idea/
 
